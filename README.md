@@ -1,132 +1,93 @@
-# Nippan AI Platform — Foundation Proposal
+# Nippan AI Platform
 
-Status: **DRAFT FOR MULTI-AI REVIEW**  
-Date: 2026-09-22  
-Purpose: define the shared foundation before implementation. This proposal must not modify the current production bot.
+Status: **Foundation v1 accepted — contracts/data foundation starting**
 
-## Why this project exists
+Nippan AI Platform is the shared AI platform for Nippan's bots, website AI, future applications/programs, internal agents and potential external/rental AI services.
 
-Nippan is moving from several independent bots/workflows toward a shared AI platform that can support:
-- Personal LINE assistant
-- Existing Nippan customer-service bot (future migration only after the core is stable)
-- Slip collector/report bot
-- Future business bots and internal agents without redesigning the core each time
+## Foundation principles
 
-The platform must prioritize:
-1. Natural Thai conversation and continuity
-2. Low operating cost
-3. Safe model/tool routing
-4. Durable memory and data ownership
-5. Easy addition of new bots
-6. Clear observability and auditability
-7. Multi-AI development with explicit handoffs and review
+- easy to operate
+- easy to debug end to end
+- high-performance realtime path
+- cost-efficient by default
+- flexible and extensible
+- safe multi-tenant/tool isolation
+- add complexity only when measured need justifies it
 
-## Core design direction
+## Product model
 
 ```text
-Channels / Bots
-      |
-Cloudflare Edge Gateway
-      |
-n8n Orchestration
-      |
-Context + Memory Retrieval
-      |
-Context Compiler (only when useful)
-      |
-OpenRouter Model Router
-      |
-Worker / Specialist AI
-      |
-Reviewer for risky or uncertain work
-      |
-Nippan MCP / Tools
-      |
-PostgreSQL + pgvector / R2 / External Systems
+Tenant
+  -> Workspace
+      -> Application
+          -> Agent
+              -> Channel
+                  -> Conversation
 ```
 
-## Strong current decisions
+An Agent is a configurable role, not the same thing as a bot.
 
+## Foundation v1 architecture
+
+```text
+Channels / Website / Apps / Bots
+              |
+      Cloudflare Worker
+   thin edge / request_id
+              |
+              v
+       FastAPI Core AI Service
+      /        |         \
+ Context     Policy     OpenRouter
+ Memory      Engine       Models
+      \        |         /
+              v
+          Nippan MCP
+              |
+      PostgreSQL + pgvector
+              |
+       External systems
+
+Background: Cloudflare Queues + n8n
+Files: R2
+Human docs: Google Drive
+Reports/exports: Google Sheets
+Control Plane: versioned Dashboard/Admin Center
+```
+
+## Key decisions
+
+- PostgreSQL is the operational source of truth.
+- pgvector supports semantic memory/RAG; retrieval is hybrid.
 - OpenRouter is the primary model gateway.
-- n8n remains the primary orchestration layer.
-- PostgreSQL is planned as the main system-of-record database for the new platform.
-- pgvector is planned for semantic memory/RAG so transactional and vector data can coexist initially.
-- Cloudflare Workers is planned as the external gateway layer.
-- Cloudflare Queues is planned for durable/background workloads.
-- Cloudflare R2 is planned for machine-oriented file storage.
-- Google Drive remains useful for human-facing/shared documents.
-- Google Sheets becomes a reporting/export surface, not the primary database.
-- Existing production bot `supermansexy-png/Ai-Nippan` must not be rewritten during foundation work.
-- Existing bot migration will be via adapters after the new core is stable.
+- FastAPI is the realtime Core runtime.
+- n8n handles background, schedules and integrations rather than every realtime chat turn.
+- Cloudflare Workers remain a thin deterministic edge gateway.
+- Context Compiler is conditional and benchmark-gated, not default.
+- risk/privacy/tool permissions are enforced in deterministic policy/code.
+- Nippan MCP is modular with per-Agent scopes.
+- destructive/financial actions support human approval.
+- control plane and runtime data plane are separated.
+- existing Ai-Nippan stays independent until adapter-based gradual migration.
 
-## Important design principle: cheap intelligence before expensive intelligence
+## Start here
 
-The platform should not send full conversation history and all memory to a strong model by default.
+1. `docs/architecture/FOUNDATION_V1.md`
+2. `PROJECT_STATE.md`
+3. `ROADMAP.md`
+4. `.ai/project.yaml`
+5. `AGENTS.md`
+6. `docs/decisions/`
 
-Preferred path:
+## Current work
 
-```text
-Raw message
-  -> deterministic prechecks
-  -> targeted memory retrieval
-  -> optional cheap Context Compiler
-  -> compact Task Packet
-  -> task-appropriate model
-  -> tool execution
-  -> reviewer only when risk/uncertainty requires it
-```
+Phase 1: **Contracts and Data Foundation**
 
-The original user message must remain available to the main worker so a compiler cannot silently change intent.
+We are defining platform identity, Agent/Application contracts, policies, request tracing, usage metering and the PostgreSQL schema before deploying production infrastructure.
 
-## Model policy direction
+## Protected production systems
 
-Model names are **candidates, not permanent architecture**. They must be benchmarked on Nippan's own Thai tasks.
+- `supermansexy-png/Ai-Nippan`
+- existing Personal Assistant / n8n production workflows
 
-Target tiers:
-- T0: free / ultra-cheap routing for low-risk data
-- T1: cheap daily model for chat, extraction, summaries, memory processing
-- T2: reliable tool-capable model for actions
-- T3: specialist model for vision, coding, multimodal, research
-- T4: premium reasoner/reviewer only when escalation is justified
-
-Model identifiers should live in central policy/presets, never be hard-coded throughout workflows.
-
-## Data classification
-
-At minimum:
-- PUBLIC / LOW RISK
-- INTERNAL
-- PII
-- FINANCIAL / CUSTOMER
-- SECRET / CREDENTIAL
-
-Free-provider routing must not receive sensitive customer/financial data by default.
-
-## Current production system relationship
-
-The current Nippan customer bot already has useful components:
-- FastAPI + LINE
-- Gemini integration
-- Cloudflare AI Gateway support
-- intent routing
-- WooCommerce product/order logic
-- Firestore chat/admin memory
-- lexical retrieval
-- per-user in-process dispatching
-- dead-letter metadata
-- Control Center
-- tests
-
-This repository treats that bot as an existing application to integrate later, not code to replace now.
-
-## Review status
-
-This document is intentionally architectural rather than implementation-complete.
-Two independent AI reviewers should analyze this proposal before the team freezes Foundation v1.
-
-See:
-- `docs/architecture/FOUNDATION_DRAFT.md`
-- `ROADMAP.md`
-- `AGENTS.md`
-- `AI_REVIEW_BRIEF.md`
-- `.ai/project.yaml`
+Do not migrate or rewrite them during the current phase.
