@@ -14,7 +14,7 @@ Completed:
 - infrastructure defer list
 
 ## Phase 1 — Contracts and Data Foundation
-Status: CONTRACTS FROZEN / DDL DESIGN STARTED
+Status: CONTRACTS FROZEN / CORE DDL APPLIED
 
 Deliver:
 - Tenant / Workspace / Application / Agent / Channel schemas
@@ -37,6 +37,9 @@ Exit:
 Current handoff:
 - `docs/reviews/PHASE1_REVIEW_GATE_FINAL.md`
 - `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md`
+- `docs/decisions/ADR-0007-supabase-schema-baseline.md`
+- `migrations/20260922174011_phase2_core_foundation.sql`
+- `migrations/20260922174227_phase2_core_fk_indexes.sql`
 
 ## Phase 2 — Core Runtime Skeleton
 Status: NEXT AFTER POSTGRES/RLS DESIGN REVIEW
@@ -152,3 +155,4 @@ Adopt only from measured need:
 - Redis
 - dedicated vector database
 - service splitting
+
