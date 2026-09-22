@@ -556,7 +556,8 @@
           "$ref": "#/$defs/environment"
         },
         "config_version_id": {
-          "$ref": "#/$defs/uuid"
+          "$ref": "#/$defs/uuid",
+          "description": "PUBLISHED config version for the same Tenant/Application/Agent; config target environment must equal activation.environment."
         },
         "activated_at": {
           "$ref": "#/$defs/timestamp"
@@ -566,7 +567,8 @@
           "minLength": 1,
           "maxLength": 255
         }
-      }
+      },
+      "description": "Current activation pointer. Storage enforces at most one row per agent_id + environment; config_version_id must reference a PUBLISHED config for the same Tenant/Application/Agent with matching target environment."
     },
     "tenant_member": {
       "type": "object",
