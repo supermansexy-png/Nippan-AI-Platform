@@ -1,0 +1,100 @@
+project: nippan-ai-platform
+status: architecture_review
+date: 2026-09-22
+
+purpose:
+  shared_ai_core: true
+  multi_bot: true
+  thai_first: true
+  cost_optimized: true
+  multi_ai_development: true
+
+protected_systems:
+  ai_nippan:
+    repository: supermansexy-png/Ai-Nippan
+    production: true
+    modify_during_foundation_review: false
+  personal_line_assistant:
+    production: true
+    migrate_now: false
+
+architecture:
+  model_gateway: openrouter
+  orchestration: n8n
+  system_of_record: postgresql
+  vector_memory: pgvector
+  machine_file_store: cloudflare_r2
+  human_document_store: google_drive
+  reporting_surface: google_sheets
+  edge_gateway: cloudflare_workers
+  background_queue: cloudflare_queues
+  tool_interface: nippan_mcp
+
+cloudflare:
+  planned:
+    - workers
+    - queues
+    - r2
+  evaluate:
+    - analytics_engine
+    - ai_gateway
+    - hyperdrive
+    - service_bindings
+    - durable_objects
+  defer_by_default:
+    - d1
+    - vectorize
+    - workflows
+    - ai_search
+
+ai_pipeline:
+  deterministic_precheck: true
+  memory_retrieval_before_main_model: true
+  context_compiler:
+    optional: true
+    preserve_raw_request: true
+    benchmark_required: true
+  model_policy:
+    free_first_for_low_risk: true
+    cheap_default: true
+    reliable_for_tools: true
+    premium_as_escalation: true
+  reviewer:
+    risk_based: true
+    independent_for_high_risk: true
+
+data_scope_keys:
+  - tenant_id
+  - bot_id
+  - channel_id
+  - user_id
+  - conversation_id
+  - request_id
+
+risk_classes:
+  - READ
+  - WRITE_LOW
+  - WRITE_IMPORTANT
+  - DESTRUCTIVE
+  - FINANCIAL
+
+privacy_classes:
+  - PUBLIC_LOW_RISK
+  - INTERNAL
+  - PII
+  - FINANCIAL_CUSTOMER
+  - SECRET_CREDENTIAL
+
+current_phase:
+  name: foundation_architecture_review
+  implementation_allowed: false
+  next_gate: reconcile_two_independent_ai_reviews
+
+task_states:
+  - BACKLOG
+  - READY
+  - IN_PROGRESS
+  - REVIEW
+  - BLOCKED
+  - NEEDS_DECISION
+  - DONE
