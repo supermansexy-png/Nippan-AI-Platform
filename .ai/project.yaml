@@ -153,4 +153,11 @@ protected_systems:
 current_phase:
   name: core_runtime_skeleton
   production_migration_allowed: false
-  next_gate: synthetic_end_to_end_request
+  audit_gate:
+    required: true
+    gate_percent: 50
+    status: pending_independent_audit
+    tracking_issue: 18
+    evidence_packet: docs/audits/PHASE2_50_AUDIT_EVIDENCE_PACKET.md
+    implementation_advancement_allowed: false
+  next_gate: independent_50_percent_audit
