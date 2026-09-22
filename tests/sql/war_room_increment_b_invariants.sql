@@ -23,7 +23,7 @@ insert into wr_ids values
   ('request_b','3e222222-2222-4222-8222-222222222222');
 
 insert into public.tenants (tenant_id, slug, display_name, tenant_type, status)
-select value, key, key, 'internal', 'active' from wr_ids where key in ('tenant_a','tenant_b');
+select value, replace(key, '_', '-'), key, 'internal', 'active' from wr_ids where key in ('tenant_a','tenant_b');
 insert into public.applications (application_id, tenant_id, slug, display_name, application_type, status)
 select (select value from wr_ids where key = 'app_a'), (select value from wr_ids where key = 'tenant_a'), 'war-a', 'War A', 'internal_tool', 'active'
 union all select (select value from wr_ids where key = 'app_b'), (select value from wr_ids where key = 'tenant_b'), 'war-b', 'War B', 'internal_tool', 'active';
