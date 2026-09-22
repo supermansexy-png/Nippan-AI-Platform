@@ -40,13 +40,18 @@ V1 decision:
 - `project_room_messages.content_text`: allowed for internal pilot chat text up to 32 KiB per message.
 - `content_reference`: optional external/durable reference for large evidence or documents.
 - At least one of `content_text` or `content_reference` must be present for user/agent content messages.
-- Secrets and `SECRET_CREDENTIAL` content are prohibited from message storage by application policy before persistence.
-- Default room retention: 30 days after room closure for message bodies.
+- For the V1 **internal pilot**, prevention of `SECRET_CREDENTIAL` persistence is an **application-level pre-persistence classification/redaction policy**. Increment B does not propose a database content scanner. This is an explicitly accepted temporary pilot risk.
+- Before War Room is enabled outside the internal pilot, pre-persistence classification/redaction enforcement for `SECRET_CREDENTIAL` content is mandatory and must be verified before storage is allowed.
+- The **30-day retention period is a policy target only**, measured from `project_rooms.closed_at`. It is not an automatic TTL, database expiry, or current deletion guarantee.
+- Until a retention worker is implemented, message bodies **may persist longer than 30 days**.
 - Structured meeting artifacts, findings, decisions and action items may outlive message bodies.
-- A later retention worker may redact `content_text` while preserving row identity, ordering, evidence references and request correlation.
+- A future retention worker may redact `content_text` while preserving row identity, ordering, evidence references and request correlation.
+- Runtime and Control Plane keep **no UPDATE/DELETE privilege** on `project_room_messages`. A future retention/redaction worker must use a **separate maintenance/retention role** with narrowly scoped privileges only for retention work, such as updating `content_text` and `content_redacted_at` on eligible rows.
+- The maintenance/retention role is **not created in Increment B**. Its exact grants, RLS behavior and worker implementation require separate review before use.
+- Each retention/redaction action should emit a corresponding append-only `audit_events` record through the maintenance workflow.
 - No binary payloads are stored in these tables.
 
-The 30-day value is a V1 policy default, not a database TTL mechanism. Automatic deletion/redaction is outside Increment B migration scope.
+There is no automatic TTL/database expiry in Increment B. The future retention worker uses `project_rooms.closed_at` as the TTL anchor when determining whether a message body has passed the 30-day policy target.
 
 ## 4. Exact table design
 
@@ -75,8 +80,8 @@ Columns:
 
 Constraints:
 
-- unique `(tenant_id, application_id, room_id)`
-- FK `(tenant_id, application_id) -> applications`
+- named parent scope key: `project_rooms_scope_uniq UNIQUE (tenant_id, application_id, room_id)`
+- exact application FK: child `(tenant_id, application_id)` -> `public.applications (tenant_id, application_id)`, backed by the existing parent `UNIQUE (tenant_id, application_id)`
 - if `cost_budget` is non-null, `cost_currency` is non-null
 - if state is `CLOSED` or `STOPPED`, `closed_at` is non-null
 - if state is active, `closed_at` is null
@@ -95,7 +100,9 @@ Columns:
 - `tenant_id uuid not null`
 - `application_id uuid not null`
 - `room_id uuid not null`
-- `agent_id uuid` — required only for `AGENT`
+- `principal_type text not null` — canonical principal class: `HUMAN | AGENT | SYSTEM`
+- `principal_id text not null` — stable canonical identifier within `principal_type`; 1..255 chars
+- `agent_id uuid` — AGENT-specific reference only; it is **not** the separation-of-duties identity
 - `participant_type text not null` — `HUMAN | AGENT | SYSTEM`
 - `role text not null` — `OWNER | CHAIR | ARCHITECT | BUILDER | SECURITY_REVIEWER | COST_OPS_REVIEWER | INDEPENDENT_AUDITOR | SECRETARY`
 - `display_name text not null` — 1..120 chars
@@ -104,27 +111,44 @@ Columns:
 - `created_at timestamptz not null default now()`
 - `updated_at timestamptz not null default now()`
 
+Canonical identity rules:
+
+- `principal_type + principal_id` is the authoritative principal identity for separation-of-duties across HUMAN, AGENT and SYSTEM participants.
+- In V1, `principal_type` must equal `participant_type`.
+- For `AGENT`, `agent_id` is required and provides the existing Agent/config relationship; `principal_id` remains the canonical identity used by the Builder/Auditor invariant.
+- For non-`AGENT`, `agent_id` must be null.
+- `principal_id` must be non-empty after trimming.
+
 Constraints:
 
-- unique `(tenant_id, application_id, room_id, participant_id)`
-- FK room scope -> `project_rooms`
-- FK agent scope -> `agents`
+- named parent scope key: `project_room_participants_scope_uniq UNIQUE (tenant_id, application_id, room_id, participant_id)`
+- duplicate identity/role guard: `UNIQUE (tenant_id, application_id, room_id, principal_type, principal_id, role)`
+- exact room FK: child `(tenant_id, application_id, room_id)` -> `public.project_rooms (tenant_id, application_id, room_id)`, backed by `project_rooms_scope_uniq`
+- exact agent FK: child `(tenant_id, application_id, agent_id)` -> `public.agents (tenant_id, application_id, agent_id)`, backed by the existing parent `UNIQUE (tenant_id, application_id, agent_id)`
 - `AGENT` requires `agent_id is not null`
 - non-`AGENT` requires `agent_id is null`
 - one active `OWNER` per room via partial unique index
 - one active `CHAIR` per room via partial unique index
-- one active `INDEPENDENT_AUDITOR` per `AUDIT_REVIEW` room is enforced by room-readiness validation, because a partial unique index alone cannot require presence.
-- no active Builder and Independent Auditor may share the same `agent_id` in the same room.
 
-Database invariant proposal:
+Authoritative Builder/Auditor independence:
 
-`app_private.validate_project_room_participant_independence()` checks inserts/updates involving `BUILDER` or `INDEPENDENT_AUDITOR` and rejects a same-room role conflict on the same `agent_id`.
+`app_private.validate_project_room_participant_independence()` is a DB trigger function executed `BEFORE INSERT OR UPDATE OF principal_type, principal_id, role, active, room_id, tenant_id, application_id` on `project_room_participants`.
 
-A separate readiness validator checks that an `AUDIT_REVIEW` room has exactly one active Independent Auditor before transition to `READY`.
+When the incoming row is active and has role `BUILDER` or `INDEPENDENT_AUDITOR`, it rejects the write if another active row in the same `tenant_id + application_id + room_id` has the same `principal_type + principal_id` and the opposite role. This invariant applies equally to HUMAN, AGENT and SYSTEM principals. `agent_id` is not used as the authoritative separation-of-duties identity.
+
+Authoritative `AUDIT_REVIEW` readiness:
+
+- `app_private.assert_project_room_audit_readiness(tenant_id, application_id, room_id)` is a DB validation function.
+- A `BEFORE UPDATE OF state` trigger on `project_rooms` calls it whenever an `AUDIT_REVIEW` room transitions into `READY`.
+- The function requires **exactly one** active participant with role `INDEPENDENT_AUDITOR` in the same tenant/application/room.
+- The function also verifies that no active principal is simultaneously represented as both `BUILDER` and `INDEPENDENT_AUDITOR`, using `principal_type + principal_id`.
+- Participant INSERT/UPDATE operations that would invalidate an already READY-or-active `AUDIT_REVIEW` room call the same readiness assertion and reject the change. This prevents a valid READY room from being made invalid afterward.
+- Service-layer validation may mirror these checks for user feedback, but **the database is authoritative**.
 
 Indexes:
 
 - `(tenant_id, application_id, room_id, active, role)`
+- `(tenant_id, application_id, room_id, principal_type, principal_id)`
 - `(tenant_id, application_id, agent_id)` where `agent_id is not null`
 
 ### 4.3 `public.project_room_agenda_items`
@@ -147,9 +171,9 @@ Columns:
 
 Constraints:
 
-- unique `(tenant_id, application_id, room_id, agenda_item_id)`
+- named parent scope key: `project_room_agenda_items_scope_uniq UNIQUE (tenant_id, application_id, room_id, agenda_item_id)`
 - unique `(tenant_id, application_id, room_id, sequence)`
-- FK room scope -> `project_rooms`
+- exact room FK: child `(tenant_id, application_id, room_id)` -> `public.project_rooms (tenant_id, application_id, room_id)`, backed by `project_rooms_scope_uniq`
 - completed/cancelled requires `completed_at`; other states require null
 
 Index:
@@ -186,10 +210,10 @@ Constraints:
 
 - unique `(tenant_id, application_id, room_id, message_id)`
 - unique `(tenant_id, application_id, room_id, sequence)`
-- FK room scope -> `project_rooms`
-- FK agenda scope -> `project_room_agenda_items`
-- FK participant scope -> `project_room_participants`
-- FK request scope -> `requests (tenant_id, application_id, request_id)`
+- exact room FK: child `(tenant_id, application_id, room_id)` -> `public.project_rooms (tenant_id, application_id, room_id)`, backed by `project_rooms_scope_uniq`
+- exact agenda FK: child `(tenant_id, application_id, room_id, agenda_item_id)` -> `public.project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)`, backed by `project_room_agenda_items_scope_uniq`
+- exact participant FK: child `(tenant_id, application_id, room_id, participant_id)` -> `public.project_room_participants (tenant_id, application_id, room_id, participant_id)`, backed by `project_room_participants_scope_uniq`; nullable `participant_id` is allowed for system events
+- exact request FK: child `(tenant_id, application_id, request_id)` -> `public.requests (tenant_id, application_id, request_id)`, backed by the existing parent `UNIQUE (tenant_id, application_id, request_id)`
 - `round_number` null or 1..2
 - content body/reference rule:
   - normal content messages require non-empty `content_text` or `content_reference`
@@ -225,7 +249,9 @@ Columns:
 
 Constraints:
 
-- scoped FKs to room, agenda and participant
+- exact room FK: child `(tenant_id, application_id, room_id)` -> `public.project_rooms (tenant_id, application_id, room_id)`, backed by `project_rooms_scope_uniq`
+- exact agenda FK: child `(tenant_id, application_id, room_id, agenda_item_id)` -> `public.project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)`, backed by `project_room_agenda_items_scope_uniq`
+- exact raised-by participant FK: child `(tenant_id, application_id, room_id, raised_by_participant_id)` -> `public.project_room_participants (tenant_id, application_id, room_id, participant_id)`, backed by `project_room_participants_scope_uniq`
 - `evidence_refs` must be JSON array
 - resolved/dismissed requires `resolved_at`
 
@@ -252,7 +278,9 @@ Columns:
 
 Constraints:
 
-- scoped FKs to room/agenda/participant
+- exact room FK: child `(tenant_id, application_id, room_id)` -> `public.project_rooms (tenant_id, application_id, room_id)`, backed by `project_rooms_scope_uniq`
+- exact agenda FK: child `(tenant_id, application_id, room_id, agenda_item_id)` -> `public.project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)`, backed by `project_room_agenda_items_scope_uniq`
+- exact proposed-by participant FK: child `(tenant_id, application_id, room_id, proposed_by_participant_id)` -> `public.project_room_participants (tenant_id, application_id, room_id, participant_id)`, backed by `project_room_participants_scope_uniq`; nullable proposer remains allowed
 - accepted/rejected requires owner principal and decided_at
 - PROPOSED requires decided_at null
 
@@ -277,12 +305,38 @@ Columns:
 
 Constraints:
 
-- scoped FKs to room/agenda
+- exact room FK: child `(tenant_id, application_id, room_id)` -> `public.project_rooms (tenant_id, application_id, room_id)`, backed by `project_rooms_scope_uniq`
+- exact agenda FK: child `(tenant_id, application_id, room_id, agenda_item_id)` -> `public.project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)`, backed by `project_room_agenda_items_scope_uniq`
 - DONE/CANCELLED requires completed_at
 
 Index:
 
 - `(tenant_id, application_id, room_id, status, created_at)`
+
+### 4.8 Exact composite FK matrix
+
+Every relationship below preserves the application-owned scope. **No War Room FK may reference only `room_id`, `agenda_item_id`, `participant_id`, or another entity id without the required `tenant_id + application_id` scope columns.**
+
+| Child table / relationship | Child FK columns | Parent table / referenced columns | Parent key that makes reference valid |
+|---|---|---|---|
+| `project_rooms -> applications` | `(tenant_id, application_id)` | `applications (tenant_id, application_id)` | existing `UNIQUE (tenant_id, application_id)` |
+| `project_room_participants -> project_rooms` | `(tenant_id, application_id, room_id)` | `project_rooms (tenant_id, application_id, room_id)` | `project_rooms_scope_uniq` |
+| `project_room_participants -> agents` | `(tenant_id, application_id, agent_id)` | `agents (tenant_id, application_id, agent_id)` | existing `UNIQUE (tenant_id, application_id, agent_id)` |
+| `project_room_agenda_items -> project_rooms` | `(tenant_id, application_id, room_id)` | `project_rooms (tenant_id, application_id, room_id)` | `project_rooms_scope_uniq` |
+| `project_room_messages -> project_rooms` | `(tenant_id, application_id, room_id)` | `project_rooms (tenant_id, application_id, room_id)` | `project_rooms_scope_uniq` |
+| `project_room_messages -> project_room_agenda_items` | `(tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items_scope_uniq` |
+| `project_room_messages -> project_room_participants` | `(tenant_id, application_id, room_id, participant_id)` | `project_room_participants (tenant_id, application_id, room_id, participant_id)` | `project_room_participants_scope_uniq` |
+| `project_room_messages -> requests` | `(tenant_id, application_id, request_id)` | `requests (tenant_id, application_id, request_id)` | existing `UNIQUE (tenant_id, application_id, request_id)` |
+| `project_room_findings -> project_rooms` | `(tenant_id, application_id, room_id)` | `project_rooms (tenant_id, application_id, room_id)` | `project_rooms_scope_uniq` |
+| `project_room_findings -> project_room_agenda_items` | `(tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items_scope_uniq` |
+| `project_room_findings -> project_room_participants` | `(tenant_id, application_id, room_id, raised_by_participant_id)` | `project_room_participants (tenant_id, application_id, room_id, participant_id)` | `project_room_participants_scope_uniq` |
+| `project_room_decisions -> project_rooms` | `(tenant_id, application_id, room_id)` | `project_rooms (tenant_id, application_id, room_id)` | `project_rooms_scope_uniq` |
+| `project_room_decisions -> project_room_agenda_items` | `(tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items_scope_uniq` |
+| `project_room_decisions -> project_room_participants` | `(tenant_id, application_id, room_id, proposed_by_participant_id)` | `project_room_participants (tenant_id, application_id, room_id, participant_id)` | `project_room_participants_scope_uniq` |
+| `project_room_action_items -> project_rooms` | `(tenant_id, application_id, room_id)` | `project_rooms (tenant_id, application_id, room_id)` | `project_rooms_scope_uniq` |
+| `project_room_action_items -> project_room_agenda_items` | `(tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items (tenant_id, application_id, room_id, agenda_item_id)` | `project_room_agenda_items_scope_uniq` |
+
+The implementation migration, if later authorized, must use these exact scoped relationships or a stricter equivalent. Any relaxation to an entity-id-only FK requires a new design review.
 
 ## 5. RLS design
 
@@ -326,7 +380,8 @@ Rationale:
 - participants are Control Plane configuration, not runtime self-configuration.
 - messages/decisions are append-only at the table privilege boundary.
 - no project role receives DELETE.
-- message redaction must be a separately audited controlled operation if later required; V1 runtime does not receive UPDATE solely to implement retention.
+- message redaction must be a separately audited controlled operation; V1 runtime and Control Plane receive no UPDATE/DELETE on messages.
+- any future retention/redaction worker uses a separate maintenance/retention role with narrowly scoped column updates only for `content_text` / `content_redacted_at`, and emits `audit_events`; this role is not created in Increment B.
 
 ## 7. State and integrity enforcement
 
@@ -340,11 +395,12 @@ Required DB-side protections:
 4. message/decision append-only role privileges.
 5. V1 round_limit 1..2.
 6. budget values non-negative/positive as applicable.
-7. independent-auditor agent identity cannot equal Builder agent identity in one room.
-8. Audit Review readiness requires exactly one active Independent Auditor.
-9. room state timestamps remain coherent.
+7. the same canonical principal `(principal_type, principal_id)` cannot be both active `BUILDER` and active `INDEPENDENT_AUDITOR` in one room.
+8. `AUDIT_REVIEW` transition into `READY` is DB-authoritative: a room-state trigger calls `app_private.assert_project_room_audit_readiness(...)`, requiring exactly one active Independent Auditor and a valid Builder/Auditor separation-of-duties state.
+9. participant writes must not be allowed to invalidate the same readiness invariant while an Audit Review room is READY or active.
+10. room state timestamps remain coherent.
 
-The full orchestration state machine stays in deterministic application code from Increment A. Database triggers should not duplicate the scheduler.
+The full orchestration state machine stays in deterministic application code from Increment A. Database triggers should not duplicate the scheduler; the readiness and separation-of-duties triggers exist only to enforce security/integrity invariants that must remain authoritative at the database boundary.
 
 ## 8. Existing platform records reused
 
@@ -378,19 +434,20 @@ Required tests:
 9. runtime cannot UPDATE/DELETE messages or decisions.
 10. analytics cannot INSERT/UPDATE/DELETE.
 11. all project roles remain non-superuser/non-BYPASSRLS.
-12. Audit Review rejects missing Independent Auditor at READY transition.
-13. Audit Review rejects Builder/Auditor sharing one `agent_id`.
-14. room/agenda round limit >2 rejected.
-15. duplicate room message sequence rejected.
-16. message request reference cannot cross tenant/application.
-17. War Room does not add alternative cost/token truth columns.
-18. negative control: grant an intentionally forbidden War Room privilege in ephemeral CI and prove the privilege suite fails.
+12. Audit Review DB trigger rejects a READY transition unless exactly one active Independent Auditor exists.
+13. Builder/Auditor separation tests cover canonical `principal_type + principal_id` identity for HUMAN, AGENT and SYSTEM principals, and reject the same principal holding both active roles in one room.
+14. participant mutation after READY cannot invalidate the exactly-one-auditor or Builder/Auditor independence invariant.
+15. room/agenda round limit >2 rejected.
+16. duplicate room message sequence rejected.
+17. message request reference cannot cross tenant/application.
+18. War Room does not add alternative cost/token truth columns.
+19. negative control: grant an intentionally forbidden War Room privilege in ephemeral CI and prove the privilege suite fails.
 
 Tests must run in PostgreSQL 17 ephemeral CI and must not use production credentials/data.
 
-## 10. Migration rollout plan after audit PASS
+## 10. Migration rollout plan after explicit audit authorization
 
-Only after Independent Audit approval:
+Audit #28 currently returned `PASS_WITH_FINDINGS`, but **migration creation remains NOT_AUTHORIZED**. The steps below begin only after the Independent Auditor re-reviews F-28-01 through F-28-06 and explicitly authorizes migration creation.
 
 1. create additive migration on a new reviewed branch.
 2. create seven tables, indexes, constraints and helper validators.
@@ -444,10 +501,27 @@ Auditor must explicitly answer:
 9. Are any fields missing that would force an unsafe schema change during Increment C?
 10. Is it safe to authorize creation of the actual migration and isolation suite?
 
-## 13. Gate
+## 13. Audit #28 Remediation
+
+Audited design head: `7ec9d3f0329c39e595d2cd3b47909eee487d71f1`  
+Audit #28 initial verdict: `PASS_WITH_FINDINGS`  
+Migration creation: `NOT_AUTHORIZED`
+
+Remediation mapping:
+
+- **F-28-01 — Composite FK completeness:** Sections 4.1–4.7 now spell out exact scoped child FK columns, referenced parent columns and the parent UNIQUE/constraint. Section 4.8 provides the complete relationship matrix and explicitly forbids entity-id-only War Room FKs.
+- **F-28-02 — Redaction vs append-only:** Sections 3 and 6 preserve no UPDATE/DELETE for runtime/control-plane messages. A future retention worker must use a separate narrowly scoped maintenance/retention role, not created in Increment B, and should emit `audit_events` for redaction.
+- **F-28-03 — Builder/Auditor independence:** Section 4.2 introduces non-null canonical `principal_type + principal_id` identity for HUMAN/AGENT/SYSTEM participants, keeps `agent_id` AGENT-specific, adds identity/role uniqueness, and changes the DB invariant to canonical-principal separation-of-duties.
+- **F-28-04 — Independent Auditor readiness:** Sections 4.2 and 7 make the database authoritative through `app_private.assert_project_room_audit_readiness(...)` plus room-state/participant triggers. `AUDIT_REVIEW` cannot enter `READY` without exactly one active Independent Auditor and valid Builder/Auditor independence.
+- **F-28-05 — SECRET_CREDENTIAL:** Section 3 explicitly defines this as application-level pre-persistence classification/redaction for the internal pilot, records the temporary pilot risk, and requires enforced classification/redaction before non-internal-pilot use. No DB content scanner is introduced.
+- **F-28-06 — Retention wording:** Section 3 defines 30 days as a policy target only, states message bodies may remain longer until a worker exists, uses `project_rooms.closed_at` as the future TTL anchor, and explicitly states that Increment B provides no automatic TTL/database expiry.
+
+No migration, Supabase application, implementation code, RLS policy shape, accepted privilege boundary, telemetry source-of-truth, negative-control plan, rollback strategy, or production boundary was changed by this remediation.
+
+## 14. Gate
 
 Current gate:
 
-**DESIGN_READY_FOR_INDEPENDENT_AUDIT**
+**AUDIT_28_REMEDIATION_READY_FOR_REVIEW**
 
-Migration/application remains **BLOCKED** until the Independent Auditor returns PASS or PASS_WITH_FINDINGS with no blocking schema/RLS finding.
+Migration creation/application remains **BLOCKED / NOT_AUTHORIZED** until the Independent Auditor re-reviews F-28-01 through F-28-06 and explicitly releases the gate.
