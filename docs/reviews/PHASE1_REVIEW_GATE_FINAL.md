@@ -1,6 +1,6 @@
 # Phase 1 Review Gate — Final Project Lead Decisions
 
-Status: **PASSED — FROZEN V1 CANDIDATE**  
+Status: **PASSED — FROZEN V1**  
 Date: 2026-09-22  
 Scope: Issues #12, #13, #14, #15
 
