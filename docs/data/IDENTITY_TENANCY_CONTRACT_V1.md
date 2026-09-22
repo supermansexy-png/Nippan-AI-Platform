@@ -1,6 +1,6 @@
 # Platform Identity & Tenancy Contract v1
 
-Status: **REVIEW**  
+Status: **ACCEPTED / FROZEN V1**  
 Issue: #7  
 Date: 2026-09-22
 
