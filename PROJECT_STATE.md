@@ -3,10 +3,10 @@
 Updated: 2026-09-22
 
 ## Phase
-FOUNDATION V1 ACCEPTED / IMPLEMENTATION FOUNDATION
+FOUNDATION V1 ACCEPTED / PHASE 1 CONTRACTS IN REVIEW
 
 ## Current objective
-Build the minimum durable platform foundation without touching production bots.
+Finish and independently review the minimum durable contracts before database/runtime implementation.
 
 ## Accepted architecture
 See:
@@ -18,6 +18,28 @@ See:
 - `docs/decisions/ADR-0005-policy-tools-and-approval.md`
 - `docs/decisions/ADR-0006-infrastructure-simplicity.md`
 
+## Phase 1 progress
+
+### REVIEW
+- Issue #7: Identity & Multi-Tenant Contract
+  - `docs/data/IDENTITY_TENANCY_CONTRACT_V1.md`
+  - `schemas/platform-identity-v1.schema.json`
+  - independent review: Issue #12
+- Issue #8: Agent Profile & Policy Contract
+  - `docs/data/AGENT_POLICY_CONTRACT_V1.md`
+  - `schemas/agent-config-v1.schema.json`
+  - independent review: Issue #13
+- Issue #9: Request / Trace / Usage Contract
+  - `docs/data/REQUEST_TRACE_USAGE_CONTRACT_V1.md`
+  - `schemas/request-envelope-v1.schema.json`
+  - independent review: Issue #14
+- Issue #11: Benchmark & Evaluation Specification
+  - `benchmarks/BENCHMARK_SPEC_V1.md`
+
+### BLOCKED
+- Issue #10: PostgreSQL + pgvector logical schema
+  - blocked until identity/policy contract review resolves blocking issues
+
 ## Core direction
 - Thin Cloudflare Worker edge gateway
 - FastAPI Core AI Service for realtime runtime
@@ -28,26 +50,31 @@ See:
 - Cloudflare Queues + n8n for background/automation
 - R2 for machine files
 - Control Plane / Dashboard separated from runtime Data Plane
-- Tenant -> Application -> Agent -> Channel -> Conversation model
+- Tenant -> Application -> Agent/Channel -> Conversation ownership model
+- explicit Agent <-> Channel bindings
 - SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
+
+## AI team policy
+Specialist models may draft/review work, but architecture remains governed by Foundation + ADRs + assigned issues.
+
+High-priority benchmark candidate:
+- Jev for structured routing/classification/decision support
+
+Jev or any model never replaces deterministic authorization, risk or privacy policy.
 
 ## Protected systems
 - `supermansexy-png/Ai-Nippan`: production; do not modify during foundation implementation
 - existing Personal Assistant / n8n workflows: do not migrate yet
 
-## First implementation gate
-Define contracts and schemas before deploying runtime infrastructure:
-1. platform identity and tenancy contract
-2. Agent/Application configuration contract
-3. request/trace envelope
-4. model policy contract
-5. tool/risk/privacy policy contracts
-6. usage/cost telemetry contract
-7. initial PostgreSQL logical schema
-8. benchmark/eval plan
-
 ## Explicitly deferred
 Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1, Vectorize, Cloudflare Workflows, dedicated vector DB, Kubernetes and unnecessary microservices.
 
-## Next task
-Create the Foundation contracts/schema package and database design; no production migration yet.
+## Immediate next gate
+1. Independent review Issues #12, #13 and #14.
+2. Resolve any blocking findings.
+3. Accept Phase 1 contracts.
+4. Begin Issue #10 PostgreSQL + pgvector logical schema.
+5. Build benchmark fixtures/runs before locking production model roles.
+
+## Production migration
+Not allowed in current phase.
