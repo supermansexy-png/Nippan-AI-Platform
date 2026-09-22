@@ -14,7 +14,7 @@ Completed:
 - infrastructure defer list
 
 ## Phase 1 — Contracts and Data Foundation
-Status: CONTRACTS FROZEN / CORE DDL APPLIED
+Status: DONE / FROZEN V1
 
 Deliver:
 - Tenant / Workspace / Application / Agent / Channel schemas
@@ -22,41 +22,51 @@ Deliver:
 - Model / Memory / Tool / Data / Risk / Privacy policies
 - request_id / trace envelope
 - usage/cost telemetry contract
-- PostgreSQL logical schema + pgvector
+- PostgreSQL logical schema
 - RLS/isolation design
 - idempotency contract
 - migration framework
-- benchmark/eval fixtures
+- benchmark/eval specification
 
 Exit:
 - contracts reviewed and frozen
-- schema migrations reproducible
-- isolation tests specified
+- executable schema baseline started
 - no production bot migrated
 
-Current handoff:
+Handoff:
 - `docs/reviews/PHASE1_REVIEW_GATE_FINAL.md`
 - `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md`
 - `docs/decisions/ADR-0007-supabase-schema-baseline.md`
-- `migrations/20260922174011_phase2_core_foundation.sql`
-- `migrations/20260922174227_phase2_core_fk_indexes.sql`
 
 ## Phase 2 — Core Runtime Skeleton
-Status: NEXT AFTER POSTGRES/RLS DESIGN REVIEW
+Status: IN PROGRESS
 
-Deliver:
-- FastAPI Core AI Service
+Completed in current milestone:
+- Supabase identity/config PostgreSQL baseline
+- request/trace/model/tool/retrieval telemetry tables
+- persistent idempotency table
+- immutable UsageEvent ledger
+- append-only audit events
+- RLS and tenant-scope constraints on current tenant-owned tables
+- repeatable SQL isolation/invariant suite checked in
+- minimal FastAPI service package
 - health/readiness endpoints
-- policy engine
-- config loader
-- request tracing
-- OpenRouter adapter
+- tenant-scoped DB transaction boundary
+- active PUBLISHED config loader
+
+Still deliver:
+- policy engine boundary
+- request persistence/tracing service
+- OpenRouter adapter interface
 - deterministic context assembler interface
 - MCP client/tool authorization interface
-- basic telemetry
+- synthetic end-to-end request
+- CI execution of isolation suite with runtime-role impersonation
+- benchmark-gated memory/pgvector dimensions
 
 Exit:
 - synthetic end-to-end request works
+- isolation/invariant suite runs repeatably
 - no production traffic
 
 ## Phase 3 — Edge and Reliability
@@ -66,7 +76,7 @@ Deliver:
 - signature/auth verification
 - rate limiting
 - request normalization
-- persistent idempotency
+- persistent idempotency integration at edge/runtime boundary
 - Cloudflare Queues for background jobs
 - DLQ/replay path
 - R2 file adapter
@@ -155,4 +165,3 @@ Adopt only from measured need:
 - Redis
 - dedicated vector database
 - service splitting
-
