@@ -73,6 +73,8 @@ Columns:
 - `cost_budget numeric` — null or >= 0
 - `cost_currency text` — null or ISO-style `^[A-Z]{3}$`
 - `retention_days integer not null default 30` — 1..3650
+- `audit_baseline_ref text` — nullable outside `AUDIT_REVIEW`; repository/PR/issue reference when present
+- `audit_baseline_sha text` — nullable outside `AUDIT_REVIEW`; exactly 40 lowercase hexadecimal characters when present
 - `created_at timestamptz not null default now()`
 - `updated_at timestamptz not null default now()`
 - `started_at timestamptz`
@@ -86,6 +88,7 @@ Constraints:
 - if state is `CLOSED` or `STOPPED`, `closed_at` is non-null
 - if state is active, `closed_at` is null
 - `started_at <= closed_at` when both are present
+- an `AUDIT_REVIEW` room cannot enter `READY` without both `audit_baseline_ref` and `audit_baseline_sha`
 
 Indexes:
 
@@ -267,11 +270,12 @@ Columns:
 - `application_id uuid not null`
 - `room_id uuid not null`
 - `agenda_item_id uuid not null`
-- `decision_type text not null` — `PROPOSAL | OWNER_DECISION`
+- `decision_type text not null` — `PROPOSAL | OWNER_DECISION | ADVISORY_AUDIT_OUTCOME`
 - `proposed_by_participant_id uuid`
 - `owner_principal_id text`
 - `decision text not null` — 1..4000 chars
 - `rationale text` — max 8000 chars
+- `evidence_refs jsonb not null default '[]'::jsonb` — array of repository/request/content references
 - `status text not null default 'PROPOSED'` — `PROPOSED | ACCEPTED | REJECTED | SUPERSEDED`
 - `created_at timestamptz not null default now()`
 - `decided_at timestamptz`
@@ -283,6 +287,10 @@ Constraints:
 - exact proposed-by participant FK: child `(tenant_id, application_id, room_id, proposed_by_participant_id)` -> `public.project_room_participants (tenant_id, application_id, room_id, participant_id)`, backed by `project_room_participants_scope_uniq`; nullable proposer remains allowed
 - accepted/rejected requires owner principal and decided_at
 - PROPOSED requires decided_at null
+- an accepted/rejected `OWNER_DECISION` requires `owner_principal_id` to resolve to the active HUMAN participant with role `OWNER`; a Builder, Auditor or other AI participant cannot be the owner approver
+- `ADVISORY_AUDIT_OUTCOME` requires `project_rooms.mode = AUDIT_REVIEW`, exactly one configured active Independent Auditor, `proposed_by_participant_id` referencing that Auditor, non-empty `evidence_refs`, and a non-null room `audit_baseline_sha`
+- `ADVISORY_AUDIT_OUTCOME` requires status `PROPOSED` or `SUPERSEDED`, is never a formal audit report, and cannot set `owner_principal_id` or an accepted/rejected owner status
+- `evidence_refs` must be a JSON array; references are metadata/pointers, not an instruction to store raw secrets or full sensitive payloads
 
 Owner decision events should additionally emit an append-only `audit_events` row through the future service layer; this table is the domain record, while `audit_events` is the operational audit trail.
 
@@ -338,6 +346,22 @@ Every relationship below preserves the application-owned scope. **No War Room FK
 
 The implementation migration, if later authorized, must use these exact scoped relationships or a stricter equivalent. Any relaxation to an entity-id-only FK requires a new design review.
 
+### 4.9 Canonical mapping and prototype boundary
+
+The seven authoritative War Room domain tables map to the proposal vocabulary as follows:
+
+| Authoritative table | Domain group | Ownership rule |
+|---|---|---|
+| `project_rooms` | rooms / meetings | tenant + application scoped root |
+| `project_room_participants` | participants | child of the scoped room |
+| `project_room_agenda_items` | agenda items | child of the scoped room |
+| `project_room_messages` | messages / transcript events | child of room, agenda and optional participant |
+| `project_room_findings` | findings | child of room, agenda and raising participant |
+| `project_room_decisions` | decisions / advisory outcomes | child of room and agenda |
+| `project_room_action_items` | action items | child of room and agenda |
+
+The four-table `apps/war-room/migrations/0001_war_room_sandbox.sql` prototype (`war_rooms`, `war_room_participants`, `war_room_messages`, `war_room_usage_events`) is not an alternate baseline. It is quarantined design output and must not be used to derive the Increment B migration, RLS policies, grants or permanent application interfaces.
+
 ## 5. RLS design
 
 All seven tables enable RLS.
@@ -362,19 +386,33 @@ War Room is a Control Plane application feature and every room is application-ow
 
 Missing either tenant or application context therefore returns zero rows.
 
+### 5.1 Role context and behavior
+
+Database roles are not inferred from a browser participant role. A participant marked `INDEPENDENT_AUDITOR` is an application/domain identity; it does not receive a database bypass role.
+
+| Role | Tenant/application context | Allowed behavior | Explicit prohibition |
+|---|---|---|---|
+| `nippan_runtime` | Must set transaction-local `app.tenant_id` and `app.application_id`; missing either fails closed | Runtime reads and only the table mutations listed in the privilege matrix | No RLS bypass, participant configuration mutation, message/decision update or delete |
+| `nippan_control_plane` | Trusted control-plane request context must set both scope keys | Room configuration, participant/agenda administration and owner decision operations within scope | No cross-scope access, message/decision update or delete, or formal audit approval |
+| Configured Auditor principal | Uses the same runtime/control-plane database role as the executing service; identity is checked in domain constraints | May propose an advisory outcome only when Audit Review readiness requirements pass | No `BYPASSRLS`, no sole approval, no replacement of the formal repository audit |
+| `nippan_analytics` | Read context must set both scope keys | Read-only scoped reporting | No INSERT, UPDATE, DELETE or state-changing function |
+| Migration/admin role | Break-glass/deployment identity only; not available to application requests | Applies an independently authorized migration and verifies ACL/RLS state | Not granted to runtime, control plane, auditor or analytics; no use before the Audit #28 gate releases implementation |
+
+All project roles are `NOLOGIN`, non-owner and non-`BYPASSRLS` group roles. `service_role`, `anon` and `authenticated` are not War Room runtime roles. `EXECUTE` on helper functions is revoked from `PUBLIC`; only the narrowly specified project roles or trigger owner may execute a function, and no helper function may widen row visibility or permissions.
+
 ## 6. Proposed privilege matrix
 
 This is a design target for Independent Audit; no grants are applied yet.
 
-| Table | Runtime SELECT | Runtime INSERT | Runtime UPDATE | Runtime DELETE | Control SELECT | Control INSERT | Control UPDATE | Control DELETE | Analytics |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| project_rooms | yes | yes | yes | no | yes | yes | yes | no | SELECT only |
-| project_room_participants | yes | no | no | no | yes | yes | yes | no | SELECT only |
-| project_room_agenda_items | yes | yes | yes | no | yes | yes | yes | no | SELECT only |
-| project_room_messages | yes | yes | no | no | yes | yes | no | no | SELECT only |
-| project_room_findings | yes | yes | yes | no | yes | yes | yes | no | SELECT only |
-| project_room_decisions | yes | yes | no | no | yes | yes | no | no | SELECT only |
-| project_room_action_items | yes | yes | yes | no | yes | yes | yes | no | SELECT only |
+| Table | Runtime SELECT | Runtime INSERT | Runtime UPDATE | Runtime DELETE | Control SELECT | Control INSERT | Control UPDATE | Control DELETE | Analytics SELECT |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `project_rooms` | yes | yes | yes | no | yes | yes | yes | no | yes |
+| `project_room_participants` | yes | no | no | no | yes | yes | yes | no | yes |
+| `project_room_agenda_items` | yes | yes | yes | no | yes | yes | yes | no | yes |
+| `project_room_messages` | yes | yes | no | no | yes | yes | no | no | yes |
+| `project_room_findings` | yes | yes | yes | no | yes | yes | yes | no | yes |
+| `project_room_decisions` | yes | yes | no | no | yes | yes | no | no | yes |
+| `project_room_action_items` | yes | yes | yes | no | yes | yes | yes | no | yes |
 
 Rationale:
 - participants are Control Plane configuration, not runtime self-configuration.
@@ -382,6 +420,18 @@ Rationale:
 - no project role receives DELETE.
 - message redaction must be a separately audited controlled operation; V1 runtime and Control Plane receive no UPDATE/DELETE on messages.
 - any future retention/redaction worker uses a separate maintenance/retention role with narrowly scoped column updates only for `content_text` / `content_redacted_at`, and emits `audit_events`; this role is not created in Increment B.
+
+Function `EXECUTE` matrix:
+
+| Function class | Runtime | Control Plane | Analytics | Migration/admin | PUBLIC |
+|---|---:|---:|---:|---:|---:|
+| `app_private.current_tenant_id()` / `current_application_id()` | yes | yes | yes | yes | no |
+| RLS/read-only validation helpers | only where required by policy | only where required by policy | no | yes for verification only | no |
+| participant independence trigger function | trigger-only | trigger-only | no | yes for verification only | no |
+| Audit Review readiness trigger/function | trigger-only | no direct execution | no | yes for verification only | no |
+| migration/admin helpers | no | no | no | explicit reviewed grant only | no |
+
+`trigger-only` means the application role does not receive a callable state-changing function privilege; PostgreSQL invokes it through the owning trigger. Function ownership, `SECURITY DEFINER` use, and fixed `search_path` must be specified and reviewed in the future migration PR rather than assumed here.
 
 ## 7. State and integrity enforcement
 
@@ -402,6 +452,20 @@ Required DB-side protections:
 
 The full orchestration state machine stays in deterministic application code from Increment A. Database triggers should not duplicate the scheduler; the readiness and separation-of-duties triggers exist only to enforce security/integrity invariants that must remain authoritative at the database boundary.
 
+### 7.1 Audit Review readiness minimum
+
+Before an `ADVISORY_AUDIT_OUTCOME` can be created, the service and database readiness validator must require:
+
+1. `project_rooms.mode = AUDIT_REVIEW` and the room is in an eligible active/summary state.
+2. Exactly one active participant has role `INDEPENDENT_AUDITOR`; the canonical principal is not the active `BUILDER` principal.
+3. `audit_baseline_ref` and a valid 40-character lowercase `audit_baseline_sha` identify the reviewed baseline.
+4. At least one evidence reference exists through `evidence_refs` or an `EVIDENCE_REFERENCE` message with `evidence_kind` and `content_reference`; references must be privacy-approved.
+5. Every finding has an explicit status and evidence references. Unresolved findings are allowed only when their unresolved state is explicitly included in the advisory artifact; they are not silently treated as resolved.
+6. Decision state is explicit: proposals, owner decisions, rejected decisions and unresolved owner decisions are distinguishable. An advisory outcome cannot imply owner acceptance.
+7. The outcome-producing execution has a platform `request_id` and trace correlation once runtime execution exists; the model output alone is not sufficient evidence.
+
+Enforcement is layered: application validation provides feedback, the database readiness trigger protects the room/participant/baseline invariants, and the formal Independent Audit process remains the authority for a formal audit report. No War Room decision row or message may be interpreted as `PASS`, `FAIL` or a replacement audit report merely because its `decision_type` is `ADVISORY_AUDIT_OUTCOME`.
+
 ## 8. Existing platform records reused
 
 War Room does not create replacements for:
@@ -416,6 +480,14 @@ War Room does not create replacements for:
 - `agent_config_versions` / `agent_activations` — model/config authority.
 
 War Room rows hold domain state plus references only.
+
+### 8.1 Telemetry ownership contract
+
+- Every automatic War Room turn creates or references one platform `request_id`; `trace_id`, `span_id`, attempt and causal links follow the frozen request/trace contract.
+- The model execution writes its provider/model/token/latency/result metadata to the existing `ai_calls` record and its immutable normalized accounting to the existing `usage_events` ledger.
+- Operational/security events use existing append-only `audit_events`; War Room domain rows may store a correlation/reference, not a second audit ledger.
+- War Room tables may keep local domain metadata such as `room_id`, `agenda_item_id`, `participant_id`, sequence, round, evidence references and budget snapshot/warning state. They must not become authoritative for provider cost, token accounting, trace identity or audit history.
+- A provider retry creates a new `ai_calls` attempt while preserving the logical `request_id`/trace relationship; replay/dedupe must not create a second successful usage event for the same provider event.
 
 ## 9. Isolation/invariant test plan
 
@@ -442,6 +514,13 @@ Required tests:
 17. message request reference cannot cross tenant/application.
 18. War Room does not add alternative cost/token truth columns.
 19. negative control: grant an intentionally forbidden War Room privilege in ephemeral CI and prove the privilege suite fails.
+20. a non-auditor cannot insert an `ADVISORY_AUDIT_OUTCOME`.
+21. an Independent Auditor cannot create an advisory outcome in `FREE_DISCUSSION` or `FORMAL_MEETING` mode.
+22. an Audit Review cannot become ready without auditor identity, baseline/reference SHA, evidence references and explicit findings/decision state.
+23. the same canonical principal cannot hold active `BUILDER` and `INDEPENDENT_AUDITOR` roles.
+24. a missing or malformed baseline SHA rejects Audit Review readiness.
+25. `PUBLIC`, `anon`, `authenticated` and analytics cannot execute state-changing helpers or migration/admin helpers.
+26. an advisory outcome cannot create or mutate a formal `docs/audits/` report record.
 
 Tests must run in PostgreSQL 17 ephemeral CI and must not use production credentials/data.
 
