@@ -1,6 +1,6 @@
 # Phase 1 Review Gate — Final Project Lead Decisions
 
-Status: **REVISION IN PROGRESS**  
+Status: **PASSED — FROZEN V1 CANDIDATE**  
 Date: 2026-09-22  
 Scope: Issues #12, #13, #14, #15
 
@@ -192,3 +192,28 @@ Phase 1 can freeze only after:
 4. Project Lead resolves remaining findings and records the final acceptance.
 
 No PostgreSQL DDL/runtime implementation before those conditions pass.
+
+## Independent re-review result
+
+Claude Opus 5 was re-run through OpenRouter against the revised artifacts:
+
+- Identity/Tenancy contract + schema: **PASS**, no blockers. Generation `gen-1790094428-sZGxccA0kUCwcGWkZwqS`.
+- Agent Policy contract + schema (with Identity activation cross-check): **PASS**, no blockers. Generation `gen-1790094463-4XcPDabfPtZz5ayG5cex`.
+- Request/Trace/Usage contract + request/usage schemas: **PASS**, no blockers. Generation `gen-1790094484-dWSv2Zwc2XHrZvHRFdRc`.
+
+Targeted Google Gemini 3.1 Pro review was used earlier to distinguish objective requirements from implementation choices for W3C trace IDs, RLS/FORCE RLS, idempotency response semantics, telemetry HMAC keying and Subject/Application association.
+
+Structural checks on all four JSON Schemas after revision found:
+- valid JSON parsing,
+- Draft 2020-12 declarations,
+- no unresolved local `$ref` targets,
+- no `required` names missing from their local `properties`,
+- expected top-level conditional/oneOf structure.
+
+A full external JSON-Schema metaschema validator could not be run from the local container because that runtime could not resolve GitHub; the independent advisor re-review found no schema blocker.
+
+## Freeze decision
+
+The 11 Phase 1 review gates are satisfied at contract/schema level. The three contracts are marked **ACCEPTED / FROZEN V1** on the review branch.
+
+Freeze does **not** authorize bypassing the next implementation boundary: PostgreSQL DDL and RLS must still be designed together from these frozen contracts, and any implementation-discovered contradiction must reopen the relevant contract rather than silently changing semantics.
