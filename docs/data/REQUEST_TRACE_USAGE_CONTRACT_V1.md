@@ -301,6 +301,9 @@ Where applicable:
 - pricing_rate_version
 
 Rules:
+- UsageEvent is for Application-attributable measurable/billable work and therefore requires `application_id` and `request_id`
+- platform/tenant-scoped `admin_action` or `health_internal` requests without an Application remain operational telemetry and do not emit billable UsageEvents
+- billable model/tool execution must not occur without an Application attribution; it must first resolve to an authorized Application (including a designated system Application where appropriate) or be blocked
 - `provider_reported_cost` and `normalized_cost` are distinct and never overwrite one another
 - `pricing_rate_version` is required when normalized cost is calculated by platform pricing/rates
 - UsageEvents are append-only/immutable after acceptance
