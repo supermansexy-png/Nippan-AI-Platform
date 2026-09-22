@@ -1,9 +1,12 @@
-name: A-001 DB privilege regression
+name: Phase 2 PostgreSQL regression
 
 on:
+  pull_request:
+    branches:
+      - phase2/postgres-logical-schema
   push:
     branches:
-      - audit/a001-least-privilege
+      - phase2/postgres-logical-schema
   workflow_dispatch:
 
 jobs:
