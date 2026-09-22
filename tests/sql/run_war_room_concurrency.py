@@ -113,6 +113,9 @@ commit;
 
 
 SETUP_SQL = f"""
+update public.project_rooms
+set state = 'DRAFT'
+where tenant_id = '{TENANT_ID}';
 delete from public.project_room_participants where tenant_id = '{TENANT_ID}';
 delete from public.project_rooms where tenant_id = '{TENANT_ID}';
 delete from public.applications where tenant_id = '{TENANT_ID}';
@@ -161,6 +164,9 @@ insert into public.project_room_participants (
 """
 
 CLEANUP_SQL = f"""
+update public.project_rooms
+set state = 'DRAFT'
+where tenant_id = '{TENANT_ID}';
 delete from public.project_room_participants where tenant_id = '{TENANT_ID}';
 delete from public.project_rooms where tenant_id = '{TENANT_ID}';
 delete from public.applications where tenant_id = '{TENANT_ID}';
