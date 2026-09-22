@@ -1,6 +1,6 @@
 # Agent Profile & Policy Contract v1
 
-Status: **REVIEW**  
+Status: **ACCEPTED / FROZEN V1**  
 Issue: #8  
 Date: 2026-09-22
 
