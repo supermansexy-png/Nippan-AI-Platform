@@ -68,7 +68,7 @@ Stable Agent identity:
 
 The profile must not contain provider credentials or hard-coded production secrets.
 
-Agent activation is stored separately and is keyed by Agent + environment. The Agent row does not contain a singular active-config pointer.
+Agent activation is stored separately and is keyed by Agent + environment. The Agent row does not contain a singular active-config pointer. The normative AgentActivation fields/invariants are defined in `IDENTITY_TENANCY_CONTRACT_V1.md §8.1`; this contract relies on that same current-pointer relation and does not define a second activation model.
 
 ## 5. Agent Config Version
 
@@ -96,12 +96,40 @@ Required:
 - published_at nullable
 - supersedes_version_id nullable
 - change_note
+- published_config_hash nullable until PUBLISHED
+- policy_merge_version
 
 Policy-reference semantics:
 - every `*_policy_ref` points to an immutable policy **version**, not a mutable policy identity
 - a referenced policy version belongs to the same Tenant/Application unless it is explicitly platform-shared and immutable
-- publishing resolves the referenced policy versions into a reproducible effective policy/config snapshot and hash
+- publishing resolves the referenced policy versions into a reproducible published Agent-config snapshot
+- `published_config_hash` is SHA-256 over the canonical published Agent Config plus referenced immutable policy IDs/content hashes and `policy_merge_version`; it is fixed for PUBLISHED/SUPERSEDED versions
+- runtime `effective_config_hash` remains a separate trace-time hash because parent Tenant/Application policy and routing context may also participate
 - mutable provider/model capability metadata must not silently change the historical meaning of a published effective configuration
+
+### 5.1 Policy version envelope
+
+Every policy object referenced by an Agent Config is itself an immutable/versioned policy document. The existing type-specific IDs such as `model_policy_id`, `tool_policy_id`, `privacy_policy_id` and similar identify the concrete policy **version** in v1.
+
+Common policy-version metadata:
+- type-specific policy ID
+- tenant_id
+- application_id where Application-scoped
+- version_number
+- lifecycle_status
+- content_hash
+- created_by
+- created_at
+- published_at nullable
+- supersedes_policy_id nullable
+
+Rules:
+- DRAFT policy versions may be edited
+- PUBLISHED policy versions are immutable
+- changing a policy creates a new policy ID/version rather than mutating the referenced row
+- Agent Config `*_policy_ref` fields point only to PUBLISHED immutable policy versions
+- policy-version lineage and hashes must be sufficient for compare/audit; a separate stable policy-family table is not required in v1
+- platform-shared policy versions are explicitly marked and immutable; other Agent Config policy refs remain inside the authorized Tenant/Application scope
 
 Lifecycle:
 ```text
@@ -393,7 +421,7 @@ Platform guardrails
 = Effective Agent Runtime Config
 ```
 
-The effective config receives an immutable hash/reference stored with request traces. The hash covers the resolved immutable policy-version set and the normative merge-semantics version so the effective decision can be reproduced later.
+The effective config receives an immutable hash/reference stored with request traces. The runtime hash covers all resolved policy layers and routing context plus `policy_merge_version`, while `published_config_hash` identifies the immutable Agent-level published snapshot. This separation keeps publish-time reproducibility distinct from runtime effective policy.
 
 This allows Dashboard to answer:
 "Which exact configuration produced this response?"
@@ -454,7 +482,7 @@ Audit record includes:
 
 ## 21. Invariants
 
-1. Published config and every policy version referenced by it are immutable.
+1. Published config and every policy version referenced by it are immutable; PUBLISHED Agent Config records have a non-null fixed `published_config_hash` and `policy_merge_version`.
 2. Active config belongs to the same Agent/Tenant/Application and is selected through Agent + environment activation.
 3. Child policy cannot widen parent entitlement and all enforcers use the same normative merge semantics.
 4. Unknown tool/action is denied by default.
