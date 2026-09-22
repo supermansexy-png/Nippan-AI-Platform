@@ -1,9 +1,9 @@
 # Nippan AI War Room V1 — Product / Architecture Proposal
 
-Status: PROPOSAL — DESIGN ONLY
+Status: PROPOSAL ACCEPTED — INCREMENT A AUTHORIZED
 Date: 2026-09-23
-Implementation status: NOT STARTED
-Current dependency: Phase 2 50% Independent Audit (Issue #18)
+Implementation status: INCREMENT A STARTING
+Current dependency: Audit #18 resolved; A-001 closed and production verified
 
 ## 1. Purpose
 
@@ -297,7 +297,7 @@ The V1 implementation should preserve display-friendly chat while storing enough
 
 ## 11. Proposed data model
 
-This is a logical proposal only. No migration is authorized while Phase 2 is held at Audit Gate #18.
+This is a logical proposal only. Audit #18 no longer blocks advancement, but this proposal does not authorize a schema migration. Increment B schema/RLS work requires immediate Independent Audit before migration/application.
 
 Potential entities:
 
@@ -628,8 +628,8 @@ War Room V1 is acceptable when:
 - acceptance criteria
 - issue decomposition
 
-### Implementation Track — blocked now
-Starts only after current Audit Gate governance permits Phase 2 work to advance and the project schedules War Room implementation.
+### Implementation Track — Increment A authorized
+Audit #18 permits Phase 2 advancement. Increment A deterministic contracts are authorized now. Increment B schema/RLS application requires immediate Independent Audit, and later increments remain gated by prerequisite completion and normal audit controls.
 
 Implementation should be split into reviewed increments rather than one large feature.
 
@@ -646,4 +646,4 @@ Mark NEEDS_DECISION during implementation planning:
 7. Exact per-room/agenda/participant budget defaults.
 8. Which read-only evidence tools are allowed in V1.
 
-No open decision above authorizes implementation during the current Phase 2 audit hold.
+Open decisions above do not block deterministic Increment A contract work; each must be resolved before the dependent implementation increment.
