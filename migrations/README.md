@@ -24,3 +24,9 @@ The A-001 remediation migration is intentionally additive instead of rewriting a
 Apply DDL through the connected Supabase project and keep checked-in SQL aligned with applied migration history. Runtime access uses the non-owner, non-`BYPASSRLS` roles described in `docs/decisions/ADR-0007-supabase-schema-baseline.md`.
 
 Memory/embedding DDL remains deferred until benchmark fixtures choose an embedding model and vector dimension.
+
+## War Room Increment B
+
+`20260923010000_war_room_increment_b_schema.sql` is derived from audited design head `72932d7` and is intended for disposable/local/ephemeral PostgreSQL verification only. It must not be applied to Supabase or deployed until the required implementation audit authorizes application.
+
+The quarantined `apps/war-room/migrations/0001_war_room_sandbox.sql` is not in this branch and is not an input to the canonical migration.

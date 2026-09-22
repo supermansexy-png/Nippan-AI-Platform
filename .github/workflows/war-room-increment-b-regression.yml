@@ -1,0 +1,61 @@
+name: War Room Increment B PostgreSQL regression
+
+on:
+  pull_request:
+    branches:
+      - war-room/increment-b-schema-implementation
+  push:
+    branches:
+      - war-room/increment-b-schema-implementation
+  workflow_dispatch:
+
+jobs:
+  postgres-regression:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply all migrations in lexical timestamp order
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create schema if not exists extensions;
+          create extension if not exists pgcrypto with schema extensions;
+          do $$
+          begin
+            if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;
+            if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
+            if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin; end if;
+          end
+          $$;
+          SQL
+          for file in migrations/*.sql; do
+            echo "APPLY $file"
+            psql -v ON_ERROR_STOP=1 -f "$file"
+          done
+      - name: Run War Room Increment B invariants
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_increment_b_invariants.sql
+      - name: Verify no prototype migration path
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e apps/war-room/migrations/0001_war_room_sandbox.sql
