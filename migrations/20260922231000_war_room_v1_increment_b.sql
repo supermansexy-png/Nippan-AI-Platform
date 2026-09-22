@@ -392,6 +392,40 @@ as $$
 declare
   opposite_role text;
 begin
+  -- The room row is the serialization point for every governance mutation.
+  -- UPDATE moves lock both rooms in canonical order to avoid lock inversion.
+  if tg_op = 'INSERT' then
+    perform 1
+    from public.project_rooms r
+    where r.tenant_id = new.tenant_id
+      and r.application_id = new.application_id
+      and r.room_id = new.room_id
+    for update;
+  elsif tg_op = 'DELETE' then
+    perform 1
+    from public.project_rooms r
+    where r.tenant_id = old.tenant_id
+      and r.application_id = old.application_id
+      and r.room_id = old.room_id
+    for update;
+
+    return old;
+  else
+    perform 1
+    from public.project_rooms r
+    where (
+      r.tenant_id = old.tenant_id
+      and r.application_id = old.application_id
+      and r.room_id = old.room_id
+    ) or (
+      r.tenant_id = new.tenant_id
+      and r.application_id = new.application_id
+      and r.room_id = new.room_id
+    )
+    order by r.tenant_id, r.application_id, r.room_id
+    for update;
+  end if;
+
   if not new.active
      or new.role not in ('BUILDER','INDEPENDENT_AUDITOR') then
     return new;
@@ -437,7 +471,26 @@ set search_path = ''
 as $$
 declare
   auditor_count integer;
+  human_owner_count integer;
 begin
+  select count(*)
+    into human_owner_count
+  from public.project_room_participants p
+  where p.tenant_id = p_tenant_id
+    and p.application_id = p_application_id
+    and p.room_id = p_room_id
+    and p.active
+    and p.role = 'OWNER'
+    and p.principal_type = 'HUMAN'
+    and p.participant_type = 'HUMAN';
+
+  if human_owner_count <> 1 then
+    raise exception
+      'AUDIT_REVIEW room requires exactly one active HUMAN OWNER; found %',
+      human_owner_count
+      using errcode = '23514';
+  end if;
+
   select count(*)
     into auditor_count
   from public.project_room_participants p
@@ -515,15 +568,18 @@ declare
   v_mode text;
   v_state text;
 begin
-  if tg_op = 'UPDATE'
-     and (
-       old.tenant_id,
-       old.application_id,
-       old.room_id
-     ) is distinct from (
-       new.tenant_id,
-       new.application_id,
-       new.room_id
+  if tg_op = 'DELETE'
+     or (
+       tg_op = 'UPDATE'
+       and (
+         old.tenant_id,
+         old.application_id,
+         old.room_id
+       ) is distinct from (
+         new.tenant_id,
+         new.application_id,
+         new.room_id
+       )
      ) then
     select r.mode, r.state
       into v_mode, v_state
@@ -544,22 +600,28 @@ begin
     end if;
   end if;
 
-  select r.mode, r.state
-    into v_mode, v_state
-  from public.project_rooms r
-  where r.tenant_id = new.tenant_id
-    and r.application_id = new.application_id
-    and r.room_id = new.room_id;
+  if tg_op <> 'DELETE' then
+    select r.mode, r.state
+      into v_mode, v_state
+    from public.project_rooms r
+    where r.tenant_id = new.tenant_id
+      and r.application_id = new.application_id
+      and r.room_id = new.room_id;
 
-  if v_mode = 'AUDIT_REVIEW'
-     and v_state in (
-       'READY','RUNNING','PAUSED','NEEDS_OWNER_DECISION','SUMMARIZING'
-     ) then
-    perform app_private.assert_project_room_audit_readiness(
-      new.tenant_id,
-      new.application_id,
-      new.room_id
-    );
+    if v_mode = 'AUDIT_REVIEW'
+       and v_state in (
+         'READY','RUNNING','PAUSED','NEEDS_OWNER_DECISION','SUMMARIZING'
+       ) then
+      perform app_private.assert_project_room_audit_readiness(
+        new.tenant_id,
+        new.application_id,
+        new.room_id
+      );
+    end if;
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
   end if;
 
   return new;
@@ -572,18 +634,17 @@ revoke all on function
   app_private.assert_project_room_audit_readiness(uuid, uuid, uuid),
   app_private.enforce_project_room_ready_state(),
   app_private.enforce_project_room_participant_post_ready()
-from public, anon, authenticated, service_role;
+from
+  public, anon, authenticated, service_role,
+  nippan_runtime, nippan_control_plane, nippan_analytics;
 
 grant execute on function
-  app_private.validate_project_room_participant_independence(),
-  app_private.assert_project_room_audit_readiness(uuid, uuid, uuid),
-  app_private.enforce_project_room_ready_state(),
-  app_private.enforce_project_room_participant_post_ready()
+  app_private.assert_project_room_audit_readiness(uuid, uuid, uuid)
 to nippan_runtime, nippan_control_plane;
 
 
 create trigger project_room_participant_independence_guard
-before insert or update of
+before insert or delete or update of
   principal_type, principal_id, role, active, room_id, tenant_id, application_id
 on public.project_room_participants
 for each row
@@ -598,7 +659,7 @@ execute function app_private.enforce_project_room_ready_state();
 
 
 create trigger project_room_participant_ready_guard
-after insert or update of
+after insert or delete or update of
   principal_type, principal_id, role, active, room_id, tenant_id, application_id
 on public.project_room_participants
 for each row

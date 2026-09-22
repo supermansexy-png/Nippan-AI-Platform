@@ -76,6 +76,10 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_isolation_invariants.sql
 
+      - name: Run War Room multi-session governance races
+        run: |
+          python3 tests/sql/run_war_room_concurrency.py
+
       - name: Set up Python for deterministic contract tests
         uses: actions/setup-python@v5
         with:
@@ -118,3 +122,4 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f migrations/20260922231000_war_room_v1_increment_b.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_isolation_invariants.sql
+          python3 tests/sql/run_war_room_concurrency.py

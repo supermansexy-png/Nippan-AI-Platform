@@ -396,6 +396,17 @@ insert into public.project_rooms (
   'audit-zero','Audit Zero','AUDIT_REVIEW','DRAFT','ci',1000
 );
 
+insert into public.project_room_participants (
+  participant_id, tenant_id, application_id, room_id,
+  principal_type, principal_id, participant_type, role, display_name
+) values (
+  '35444444-4444-4444-8444-444444444444',
+  '11111111-1111-4111-8111-111111111111',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+  '10444444-4444-4444-8444-444444444444',
+  'HUMAN','owner-zero','HUMAN','OWNER','Owner Zero'
+);
+
 do $$
 begin
   begin
@@ -425,6 +436,7 @@ insert into public.project_room_participants (
   participant_id, tenant_id, application_id, room_id,
   principal_type, principal_id, participant_type, role, display_name
 ) values
+  ('35000000-0000-4000-8000-000000000000','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10555555-5555-4555-8555-555555555555','HUMAN','owner-two','HUMAN','OWNER','Owner Two'),
   ('35111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10555555-5555-4555-8555-555555555555','HUMAN','auditor-one','HUMAN','INDEPENDENT_AUDITOR','Auditor One'),
   ('35222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10555555-5555-4555-8555-555555555555','HUMAN','auditor-two','HUMAN','INDEPENDENT_AUDITOR','Auditor Two');
 
@@ -451,6 +463,17 @@ insert into public.project_rooms (
   '11111111-1111-4111-8111-111111111111',
   'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
   'audit-conflict','Audit Conflict','AUDIT_REVIEW','DRAFT','ci',1000
+);
+
+insert into public.project_room_participants (
+  participant_id, tenant_id, application_id, room_id,
+  principal_type, principal_id, participant_type, role, display_name
+) values (
+  '36000000-0000-4000-8000-000000000000',
+  '11111111-1111-4111-8111-111111111111',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+  '10666666-6666-4666-8666-666666666666',
+  'HUMAN','owner-conflict','HUMAN','OWNER','Owner Conflict'
 );
 
 insert into public.project_room_participants (
@@ -564,6 +587,38 @@ delete from public.project_room_participants
 where participant_id = '36555555-5555-4555-8555-555555555555';
 
 
+-- Audit readiness requires the final authority to be a HUMAN OWNER.
+insert into public.project_rooms (
+  room_id, tenant_id, application_id, project_key, title, mode, state,
+  created_by_principal_id, token_budget
+) values (
+  '10888888-8888-4888-8888-888888888888',
+  '11111111-1111-4111-8111-111111111111',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+  'audit-human-owner','Audit Human Owner','AUDIT_REVIEW','DRAFT','ci',1000
+);
+
+insert into public.project_room_participants (
+  participant_id, tenant_id, application_id, room_id,
+  principal_type, principal_id, participant_type, role, display_name
+) values
+  ('36888888-8888-4888-8888-888888888881','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10888888-8888-4888-8888-888888888888','SYSTEM','system-owner','SYSTEM','OWNER','System Owner'),
+  ('36888888-8888-4888-8888-888888888882','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10888888-8888-4888-8888-888888888888','HUMAN','human-auditor','HUMAN','INDEPENDENT_AUDITOR','Human Auditor');
+
+do $$
+begin
+  begin
+    update public.project_rooms
+      set state = 'READY'
+      where room_id = '10888888-8888-4888-8888-888888888888';
+    raise exception 'AUDIT_REVIEW with non-human owner unexpectedly reached READY';
+  exception when check_violation then
+    null;
+  end;
+end
+$$;
+
+
 -- Valid Audit Review can enter READY with exactly one independent auditor.
 insert into public.project_rooms (
   room_id, tenant_id, application_id, project_key, title, mode, state,
@@ -579,6 +634,7 @@ insert into public.project_room_participants (
   participant_id, tenant_id, application_id, room_id,
   principal_type, principal_id, participant_type, role, display_name
 ) values
+  ('37000000-0000-4000-8000-000000000000','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10777777-7777-4777-8777-777777777777','HUMAN','owner-valid','HUMAN','OWNER','Owner Valid'),
   ('37111111-1111-4111-8111-111111111111','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10777777-7777-4777-8777-777777777777','HUMAN','builder-valid','HUMAN','BUILDER','Builder Valid'),
   ('37222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','10777777-7777-4777-8777-777777777777','HUMAN','auditor-valid','HUMAN','INDEPENDENT_AUDITOR','Auditor Valid');
 

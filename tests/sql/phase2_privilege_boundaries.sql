@@ -36,6 +36,51 @@ begin
   end if;
 end $$;
 
+create temporary table war_room_function_expectations (
+  function_signature text primary key,
+  runtime_execute boolean not null,
+  control_execute boolean not null
+);
+
+insert into war_room_function_expectations values
+  ('app_private.validate_project_room_participant_independence()', false, false),
+  ('app_private.assert_project_room_audit_readiness(uuid,uuid,uuid)', true, true),
+  ('app_private.enforce_project_room_ready_state()', false, false),
+  ('app_private.enforce_project_room_participant_post_ready()', false, false);
+
+do $$
+declare
+  e record;
+  denied_role text;
+begin
+  for e in select * from war_room_function_expectations loop
+    if has_function_privilege(
+         'nippan_runtime', e.function_signature, 'EXECUTE'
+       ) is distinct from e.runtime_execute then
+      raise exception 'nippan_runtime EXECUTE mismatch on %',
+        e.function_signature;
+    end if;
+
+    if has_function_privilege(
+         'nippan_control_plane', e.function_signature, 'EXECUTE'
+       ) is distinct from e.control_execute then
+      raise exception 'nippan_control_plane EXECUTE mismatch on %',
+        e.function_signature;
+    end if;
+
+    foreach denied_role in array array[
+      'anon', 'authenticated', 'service_role', 'nippan_analytics'
+    ] loop
+      if has_function_privilege(
+           denied_role, e.function_signature, 'EXECUTE'
+         ) then
+        raise exception '% unexpectedly has EXECUTE on %',
+          denied_role, e.function_signature;
+      end if;
+    end loop;
+  end loop;
+end $$;
+
 create temporary table phase2_privilege_expectations (
   table_name text primary key,
   runtime_select boolean not null,
