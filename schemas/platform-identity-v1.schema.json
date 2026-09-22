@@ -1,0 +1,415 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nippan.org/schemas/platform-identity-v1.schema.json",
+  "title": "Nippan AI Platform Identity Contract v1",
+  "type": "object",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "provisioning",
+        "active",
+        "suspended",
+        "disabled",
+        "archived"
+      ]
+    },
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "slug",
+        "display_name",
+        "tenant_type",
+        "status"
+      ],
+      "properties": {
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "tenant_type": {
+          "type": "string",
+          "enum": [
+            "internal",
+            "customer",
+            "partner",
+            "system"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_id",
+        "tenant_id",
+        "slug",
+        "display_name",
+        "status"
+      ],
+      "properties": {
+        "workspace_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "application_id",
+        "tenant_id",
+        "slug",
+        "display_name",
+        "application_type",
+        "status"
+      ],
+      "properties": {
+        "application_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "workspace_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "application_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "tenant_id",
+        "application_id",
+        "slug",
+        "display_name",
+        "role",
+        "status"
+      ],
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "application_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "active_config_version_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channel_id",
+        "tenant_id",
+        "application_id",
+        "channel_type",
+        "display_name",
+        "status"
+      ],
+      "properties": {
+        "channel_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "application_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "channel_type": {
+          "type": "string",
+          "enum": [
+            "line",
+            "web",
+            "api",
+            "mobile",
+            "desktop",
+            "webhook",
+            "internal"
+          ]
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "external_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 255
+        }
+      }
+    },
+    "agent_channel_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "tenant_id",
+        "application_id",
+        "agent_id",
+        "channel_id",
+        "routing_role",
+        "priority",
+        "enabled"
+      ],
+      "properties": {
+        "binding_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "application_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "channel_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "routing_role": {
+          "type": "string",
+          "enum": [
+            "default",
+            "specialist",
+            "fallback",
+            "reviewer"
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_id",
+        "tenant_id",
+        "status"
+      ],
+      "properties": {
+        "subject_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "canonical_display_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        }
+      }
+    },
+    "subject_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_identity_id",
+        "tenant_id",
+        "subject_id",
+        "channel_id",
+        "provider",
+        "external_subject_id"
+      ],
+      "properties": {
+        "subject_identity_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "channel_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "external_subject_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conversation_id",
+        "tenant_id",
+        "application_id",
+        "channel_id",
+        "status"
+      ],
+      "properties": {
+        "conversation_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "application_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "channel_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "subject_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "primary_agent_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "waiting",
+            "human_handoff",
+            "closed",
+            "archived"
+          ]
+        },
+        "external_thread_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 255
+        }
+      }
+    }
+  }
+}
