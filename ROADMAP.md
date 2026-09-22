@@ -1,5 +1,31 @@
 # Nippan AI Platform — Roadmap v1
 
+## Project-wide Independent Audit System
+Status: ACTIVE
+
+All phases and milestones use progress-based independent Audit Gates:
+- 25%
+- 50%
+- 75%
+- 90%
+- 100%
+
+Progress is calculated from explicit milestone deliverables, not time elapsed. If no weights are defined, deliverables are equally weighted.
+
+Immediate audit is also required for major:
+- architecture changes
+- security/authorization changes
+- PostgreSQL/schema/RLS changes
+
+Governance:
+- Builder cannot self-approve
+- BLOCKER findings halt milestone advancement
+- BLOCKER remediation requires independent re-audit
+- 100% gate must PASS before DONE
+- Primary Independent Auditor: Claude Opus 5 via OpenRouter, replaceable by configuration
+- audit protocol: `docs/audits/AUDIT_SYSTEM_V1.md`
+- report template: `docs/audits/AUDIT_REPORT_TEMPLATE.md`
+
 ## Phase 0 — Foundation Architecture
 Status: DONE
 
@@ -53,6 +79,14 @@ Completed in current milestone:
 - health/readiness endpoints
 - tenant-scoped DB transaction boundary
 - active PUBLISHED config loader
+
+Audit baseline for this milestone:
+- 19 currently enumerated deliverables
+- 11 recorded complete
+- 8 recorded pending
+- baseline progress: 57.9% using equal weights
+- highest crossed gate: 50%
+- catch-up 50% independent audit required because the Audit System was introduced mid-Phase 2
 
 Still deliver:
 - policy engine boundary
