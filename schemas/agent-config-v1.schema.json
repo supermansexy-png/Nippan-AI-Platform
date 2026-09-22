@@ -23,7 +23,13 @@
     "knowledge_policy_ref",
     "quota_policy_ref",
     "feature_flags",
-    "change_note"
+    "change_note",
+    "created_by",
+    "created_at",
+    "published_at",
+    "supersedes_version_id",
+    "published_config_hash",
+    "policy_merge_version"
   ],
   "properties": {
     "config_version_id": {
@@ -131,48 +137,93 @@
     },
     "model_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "memory_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "tool_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "data_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "risk_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "privacy_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "knowledge_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "quota_policy_ref": {
       "type": "string",
-      "format": "uuid"
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
     },
     "feature_flags": {
       "type": "object",
+      "description": "Map of registered feature-flag keys to validated flag configuration. Unknown keys are rejected by the flag registry/publish validator and cannot widen authorization.",
       "additionalProperties": {
-        "oneOf": [
-          {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
             "type": "boolean"
           },
-          {
-            "type": "object",
-            "additionalProperties": true
+          "rollout_percentage": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "subject_allowlist": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "uniqueItems": true
+          },
+          "test_allowlist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "environment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "development",
+              "staging",
+              "production",
+              null
+            ]
           }
-        ]
+        }
       }
     },
     "change_note": {
@@ -189,6 +240,99 @@
           "type": "null"
         }
       ]
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "published_config_hash": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "SHA-256 of canonical published Agent Config plus referenced immutable policy IDs/content hashes and policy_merge_version. Non-null for PUBLISHED/SUPERSEDED."
+    },
+    "policy_merge_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Version identifier of the normative effective-policy merge semantics."
     }
-  }
+  },
+  "description": "Serialized Agent Config Version. Markdown Agent Policy Contract is normative for policy semantics; every *_policy_ref identifies an immutable policy version.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "lifecycle_status": {
+            "enum": [
+              "PUBLISHED",
+              "SUPERSEDED"
+            ]
+          }
+        },
+        "required": [
+          "lifecycle_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "published_config_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "lifecycle_status": {
+            "enum": [
+              "DRAFT",
+              "TESTING"
+            ]
+          }
+        },
+        "required": [
+          "lifecycle_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "published_at": {
+            "type": "null"
+          },
+          "published_config_hash": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
 }

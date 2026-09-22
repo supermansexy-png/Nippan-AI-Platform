@@ -26,7 +26,9 @@
         "slug",
         "display_name",
         "tenant_type",
-        "status"
+        "status",
+        "created_at",
+        "updated_at"
       ],
       "properties": {
         "tenant_id": {
@@ -54,6 +56,12 @@
         },
         "status": {
           "$ref": "#/$defs/status"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
         }
       }
     },
@@ -65,7 +73,9 @@
         "tenant_id",
         "slug",
         "display_name",
-        "status"
+        "status",
+        "created_at",
+        "updated_at"
       ],
       "properties": {
         "workspace_id": {
@@ -86,6 +96,12 @@
         },
         "status": {
           "$ref": "#/$defs/status"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
         }
       }
     },
@@ -98,7 +114,10 @@
         "slug",
         "display_name",
         "application_type",
-        "status"
+        "status",
+        "created_at",
+        "updated_at",
+        "environment_policy"
       ],
       "properties": {
         "application_id": {
@@ -134,6 +153,16 @@
         },
         "status": {
           "$ref": "#/$defs/status"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "environment_policy": {
+          "type": "object",
+          "additionalProperties": true
         }
       }
     },
@@ -147,7 +176,9 @@
         "slug",
         "display_name",
         "role",
-        "status"
+        "status",
+        "created_at",
+        "updated_at"
       ],
       "properties": {
         "agent_id": {
@@ -177,15 +208,11 @@
         "status": {
           "$ref": "#/$defs/status"
         },
-        "active_config_version_id": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/uuid"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
         }
       }
     },
@@ -198,7 +225,9 @@
         "application_id",
         "channel_type",
         "display_name",
-        "status"
+        "status",
+        "created_at",
+        "updated_at"
       ],
       "properties": {
         "channel_id": {
@@ -236,6 +265,12 @@
             "null"
           ],
           "maxLength": 255
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
         }
       }
     },
@@ -250,7 +285,10 @@
         "channel_id",
         "routing_role",
         "priority",
-        "enabled"
+        "enabled",
+        "created_at",
+        "updated_at",
+        "environment"
       ],
       "properties": {
         "binding_id": {
@@ -283,6 +321,15 @@
         },
         "enabled": {
           "type": "boolean"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
         }
       }
     },
@@ -292,7 +339,9 @@
       "required": [
         "subject_id",
         "tenant_id",
-        "status"
+        "status",
+        "created_at",
+        "updated_at"
       ],
       "properties": {
         "subject_id": {
@@ -310,6 +359,12 @@
         },
         "status": {
           "$ref": "#/$defs/status"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
         }
       }
     },
@@ -322,7 +377,10 @@
         "subject_id",
         "channel_id",
         "provider",
-        "external_subject_id"
+        "external_subject_id",
+        "created_at",
+        "updated_at",
+        "verified_at"
       ],
       "properties": {
         "subject_identity_id": {
@@ -346,6 +404,22 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 255
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "verified_at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -357,7 +431,10 @@
         "tenant_id",
         "application_id",
         "channel_id",
-        "status"
+        "status",
+        "started_at",
+        "last_activity_at",
+        "closed_at"
       ],
       "properties": {
         "conversation_id": {
@@ -408,8 +485,170 @@
             "null"
           ],
           "maxLength": 255
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "last_activity_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "closed_at": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parent_conversation_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "development",
+        "staging",
+        "production"
+      ]
+    },
+    "agent_activation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "activation_id",
+        "tenant_id",
+        "application_id",
+        "agent_id",
+        "environment",
+        "config_version_id",
+        "activated_at",
+        "activated_by"
+      ],
+      "properties": {
+        "activation_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "application_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        },
+        "config_version_id": {
+          "$ref": "#/$defs/uuid",
+          "description": "PUBLISHED config version for the same Tenant/Application/Agent; config target environment must equal activation.environment."
+        },
+        "activated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "activated_by": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "description": "Current activation pointer. Storage enforces at most one row per agent_id + environment; config_version_id must reference a PUBLISHED config for the same Tenant/Application/Agent with matching target environment."
+    },
+    "tenant_member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_member_id",
+        "tenant_id",
+        "principal_id",
+        "role",
+        "status"
+      ],
+      "properties": {
+        "tenant_member_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "principal_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "owner",
+            "admin",
+            "operator",
+            "analyst",
+            "reviewer",
+            "billing"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "suspended",
+            "disabled",
+            "archived"
+          ]
         }
       }
     }
-  }
+  },
+  "description": "Single-entity identity schema. Markdown contract is normative for domain semantics; this schema is normative for supported serialized entity shapes.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/tenant"
+    },
+    {
+      "$ref": "#/$defs/workspace"
+    },
+    {
+      "$ref": "#/$defs/application"
+    },
+    {
+      "$ref": "#/$defs/agent"
+    },
+    {
+      "$ref": "#/$defs/agent_activation"
+    },
+    {
+      "$ref": "#/$defs/channel"
+    },
+    {
+      "$ref": "#/$defs/agent_channel_binding"
+    },
+    {
+      "$ref": "#/$defs/subject"
+    },
+    {
+      "$ref": "#/$defs/subject_identity"
+    },
+    {
+      "$ref": "#/$defs/tenant_member"
+    },
+    {
+      "$ref": "#/$defs/conversation"
+    }
+  ]
 }

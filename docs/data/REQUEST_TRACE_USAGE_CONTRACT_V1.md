@@ -1,8 +1,10 @@
 # Request, Trace & Usage Telemetry Contract v1
 
-Status: **REVIEW**
+Status: **ACCEPTED / FROZEN V1**
 Issue: #9
 Date: 2026-09-22
+
+**Normativity:** This Markdown contract is normative for request/trace/usage semantics and invariants. `schemas/request-envelope-v1.schema.json` and `schemas/usage-event-v1.schema.json` are normative for the serialized structures they describe and must not conflict with this contract.
 
 ## Purpose
 
@@ -26,22 +28,31 @@ Do not overload one ID for multiple jobs.
 
 Generate request_id at the first trusted ingress boundary. Prefer UUIDv7; UUIDv4 is acceptable.
 
+For W3C/OpenTelemetry interoperability:
+- `trace_id` is 16 bytes serialized as exactly 32 lowercase hexadecimal characters and must not be all zero
+- `span_id` is 8 bytes serialized as exactly 16 lowercase hexadecimal characters and must not be all zero
+- `request_id` remains the platform UUID and is not overloaded as trace/span identity
+
 request_id stays unchanged across Worker -> Core -> model -> MCP -> reply.
 
 ## Request envelope
 
-Required when known:
+Always required:
 - request_id
 - trace_id
 - tenant_id
-- application_id
-- channel_id
 - received_at
 - environment
 - request_kind
 - source
 - privacy_class
-- status
+- status_at_emit
+
+Scope requirements:
+- `application_id` is required for conversation, tool_action, background_job, scheduled_job, ingestion, extraction and evaluation
+- `application_id` may be null/absent only for explicitly platform/tenant-scoped admin_action or health_internal work
+- `channel_id` is required for conversation and otherwise optional when the request did not originate from a Channel
+- fake Application/Channel IDs are forbidden
 
 Conditional:
 - agent_id after routing
@@ -67,6 +78,8 @@ Initial canonical values:
 - health_internal
 
 ## Request status
+
+The request envelope carries `status_at_emit`, an immutable snapshot of status when that envelope is emitted. Mutable current request status belongs to the operational request-state record.
 
 Canonical operational status:
 - RECEIVED
@@ -106,7 +119,8 @@ Canonical span types:
 Span fields:
 - trace_id
 - span_id
-- parent_span_id
+- parent_span_id nullable
+- trace_links nullable for async/causal relationships
 - request_id
 - span_type
 - service
@@ -118,6 +132,11 @@ Span fields:
 - attempt
 - error_code
 - minimal metadata
+
+Rules:
+- queued/async work may use trace links when a single synchronous parent would be misleading
+- retries create distinct attempts/spans while preserving the logical request/trace where appropriate
+- attempt numbering starts at 1 and is monotonic per retried operation
 
 Full content is not a default trace field.
 
@@ -204,10 +223,11 @@ Record:
 - attempt
 - success
 - error_code
-- args_hash
-- result_hash when applicable
+- args_fingerprint nullable
+- result_fingerprint nullable
+- fingerprint_key_id nullable
 
-Default audit stores hashes and operational metadata, not full sensitive arguments/results.
+Default audit stores privacy-approved fingerprints and operational metadata, not full sensitive arguments/results. Fingerprint rules are defined in Logging/privacy below.
 
 ## Retrieval telemetry
 
@@ -252,6 +272,43 @@ Usage event types may include:
 - queue_operation
 - file_processing
 - external_api_cost
+
+### Immutable UsageEvent ledger
+
+Every billable/measurable unit used for aggregation is represented by an immutable UsageEvent with at least:
+- usage_event_id
+- occurred_at
+- tenant_id
+- application_id
+- request_id
+- event_type
+- quantity
+- unit
+- dedupe_key
+- source_type and source_id/call reference
+
+Where applicable:
+- agent_id
+- channel_id
+- subject_id
+- conversation_id
+- provider
+- model
+- tool_domain/tool_name
+- provider_reported_cost
+- normalized_cost
+- currency
+- pricing_rate_version
+
+Rules:
+- UsageEvent is for Application-attributable measurable/billable work and therefore requires `application_id` and `request_id`
+- platform/tenant-scoped `admin_action` or `health_internal` requests without an Application remain operational telemetry and do not emit billable UsageEvents
+- billable model/tool execution must not occur without an Application attribution; it must first resolve to an authorized Application (including a designated system Application where appropriate) or be blocked
+- `provider_reported_cost` and `normalized_cost` are distinct and never overwrite one another
+- `pricing_rate_version` is required when normalized cost is calculated by platform pricing/rates
+- UsageEvents are append-only/immutable after acceptance
+- `tenant_id + dedupe_key` identifies the same measurable event for dedupe; retries/replays must not create duplicate billable units
+- aggregates are derived/rebuildable from UsageEvents and are not the billing source of truth
 
 This supports future billing without implementing billing now.
 
@@ -320,12 +377,25 @@ Persistent record:
 - idempotency_key
 - tenant_id
 - scope
-- request_id
 - operation
+- request_id
 - state
 - result_reference
+- request_fingerprint nullable when policy permits
 - created_at
+- updated_at
 - expires_at
+
+Semantics:
+- uniqueness scope is `tenant_id + scope + operation + idempotency_key`
+- reservation/check is atomic before executing a side effect
+- canonical states are `IN_PROGRESS`, `SUCCEEDED`, `FAILED`, `EXPIRED`
+- a duplicate while `IN_PROGRESS` must not execute the side effect again; wait/ack/conflict behavior is transport policy
+- a duplicate after `SUCCEEDED` reuses or references the prior successful result where supported
+- reuse of the same key for materially different operation/request identity is a conflict
+- retry after `FAILED` is allowed only when operation policy says retry is safe; the same idempotency protection remains in force
+- expiry removes dedupe guarantees only after the documented safe replay window
+- provider `event_id` dedupe is ingress-event dedupe and is separate from side-effect `idempotency_key`
 
 Side-effecting operations consult persistent idempotency state before execute/retry.
 
@@ -365,6 +435,15 @@ n8n execution history is diagnostic, not the platform source of truth.
 Production logs are metadata-first.
 
 Content logging is opt-in by policy and environment.
+
+Fingerprint/minimization rules:
+- `SECRET_CREDENTIAL` values are never logged, hashed or included in telemetry fingerprints
+- sensitive values are omitted/redacted by default
+- plain unkeyed hashes are not treated as safe redaction for low-entropy PII/sensitive values
+- where correlation/comparison is justified and privacy policy permits it, canonicalize the approved value and use HMAC-SHA-256 with a platform-managed rotating secret
+- HMAC input is domain-separated by Tenant and fingerprint purpose; telemetry stores `fingerprint_key_id` for rotation/audit
+- a separate per-Tenant HMAC key is not required in v1
+- telemetry field collection is minimized by privacy class
 
 Suggested modes:
 - metadata_only
@@ -425,16 +504,18 @@ All share platform request/trace correlation.
 
 ## Invariants
 
-1. Every production request has request_id and tenant_id.
-2. Every material span belongs to one trace and request.
+1. Every production request has request_id and tenant_id; Application/Channel scope follows request-kind rules and fake IDs are forbidden.
+2. Every material span belongs to one trace and request and uses the canonical W3C-compatible trace/span identifier format.
 3. Every model/tool call is attributable to tenant/application/request.
 4. Side-effect retry preserves idempotency protection.
 5. Effective config version/hash is recorded for AI/tool execution.
 6. Unknown provider cost is null, never fabricated.
 7. High-level error categories remain stable across providers.
-8. Normal trace debugging does not require sensitive payload content.
-9. Async jobs preserve parent request/trace correlation.
-10. Dashboard can locate the failing service from request_id without searching by customer message text.
+8. Normal trace debugging does not require sensitive payload content and SECRET_CREDENTIAL is never fingerprinted.
+9. Async jobs preserve causal request/trace correlation using parent relationships and/or trace links.
+10. Side-effect retries cannot bypass atomic idempotency protection.
+11. Usage aggregates are rebuildable from immutable deduplicated UsageEvents.
+12. Dashboard can locate the failing service from request_id without searching by customer message text.
 
 ## Non-goals
 
