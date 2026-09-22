@@ -59,18 +59,18 @@ where p.room_id = (select value from wr_ids where key='room_a') and p.role = 'IN
 
 -- RLS positive and fail-closed controls.
 set local role nippan_runtime;
-select set_config('app.tenant_id',(select value::text from wr_ids where key='tenant_a'),true);
-select set_config('app.application_id',(select value::text from wr_ids where key='app_a'),true);
+select set_config('app.tenant_id','31111111-1111-4111-8111-111111111111',true);
+select set_config('app.application_id','3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',true);
 do $$ declare n bigint; begin select count(*) into n from public.project_rooms; if n <> 1 then raise exception 'positive RLS scope failed'; end if; end $$;
 select set_config('app.application_id','',true);
 do $$ declare n bigint; begin select count(*) into n from public.project_rooms; if n <> 0 then raise exception 'missing application context did not fail closed'; end if; end $$;
 select set_config('app.tenant_id','',true);
-select set_config('app.application_id',(select value::text from wr_ids where key='app_a'),true);
+select set_config('app.application_id','3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',true);
 do $$ declare n bigint; begin select count(*) into n from public.project_rooms; if n <> 0 then raise exception 'missing tenant context did not fail closed'; end if; end $$;
-select set_config('app.tenant_id',(select value::text from wr_ids where key='tenant_b'),true);
+select set_config('app.tenant_id','32222222-2222-4222-8222-222222222222',true);
 do $$ declare n bigint; begin select count(*) into n from public.project_rooms; if n <> 0 then raise exception 'wrong tenant was visible'; end if; end $$;
-select set_config('app.tenant_id',(select value::text from wr_ids where key='tenant_a'),true);
-select set_config('app.application_id',(select value::text from wr_ids where key='app_a2'),true);
+select set_config('app.tenant_id','31111111-1111-4111-8111-111111111111',true);
+select set_config('app.application_id','3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',true);
 do $$ declare n bigint; begin select count(*) into n from public.project_rooms; if n <> 0 then raise exception 'wrong application was visible'; end if; end $$;
 reset role;
 
@@ -220,9 +220,9 @@ end $$;
 -- Analytics is read-only at the actual privilege boundary.
 set local role nippan_analytics;
 do $$ begin
-  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'analytics-write','Bad','FORMAL_MEETING','analytics',10); raise exception 'analytics INSERT succeeded'; exception when insufficient_privilege then null; end;
-  begin update public.project_rooms set title='Bad' where room_id=(select value from wr_ids where key='room_a'); raise exception 'analytics UPDATE succeeded'; exception when insufficient_privilege then null; end;
-  begin delete from public.project_rooms where room_id=(select value from wr_ids where key='room_a'); raise exception 'analytics DELETE succeeded'; exception when insufficient_privilege then null; end;
+  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget) values ('31111111-1111-4111-8111-111111111111','3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','analytics-write','Bad','FORMAL_MEETING','analytics',10); raise exception 'analytics INSERT succeeded'; exception when insufficient_privilege then null; end;
+  begin update public.project_rooms set title='Bad' where room_id='3c111111-1111-4111-8111-111111111111'; raise exception 'analytics UPDATE succeeded'; exception when insufficient_privilege then null; end;
+  begin delete from public.project_rooms where room_id='3c111111-1111-4111-8111-111111111111'; raise exception 'analytics DELETE succeeded'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
 
@@ -240,14 +240,14 @@ end $$;
 
 -- Runtime privilege-level enforcement, not just application convention.
 set local role nippan_runtime;
-select set_config('app.tenant_id',(select value::text from wr_ids where key='tenant_a'),true);
-select set_config('app.application_id',(select value::text from wr_ids where key='app_a'),true);
+select set_config('app.tenant_id','31111111-1111-4111-8111-111111111111',true);
+select set_config('app.application_id','3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',true);
 do $$ begin
   begin update public.project_room_messages set content_text='mutated' where sequence=1; raise exception 'runtime message UPDATE succeeded'; exception when insufficient_privilege then null; end;
   begin delete from public.project_room_messages where sequence=1; raise exception 'runtime message DELETE succeeded'; exception when insufficient_privilege then null; end;
   begin update public.project_room_decisions set decision_text='mutated'; raise exception 'runtime decision UPDATE succeeded'; exception when insufficient_privilege then null; end;
   begin delete from public.project_room_decisions; raise exception 'runtime decision DELETE succeeded'; exception when insufficient_privilege then null; end;
-  begin insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),(select value from wr_ids where key='room_a'),'HUMAN','bad-runtime','HUMAN','BUILDER','Bad'); raise exception 'runtime participant INSERT succeeded'; exception when insufficient_privilege then null; end;
+  begin insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name) values ('31111111-1111-4111-8111-111111111111','3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1','3c111111-1111-4111-8111-111111111111','HUMAN','bad-runtime','HUMAN','BUILDER','Bad'); raise exception 'runtime participant INSERT succeeded'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
 
