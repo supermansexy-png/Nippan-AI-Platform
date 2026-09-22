@@ -127,6 +127,26 @@ Phase 2 catch-up status:
 - independent audit outcome: PENDING
 - milestone implementation advancement: ON HOLD until independent audit outcome permits continuation
 
+## Parallel design track — Nippan AI War Room V1
+Status: PROPOSAL ONLY / NO IMPLEMENTATION AUTHORIZED
+
+Tracking:
+- Issue #19
+- proposal: `docs/proposals/WAR_ROOM_V1_PROPOSAL.md`
+
+Current design includes:
+- visible multi-agent project chat
+- Chair / Architect / Builder / Security / Cost & Ops / Independent Auditor / Project Owner roles
+- human owner final authority
+- bounded two-round automatic discussion
+- Pause / Resume / Stop / Owner Decision controls
+- token/cost hard limits
+- logical room/message/finding/decision/action-item model
+- Free Discussion / Formal Meeting / Audit Review modes
+- formal Independent Audit remains separately governed
+
+This parallel design work does not count toward Phase 2 progress and must not bypass the current Audit #18 hold. Runtime code, migrations and deployment remain blocked.
+
 ## AI team policy
 Specialist models may draft/review work, but architecture remains governed by Foundation + ADRs + assigned issues.
 
