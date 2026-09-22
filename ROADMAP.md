@@ -1,125 +1,149 @@
-# Nippan AI Platform — Proposed Roadmap
+# Nippan AI Platform — Roadmap v1
 
-This roadmap is intentionally phased. Each phase should produce testable artifacts before the next begins.
+## Phase 0 — Foundation Architecture
+Status: DONE
 
-## Phase 0 — Architecture review and benchmark design
+Completed:
+- independent architecture reviews
+- runtime topology decision
+- control-plane/data-plane decision
+- multi-tenant product model
+- data/memory direction
+- model gateway direction
+- tool/risk/privacy principles
+- infrastructure defer list
 
-Deliverables:
-- Foundation architecture
-- Data ownership map
-- Security/privacy classification
-- Model policy design
-- Cloudflare responsibility map
-- Benchmark suite specification
-- Migration contract for existing bots
+## Phase 1 — Contracts and Data Foundation
+Status: NEXT
 
-Exit criteria:
-- Major architecture decisions recorded
-- No unresolved source-of-truth ambiguity
-- Two independent AI reviews reconciled
+Deliver:
+- Tenant / Workspace / Application / Agent / Channel schemas
+- Agent Profile and versioned configuration
+- Model / Memory / Tool / Data / Risk / Privacy policies
+- request_id / trace envelope
+- usage/cost telemetry contract
+- PostgreSQL logical schema + pgvector
+- RLS/isolation design
+- idempotency contract
+- migration framework
+- benchmark/eval fixtures
 
-## Phase 1 — Model Gateway Foundation
+Exit:
+- contracts reviewed
+- schema migrations reproducible
+- isolation tests specified
+- no production bot migrated
 
-Build:
-- OpenRouter credentials by project/bot
-- Central model policy/presets
-- Free -> cheap -> reliable -> premium fallback
-- Provider/privacy constraints
-- Structured output contracts
-- Cost/latency/error telemetry
+## Phase 2 — Core Runtime Skeleton
 
-Do not migrate production bots yet.
+Deliver:
+- FastAPI Core AI Service
+- health/readiness endpoints
+- policy engine
+- config loader
+- request tracing
+- OpenRouter adapter
+- deterministic context assembler interface
+- MCP client/tool authorization interface
+- basic telemetry
 
-## Phase 2 — Data Foundation
+Exit:
+- synthetic end-to-end request works
+- no production traffic
 
-Build:
-- PostgreSQL
-- pgvector
-- schema namespaces for core/chat/memory/ops/files
-- backup/restore plan
-- retention rules
-- tenant/bot/user/channel scoping
-- audit identifiers and idempotency keys
+## Phase 3 — Edge and Reliability
 
-Google Sheets remains reporting/export only.
+Deliver:
+- thin Cloudflare Worker gateway
+- signature/auth verification
+- rate limiting
+- request normalization
+- persistent idempotency
+- Cloudflare Queues for background jobs
+- DLQ/replay path
+- R2 file adapter
+- degraded-mode behavior
 
-## Phase 3 — Memory v2 + Context Engine
+## Phase 4 — Memory and Context
 
-Build:
-- recent conversation store
-- rolling summaries
+Deliver:
+- recent conversation
 - active state
-- semantic long-term memory
-- retrieval/reranking
-- Context Compiler
-- memory writer/reviewer policy
-- token budgets
+- rolling summary
+- long-term memory
+- provenance/conflict/expiry rules
+- hybrid exact/keyword/vector retrieval
+- token budgeting
+- Context Compiler benchmark and optional implementation only if justified
 
-Benchmark continuity, Thai reference resolution and token savings.
+## Phase 5 — Control Plane v1
 
-## Phase 4 — Cloudflare Edge Foundation
+Deliver a minimal dashboard for:
+- tenants
+- applications
+- agents
+- channels
+- model/tool/memory/risk policies
+- config Draft -> Test -> Publish -> Rollback
+- requests/traces
+- usage/cost
+- errors
+- approval queue
 
-Build only components proven useful:
-- Worker gateway
-- webhook verification/normalization/rate control
-- Queues for durable background workloads
-- R2 for machine files
-- Analytics Engine where it adds operational value
+Do not build full SaaS billing yet.
 
-Evaluate, do not automatically adopt:
-- AI Gateway in front of OpenRouter
+## Phase 6 — Personal Assistant Pilot
+
+Migrate the Personal Assistant as the first conversational pilot:
+- feature flag
+- rollback path
+- memory v2
+- MCP policies
+- cost/trace visibility
+
+## Phase 7 — Slip Application
+
+Create Slip App/Agent:
+- LINE group intake
+- image extraction
+- duplicate detection
+- R2
+- Postgres transactions
+- reporting via n8n/Sheets when useful
+
+## Phase 8 — Nippan Website AI
+
+Connect nippan.org through platform APIs/Agents:
+- support
+- content/SEO/admin capabilities only as separately permissioned agents
+- WordPress/WooCommerce tools via MCP policies
+
+## Phase 9 — Ai-Nippan Migration
+
+Adapter-based migration only:
+- shadow/read-only comparison
+- feature flags / traffic split
+- gradual cutover
+- rollback
+- preserve proven commerce/order logic
+
+## Phase 10 — External Customer / Rental Readiness
+
+When business demand exists:
+- tenant onboarding
+- templates
+- plan/entitlement management
+- quotas
+- usage metering
+- billing integration
+- customer-facing admin surface
+
+## Optional infrastructure
+Adopt only from measured need:
+- Cloudflare AI Gateway
 - Hyperdrive
 - Durable Objects
-
-Avoid initially unless requirements change:
-- D1 (duplicates PostgreSQL)
-- Vectorize (duplicates pgvector)
-- Workflows (duplicates n8n)
-
-## Phase 5 — Personal Assistant v2
-
-Use the personal assistant as the first full conversational migration:
-- natural-language router
-- memory v2
-- OpenRouter policy
-- MCP/tools
-- reviewer gates
-- cost telemetry
-
-Keep rollback to current workflow.
-
-## Phase 6 — Slip Bot
-
-Second Bot Profile; intentionally minimal conversation:
-- LINE group event intake
-- slip-image validation/extraction
-- duplicate detection
-- R2 object storage
-- PostgreSQL transaction record
-- optional Sheets report sync
-- monthly summaries
-
-## Phase 7 — Existing Nippan Customer Bot Adapter
-
-Only after the core is stable:
-- keep existing commerce/order business rules
-- add model adapter to shared model gateway
-- add shared telemetry
-- map memory via adapter instead of destructive rewrite
-- durable queue migration if justified
-- progressively migrate retrieval/memory
-
-No big-bang rewrite.
-
-## Future bot enablement
-
-The platform should allow a new bot to be created primarily from:
-- Bot Profile
-- Model Policy
-- Memory Policy
-- Tool Policy
-- Data Policy
-- Risk Policy
-- Channel Adapter
-
-Future business bots are requirements placeholders only; they are not part of current implementation scope.
+- Analytics Engine
+- Redis
+- dedicated vector database
+- service splitting
