@@ -67,6 +67,27 @@ Static inventory before PostgreSQL execution: 41 expected-failure assertion mark
 
 This environment did not have `docker` or `psql`, so the suite was not executed locally in this contribution. The SQL was checked into the branch for ephemeral CI/local PostgreSQL execution; a passing result must be recorded by the Independent Auditor workflow before application authorization.
 
+## PostgreSQL 17 CI evidence
+
+Final evidence run before this document update:
+
+- Run ID: `35799292453`
+- Workflow URL: `https://github.com/supermansexy-png/Nippan-AI-Platform/actions/runs/35799292453`
+- Tested commit: `1a835027487216553be3c9e6f2d36ab3c7af1675`
+- PostgreSQL: `17.11 (Debian 17.11-1.pgdg13+2)`
+- Migration apply: PASS
+- Canonical table inventory: 7
+- RLS inventory: all seven tables enabled; `FORCE ROW LEVEL SECURITY = false` for all seven
+- Project roles: `nippan_runtime`, `nippan_control_plane`, `nippan_analytics` all `rolsuper=false`, `rolbypassrls=false`
+- Helper functions: five, all `prosecdef=false`, owner `postgres`, `search_path=""`
+- RLS policies and ACL inventory: recorded by workflow output
+- Main positive/negative suite: PASS
+- Intentional forbidden `UPDATE` grant: detected by expected suite failure, revoked, clean suite PASS
+- Fresh database migration reapply: PASS
+- Fresh database clean suite rerun: PASS
+
+The evidence commit after this section changes the tested HEAD and therefore requires one final clean CI rerun before audit submission.
+
 ## Retention boundary
 
 No automatic 30-day TTL or retention worker is created. Future redaction requires a separately reviewed maintenance role, narrowly scoped content updates, idempotent retry behavior and an append-only `audit_events` record for each redaction.
