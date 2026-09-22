@@ -1,6 +1,6 @@
 # Nippan AI Platform
 
-Status: **Foundation v1 accepted — contracts/data foundation starting**
+Status: **Foundation v1 accepted — Phase 2 starting from frozen contracts**
 
 Nippan AI Platform is the shared AI platform for Nippan's bots, website AI, future applications/programs, internal agents and potential external/rental AI services.
 
@@ -21,11 +21,12 @@ Tenant
   -> Workspace
       -> Application
           -> Agent
-              -> Channel
-                  -> Conversation
+          -> Channel
+          -> AgentChannelBinding
+          -> Conversation
 ```
 
-An Agent is a configurable role, not the same thing as a bot.
+An Agent is a configurable role, not the same thing as a bot. Agents and Channels are Application-owned peers connected by explicit bindings.
 
 ## Foundation v1 architecture
 
@@ -81,9 +82,9 @@ Control Plane: versioned Dashboard/Admin Center
 
 ## Current work
 
-Phase 1: **Contracts and Data Foundation**
+Phase 2: **PostgreSQL/RLS design and Core Runtime Skeleton**
 
-We are defining platform identity, Agent/Application contracts, policies, request tracing, usage metering and the PostgreSQL schema before deploying production infrastructure.
+Phase 1 contracts are frozen at Markdown/JSON Schema level. Current work is translating those contracts into PostgreSQL/RLS design, reproducible migrations, isolation tests and the minimal FastAPI Core runtime skeleton before deploying production infrastructure.
 
 ## Protected production systems
 

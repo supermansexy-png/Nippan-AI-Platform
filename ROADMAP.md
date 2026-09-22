@@ -14,7 +14,7 @@ Completed:
 - infrastructure defer list
 
 ## Phase 1 — Contracts and Data Foundation
-Status: NEXT
+Status: CONTRACTS FROZEN / DDL DESIGN STARTED
 
 Deliver:
 - Tenant / Workspace / Application / Agent / Channel schemas
@@ -29,12 +29,17 @@ Deliver:
 - benchmark/eval fixtures
 
 Exit:
-- contracts reviewed
+- contracts reviewed and frozen
 - schema migrations reproducible
 - isolation tests specified
 - no production bot migrated
 
+Current handoff:
+- `docs/reviews/PHASE1_REVIEW_GATE_FINAL.md`
+- `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md`
+
 ## Phase 2 — Core Runtime Skeleton
+Status: NEXT AFTER POSTGRES/RLS DESIGN REVIEW
 
 Deliver:
 - FastAPI Core AI Service

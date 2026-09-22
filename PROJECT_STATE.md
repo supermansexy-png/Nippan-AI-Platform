@@ -1,12 +1,12 @@
 # Project State
 
-Updated: 2026-09-22
+Updated: 2026-09-23
 
 ## Phase
-FOUNDATION V1 ACCEPTED / PHASE 1 CONTRACTS IN REVIEW
+FOUNDATION V1 ACCEPTED / PHASE 2 STARTING
 
 ## Current objective
-Finish and independently review the minimum durable contracts before database/runtime implementation.
+Convert frozen Phase 1 contracts into PostgreSQL/RLS design and the first Core Runtime Skeleton boundaries without touching production systems.
 
 ## Accepted architecture
 See:
@@ -20,7 +20,7 @@ See:
 
 ## Phase 1 progress
 
-### REVIEW
+### FROZEN
 - Issue #7: Identity & Multi-Tenant Contract
   - `docs/data/IDENTITY_TENANCY_CONTRACT_V1.md`
   - `schemas/platform-identity-v1.schema.json`
@@ -35,10 +35,14 @@ See:
   - independent review: Issue #14
 - Issue #11: Benchmark & Evaluation Specification
   - `benchmarks/BENCHMARK_SPEC_V1.md`
+- PR #16: Phase 1 review gate final
+  - `docs/reviews/PHASE1_REVIEW_GATE_FINAL.md`
+  - merged 2026-09-22
 
-### BLOCKED
+### PHASE 2 STARTED
 - Issue #10: PostgreSQL + pgvector logical schema
-  - blocked until identity/policy contract review resolves blocking issues
+  - `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md`
+  - status: draft implementation handoff; no executable DDL yet
 
 ## Core direction
 - Thin Cloudflare Worker edge gateway
@@ -70,10 +74,10 @@ Jev or any model never replaces deterministic authorization, risk or privacy pol
 Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1, Vectorize, Cloudflare Workflows, dedicated vector DB, Kubernetes and unnecessary microservices.
 
 ## Immediate next gate
-1. Independent review Issues #12, #13 and #14.
-2. Resolve any blocking findings.
-3. Accept Phase 1 contracts.
-4. Begin Issue #10 PostgreSQL + pgvector logical schema.
+1. Review `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md` against the frozen contracts.
+2. Decide migration tooling, role names, enum/domain strategy and UUID generation source.
+3. Write reproducible PostgreSQL migrations and isolation tests.
+4. Build the minimal FastAPI Core skeleton against the accepted schema boundaries.
 5. Build benchmark fixtures/runs before locking production model roles.
 
 ## Production migration
