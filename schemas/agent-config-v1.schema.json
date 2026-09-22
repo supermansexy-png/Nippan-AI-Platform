@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nippan.org/schemas/agent-config-v1.schema.json",
+  "title": "Nippan Agent Config Version v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "config_version_id",
+    "tenant_id",
+    "application_id",
+    "agent_id",
+    "version_number",
+    "lifecycle_status",
+    "environment",
+    "persona",
+    "instruction_set",
+    "model_policy_ref",
+    "memory_policy_ref",
+    "tool_policy_ref",
+    "data_policy_ref",
+    "risk_policy_ref",
+    "privacy_policy_ref",
+    "knowledge_policy_ref",
+    "quota_policy_ref",
+    "feature_flags",
+    "change_note"
+  ],
+  "properties": {
+    "config_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "application_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "TESTING",
+        "PUBLISHED",
+        "SUPERSEDED"
+      ]
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "development",
+        "staging",
+        "production"
+      ]
+    },
+    "persona": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "language"
+      ],
+      "properties": {
+        "display_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": "string"
+        },
+        "tone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "style_constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "response_length_preference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "instruction_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system_instructions"
+      ],
+      "properties": {
+        "system_instructions": {
+          "type": "string"
+        },
+        "business_rules_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_behaviors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "escalation_guidance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "model_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "memory_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tool_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "risk_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "privacy_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "knowledge_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "quota_policy_ref": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "feature_flags": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "change_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supersedes_version_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
