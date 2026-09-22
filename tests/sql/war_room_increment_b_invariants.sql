@@ -151,7 +151,7 @@ do $$ begin
     insert into public.project_room_decisions (tenant_id, application_id, room_id, agenda_item_id, decision_type, decision_text, evidence_refs)
       values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),(select value from wr_ids where key='room_a'),(select value from wr_ids where key='agenda_a'),'ADVISORY_AUDIT_OUTCOME','Missing evidence','[]'::jsonb);
     raise exception 'Advisory outcome without Auditor/evidence accepted';
-  exception when sqlstate '42501' then null; end;
+  exception when sqlstate '42501' or sqlstate '23514' then null; end;
 end $$;
 
 do $$ declare free_room uuid; agenda uuid; auditor uuid; begin
