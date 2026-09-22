@@ -36,9 +36,9 @@ insert into public.requests (request_id, trace_id, tenant_id, application_id, en
 select (select value from wr_ids where key='request_a'), repeat('a',32), (select value from wr_ids where key='tenant_a'), (select value from wr_ids where key='app_a'), 'development', 'evaluation', 'war-room-test', 'INTERNAL', 'RUNNING', now()
 union all select (select value from wr_ids where key='request_b'), repeat('b',32), (select value from wr_ids where key='tenant_b'), (select value from wr_ids where key='app_b'), 'development', 'evaluation', 'war-room-test', 'INTERNAL', 'RUNNING', now();
 
-insert into public.project_rooms (room_id, tenant_id, application_id, project_key, title, mode, token_budget, audit_baseline_ref, audit_baseline_sha)
-select (select value from wr_ids where key='room_a'), (select value from wr_ids where key='tenant_a'), (select value from wr_ids where key='app_a'), 'audit-a', 'Audit A', 'AUDIT_REVIEW', 1000, 'PR-27', repeat('a',40)
-union all select (select value from wr_ids where key='room_b'), (select value from wr_ids where key='tenant_b'), (select value from wr_ids where key='app_b'), 'audit-b', 'Audit B', 'AUDIT_REVIEW', 1000, 'PR-27', repeat('b',40);
+insert into public.project_rooms (room_id, tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget, audit_baseline_ref, audit_baseline_sha)
+select (select value from wr_ids where key='room_a'), (select value from wr_ids where key='tenant_a'), (select value from wr_ids where key='app_a'), 'audit-a', 'Audit A', 'AUDIT_REVIEW', 'owner-a', 1000, 'PR-27', repeat('a',40)
+union all select (select value from wr_ids where key='room_b'), (select value from wr_ids where key='tenant_b'), (select value from wr_ids where key='app_b'), 'audit-b', 'Audit B', 'AUDIT_REVIEW', 'owner-b', 1000, 'PR-27', repeat('b',40);
 insert into public.project_room_agenda_items (agenda_item_id, tenant_id, application_id, room_id, sequence, title, objective, token_budget)
 select (select value from wr_ids where key='agenda_a'), (select value from wr_ids where key='tenant_a'), (select value from wr_ids where key='app_a'), (select value from wr_ids where key='room_a'), 1, 'Evidence', 'Review evidence', 500;
 insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name, agent_id)
@@ -86,8 +86,8 @@ do $$ begin
   begin insert into public.project_room_messages (tenant_id, application_id, room_id, agenda_item_id, message_type, sequence, content_text) values ((select value from wr_ids where key='tenant_b'),(select value from wr_ids where key='app_b'),(select value from wr_ids where key='room_a'),(select value from wr_ids where key='agenda_a'),'OWNER_MESSAGE',2,'cross scope'); raise exception 'cross scope message accepted'; exception when foreign_key_violation then null; end;
   begin insert into public.project_room_messages (tenant_id, application_id, room_id, agenda_item_id, message_type, sequence, content_text) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a2'),(select value from wr_ids where key='room_a'),(select value from wr_ids where key='agenda_a'),'OWNER_MESSAGE',2,'cross application'); raise exception 'cross application message accepted'; exception when foreign_key_violation then null; end;
   begin insert into public.project_room_messages (tenant_id, application_id, room_id, agenda_item_id, message_type, sequence, content_text) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),(select value from wr_ids where key='room_a'),(select value from wr_ids where key='agenda_a'),'OWNER_MESSAGE',1,'duplicate'); raise exception 'duplicate sequence accepted'; exception when unique_violation then null; end;
-  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, automatic_round_limit, token_budget, audit_baseline_ref, audit_baseline_sha) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'bad-round','Bad','FORMAL_MEETING',3,1); raise exception 'round >2 accepted'; exception when check_violation then null; end;
-  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget, audit_baseline_ref, audit_baseline_sha) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'bad-sha','Bad','AUDIT_REVIEW',1,'PR-27','BAD'); raise exception 'bad SHA accepted'; exception when check_violation then null; end;
+  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, automatic_round_limit, token_budget, audit_baseline_ref, audit_baseline_sha) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'bad-round','Bad','FORMAL_MEETING','owner-a',3,1); raise exception 'round >2 accepted'; exception when check_violation then null; end;
+  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget, audit_baseline_ref, audit_baseline_sha) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'bad-sha','Bad','AUDIT_REVIEW','owner-a',1,'PR-27','BAD'); raise exception 'bad SHA accepted'; exception when check_violation then null; end;
 end $$;
 
 do $$ declare missing text; begin
@@ -109,8 +109,8 @@ end $$;
 
 -- Audit readiness negative controls.
 do $$ declare bad_room uuid; begin
-  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget)
-    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'missing-auditor','Missing Auditor','AUDIT_REVIEW',100)
+  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget)
+    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'missing-auditor','Missing Auditor','AUDIT_REVIEW','owner-missing',100)
     returning room_id into bad_room;
   insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name)
     values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),bad_room,'HUMAN','owner-missing','HUMAN','OWNER','Owner');
@@ -118,8 +118,8 @@ do $$ declare bad_room uuid; begin
 end $$;
 
 do $$ declare bad_room uuid; begin
-  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget, audit_baseline_ref, audit_baseline_sha)
-    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'two-auditors','Two Auditors','AUDIT_REVIEW',100,'PR-27',repeat('c',40)) returning room_id into bad_room;
+  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget, audit_baseline_ref, audit_baseline_sha)
+    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'two-auditors','Two Auditors','AUDIT_REVIEW','owner-two',100,'PR-27',repeat('c',40)) returning room_id into bad_room;
   insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name)
     values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),bad_room,'HUMAN','owner-two','HUMAN','OWNER','Owner'),
            ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),bad_room,'HUMAN','auditor-two-a','HUMAN','INDEPENDENT_AUDITOR','Auditor A'),
@@ -128,8 +128,8 @@ do $$ declare bad_room uuid; begin
 end $$;
 
 do $$ declare bad_room uuid; begin
-  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget, audit_baseline_ref, audit_baseline_sha)
-    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'shared-principal','Shared Principal','AUDIT_REVIEW',100,'PR-27',repeat('d',40)) returning room_id into bad_room;
+  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget, audit_baseline_ref, audit_baseline_sha)
+    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'shared-principal','Shared Principal','AUDIT_REVIEW','owner-shared',100,'PR-27',repeat('d',40)) returning room_id into bad_room;
   insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name)
     values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),bad_room,'HUMAN','owner-shared','HUMAN','OWNER','Owner'),
            ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),bad_room,'HUMAN','shared','HUMAN','BUILDER','Builder');
@@ -153,8 +153,8 @@ do $$ begin
 end $$;
 
 do $$ declare free_room uuid; agenda uuid; auditor uuid; begin
-  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget)
-    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'free-outcome','Free','FREE_DISCUSSION',100) returning room_id into free_room;
+  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget)
+    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'free-outcome','Free','FREE_DISCUSSION','owner-free',100) returning room_id into free_room;
   insert into public.project_room_agenda_items (tenant_id, application_id, room_id, sequence, title, objective, token_budget)
     values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),free_room,1,'Free','Discuss',50) returning agenda_item_id into agenda;
   insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name)
@@ -180,8 +180,8 @@ do $$ declare builder_id uuid; begin
 end $$;
 
 do $$ declare formal_room uuid; formal_agenda uuid; formal_auditor uuid; begin
-  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget)
-    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'formal-outcome','Formal','FORMAL_MEETING',100) returning room_id into formal_room;
+  insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget)
+    values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'formal-outcome','Formal','FORMAL_MEETING','owner-formal',100) returning room_id into formal_room;
   insert into public.project_room_agenda_items (tenant_id, application_id, room_id, sequence, title, objective, token_budget)
     values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),formal_room,1,'Formal','Discuss',50) returning agenda_item_id into formal_agenda;
   insert into public.project_room_participants (tenant_id, application_id, room_id, principal_type, principal_id, participant_type, role, display_name)
@@ -218,7 +218,7 @@ end $$;
 -- Analytics is read-only at the actual privilege boundary.
 set local role nippan_analytics;
 do $$ begin
-  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, token_budget) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'analytics-write','Bad','FORMAL_MEETING',10); raise exception 'analytics INSERT succeeded'; exception when insufficient_privilege then null; end;
+  begin insert into public.project_rooms (tenant_id, application_id, project_key, title, mode, created_by_principal_id, token_budget) values ((select value from wr_ids where key='tenant_a'),(select value from wr_ids where key='app_a'),'analytics-write','Bad','FORMAL_MEETING','analytics',10); raise exception 'analytics INSERT succeeded'; exception when insufficient_privilege then null; end;
   begin update public.project_rooms set title='Bad' where room_id=(select value from wr_ids where key='room_a'); raise exception 'analytics UPDATE succeeded'; exception when insufficient_privilege then null; end;
   begin delete from public.project_rooms where room_id=(select value from wr_ids where key='room_a'); raise exception 'analytics DELETE succeeded'; exception when insufficient_privilege then null; end;
 end $$;
