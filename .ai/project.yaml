@@ -128,6 +128,20 @@ audit:
     highest_crossed_gate_percent: 50
     status: catch_up_audit_required
 
+parallel_design_tracks:
+  war_room_v1:
+    status: proposal_only
+    tracking_issue: 19
+    proposal: docs/proposals/WAR_ROOM_V1_PROPOSAL.md
+    counts_toward_current_phase_progress: false
+    implementation_authorized: false
+    blocked_by_audit_issue: 18
+    owner_final_authority: true
+    autonomous_round_limit_default: 2
+    infinite_agent_loops_allowed: false
+    ai_consensus_is_binding: false
+    formal_audit_replacement_allowed: false
+
 deferred:
   - cloudflare_ai_gateway
   - hyperdrive
