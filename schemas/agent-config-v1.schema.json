@@ -27,7 +27,9 @@
     "created_by",
     "created_at",
     "published_at",
-    "supersedes_version_id"
+    "supersedes_version_id",
+    "published_config_hash",
+    "policy_merge_version"
   ],
   "properties": {
     "config_version_id": {
@@ -258,6 +260,24 @@
           "type": "null"
         }
       ]
+    },
+    "published_config_hash": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "SHA-256 of canonical published Agent Config plus referenced immutable policy IDs/content hashes and policy_merge_version. Non-null for PUBLISHED/SUPERSEDED."
+    },
+    "policy_merge_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Version identifier of the normative effective-policy merge semantics."
     }
   },
   "description": "Serialized Agent Config Version. Markdown Agent Policy Contract is normative for policy semantics; every *_policy_ref identifies an immutable policy version.",
@@ -281,6 +301,10 @@
           "published_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "published_config_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
           }
         }
       }
@@ -302,6 +326,9 @@
       "then": {
         "properties": {
           "published_at": {
+            "type": "null"
+          },
+          "published_config_hash": {
             "type": "null"
           }
         }
