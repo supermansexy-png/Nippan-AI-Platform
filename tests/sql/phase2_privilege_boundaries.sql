@@ -66,9 +66,16 @@ insert into phase2_privilege_expectations values
   ('ai_calls',               true,  true,  true,  true, false, false, true),
   ('tool_calls',             true,  true,  true,  true, false, false, true),
   ('retrieval_events',       true,  true,  true,  true, false, false, true),
-  ('idempotency_records',    true,  true,  true,  true, true,  true,  true),
-  ('usage_events',           true,  true,  false, true, false, false, true),
-  ('audit_events',           true,  true,  false, true, true,  false, true);
+  ('idempotency_records',          true,  true,  true,  true, true,  true,  true),
+  ('usage_events',                 true,  true,  false, true, false, false, true),
+  ('audit_events',                 true,  true,  false, true, true,  false, true),
+  ('project_rooms',                true,  true,  true,  true, true,  true,  true),
+  ('project_room_participants',    true,  false, false, true, true,  true,  true),
+  ('project_room_agenda_items',    true,  true,  true,  true, true,  true,  true),
+  ('project_room_messages',        true,  true,  false, true, true,  false, true),
+  ('project_room_findings',        true,  true,  true,  true, true,  true,  true),
+  ('project_room_decisions',       true,  true,  false, true, true,  false, true),
+  ('project_room_action_items',    true,  true,  true,  true, true,  true,  true);
 
 do $$
 declare
