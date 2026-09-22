@@ -71,6 +71,10 @@ This environment did not have `docker` or `psql`, so the suite was not executed 
 
 No automatic 30-day TTL or retention worker is created. Future redaction requires a separately reviewed maintenance role, narrowly scoped content updates, idempotent retry behavior and an append-only `audit_events` record for each redaction.
 
+## Rollback boundary
+
+Before any room data exists in a disposable environment, rollback is a reviewed reverse-FK drop of action items, decisions, findings, messages, agenda items, participants, rooms and War Room-only helper functions/policies. After data exists, do not destructive-drop as routine rollback: disable entrypoints, revoke mutation grants, preserve data for export/forensics and use a corrective forward migration. Production rollback/application remains outside this commit.
+
 ## Limitations requiring audit review
 
 - PostgreSQL execution was not available on the current workstation.
