@@ -1,3 +1,17 @@
 # Schemas
 
-Contracts will live here after Foundation v1: Task Packet, Bot Profile, Model Policy, Tool Policy, Memory records, Telemetry events, and Review decisions.
+Machine-readable Foundation contracts.
+
+Current:
+- `platform-identity-v1.schema.json`
+- `agent-config-v1.schema.json`
+- `request-envelope-v1.schema.json`
+
+These schemas are contracts, not final PostgreSQL DDL.
+
+Upcoming after review:
+- model policy
+- memory policy
+- tool policy
+- telemetry event schemas
+- database migrations
