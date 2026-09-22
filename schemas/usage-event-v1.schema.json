@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://nippan.org/schemas/usage-event-v1.schema.json",
   "title": "Nippan Immutable Usage Event v1",
-  "description": "Append-only measurable usage event used to rebuild usage/cost aggregates. Markdown Request/Trace/Usage Contract is normative for semantics.",
+  "description": "Append-only Application-attributable measurable/billable usage event used to rebuild usage/cost aggregates. Platform/tenant-scoped admin/health telemetry without application attribution is outside this ledger. Markdown Request/Trace/Usage Contract is normative for semantics.",
   "type": "object",
   "additionalProperties": false,
   "required": [
