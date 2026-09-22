@@ -84,7 +84,7 @@ Control Plane: versioned Dashboard/Admin Center
 
 Phase 2: **PostgreSQL/RLS design and Core Runtime Skeleton**
 
-Phase 1 contracts are frozen at Markdown/JSON Schema level. Current work is translating those contracts into PostgreSQL/RLS design, reproducible migrations, isolation tests and the minimal FastAPI Core runtime skeleton before deploying production infrastructure.
+Phase 1 contracts are frozen at Markdown/JSON Schema level. The core identity/config PostgreSQL baseline is now applied to Supabase `nippan-ai-platform`; current work continues with telemetry/usage migrations, repeatable isolation tests and the minimal FastAPI Core runtime skeleton.
 
 ## Protected production systems
 
@@ -92,3 +92,4 @@ Phase 1 contracts are frozen at Markdown/JSON Schema level. Current work is tran
 - existing Personal Assistant / n8n production workflows
 
 Do not migrate or rewrite them during the current phase.
+
