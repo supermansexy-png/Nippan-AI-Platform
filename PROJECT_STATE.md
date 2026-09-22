@@ -90,6 +90,39 @@ Initial FastAPI skeleton is checked in at `services/core`:
 - explicit Agent <-> Channel bindings
 - SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
 
+## Independent Audit System
+Status: ACTIVE
+
+Authoritative protocol:
+- `docs/audits/AUDIT_SYSTEM_V1.md`
+
+Mandatory progress gates:
+- 25%
+- 50%
+- 75%
+- 90%
+- 100%
+
+Immediate triggers:
+- major architecture changes
+- major security/authorization changes
+- major PostgreSQL/schema/RLS changes
+
+Independence:
+- Builder cannot self-approve
+- BLOCKER findings halt milestone advancement
+- remediation of a BLOCKER requires independent re-audit
+- 100% must PASS before milestone DONE
+- Primary Independent Auditor: Claude Opus 5 through OpenRouter, replaceable by configuration
+- specialist auditors may supplement the primary auditor
+
+Phase 2 catch-up status:
+- current ROADMAP enumerates 19 Phase 2 deliverables
+- 11 are recorded complete and 8 pending
+- equal-weight baseline progress: 57.9%
+- highest crossed gate: 50%
+- catch-up 50% audit is now due
+
 ## AI team policy
 Specialist models may draft/review work, but architecture remains governed by Foundation + ADRs + assigned issues.
 
@@ -106,12 +139,14 @@ Jev or any model never replaces deterministic authorization, risk or privacy pol
 Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1, Vectorize, Cloudflare Workflows, dedicated vector DB, Kubernetes and unnecessary microservices.
 
 ## Immediate next gate
-1. Run `tests/sql/phase2_isolation_invariants.sql` with a CI/test principal allowed to `SET ROLE nippan_runtime`.
-2. Add request persistence/tracing service boundaries to FastAPI Core.
-3. Add deterministic policy/config interfaces.
-4. Add OpenRouter adapter interface without locking production model IDs.
-5. Add MCP authorization interface and synthetic end-to-end request path.
-6. Keep memory/pgvector tables deferred until embedding benchmarks choose model/dimension.
+1. Run the Phase 2 catch-up 50% Independent Audit and record it under `docs/audits/`.
+2. Resolve and independently re-audit any BLOCKER findings before milestone advancement.
+3. Run `tests/sql/phase2_isolation_invariants.sql` with a CI/test principal allowed to `SET ROLE nippan_runtime`.
+4. Add request persistence/tracing service boundaries to FastAPI Core.
+5. Add deterministic policy/config interfaces.
+6. Add OpenRouter adapter interface without locking production model IDs.
+7. Add MCP authorization interface and synthetic end-to-end request path.
+8. Keep memory/pgvector tables deferred until embedding benchmarks choose model/dimension.
 
 ## Production migration
 Not allowed in current phase.
