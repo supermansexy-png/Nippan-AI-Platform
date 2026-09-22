@@ -7,7 +7,7 @@ Do not merely agree with the proposal. Treat this as a pre-implementation archit
 ## Read first
 
 1. `README.md`
-2. `ARCHITECTURE_DRAFT.md`
+2. `docs/architecture/FOUNDATION_DRAFT.md`
 3. `ROADMAP.md`
 4. `PROJECT_STATE.md`
 5. `AGENTS.md`
