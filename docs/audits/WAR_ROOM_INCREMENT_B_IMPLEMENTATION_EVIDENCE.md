@@ -6,6 +6,7 @@ Status: **IMPLEMENTATION COMMITTED / APPLICATION NOT AUTHORIZED**
 
 - Implementation branch: `war-room/increment-b-schema-implementation`
 - Audited design base: `72932d76c03e36ce209357f581282526ccf4a9ac`
+- Implementation commit: `7b0d52af78956205eaaf3978c96c38376761a2f0`
 - Migration: `migrations/20260923010000_war_room_increment_b_schema.sql`
 - Migration blob SHA: `d41a08f86f2206f345c6e3eea823ef8a80885a1b`
 - Test suite: `tests/sql/war_room_increment_b_invariants.sql`
@@ -75,4 +76,4 @@ No automatic 30-day TTL or retention worker is created. Future redaction require
 - PostgreSQL execution was not available on the current workstation.
 - Migration apply/reapply, rollback/forward-fix and full ACL/RLS behavior remain unverified until disposable PostgreSQL CI runs.
 - No Supabase or production credentials were used.
-- Implementation commit and migration checksum must be filled after commit in the final handoff.
+- PostgreSQL execution and migration checksum were recorded, but the checksum must be rechecked by the independent disposable-PostgreSQL run.
