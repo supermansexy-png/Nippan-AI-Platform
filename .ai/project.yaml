@@ -1,75 +1,57 @@
 project: nippan-ai-platform
-status: architecture_review
+status: foundation_v1_accepted
 date: 2026-09-22
 
-purpose:
-  shared_ai_core: true
-  multi_bot: true
-  thai_first: true
-  cost_optimized: true
-  multi_ai_development: true
+principles:
+  easy_to_operate: true
+  easy_to_debug: true
+  high_performance: true
+  cost_efficient: true
+  flexible: true
+  extensible: true
+  complexity_requires_evidence: true
 
-protected_systems:
-  ai_nippan:
-    repository: supermansexy-png/Ai-Nippan
-    production: true
-    modify_during_foundation_review: false
-  personal_line_assistant:
-    production: true
-    migrate_now: false
+product_model:
+  multi_tenant: true
+  supports:
+    - bots
+    - websites
+    - web_apps
+    - mobile_apps
+    - desktop_apps
+    - internal_agents
+    - future_rental_saas
+  hierarchy:
+    - tenant
+    - workspace
+    - application
+    - agent
+    - channel
+    - conversation
 
 architecture:
+  edge_gateway: cloudflare_workers
+  realtime_runtime: fastapi
   model_gateway: openrouter
-  orchestration: n8n
+  orchestration_background: n8n
   system_of_record: postgresql
   vector_memory: pgvector
+  retrieval: hybrid
+  tool_interface: nippan_mcp
+  background_queue: cloudflare_queues
   machine_file_store: cloudflare_r2
   human_document_store: google_drive
   reporting_surface: google_sheets
-  edge_gateway: cloudflare_workers
-  background_queue: cloudflare_queues
-  tool_interface: nippan_mcp
+  control_plane: dashboard
+  data_plane: core_runtime
 
-cloudflare:
-  planned:
-    - workers
-    - queues
-    - r2
-  evaluate:
-    - analytics_engine
-    - ai_gateway
-    - hyperdrive
-    - service_bindings
-    - durable_objects
-  defer_by_default:
-    - d1
-    - vectorize
-    - workflows
-    - ai_search
-
-ai_pipeline:
-  deterministic_precheck: true
-  memory_retrieval_before_main_model: true
-  context_compiler:
-    optional: true
-    preserve_raw_request: true
+context:
+  default: deterministic
+  preserve_raw_request: true
+  compiler:
+    enabled_by_default: false
     benchmark_required: true
-  model_policy:
-    free_first_for_low_risk: true
-    cheap_default: true
-    reliable_for_tools: true
-    premium_as_escalation: true
-  reviewer:
-    risk_based: true
-    independent_for_high_risk: true
-
-data_scope_keys:
-  - tenant_id
-  - bot_id
-  - channel_id
-  - user_id
-  - conversation_id
-  - request_id
+    conditional_only: true
 
 risk_classes:
   - READ
@@ -85,16 +67,53 @@ privacy_classes:
   - FINANCIAL_CUSTOMER
   - SECRET_CREDENTIAL
 
-current_phase:
-  name: foundation_architecture_review
-  implementation_allowed: false
-  next_gate: reconcile_two_independent_ai_reviews
+policy:
+  model_cannot_downgrade_risk: true
+  tool_allowlist_required: true
+  schema_validation_required: true
+  side_effect_idempotency_required: true
+  privacy_gate_before_model: true
+  destructive_financial_human_approval_supported: true
 
-task_states:
-  - BACKLOG
-  - READY
-  - IN_PROGRESS
-  - REVIEW
-  - BLOCKED
-  - NEEDS_DECISION
-  - DONE
+scope_keys:
+  - tenant_id
+  - application_id
+  - agent_id
+  - channel_id
+  - user_id
+  - conversation_id
+  - request_id
+
+observability:
+  shared_request_id: true
+  edge: cloudflare_logs_traces
+  ai: openrouter_usage
+  system_truth: postgresql_ops_audit
+  background: n8n_execution_history
+
+deferred:
+  - cloudflare_ai_gateway
+  - hyperdrive
+  - durable_objects
+  - analytics_engine
+  - redis
+  - d1
+  - vectorize
+  - cloudflare_workflows
+  - dedicated_vector_database
+  - kubernetes
+  - unnecessary_microservices
+
+protected_systems:
+  ai_nippan:
+    repository: supermansexy-png/Ai-Nippan
+    production: true
+    migrate_now: false
+  personal_line_assistant:
+    production: true
+    migrate_now: false
+
+current_phase:
+  name: contracts_and_data_foundation
+  production_migration_allowed: false
+  next_gate: contracts_and_schema_review
