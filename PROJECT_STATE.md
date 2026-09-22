@@ -3,10 +3,10 @@
 Updated: 2026-09-23
 
 ## Phase
-FOUNDATION V1 ACCEPTED / PHASE 2 STARTING
+FOUNDATION V1 ACCEPTED / PHASE 2 IN PROGRESS
 
 ## Current objective
-Convert frozen Phase 1 contracts into PostgreSQL/RLS design and the first Core Runtime Skeleton boundaries without touching production systems.
+Build the Supabase PostgreSQL/RLS foundation and the first Core Runtime Skeleton boundaries without touching protected legacy production systems.
 
 ## Accepted architecture
 See:
@@ -42,7 +42,10 @@ See:
 ### PHASE 2 STARTED
 - Issue #10: PostgreSQL + pgvector logical schema
   - `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md`
-  - status: draft implementation handoff; no executable DDL yet
+  - status: core identity/config baseline applied to Supabase `nippan-ai-platform`
+  - migrations: `20260922174011_phase2_core_foundation.sql`, `20260922174227_phase2_core_fk_indexes.sql`
+  - 12 tenant-owned tables have RLS enabled; direct `anon`, `authenticated` and `service_role` table grants are revoked
+  - tenant isolation smoke test and Supabase security advisor passed
 
 ## Core direction
 - Thin Cloudflare Worker edge gateway
@@ -74,11 +77,12 @@ Jev or any model never replaces deterministic authorization, risk or privacy pol
 Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1, Vectorize, Cloudflare Workflows, dedicated vector DB, Kubernetes and unnecessary microservices.
 
 ## Immediate next gate
-1. Review `docs/data/POSTGRES_LOGICAL_SCHEMA_V1.md` against the frozen contracts.
-2. Decide migration tooling, role names, enum/domain strategy and UUID generation source.
-3. Write reproducible PostgreSQL migrations and isolation tests.
-4. Build the minimal FastAPI Core skeleton against the accepted schema boundaries.
-5. Build benchmark fixtures/runs before locking production model roles.
+1. Add request/trace, idempotency, usage and audit migrations.
+2. Add repeatable SQL isolation/invariant tests for all tenant-owned tables.
+3. Build the minimal FastAPI Core skeleton against the accepted schema boundaries.
+4. Add memory tables after benchmark fixtures choose an embedding model and dimension.
+5. Build benchmark runs before locking production model roles.
 
 ## Production migration
 Not allowed in current phase.
+
