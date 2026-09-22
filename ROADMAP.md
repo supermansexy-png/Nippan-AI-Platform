@@ -103,6 +103,25 @@ Exit:
 - isolation/invariant suite runs repeatably
 - no production traffic
 
+## Parallel Design Track — Nippan AI War Room V1
+Status: PROPOSAL ONLY / IMPLEMENTATION BLOCKED BY PHASE 2 AUDIT GATE
+
+Tracking:
+- Issue #19
+- `docs/proposals/WAR_ROOM_V1_PROPOSAL.md`
+
+Design work may continue while Audit #18 is pending, but this track does not change Phase 2 progress and does not authorize runtime code, database migrations, production deployment or architecture acceptance.
+
+Planned capability:
+- visible multi-agent project chat room
+- Project Owner can interrupt, ask one/all roles, pause/resume/stop
+- controlled independent first round + bounded challenge round
+- Chair synthesis and NEEDS_OWNER_DECISION gates
+- token/cost budgets with hard stop
+- Free Discussion / Formal Meeting / Audit Review modes
+- durable decisions/action items
+- formal Independent Audit remains separate and cannot be replaced by AI consensus
+
 ## Phase 3 — Edge and Reliability
 
 Deliver:
@@ -141,6 +160,7 @@ Deliver a minimal dashboard for:
 - usage/cost
 - errors
 - approval queue
+- Nippan AI War Room internal project collaboration surface, subject to accepted implementation plan
 
 Do not build full SaaS billing yet.
 
