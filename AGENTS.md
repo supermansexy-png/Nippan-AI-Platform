@@ -9,8 +9,9 @@ Before proposing or changing anything:
 2. `.ai/project.yaml`
 3. `PROJECT_STATE.md`
 4. `ROADMAP.md`
-5. Relevant architecture/decision documents
-6. Assigned task or review brief
+5. `docs/audits/AUDIT_SYSTEM_V1.md`
+6. Relevant architecture/decision documents
+7. Assigned task or review brief
 
 ## Work rules
 
@@ -24,9 +25,26 @@ Before proposing or changing anything:
 - Expensive/reliable models should be escalation paths, not the default for all tasks.
 - A worker model must not be the sole approver of high-risk/destructive actions.
 - High-risk architecture/security/data changes require independent review.
+- Project milestones are subject to mandatory independent Audit Gates at 25%, 50%, 75%, 90% and 100% progress.
+- Major architecture, security/authorization or PostgreSQL/schema/RLS changes trigger an immediate independent audit regardless of progress percentage.
+- A Builder must not approve its own milestone or close its own BLOCKER audit finding.
+- BLOCKER audit findings halt milestone advancement until independently re-audited.
+- The 100% Audit Gate must PASS before a milestone is marked DONE.
 - Any new managed service must justify operational benefit versus added complexity and recurring cost.
 - Avoid duplicating capabilities across Cloudflare, OpenRouter, n8n, and PostgreSQL without a measurable reason.
 - Design every reusable component to be scoped by bot/tenant/user/channel where appropriate.
+
+## Audit protocol
+
+The authoritative project-level audit rules are in `docs/audits/AUDIT_SYSTEM_V1.md`.
+
+- Audit progress is based on explicit milestone deliverables, not elapsed calendar time.
+- If deliverable weights are not defined, use equal weights.
+- Crossing a gate creates an audit obligation even if implementation has already progressed beyond it.
+- Primary Independent Auditor: Claude Opus 5 via OpenRouter, replaceable through project configuration.
+- Prefer an auditor model/model family different from the Builder where practical.
+- Specialist security/domain auditors may supplement, but do not replace, the mandatory independent gate.
+- Audit reports are durable repository artifacts under `docs/audits/`.
 
 ## Status protocol
 
@@ -44,6 +62,9 @@ If a major architectural decision is unresolved, mark it NEEDS_DECISION rather t
 ## Handoff format
 
 Every AI contribution should end with:
+
+### Progress / Audit
+Current milestone progress, highest crossed Audit Gate, and whether an audit is due.
 
 ### Findings
 Facts verified from code/docs/data.
