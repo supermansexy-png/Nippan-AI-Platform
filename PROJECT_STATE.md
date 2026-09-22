@@ -122,6 +122,10 @@ Phase 2 catch-up status:
 - equal-weight baseline progress: 57.9%
 - highest crossed gate: 50%
 - catch-up 50% audit is now due
+- evidence packet: `docs/audits/PHASE2_50_AUDIT_EVIDENCE_PACKET.md`
+- tracking: Issue #18
+- independent audit outcome: PENDING
+- milestone implementation advancement: ON HOLD until independent audit outcome permits continuation
 
 ## AI team policy
 Specialist models may draft/review work, but architecture remains governed by Foundation + ADRs + assigned issues.
