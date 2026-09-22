@@ -170,8 +170,11 @@ declare
   t text;
   visible_count bigint;
 begin
+  -- Only tables readable by nippan_runtime belong in this visibility check.
+  -- Control-plane-only tables such as workspaces are asserted separately by
+  -- tests/sql/phase2_privilege_boundaries.sql.
   foreach t in array array[
-    'tenants','workspaces','applications','agents','channels','agent_channel_bindings',
+    'tenants','applications','agents','channels','agent_channel_bindings',
     'subjects','subject_identities','conversations','policy_versions','agent_config_versions',
     'agent_activations','requests','trace_spans','trace_span_links','ai_calls','tool_calls',
     'retrieval_events','idempotency_records','usage_events','audit_events'
