@@ -1,0 +1,47 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException
+
+from .config_repository import ConfigRepository
+from .db import Database
+from .settings import get_settings
+
+settings = get_settings()
+database = Database(settings)
+config_repository = ConfigRepository(database)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await database.open()
+    try:
+        yield
+    finally:
+        await database.close()
+
+
+app = FastAPI(
+    title="Nippan AI Platform Core",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {
+        "status": "ok",
+        "service": "nippan-core",
+        "environment": settings.environment,
+    }
+
+
+@app.get("/ready")
+async def ready() -> dict[str, str]:
+    if not database.configured:
+        raise HTTPException(status_code=503, detail="database_not_configured")
+
+    if not await database.ping():
+        raise HTTPException(status_code=503, detail="database_unavailable")
+
+    return {"status": "ready"}
