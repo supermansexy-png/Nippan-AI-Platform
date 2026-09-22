@@ -236,9 +236,10 @@ Required:
 - activated_by
 
 Rules:
-- at most one active activation exists per Agent + environment
-- the referenced config version must be PUBLISHED and belong to the same Tenant/Application/Agent
-- rollback repoints the environment activation to a previously published immutable config version
+- zero or one current AgentActivation row exists per Agent + environment; the row itself is the current activation pointer, not an activation-history record
+- the referenced config version must be PUBLISHED, belong to the same Tenant/Application/Agent, and its target environment must equal the activation environment
+- publish/rollback updates the current activation pointer to a previously published immutable config version
+- activation history is recorded in audit events rather than retained as multiple competing activation rows
 - changing activation is audited; activating does not mutate the Agent or config version
 
 ## 9. Channel
@@ -532,7 +533,7 @@ These rules must be testable:
 
 1. Child tenant_id must match its parent's tenant_id.
 2. Agent and Channel binding cannot cross tenants/applications and binding environment is explicit.
-3. Agent activation cannot cross Tenant/Application/Agent scope and is unique per Agent + environment.
+3. Agent activation cannot cross Tenant/Application/Agent scope, is unique as the current row per Agent + environment, and may reference only a PUBLISHED config whose target environment matches the activation environment.
 4. Conversation channel must belong to same tenant/application.
 5. primary_agent_id, when set, must belong to same application.
 6. SubjectIdentity uniqueness is `tenant_id + channel_id + provider + external_subject_id`.
