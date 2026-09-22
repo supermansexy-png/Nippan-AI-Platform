@@ -53,7 +53,9 @@ from public.project_room_participants where room_id = (select value from wr_ids 
 
 -- Positive message and deterministic sequence.
 insert into public.project_room_messages (tenant_id, application_id, room_id, agenda_item_id, participant_id, request_id, message_type, evidence_kind, round_number, sequence, content_text)
-select (select value from wr_ids where key='tenant_a'), (select value from wr_ids where key='app_a'), (select value from wr_ids where key='room_a'), (select value from wr_ids where key='agenda_a'), participant_id, (select value from wr_ids where key='request_a'), 'AGENT_MESSAGE', 'VERIFIED_EVIDENCE', 1, 1, 'Evidence';
+select (select value from wr_ids where key='tenant_a'), (select value from wr_ids where key='app_a'), (select value from wr_ids where key='room_a'), (select value from wr_ids where key='agenda_a'), p.participant_id, (select value from wr_ids where key='request_a'), 'AGENT_MESSAGE', 'VERIFIED_EVIDENCE', 1, 1, 'Evidence'
+from public.project_room_participants p
+where p.room_id = (select value from wr_ids where key='room_a') and p.role = 'INDEPENDENT_AUDITOR';
 
 -- RLS positive and fail-closed controls.
 set local role nippan_runtime;
