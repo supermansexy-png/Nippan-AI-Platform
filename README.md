@@ -117,7 +117,7 @@ The current Nippan customer bot already has useful components:
 - Control Center
 - tests
 
-This proposal treats that bot as an existing application to integrate later, not code to replace now.
+This repository treats that bot as an existing application to integrate later, not code to replace now.
 
 ## Review status
 
@@ -125,7 +125,7 @@ This document is intentionally architectural rather than implementation-complete
 Two independent AI reviewers should analyze this proposal before the team freezes Foundation v1.
 
 See:
-- `ARCHITECTURE_DRAFT.md`
+- `docs/architecture/FOUNDATION_DRAFT.md`
 - `ROADMAP.md`
 - `AGENTS.md`
 - `AI_REVIEW_BRIEF.md`
