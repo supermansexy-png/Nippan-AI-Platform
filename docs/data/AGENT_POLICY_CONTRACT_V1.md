@@ -4,6 +4,8 @@ Status: **REVIEW**
 Issue: #8  
 Date: 2026-09-22
 
+**Normativity:** This Markdown contract is normative for Agent/policy semantics and invariants. `schemas/agent-config-v1.schema.json` is normative for the serialized Agent Config Version document and must not conflict with this contract.
+
 ## 1. Purpose
 
 Define how an Agent is configured, tested, published, rolled back and constrained without changing application code.
@@ -38,6 +40,17 @@ Platform hard guardrails
 A child layer may narrow permissions.
 A child layer may not widen permissions forbidden by a parent.
 
+Canonical effective-policy merge semantics:
+- allowlists/capability sets are intersected
+- denylists/blocked sets are unioned
+- numeric upper bounds, quotas and budgets use the minimum applicable value
+- boolean permission grants require all applicable parent layers to allow them
+- mandatory controls, privacy restrictions and approval requirements use the strongest applicable requirement
+- runtime hints may only narrow
+- unknown policy fields or feature flags cannot widen permissions and are rejected or treated as disabled
+
+All services that inspect or enforce effective policy (Core, MCP and Control Plane inspection) use the same merge semantics/version.
+
 Models/prompts cannot override deterministic policy.
 
 ## 4. Agent Profile
@@ -50,11 +63,12 @@ Stable Agent identity:
 - display_name
 - role
 - status
-- active_config_version_id
 - created_at
 - updated_at
 
 The profile must not contain provider credentials or hard-coded production secrets.
+
+Agent activation is stored separately and is keyed by Agent + environment. The Agent row does not contain a singular active-config pointer.
 
 ## 5. Agent Config Version
 
@@ -83,6 +97,12 @@ Required:
 - supersedes_version_id nullable
 - change_note
 
+Policy-reference semantics:
+- every `*_policy_ref` points to an immutable policy **version**, not a mutable policy identity
+- a referenced policy version belongs to the same Tenant/Application unless it is explicitly platform-shared and immutable
+- publishing resolves the referenced policy versions into a reproducible effective policy/config snapshot and hash
+- mutable provider/model capability metadata must not silently change the historical meaning of a published effective configuration
+
 Lifecycle:
 ```text
 DRAFT -> TESTING -> PUBLISHED -> SUPERSEDED
@@ -94,9 +114,11 @@ Rules:
 - DRAFT may be edited.
 - TESTING is frozen for a test run/snapshot.
 - PUBLISHED is immutable.
-- only one active published version per Agent + environment.
-- rollback activates a prior published version; it does not copy/edit it.
+- only one active published version per Agent + environment through the separate activation relationship.
+- `version_number` is unique within Agent + environment.
+- rollback repoints that environment's activation to a prior published version; it does not copy/edit it.
 - every publish/rollback creates an audit event.
+- TESTING and PUBLISHED snapshots are frozen; changes create a new version.
 
 ## 6. Persona and instructions
 
@@ -177,7 +199,9 @@ retrieval_mode:
 
 Rules:
 - memory retrieval is tenant/application/subject scoped.
-- cross-Agent memory access is denied unless explicitly allowed.
+- tenant-global Subject identity never implies cross-Application memory access.
+- cross-Application memory read/write is denied unless a future explicit governed capability permits it.
+- cross-Agent memory access is denied unless explicitly allowed by canonical scope values.
 - inferred memories do not outrank verified structured facts.
 - model does not decide its own unrestricted memory scope.
 - sensitive memory follows privacy policy and retention rules.
@@ -205,7 +229,9 @@ Per-tool constraints may define:
 
 Rules:
 - deny by default.
-- MCP server validates policy independently from prompt/model.
+- Core establishes an authoritative execution authorization context containing at least request_id, tenant_id, application_id, agent_id, environment/principal identity and effective config/policy identity.
+- MCP server validates trusted context and effective policy independently from prompt/model; tenant/application/agent IDs supplied by a model or arbitrary tool payload are never authority.
+- authenticated internal context or server-side lookup are both permitted implementations; this contract does not require one token/signature format.
 - tool schemas are validated before execution.
 - side-effecting tools require request/idempotency context.
 - Agent cannot discover or call tools outside effective allowlist.
@@ -311,6 +337,8 @@ Fields:
 Rules:
 - effective budget is the minimum allowed across platform/tenant/application/agent scopes.
 - hard stop must be possible per Tenant, Application and Agent.
+- budget/quota enforcement must use an atomic reservation/accounting approach rather than an unsafe check-then-act flow when concurrent requests can race.
+- final model/tool usage and cost are reconciled after execution; reservation strategy is an implementation decision.
 - budget exhaustion has explicit degraded behavior.
 - usage is measured even if billing is not enabled.
 
@@ -335,6 +363,7 @@ Each flag:
 
 Rules:
 - flags cannot bypass security/policy.
+- flag keys and value shapes must be registered/validated; unknown flags cannot become hidden authorization paths.
 - production flags are auditable and versioned when part of Agent config.
 - emergency kill switch may exist outside normal publish flow with audit logging.
 
@@ -364,7 +393,7 @@ Platform guardrails
 = Effective Agent Runtime Config
 ```
 
-The effective config receives an immutable hash/reference stored with request traces.
+The effective config receives an immutable hash/reference stored with request traces. The hash covers the resolved immutable policy-version set and the normative merge-semantics version so the effective decision can be reproduced later.
 
 This allows Dashboard to answer:
 "Which exact configuration produced this response?"
@@ -425,16 +454,17 @@ Audit record includes:
 
 ## 21. Invariants
 
-1. Published config is immutable.
-2. Active config belongs to the same Agent/Tenant/Application.
-3. Child policy cannot widen parent entitlement.
+1. Published config and every policy version referenced by it are immutable.
+2. Active config belongs to the same Agent/Tenant/Application and is selected through Agent + environment activation.
+3. Child policy cannot widen parent entitlement and all enforcers use the same normative merge semantics.
 4. Unknown tool/action is denied by default.
 5. Fallback model cannot violate privacy restrictions.
 6. Agent prompt cannot grant tool/data permission.
 7. Secrets are references, never config plaintext.
 8. Every production execution records effective_config_version/hash.
-9. Rollback points only to a previously published valid version.
-10. Quota/budget can block execution independently of model response.
+9. MCP/tool authorization uses trusted server-established context, never model-asserted scope as authority.
+10. Rollback points only to a previously published valid version.
+11. Quota/budget can block execution independently of model response and concurrent hard-stop enforcement is atomic/reserved.
 
 ## 22. Explicit non-goals
 
