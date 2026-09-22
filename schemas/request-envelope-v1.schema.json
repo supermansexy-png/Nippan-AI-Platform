@@ -8,14 +8,12 @@
     "request_id",
     "trace_id",
     "tenant_id",
-    "application_id",
-    "channel_id",
     "received_at",
     "environment",
     "request_kind",
     "source",
     "privacy_class",
-    "status"
+    "status_at_emit"
   ],
   "properties": {
     "request_id": {
@@ -24,16 +22,23 @@
     },
     "trace_id": {
       "type": "string",
-      "minLength": 16,
-      "maxLength": 64
+      "pattern": "^(?!0{32}$)[0-9a-f]{32}$",
+      "description": "W3C/OpenTelemetry-compatible 16-byte TraceId serialized as 32 lowercase hex characters; all-zero is invalid."
     },
     "tenant_id": {
       "type": "string",
       "format": "uuid"
     },
     "application_id": {
-      "type": "string",
-      "format": "uuid"
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "agent_id": {
       "anyOf": [
@@ -47,8 +52,15 @@
       ]
     },
     "channel_id": {
-      "type": "string",
-      "format": "uuid"
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "subject_id": {
       "anyOf": [
@@ -162,21 +174,6 @@
         }
       ]
     },
-    "status": {
-      "type": "string",
-      "enum": [
-        "RECEIVED",
-        "ACCEPTED",
-        "RUNNING",
-        "WAITING",
-        "SUCCEEDED",
-        "FAILED",
-        "PARTIAL",
-        "CANCELLED",
-        "BLOCKED",
-        "DEAD_LETTER"
-      ]
-    },
     "effective_config_version_id": {
       "anyOf": [
         {
@@ -194,6 +191,79 @@
         "null"
       ],
       "maxLength": 128
+    },
+    "status_at_emit": {
+      "type": "string",
+      "enum": [
+        "RECEIVED",
+        "ACCEPTED",
+        "RUNNING",
+        "WAITING",
+        "SUCCEEDED",
+        "FAILED",
+        "PARTIAL",
+        "CANCELLED",
+        "BLOCKED",
+        "DEAD_LETTER"
+      ],
+      "description": "Immutable snapshot of request status when this envelope is emitted; mutable current status belongs to the operational request record."
     }
-  }
+  },
+  "description": "Request envelope snapshot. Markdown Request/Trace/Usage Contract is normative for semantics; scope fields are conditional by request_kind.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "request_kind": {
+            "enum": [
+              "conversation",
+              "tool_action",
+              "background_job",
+              "scheduled_job",
+              "ingestion",
+              "extraction",
+              "evaluation"
+            ]
+          }
+        },
+        "required": [
+          "request_kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "application_id"
+        ],
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "request_kind": {
+            "const": "conversation"
+          }
+        },
+        "required": [
+          "request_kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "channel_id"
+        ],
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    }
+  ]
 }
