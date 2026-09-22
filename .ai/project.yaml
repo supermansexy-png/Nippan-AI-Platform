@@ -130,13 +130,17 @@ audit:
 
 parallel_design_tracks:
   war_room_v1:
-    status: increment_a_authorized
+    status: increment_a_complete_increment_b_design
     tracking_issue: 19
     proposal: docs/proposals/WAR_ROOM_V1_PROPOSAL.md
     counts_toward_current_phase_progress: false
     implementation_authorized: true
     authorized_increments:
       - A
+    design_authorized_increments:
+      - B
+    schema_design: docs/proposals/WAR_ROOM_V1_SCHEMA_RLS_DESIGN.md
+    schema_design_status: ready_for_independent_audit
     schema_migration_authorized: false
     blocked_by_audit_issue: null
     owner_final_authority: true
