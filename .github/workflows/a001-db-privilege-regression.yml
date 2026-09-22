@@ -1,0 +1,70 @@
+name: A-001 DB privilege regression
+
+on:
+  push:
+    branches:
+      - audit/a001-least-privilege
+  workflow_dispatch:
+
+jobs:
+  postgres-regression:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare Supabase-compatible local roles/extensions
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create schema if not exists extensions;
+          create extension if not exists pgcrypto with schema extensions;
+          do $$
+          begin
+            if not exists (select 1 from pg_roles where rolname = 'anon') then
+              create role anon nologin;
+            end if;
+            if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+              create role authenticated nologin;
+            end if;
+            if not exists (select 1 from pg_roles where rolname = 'service_role') then
+              create role service_role nologin;
+            end if;
+          end
+          $$;
+          SQL
+
+      - name: Apply Phase 2 migrations in order
+        run: |
+          set -euo pipefail
+          for file in migrations/*.sql; do
+            echo "APPLY $file"
+            psql -v ON_ERROR_STOP=1 -f "$file"
+          done
+
+      - name: Run A-001 privilege regression
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
+
+      - name: Run Phase 2 isolation invariants
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_isolation_invariants.sql
