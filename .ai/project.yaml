@@ -91,6 +91,43 @@ observability:
   system_truth: postgresql_ops_audit
   background: n8n_execution_history
 
+audit:
+  enabled: true
+  protocol: docs/audits/AUDIT_SYSTEM_V1.md
+  report_template: docs/audits/AUDIT_REPORT_TEMPLATE.md
+  progress_basis: milestone_deliverables
+  gates_percent:
+    - 25
+    - 50
+    - 75
+    - 90
+    - 100
+  immediate_triggers:
+    - major_architecture_change
+    - major_security_or_authorization_change
+    - major_postgresql_schema_or_rls_change
+  independence:
+    builder_self_approval_allowed: false
+    independent_auditor_required: true
+    prefer_different_builder_model_family: true
+  primary_auditor:
+    gateway: openrouter
+    model: anthropic/claude-opus-5
+    replaceable_by_configuration: true
+  specialist_auditor_allowed: true
+  blocking:
+    blocker_halts_milestone: true
+    blocker_requires_independent_reaudit: true
+    milestone_done_requires_100_percent_pass: true
+  records_path: docs/audits
+  current_phase_baseline:
+    phase: 2
+    total_deliverables: 19
+    completed_deliverables: 11
+    progress_percent: 57.9
+    highest_crossed_gate_percent: 50
+    status: catch_up_audit_required
+
 deferred:
   - cloudflare_ai_gateway
   - hyperdrive
