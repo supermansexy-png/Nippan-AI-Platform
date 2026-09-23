@@ -1,6 +1,6 @@
 # Audit #28 - PR #29 Migration Remediation Evidence
 
-Status: READY FOR INDEPENDENT RE-REVIEW
+Status: INDEPENDENT RE-REVIEW PASS WITH FINDINGS
 Date: 2026-09-23
 Repository: `supermansexy-png/Nippan-AI-Platform`
 Pull request: #29
@@ -9,10 +9,13 @@ Pull request: #29
 
 - original audited head: `c5bb358ce5ec74e5f056b487fa19ddb373f0b358`
 - remediation implementation head: `4e63fe0713fd5f4f21855f93fc81f7857f7b2531`
+- independent re-review target: `181de7e94fc9ae0d0f4d99548d2291da1e3a3102`
 - approved design base: `43ac9fd077bebf34ff5e8bc237173bbbdf8b4612`
 - original blocked audit generation: `gen-1790120199-tFltkAkyujYQOT0D0vZD`
-- remediation CI run: `35799894160`
-- CI job: `postgres-regression` / `106987600211`
+- independent re-review generation: `gen-1790121978-g9Cg0uDonzMOGOf3aj9v`
+- truncated-report completion generation: `gen-1790122136-E1hZfJnJXMwz3fPxjPKL`
+- remediation CI run: `35800376750`
+- CI job: `postgres-regression` / `106989127397`
 - PostgreSQL image: `postgres:17`
 
 The remediation changes only the migration governance triggers, their ACL
@@ -113,10 +116,31 @@ The privilege regression suite checks every cell available through the named
 database roles. Revoking PUBLIC is transitively verified because an accidental
 PUBLIC EXECUTE grant would make the denied named roles executable as well.
 
+## Independent re-review
+
+Claude Opus 5 reviewed the exact remediation diff at
+`181de7e94fc9ae0d0f4d99548d2291da1e3a3102`. Its primary generation reached
+the output-token limit after recording the evidence classification and
+finding dispositions, so a second short generation completed only the missing
+summary fields without receiving or re-reviewing new evidence.
+
+- PR29-F-01: CLOSED
+- PR29-F-02: CLOSED
+- PR29-F-03: CLOSED
+- new findings: none
+- verdict: PASS_WITH_FINDINGS
+- technical audit merge disposition: READY_FOR_MERGE
+- production: NOT_AUTHORIZED
+
+The technical merge disposition does not satisfy the repository ruleset by
+itself. Independent GitHub approval of the latest push remains required, so
+the current operational merge status is NOT_READY_FOR_MERGE until that approval
+exists.
+
 ## Regression results
 
-GitHub Actions run `35799894160` completed successfully on the exact
-remediation head merged ephemerally onto the exact PR base.
+GitHub Actions run `35800376750` completed successfully on the exact
+independent re-review target merged ephemerally onto the exact PR base.
 
 - clean ordered migration apply: PASS
 - A-001 table and function privilege suite: PASS
@@ -158,8 +182,7 @@ for destructive production rollback.
   state or bypass RLS.
 - The migration has not been applied to Supabase production.
 - No production post-deploy ACL/RLS query or Supabase Advisor evidence exists.
-- Independent Auditor re-review is still required to close PR29-F-01 through
-  PR29-F-03.
+- Independent Auditor closed PR29-F-01 through PR29-F-03 with no new findings.
 - Independent last-push GitHub approval is still required by the active
   repository ruleset. Builder self-approval remains prohibited.
 - PR #29 remains unmerged and production remains untouched.
