@@ -195,7 +195,8 @@ class PostgresRoomTurnGuard:
             request_id=correlation.request_id,
         ) as conn:
             await conn.execute(
-                "select set_config('idle_in_transaction_session_timeout', '0', true)"
+                "select set_config('idle_in_transaction_session_timeout', '0', true)",
+                (),
             )
             await conn.execute(
                 "select pg_advisory_xact_lock(hashtextextended(%s, 0))",
