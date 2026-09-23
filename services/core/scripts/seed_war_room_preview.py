@@ -51,7 +51,13 @@ def _preview_scope(settings: Settings) -> tuple[UUID, UUID, str]:
     return tenant_id, application_id, principal_id
 
 
-def seed(\n    *,\n    settings: Settings | None = None,\n    admin_dsn: str | None = None,\n) -> tuple[UUID, UUID, UUID, str]:\n    settings = settings or Settings()\n    if settings.environment.lower() != "development":
+def seed(
+    *,
+    settings: Settings | None = None,
+    admin_dsn: str | None = None,
+) -> tuple[UUID, UUID, UUID, str]:
+    settings = settings or Settings()
+    if settings.environment.lower() != "development":
         raise RuntimeError("preview seed refuses non-development environment")
     if not settings.war_room_preview_enabled:
         raise RuntimeError(
