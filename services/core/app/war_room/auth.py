@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from app.db import Database
 
-from .interfaces import RoomCommand, TrustedActorContext
+from .interfaces import (
+    RoomCommand,
+    RoomReadRequest,
+    TrustedActorContext,
+)
 
 
 class DatabaseRoomCommandAuthorizer:
@@ -55,3 +59,16 @@ class DatabaseRoomCommandAuthorizer:
                 row = await cur.fetchone()
 
         return bool(row and row[0])
+
+
+
+class DenyAllRoomReadAuthorizer:
+    """Fail-closed default for snapshot/SSE reads until a reviewed policy is injected."""
+
+    async def authorize_read(
+        self,
+        *,
+        request: RoomReadRequest,
+        actor: TrustedActorContext,
+    ) -> bool:
+        return False
