@@ -47,6 +47,7 @@ from .preview_auth import (
     csrf_matches,
     issue_preview_session,
     remote_auth_configured,
+    request_host_allowed,
     request_origin_allowed,
     verify_preview_session,
 )
@@ -181,17 +182,28 @@ def _post_login_url(room_id: str | None) -> str:
     return f"/war-room/?{urlencode({'room_id': safe_room_id})}"
 
 
+def _enforce_remote_host(request: Request, settings: Settings) -> None:
+    if not settings.war_room_preview_remote_auth_enabled:
+        return
+    if not remote_auth_configured(settings):
+        raise HTTPException(
+            status_code=503,
+            detail="war_room_preview_remote_auth_misconfigured",
+        )
+    if not request_host_allowed(request.headers.get("host"), settings):
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_host_forbidden",
+        )
+
+
 def _remote_session(
     request: Request,
     settings: Settings,
 ) -> PreviewSession | None:
     if not settings.war_room_preview_remote_auth_enabled:
         return None
-    if not remote_auth_configured(settings):
-        raise HTTPException(
-            status_code=503,
-            detail="war_room_preview_remote_auth_misconfigured",
-        )
+    _enforce_remote_host(request, settings)
     return verify_preview_session(
         request.cookies.get(SESSION_COOKIE_NAME),
         settings,
@@ -202,9 +214,6 @@ def _enforce_preview_access(
     request: Request,
     settings: Settings,
 ) -> PreviewSession | None:
-    if settings.environment.lower() == "test":
-        return None
-
     if settings.war_room_preview_remote_auth_enabled:
         session = _remote_session(request, settings)
         if session is None:
@@ -221,11 +230,9 @@ def _enforce_preview_access(
 
 
 def _enforce_remote_origin(request: Request, settings: Settings) -> None:
-    if (
-        settings.environment.lower() == "test"
-        or not settings.war_room_preview_remote_auth_enabled
-    ):
+    if not settings.war_room_preview_remote_auth_enabled:
         return
+    _enforce_remote_host(request, settings)
     if not request_origin_allowed(request.headers.get("origin"), settings):
         raise HTTPException(
             status_code=403,
@@ -238,10 +245,7 @@ def _enforce_remote_mutation(
     settings: Settings,
     session: PreviewSession | None,
 ) -> None:
-    if (
-        settings.environment.lower() == "test"
-        or not settings.war_room_preview_remote_auth_enabled
-    ):
+    if not settings.war_room_preview_remote_auth_enabled:
         return
     if session is None:
         raise HTTPException(
@@ -395,11 +399,7 @@ def create_war_room_preview_router(
     async def war_room_login_page(request: Request):
         if not settings.war_room_preview_remote_auth_enabled:
             raise HTTPException(status_code=404, detail="not_found")
-        if not remote_auth_configured(settings):
-            raise HTTPException(
-                status_code=503,
-                detail="war_room_preview_remote_auth_misconfigured",
-            )
+        _enforce_remote_host(request, settings)
 
         if verify_preview_session(
             request.cookies.get(SESSION_COOKIE_NAME),
@@ -517,19 +517,8 @@ def create_war_room_preview_router(
 
     @router.get("/war-room")
     async def war_room_redirect(request: Request):
-        if (
-            settings.environment.lower() != "test"
-            and settings.war_room_preview_remote_auth_enabled
-        ):
-            if not remote_auth_configured(settings):
-                raise HTTPException(
-                    status_code=503,
-                    detail="war_room_preview_remote_auth_misconfigured",
-                )
-            if verify_preview_session(
-                request.cookies.get(SESSION_COOKIE_NAME),
-                settings,
-            ) is None:
+        if settings.war_room_preview_remote_auth_enabled:
+            if _remote_session(request, settings) is None:
                 return RedirectResponse(url=_login_url(request), status_code=307)
         else:
             _enforce_preview_access(request, settings)
@@ -539,19 +528,8 @@ def create_war_room_preview_router(
 
     @router.get("/war-room/")
     async def war_room_index(request: Request):
-        if (
-            settings.environment.lower() != "test"
-            and settings.war_room_preview_remote_auth_enabled
-        ):
-            if not remote_auth_configured(settings):
-                raise HTTPException(
-                    status_code=503,
-                    detail="war_room_preview_remote_auth_misconfigured",
-                )
-            if verify_preview_session(
-                request.cookies.get(SESSION_COOKIE_NAME),
-                settings,
-            ) is None:
+        if settings.war_room_preview_remote_auth_enabled:
+            if _remote_session(request, settings) is None:
                 return RedirectResponse(url=_login_url(request), status_code=307)
 
         _enforce_preview_access(request, settings)
