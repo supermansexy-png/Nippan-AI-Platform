@@ -167,8 +167,8 @@
         "usage_tokens": {"type": "integer", "minimum": 0},
         "failure_kind": {"$ref": "#/$defs/failure_kind"},
         "automatic_retry_allowed": {"type": "boolean"},
-        "provider_request_id": {"type": ["string", "null"], "minLength": 1},
-        "model": {"type": ["string", "null"], "minLength": 1}
+        "provider_request_id": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1}
       }
     }
   },
@@ -229,6 +229,27 @@
                   {"required": ["content_reference"]}
                 ]
               }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {"const": "MESSAGE_APPENDED"},
+          "message_type": {
+            "enum": ["AGENT_MESSAGE", "CHAIR_SYNTHESIS"]
+          }
+        },
+        "required": ["event_type", "message_type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["provider_request_id", "model"]}
             ]
           }
         }
