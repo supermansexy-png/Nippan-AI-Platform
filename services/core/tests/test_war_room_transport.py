@@ -81,7 +81,7 @@ def test_preview_actor_comes_only_from_server_settings() -> None:
         )
 
 
-def test_preview_router_has_track_d_routes_but_no_turn_driver() -> None:
+def test_preview_router_has_track_d_routes_and_model_turns_default_off() -> None:
     settings = preview_settings()
     router = create_war_room_preview_router(
         settings=settings,
@@ -98,6 +98,7 @@ def test_preview_router_has_track_d_routes_but_no_turn_driver() -> None:
     assert ("GET", "/war-room/rooms/{room_id}/events") in routes
     assert ("POST", "/war-room/rooms/{room_id}/commands") in routes
     assert not any("turn" in path for _, path in routes)
+    assert settings.war_room_preview_model_turns_enabled is False
 
     source = (
         Path(__file__).resolve().parents[1]
@@ -105,7 +106,7 @@ def test_preview_router_has_track_d_routes_but_no_turn_driver() -> None:
         / "war_room"
         / "transport.py"
     ).read_text()
-    assert ".run_next_turn(" not in source
+    assert "war_room_preview_model_turns_enabled" in source
 
 
 def test_client_correlation_cannot_change_authoritative_scope() -> None:
