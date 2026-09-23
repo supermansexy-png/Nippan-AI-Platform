@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 
 from .config_repository import ConfigRepository
 from .db import Database
+from .preview_bootstrap import bootstrap_preview_database
 from .settings import get_settings
 from .war_room.transport import (
     create_war_room_preview_router,
@@ -17,6 +18,8 @@ config_repository = ConfigRepository(database)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    if settings.war_room_preview_bootstrap:
+        bootstrap_preview_database(settings)
     await database.open()
     try:
         yield
