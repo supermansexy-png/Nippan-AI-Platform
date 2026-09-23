@@ -36,6 +36,51 @@ begin
   end if;
 end $$;
 
+create temporary table war_room_function_expectations (
+  function_signature text primary key,
+  runtime_execute boolean not null,
+  control_execute boolean not null
+);
+
+insert into war_room_function_expectations values
+  ('app_private.validate_project_room_participant_independence()', false, false),
+  ('app_private.assert_project_room_audit_readiness(uuid,uuid,uuid)', true, true),
+  ('app_private.enforce_project_room_ready_state()', false, false),
+  ('app_private.enforce_project_room_participant_post_ready()', false, false);
+
+do $$
+declare
+  e record;
+  denied_role text;
+begin
+  for e in select * from war_room_function_expectations loop
+    if has_function_privilege(
+         'nippan_runtime', e.function_signature, 'EXECUTE'
+       ) is distinct from e.runtime_execute then
+      raise exception 'nippan_runtime EXECUTE mismatch on %',
+        e.function_signature;
+    end if;
+
+    if has_function_privilege(
+         'nippan_control_plane', e.function_signature, 'EXECUTE'
+       ) is distinct from e.control_execute then
+      raise exception 'nippan_control_plane EXECUTE mismatch on %',
+        e.function_signature;
+    end if;
+
+    foreach denied_role in array array[
+      'anon', 'authenticated', 'service_role', 'nippan_analytics'
+    ] loop
+      if has_function_privilege(
+           denied_role, e.function_signature, 'EXECUTE'
+         ) then
+        raise exception '% unexpectedly has EXECUTE on %',
+          denied_role, e.function_signature;
+      end if;
+    end loop;
+  end loop;
+end $$;
+
 create temporary table phase2_privilege_expectations (
   table_name text primary key,
   runtime_select boolean not null,
@@ -66,9 +111,16 @@ insert into phase2_privilege_expectations values
   ('ai_calls',               true,  true,  true,  true, false, false, true),
   ('tool_calls',             true,  true,  true,  true, false, false, true),
   ('retrieval_events',       true,  true,  true,  true, false, false, true),
-  ('idempotency_records',    true,  true,  true,  true, true,  true,  true),
-  ('usage_events',           true,  true,  false, true, false, false, true),
-  ('audit_events',           true,  true,  false, true, true,  false, true);
+  ('idempotency_records',          true,  true,  true,  true, true,  true,  true),
+  ('usage_events',                 true,  true,  false, true, false, false, true),
+  ('audit_events',                 true,  true,  false, true, true,  false, true),
+  ('project_rooms',                true,  true,  true,  true, true,  true,  true),
+  ('project_room_participants',    true,  false, false, true, true,  true,  true),
+  ('project_room_agenda_items',    true,  true,  true,  true, true,  true,  true),
+  ('project_room_messages',        true,  true,  false, true, true,  false, true),
+  ('project_room_findings',        true,  true,  true,  true, true,  true,  true),
+  ('project_room_decisions',       true,  true,  false, true, true,  false, true),
+  ('project_room_action_items',    true,  true,  true,  true, true,  true,  true);
 
 do $$
 declare

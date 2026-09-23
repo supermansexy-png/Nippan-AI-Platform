@@ -72,6 +72,14 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_isolation_invariants.sql
 
+      - name: Run War Room isolation and integrity invariants
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_isolation_invariants.sql
+
+      - name: Run War Room multi-session governance races
+        run: |
+          python3 tests/sql/run_war_room_concurrency.py
+
       - name: Set up Python for deterministic contract tests
         uses: actions/setup-python@v5
         with:
@@ -82,3 +90,36 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check "pytest>=8.4,<9"
           python -m pytest -q tests/test_war_room_contracts.py
+
+      - name: Prove War Room privilege negative control fails
+        run: |
+          set -euo pipefail
+          psql -v ON_ERROR_STOP=1 -c "grant update on public.project_room_participants to nippan_runtime"
+
+          set +e
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql > /tmp/war-room-negative-control.log 2>&1
+          status=$?
+          set -e
+
+          cat /tmp/war-room-negative-control.log
+
+          if [ "$status" -eq 0 ]; then
+            echo "negative control unexpectedly passed"
+            exit 1
+          fi
+
+          grep -Fq "nippan_runtime UPDATE mismatch on public.project_room_participants" /tmp/war-room-negative-control.log
+          psql -v ON_ERROR_STOP=1 -c "revoke update on public.project_room_participants from nippan_runtime"
+
+      - name: Clean privilege rerun after negative control
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
+
+      - name: Test War Room rollback path and clean reapply
+        run: |
+          set -euo pipefail
+          psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_rollback.sql
+          psql -v ON_ERROR_STOP=1 -f migrations/20260922231000_war_room_v1_increment_b.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_isolation_invariants.sql
+          python3 tests/sql/run_war_room_concurrency.py
