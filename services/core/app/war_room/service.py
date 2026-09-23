@@ -244,7 +244,7 @@ class WarRoomOrchestrator:
         return await self._emit(
             session,
             correlation,
-            RoomEventType.TURN_FAILED,
+            RoomEventType.SCHEDULER_HALTED,
             halt_reason=reason,
             payload={"round_number": session.round_number},
         )

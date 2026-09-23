@@ -160,3 +160,25 @@ async def test_budget_denial_stops_before_provider_call() -> None:
     assert event.event_type is RoomEventType.BUDGET_HARD_STOP
     assert room.state is RoomState.NEEDS_OWNER_DECISION
     assert gateway.calls == 0
+
+
+@pytest.mark.anyio
+async def test_round_completion_is_not_reported_as_turn_failure() -> None:
+    room = session()
+    room.state = RoomState.RUNNING
+    room.completed_participant_ids.add("builder")
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        event_sink=Sink(),
+    )
+
+    event = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Review the implementation",
+    )
+
+    assert event.event_type is RoomEventType.SCHEDULER_HALTED
+    assert room.round_number == 2
