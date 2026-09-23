@@ -4,7 +4,7 @@ from .persistence import (
     RoomPersistenceConflict,
     RoomPersistenceError,
 )
-from .auth import DatabaseRoomCommandAuthorizer
+from .auth import DatabaseRoomCommandAuthorizer, DenyAllRoomReadAuthorizer
 from .contracts import (
     AgendaPolicy,
     BudgetSnapshot,
@@ -41,7 +41,11 @@ from .interfaces import (
     RoomEventDraft,
     RoomFindingSnapshot,
     RoomParticipantSnapshot,
+    RoomReadAuthorizer,
+    RoomReadKind,
+    RoomReadRequest,
     RoomSnapshot,
+    RoomSnapshotSource,
     RoomUsageSnapshot,
     RoomCommand,
     RoomCommandAuthorizer,
@@ -74,6 +78,7 @@ __all__ = [
     "CorrelationContext",
     "ContractViolation",
     "DatabaseRoomCommandAuthorizer",
+    "DenyAllRoomReadAuthorizer",
     "DeterministicTurnScheduler",
     "EvidenceKind",
     "HaltReason",
@@ -97,7 +102,11 @@ __all__ = [
     "RoomEventDraft",
     "RoomFindingSnapshot",
     "RoomParticipantSnapshot",
+    "RoomReadAuthorizer",
+    "RoomReadKind",
+    "RoomReadRequest",
     "RoomSnapshot",
+    "RoomSnapshotSource",
     "RoomUsageSnapshot",
     "RoomCommandAuthorizer",
     "RoomCommandType",
