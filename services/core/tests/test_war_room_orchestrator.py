@@ -40,6 +40,8 @@ class Gateway:
             content_text=f"{request.role.value} response",
             content_reference=None,
             usage=UsageDelta(input_tokens=10, output_tokens=5),
+            provider_request_id="req-orchestrator",
+            responded_model="model-orchestrator",
         )
 
 
@@ -690,3 +692,35 @@ async def test_owner_stop_serializes_before_stale_turn_and_prevents_provider_cal
     assert stale_turn_room.state is RoomState.STOPPED
     assert gateway.calls == []
     assert guard.entries == 2
+
+
+@pytest.mark.anyio
+async def test_successful_agent_message_persists_provider_model_evidence() -> None:
+    sink = Sink()
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(state=RoomState.RUNNING),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    event = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Persist model evidence",
+    )
+
+    assert event.event_type is RoomEventType.MESSAGE_APPENDED
+    assert event.payload["provider_request_id"] == "req-orchestrator"
+    assert event.payload["responded_model"] == "model-orchestrator"
