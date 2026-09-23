@@ -61,9 +61,20 @@ cannot invoke a provider. Owner commands register their request trace in the
 existing `requests` table and persist through the existing War Room event sink;
 no new ledger, migration, schema, RLS or grant is introduced.
 
-By default, development HTTP access remains limited to the loopback client.
-Remote preview is a separate, explicit gate and remains disabled unless all of the
-following server-side settings are configured:
+By default, all development HTTP access is denied. Local preview is an explicit
+deployment-level opt-in for a process that is reachable only from the local
+machine:
+
+```text
+NIPPAN_WAR_ROOM_PREVIEW_LOCAL_ACCESS_ENABLED=true
+```
+
+Local mode does not trust the client address or forwarded headers because those
+values are proxy-controlled and spoofable. Never enable local mode on Render or
+another network-accessible host.
+
+Remote preview is a separate explicit gate and remains disabled unless all of
+the following server-side settings are configured:
 
 ```text
 NIPPAN_WAR_ROOM_PREVIEW_REMOTE_ACCESS_ENABLED=true
@@ -72,7 +83,7 @@ NIPPAN_CLOUDFLARE_ACCESS_AUDIENCE=<Access application AUD tag>
 NIPPAN_CLOUDFLARE_ACCESS_OWNER_EMAIL=<exact owner email>
 ```
 
-For every non-loopback War Room request, Core requires the
+For every War Room request in remote mode, Core requires the
 `Cf-Access-Jwt-Assertion` header, fetches Cloudflare Access signing keys from
 the configured team domain, verifies the RS256 signature plus issuer/audience
 and token lifetime claims, requires an Access application token, and requires
@@ -81,8 +92,9 @@ same server-configured preview principal; tenant/application/principal scope is
 never accepted from the browser.
 
 Signing keys are cached briefly and refreshed when the key id/signature requires
-it. Missing or invalid remote auth fails closed with HTTP 403. Provider/model
-turns remain disabled.
+it. Missing or invalid remote auth fails closed with HTTP 403. Remote mode takes
+precedence if both access modes are configured, so local mode cannot bypass JWT
+verification. Bounded provider/model turns remain separately disabled by default.
 
 Cloudflare reference:
 https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/

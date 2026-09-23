@@ -67,22 +67,25 @@ def _token(
     email: str = OWNER_EMAIL,
     issuer: str = TEAM_DOMAIN,
     token_type: str = "app",
+    expires_in: int = 300,
+    not_before_in: int = -1,
+    kid: str = KID,
 ) -> str:
     now = int(time.time())
     return jwt.encode(
         {
             "aud": [audience],
             "email": email,
-            "exp": now + 300,
+            "exp": now + expires_in,
             "iat": now,
-            "nbf": now - 1,
+            "nbf": now + not_before_in,
             "iss": issuer,
             "type": token_type,
             "sub": "preview-owner-subject",
         },
         private_key,
         algorithm="RS256",
-        headers={"kid": KID, "typ": "JWT"},
+        headers={"kid": kid, "typ": "JWT"},
     )
 
 
@@ -124,6 +127,25 @@ async def test_access_verifier_rejects_wrong_audience_and_owner() -> None:
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize(
+    "token_overrides",
+    [
+        {"issuer": "https://other.cloudflareaccess.com"},
+        {"expires_in": -1},
+        {"not_before_in": 300},
+    ],
+)
+async def test_access_verifier_rejects_invalid_time_and_issuer_claims(
+    token_overrides: dict[str, object],
+) -> None:
+    private_key, jwk = _key_material()
+    async with _mock_client(jwk) as client:
+        verifier = CloudflareAccessVerifier(_settings(), client=client)
+        with pytest.raises(AccessAuthenticationError, match="validation failed"):
+            await verifier.authenticate(_token(private_key, **token_overrides))
+
+
+@pytest.mark.anyio
 async def test_access_verifier_rejects_non_app_token_and_incomplete_config() -> None:
     private_key, jwk = _key_material()
     async with _mock_client(jwk) as client:
@@ -138,3 +160,61 @@ async def test_access_verifier_rejects_non_app_token_and_incomplete_config() -> 
     )
     with pytest.raises(AccessAuthenticationError, match="incomplete"):
         await incomplete.authenticate("not-a-token")
+
+
+@pytest.mark.anyio
+async def test_access_verifier_rejects_malformed_and_invalid_signature() -> None:
+    _, jwk = _key_material()
+    untrusted_private_key, _ = _key_material()
+    async with _mock_client(jwk) as client:
+        verifier = CloudflareAccessVerifier(_settings(), client=client)
+        with pytest.raises(AccessAuthenticationError, match="header is invalid"):
+            await verifier.authenticate("not-a-jwt")
+        with pytest.raises(AccessAuthenticationError, match="validation failed"):
+            await verifier.authenticate(_token(untrusted_private_key))
+
+
+@pytest.mark.anyio
+async def test_access_verifier_rejects_unknown_signing_key() -> None:
+    private_key, jwk = _key_material()
+    async with _mock_client(jwk) as client:
+        verifier = CloudflareAccessVerifier(_settings(), client=client)
+        with pytest.raises(AccessAuthenticationError, match="key is unknown"):
+            await verifier.authenticate(_token(private_key, kid="unknown-key"))
+
+
+@pytest.mark.anyio
+async def test_access_verifier_fails_closed_when_jwks_is_unavailable() -> None:
+    private_key, _ = _key_material()
+
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503)
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handler)
+    ) as client:
+        verifier = CloudflareAccessVerifier(_settings(), client=client)
+        with pytest.raises(AccessAuthenticationError, match="unavailable"):
+            await verifier.authenticate(_token(private_key))
+
+
+@pytest.mark.anyio
+async def test_access_verifier_fails_closed_when_jwks_refresh_fails() -> None:
+    private_key, jwk = _key_material()
+    requests = 0
+
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal requests
+        requests += 1
+        if requests == 1:
+            return httpx.Response(200, json={"keys": [jwk]})
+        return httpx.Response(503)
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(handler)
+    ) as client:
+        verifier = CloudflareAccessVerifier(_settings(), client=client)
+        with pytest.raises(AccessAuthenticationError, match="unavailable"):
+            await verifier.authenticate(_token(private_key, kid="rotated-key"))
+
+    assert requests == 2

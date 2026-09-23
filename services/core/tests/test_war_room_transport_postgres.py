@@ -206,6 +206,7 @@ async def test_track_d_http_preview_persists_owner_commands_without_provider_spe
         database_pool_min_size=1,
         database_pool_max_size=2,
         war_room_preview_enabled=True,
+        war_room_preview_local_access_enabled=True,
         war_room_preview_tenant_id=TENANT_ID,
         war_room_preview_application_id=APPLICATION_ID,
         war_room_preview_principal_id=OWNER_PRINCIPAL_ID,

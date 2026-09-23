@@ -336,18 +336,14 @@ async def _authorize_preview_request(
     settings: Settings,
     remote_access_verifier: RemoteAccessVerifier | None,
 ) -> None:
-    if settings.environment.lower() == "test":
-        return
-
-    host = request.client.host if request.client is not None else ""
-    if host in {"127.0.0.1", "::1", "localhost"}:
-        return
-
     if not settings.war_room_preview_remote_access_enabled:
+        if settings.war_room_preview_local_access_enabled:
+            return
         raise HTTPException(
             status_code=403,
-            detail="war_room_preview_loopback_only",
+            detail="war_room_preview_access_disabled",
         )
+
     if remote_access_verifier is None:
         raise HTTPException(
             status_code=403,
