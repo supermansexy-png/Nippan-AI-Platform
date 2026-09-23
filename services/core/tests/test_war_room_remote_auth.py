@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import hmac
 from uuid import UUID
 
 from fastapi import FastAPI
@@ -12,6 +15,7 @@ from app.war_room.preview_auth import (
     PreviewLoginRateLimiter,
     csrf_matches,
     issue_preview_session,
+    request_host_allowed,
     request_origin_allowed,
     verify_preview_session,
 )
@@ -70,6 +74,22 @@ def test_signed_session_expires_and_token_rotation_invalidates_it() -> None:
     assert verify_preview_session(cookie, rotated, now=1_001) is None
 
 
+def test_malformed_signed_cookie_fails_closed() -> None:
+    settings = remote_settings()
+    body = "a"
+    signing_key = hmac.new(
+        TOKEN.encode("utf-8"),
+        b"nippan-war-room-preview/session-signing-key/v1",
+        hashlib.sha256,
+    ).digest()
+    signature = base64.urlsafe_b64encode(
+        hmac.new(signing_key, body.encode("ascii"), hashlib.sha256).digest()
+    ).rstrip(b"=").decode("ascii")
+
+    assert verify_preview_session(f"{body}.{signature}", settings, now=1_000) is None
+    assert verify_preview_session("x" * 2049, settings, now=1_000) is None
+
+
 def test_csrf_proof_is_bound_to_signed_session() -> None:
     settings = remote_settings()
     _, session = issue_preview_session(settings, now=1_000)
@@ -94,6 +114,20 @@ def test_remote_origin_must_be_exact_https_origin() -> None:
     assert not request_origin_allowed("http://preview.example", settings)
     assert not request_origin_allowed("https://evil.example", settings)
     assert not request_origin_allowed(None, settings)
+
+
+def test_remote_host_must_match_configured_origin() -> None:
+    settings = remote_settings()
+
+    assert request_host_allowed("preview.example", settings)
+    assert request_host_allowed("preview.example:443", settings)
+    assert not request_host_allowed("evil.example", settings)
+    assert not request_host_allowed(None, settings)
+
+    client = preview_client(settings)
+    response = client.get("/war-room/login", headers={"Host": "evil.example"})
+    assert response.status_code == 403
+    assert response.json()["detail"] == "war_room_preview_host_forbidden"
 
 
 def test_remote_index_redirects_to_login_until_authenticated() -> None:
@@ -199,6 +233,15 @@ def test_remote_auth_disabled_preserves_loopback_only_boundary() -> None:
 
     assert response.status_code == 403
     assert response.json()["detail"] == "war_room_preview_loopback_only"
+
+
+def test_test_environment_does_not_bypass_remote_auth() -> None:
+    client = preview_client(remote_settings(environment="test"))
+
+    response = client.get("/war-room/")
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/war-room/login"
 
 
 def test_production_never_mounts_preview_even_with_remote_auth_enabled() -> None:
