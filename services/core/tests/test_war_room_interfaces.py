@@ -85,6 +85,10 @@ def test_ordered_event_requires_positive_sequence() -> None:
         )
 
 
+def test_scheduler_halt_is_distinct_from_turn_failure() -> None:
+    assert RoomEventType.SCHEDULER_HALTED is not RoomEventType.TURN_FAILED
+
+
 def test_ask_role_accepts_frozen_role_contract() -> None:
     command = RoomCommand(
         command=RoomCommandType.ASK_ROLE,
