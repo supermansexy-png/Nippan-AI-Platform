@@ -129,3 +129,25 @@ def test_snapshot_source_contract_reuses_platform_usage_evidence() -> None:
     assert "project_room_messages.request_id" in contract
     assert "no new usage ledger or aggregate table" in contract
     assert "DenyAllRoomReadAuthorizer" in contract
+
+
+def test_accounting_failure_wire_requires_provider_evidence() -> None:
+    schema = json.loads(
+        (SCHEMAS / "war-room-event-v1.schema.json").read_text()
+    )
+
+    assert "ACCOUNTING_FAILED" in schema["$defs"]["failure_kind"]["enum"]
+
+    accounting_rules = []
+    for item in schema["allOf"]:
+        condition = item.get("if", {})
+        payload = condition.get("properties", {}).get("payload", {})
+        failure_kind = payload.get("properties", {}).get("failure_kind", {})
+        if failure_kind.get("const") == "ACCOUNTING_FAILED":
+            accounting_rules.append(item)
+
+    assert len(accounting_rules) == 1
+    required = accounting_rules[0]["then"]["properties"]["payload"]["allOf"][1][
+        "required"
+    ]
+    assert required == ["provider_request_id", "model"]

@@ -147,7 +147,8 @@
         "TIMEOUT",
         "PROVIDER_UNAVAILABLE",
         "INVALID_RESPONSE",
-        "POLICY_REJECTED"
+        "POLICY_REJECTED",
+        "ACCOUNTING_FAILED"
       ]
     },
     "payload": {
@@ -273,6 +274,30 @@
             "allOf": [
               {"$ref": "#/$defs/payload"},
               {"required": ["failure_kind", "automatic_retry_allowed"]}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {"const": "TURN_FAILED"},
+          "payload": {
+            "properties": {
+              "failure_kind": {"const": "ACCOUNTING_FAILED"}
+            },
+            "required": ["failure_kind"]
+          }
+        },
+        "required": ["event_type", "payload"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["provider_request_id", "model"]}
             ]
           }
         }
