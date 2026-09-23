@@ -63,3 +63,32 @@ no new ledger, migration, schema, RLS or grant is introduced.
 
 HTTP access is always limited to the loopback client in development. There is no
 remote-preview override. This preview is not a production authentication mechanism.
+
+
+### Seed a complete local room
+
+After applying the repository migrations to a local development PostgreSQL
+database, the preview can seed a deterministic room with one Project Owner and
+seven AI-role participants (Chair, Architect, Builder, Security, Cost & Ops,
+Independent Auditor and Secretary), plus an agenda, finding and proposal.
+
+Run from `services/core`:
+
+```bash
+export NIPPAN_ENVIRONMENT=development
+export NIPPAN_WAR_ROOM_PREVIEW_ENABLED=true
+export NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN='postgresql://...local-admin...'
+python scripts/seed_war_room_preview.py
+```
+
+The script refuses non-development environments and prints the exact
+`NIPPAN_WAR_ROOM_PREVIEW_*` scope plus a loopback URL. The default deterministic
+room URL ends with:
+
+```text
+/war-room/?room_id=c3333333-3333-4333-8333-333333333333
+```
+
+The seed contains no provider credentials and creates no model calls. Pressing
+owner controls exercises only durable lifecycle/owner-message paths until a
+separately governed turn driver is introduced.
