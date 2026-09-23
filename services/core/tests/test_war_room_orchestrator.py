@@ -17,6 +17,8 @@ from app.war_room import (
     RoomMode,
     RoomSession,
     RoomState,
+    TrustedActorContext,
+    UnauthorizedRoomCommand,
     UsageDelta,
     WarRoomOrchestrator,
 )
@@ -44,6 +46,16 @@ class Budget:
 
     async def record_usage(self, **_):
         return None
+
+
+class Authorizer:
+    def __init__(self, allowed: bool = True) -> None:
+        self.allowed = allowed
+        self.calls = []
+
+    async def authorize(self, **values) -> bool:
+        self.calls.append(values)
+        return self.allowed
 
 
 class Sink:
@@ -109,6 +121,7 @@ async def test_pause_resume_stop_are_authoritative_state_transitions() -> None:
     orchestrator = WarRoomOrchestrator(
         model_gateway=Gateway(),
         budget_authority=Budget(),
+        command_authorizer=Authorizer(),
         event_sink=sink,
     )
 
@@ -124,6 +137,12 @@ async def test_pause_resume_stop_are_authoritative_state_transitions() -> None:
                 command=command,
                 correlation=correlation(),
                 expected_state=expected_before,
+            ),
+            actor=TrustedActorContext(
+                tenant_id=UUID(int=1),
+                application_id=UUID(int=2),
+                principal_type=ParticipantType.HUMAN,
+                principal_id="owner",
             ),
         )
         assert room.state is expected_after
@@ -146,6 +165,7 @@ async def test_owner_decision_gate_halts_before_model_invocation() -> None:
     orchestrator = WarRoomOrchestrator(
         model_gateway=gateway,
         budget_authority=Budget(),
+        command_authorizer=Authorizer(),
         event_sink=Sink(),
     )
 
@@ -155,6 +175,12 @@ async def test_owner_decision_gate_halts_before_model_invocation() -> None:
             command=RoomCommandType.REQUEST_OWNER_DECISION,
             correlation=correlation(),
             expected_state=RoomState.RUNNING,
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner",
         ),
     )
     event = await orchestrator.run_next_turn(
@@ -184,6 +210,7 @@ async def test_chair_provider_failure_pauses_room() -> None:
     orchestrator = WarRoomOrchestrator(
         model_gateway=gateway,
         budget_authority=Budget(),
+        command_authorizer=Authorizer(),
         event_sink=Sink(),
     )
 
@@ -214,6 +241,7 @@ async def test_synthetic_room_runs_two_bounded_rounds_with_ordered_trace() -> No
     orchestrator = WarRoomOrchestrator(
         model_gateway=gateway,
         budget_authority=Budget(),
+        command_authorizer=Authorizer(),
         event_sink=sink,
     )
 
@@ -244,3 +272,78 @@ async def test_synthetic_room_runs_two_bounded_rounds_with_ordered_trace() -> No
         event.correlation.trace_id == "0123456789abcdef0123456789abcdef"
         for event in sink.events
     )
+
+
+@pytest.mark.anyio
+async def test_owner_command_is_rejected_before_state_mutation_when_not_authorized() -> None:
+    authorizer = Authorizer(allowed=False)
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.READY,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=authorizer,
+        event_sink=Sink(),
+    )
+
+    with pytest.raises(UnauthorizedRoomCommand):
+        await orchestrator.apply_command(
+            room,
+            RoomCommand(
+                command=RoomCommandType.START,
+                correlation=correlation(),
+                expected_state=RoomState.READY,
+            ),
+            actor=TrustedActorContext(
+                tenant_id=UUID(int=1),
+                application_id=UUID(int=2),
+                principal_type=ParticipantType.HUMAN,
+                principal_id="not-owner",
+            ),
+        )
+
+    assert room.state is RoomState.READY
+    assert len(authorizer.calls) == 1
+
+
+@pytest.mark.anyio
+async def test_authorization_receives_trusted_actor_and_command_scope() -> None:
+    authorizer = Authorizer()
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.READY,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=authorizer,
+        event_sink=Sink(),
+    )
+    actor = TrustedActorContext(
+        tenant_id=UUID(int=1),
+        application_id=UUID(int=2),
+        principal_type=ParticipantType.HUMAN,
+        principal_id="owner-principal",
+    )
+    command = RoomCommand(
+        command=RoomCommandType.START,
+        correlation=correlation(),
+        expected_state=RoomState.READY,
+    )
+
+    await orchestrator.apply_command(room, command, actor=actor)
+
+    call = authorizer.calls[0]
+    assert call["actor"] == actor
+    assert call["command"].correlation.tenant_id == UUID(int=1)
+    assert call["command"].correlation.application_id == UUID(int=2)
