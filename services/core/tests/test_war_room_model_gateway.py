@@ -400,9 +400,12 @@ async def test_postgres_turn_guard_takes_room_scoped_advisory_lock() -> None:
             "request_id": UUID(int=5),
         }
     ]
-    assert len(database.connection.executed) == 2
-    lock_query, lock_params = database.connection.executed[0]
-    state_query, state_params = database.connection.executed[1]
+    assert len(database.connection.executed) == 3
+    timeout_query, timeout_params = database.connection.executed[0]
+    lock_query, lock_params = database.connection.executed[1]
+    state_query, state_params = database.connection.executed[2]
+    assert "idle_in_transaction_session_timeout" in timeout_query
+    assert timeout_params == ()
     assert "pg_advisory_xact_lock" in lock_query
     assert str(UUID(int=3)) in lock_params[0]
     assert "select state" in state_query.lower()
