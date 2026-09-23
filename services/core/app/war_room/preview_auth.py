@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -84,6 +85,17 @@ def request_origin_allowed(origin: str | None, settings: Settings) -> bool:
     return canonical_remote_origin(probe) == expected
 
 
+def request_host_allowed(host: str | None, settings: Settings) -> bool:
+    expected = canonical_remote_origin(settings)
+    if expected is None or host is None:
+        return False
+
+    probe = settings.model_copy(
+        update={"war_room_preview_remote_origin": f"https://{host.strip()}"},
+    )
+    return canonical_remote_origin(probe) == expected
+
+
 def access_token_matches(candidate: str, settings: Settings) -> bool:
     token = settings.war_room_preview_remote_auth_token
     if not remote_auth_configured(settings) or token is None:
@@ -143,7 +155,7 @@ def verify_preview_session(
     now: int | None = None,
 ) -> PreviewSession | None:
     key = _session_signing_key(settings)
-    if key is None or value is None:
+    if key is None or value is None or len(value) > 2048:
         return None
 
     try:
@@ -159,7 +171,14 @@ def verify_preview_session(
         expires_at = int(payload["exp"])
         nonce = str(payload["nonce"])
         csrf_token = str(payload["csrf"])
-    except (KeyError, TypeError, ValueError, UnicodeDecodeError, json.JSONDecodeError):
+    except (
+        binascii.Error,
+        KeyError,
+        TypeError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ):
         return None
 
     current = int(time.time() if now is None else now)
