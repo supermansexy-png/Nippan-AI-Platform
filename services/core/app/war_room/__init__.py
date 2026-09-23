@@ -1,6 +1,7 @@
-from .budget import PostgresRoomTurnGuard
+from .budget import PostgresRoomTurnGuard, RoomTurnGuardError
 from .persistence import (
     PostgresRoomEventSink,
+    PostgresRoomFailureHistorySource,
     RoomPersistenceConflict,
     RoomPersistenceError,
 )
@@ -52,6 +53,7 @@ from .interfaces import (
     RoomCommandType,
     RoomEventSink,
     RoomEventType,
+    RoomFailureHistorySource,
     TrustedActorContext,
     TurnExecutionGuard,
     TurnFailureKind,
@@ -90,6 +92,7 @@ __all__ = [
     "ModelTurnResult",
     "OrderedRoomEvent",
     "PostgresRoomEventSink",
+    "PostgresRoomFailureHistorySource",
     "PostgresRoomTurnGuard",
     "RealtimeTransport",
     "RoomAgendaSnapshot",
@@ -117,8 +120,10 @@ __all__ = [
     "RoomPersistenceError",
     "RoomState",
     "RoomSession",
+    "RoomTurnGuardError",
     "RoomEventSink",
     "RoomEventType",
+    "RoomFailureHistorySource",
     "ScheduleDecision",
     "StaleRoomCommand",
     "TurnRequest",
@@ -130,3 +135,4 @@ __all__ = [
     "WarRoomOrchestrator",
     "transition_room_state",
 ]
+
