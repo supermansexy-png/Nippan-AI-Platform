@@ -12,6 +12,11 @@ from app.war_room import (
     InterfaceViolation,
     OrderedRoomEvent,
     ParticipantRole,
+    RealtimeTransport,
+    RoomMode,
+    RoomParticipantSnapshot,
+    RoomSnapshot,
+    RoomUsageSnapshot,
     RoomCommand,
     RoomCommandType,
     RoomEventType,
@@ -99,3 +104,80 @@ def test_ask_role_accepts_frozen_role_contract() -> None:
     )
 
     assert command.target_role is ParticipantRole.SECURITY_REVIEWER
+
+
+def test_v1_realtime_transport_is_server_sent_events() -> None:
+    assert RealtimeTransport.SERVER_SENT_EVENTS.value == "SERVER_SENT_EVENTS"
+
+
+def test_room_snapshot_binds_event_scope_and_sequence_cursor() -> None:
+    event = OrderedRoomEvent(
+        event_id=UUID(int=7),
+        sequence=1,
+        event_type=RoomEventType.MESSAGE_APPENDED,
+        correlation=correlation(),
+        occurred_at=datetime.now(UTC),
+        room_state=RoomState.RUNNING,
+        payload={"content_text": "hello"},
+    )
+    snapshot = RoomSnapshot(
+        tenant_id=correlation().tenant_id,
+        application_id=correlation().application_id,
+        room_id=correlation().room_id,
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        generated_at=datetime.now(UTC),
+        last_sequence=1,
+        participants=(
+            RoomParticipantSnapshot(
+                participant_id=UUID(int=8),
+                role=ParticipantRole.OWNER,
+                display_name="Owner",
+                active=True,
+            ),
+        ),
+        agenda=(),
+        findings=(),
+        decisions=(),
+        usage=RoomUsageSnapshot(input_tokens=10, output_tokens=5),
+        recent_events=(event,),
+    )
+
+    assert snapshot.last_sequence == 1
+    assert snapshot.recent_events[0].sequence == 1
+    assert snapshot.usage.total_tokens == 15
+
+
+def test_room_snapshot_rejects_cross_room_event() -> None:
+    foreign = CorrelationContext(
+        tenant_id=correlation().tenant_id,
+        application_id=correlation().application_id,
+        room_id=UUID(int=999),
+        agenda_item_id=UUID(int=4),
+        request_id=UUID(int=5),
+        trace_id="0123456789abcdef0123456789abcdef",
+    )
+    event = OrderedRoomEvent(
+        event_id=UUID(int=9),
+        sequence=1,
+        event_type=RoomEventType.MESSAGE_APPENDED,
+        correlation=foreign,
+        occurred_at=datetime.now(UTC),
+    )
+
+    with pytest.raises(InterfaceViolation):
+        RoomSnapshot(
+            tenant_id=correlation().tenant_id,
+            application_id=correlation().application_id,
+            room_id=correlation().room_id,
+            mode=RoomMode.FORMAL_MEETING,
+            state=RoomState.RUNNING,
+            generated_at=datetime.now(UTC),
+            last_sequence=1,
+            participants=(),
+            agenda=(),
+            findings=(),
+            decisions=(),
+            usage=RoomUsageSnapshot(input_tokens=0, output_tokens=0),
+            recent_events=(event,),
+        )

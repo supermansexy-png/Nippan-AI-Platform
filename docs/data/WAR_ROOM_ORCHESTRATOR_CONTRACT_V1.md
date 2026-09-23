@@ -117,11 +117,25 @@ When a hard limit is reached:
 
 ## Frontend projection
 
-`/war-room` consumes a room snapshot and ordered events. The minimum projection
-contains roster, state, agenda, ordered messages, findings, decisions and
-token/cost totals derived from platform usage. Controls map one-to-one to the
+`/war-room` consumes the typed `RoomSnapshot` plus ordered
+`OrderedRoomEvent` values. The snapshot contains tenant/application/room
+scope, mode/state, `last_sequence`, roster, agenda, findings, decisions,
+token/cost totals derived from platform usage, and a bounded recent-event
+window.
+
+War Room V1 transport is **Server-Sent Events (SSE)** as frozen by ADR-0009:
+
+- `GET /war-room/rooms/{room_id}/snapshot` returns `RoomSnapshot`;
+- `GET /war-room/rooms/{room_id}/events` returns `text/event-stream`;
+- SSE `id` is the durable event sequence;
+- reconnect uses `Last-Event-ID` or `after_sequence` and replays committed
+  events with sequence greater than the cursor;
+- `POST /war-room/rooms/{room_id}/commands` accepts `RoomCommand`, while
+  trusted actor identity is supplied separately by server authentication.
+
+WebSocket and polling are not required for V1. Controls map one-to-one to the
 commands above. Optimistic UI may show pending intent but authoritative state
-comes back from the Core service.
+comes back from the Core service and PostgreSQL event replay.
 
 ## Failure policy
 
