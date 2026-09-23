@@ -57,6 +57,15 @@ function randomTraceId() {
   return [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
 }
 
+function cookieValue(name) {
+  const prefix = `${name}=`;
+  const match = document.cookie
+    .split(";")
+    .map((value) => value.trim())
+    .find((value) => value.startsWith(prefix));
+  return match ? decodeURIComponent(match.slice(prefix.length)) : null;
+}
+
 function buildCorrelation() {
   const agenda = activeAgenda();
   if (!agenda) throw new Error("This room has no agenda item for command correlation.");
@@ -265,12 +274,16 @@ async function sendCommand(command, extra = {}) {
     ...extra,
   };
 
+  const csrf = cookieValue("__Secure-nippan_war_room_csrf");
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  if (csrf) headers["X-War-Room-CSRF"] = csrf;
+
   const response = await fetch(
     `/war-room/rooms/${encodeURIComponent(app.snapshot.room_id)}/commands`,
     {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers,
       body: JSON.stringify(body),
     },
   );
