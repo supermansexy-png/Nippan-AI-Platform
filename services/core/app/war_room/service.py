@@ -175,12 +175,17 @@ class WarRoomOrchestrator:
             session.failed_participant_ids.update(durable_failures)
 
             if durable_state is not RoomState.RUNNING:
+                durable_halt_reason = (
+                    HaltReason.OWNER_DECISION_REQUIRED
+                    if durable_state is RoomState.NEEDS_OWNER_DECISION
+                    else HaltReason.STATE_NOT_RUNNING
+                )
                 event = await self._emit(
                     session,
                     correlation,
                     RoomEventType.SCHEDULER_HALTED,
                     room_state=durable_state,
-                    halt_reason=HaltReason.STATE_NOT_RUNNING,
+                    halt_reason=durable_halt_reason,
                     payload={"round_number": session.round_number},
                     expected_state=durable_state,
                 )
