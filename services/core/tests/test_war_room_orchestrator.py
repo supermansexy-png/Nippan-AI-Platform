@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 import pytest
@@ -43,7 +44,7 @@ class Gateway:
 
 class Budget:
     async def authorize_turn(self, **_):
-        return BudgetDecision(allowed=True)
+        return BudgetDecision(allowed=True, max_output_tokens=128)
 
     async def record_usage(self, **_):
         return None
@@ -52,6 +53,16 @@ class Budget:
 class FailingSink:
     async def append(self, event, *, expected_state=None, new_state=None):
         raise RuntimeError("persistence failed")
+
+
+class TurnGuard:
+    def __init__(self) -> None:
+        self.entries = 0
+
+    @asynccontextmanager
+    async def hold(self, **_):
+        self.entries += 1
+        yield
 
 
 class Authorizer:
@@ -141,6 +152,7 @@ async def test_pause_resume_stop_are_authoritative_state_transitions() -> None:
         model_gateway=Gateway(),
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=sink,
     )
 
@@ -185,6 +197,7 @@ async def test_owner_decision_gate_halts_before_model_invocation() -> None:
         model_gateway=gateway,
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=Sink(),
     )
 
@@ -230,6 +243,7 @@ async def test_chair_provider_failure_pauses_room() -> None:
         model_gateway=gateway,
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=Sink(),
     )
 
@@ -261,6 +275,7 @@ async def test_synthetic_room_runs_two_bounded_rounds_with_ordered_trace() -> No
         model_gateway=gateway,
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=sink,
     )
 
@@ -308,6 +323,7 @@ async def test_owner_command_is_rejected_before_state_mutation_when_not_authoriz
         model_gateway=Gateway(),
         budget_authority=Budget(),
         command_authorizer=authorizer,
+        turn_execution_guard=TurnGuard(),
         event_sink=Sink(),
     )
 
@@ -346,6 +362,7 @@ async def test_authorization_receives_trusted_actor_and_command_scope() -> None:
         model_gateway=Gateway(),
         budget_authority=Budget(),
         command_authorizer=authorizer,
+        turn_execution_guard=TurnGuard(),
         event_sink=Sink(),
     )
     actor = TrustedActorContext(
@@ -382,6 +399,7 @@ async def test_state_does_not_mutate_when_persistence_fails() -> None:
         model_gateway=Gateway(),
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=FailingSink(),
     )
 
