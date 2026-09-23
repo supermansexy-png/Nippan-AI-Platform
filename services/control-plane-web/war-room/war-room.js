@@ -115,7 +115,7 @@ function renderContext() {
   cardList("#agenda-list", app.snapshot?.agenda, (item) => {
     const card = el("article", "card");
     card.append(el("strong", "", `${item.sequence}. ${item.title}`));
-    card.append(el("div", "meta", `${item.status} · max ${item.round_limit} rounds`));
+    card.append(el("div", "meta", `${item.status} · สูงสุด ${item.round_limit} รอบ`));
     card.append(el("div", "meta", item.objective));
     return card;
   }, "ยังไม่มีวาระ");

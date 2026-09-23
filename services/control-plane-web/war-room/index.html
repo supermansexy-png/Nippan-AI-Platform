@@ -65,13 +65,13 @@
           <textarea id="owner-message" rows="3" placeholder="ถามห้องประชุมหรือบันทึกคำตัดสิน"></textarea>
           <div class="composer-actions">
             <select id="target-role" aria-label="Target role">
-              <option value="BUILDER">Builder</option>
-              <option value="ARCHITECT">Architect</option>
-              <option value="SECURITY_REVIEWER">Security reviewer</option>
-              <option value="COST_OPS_REVIEWER">Cost / Ops reviewer</option>
-              <option value="INDEPENDENT_AUDITOR">Independent auditor</option>
-              <option value="CHAIR">Chair</option>
-              <option value="SECRETARY">Secretary</option>
+              <option value="BUILDER">Builder / ผู้พัฒนา</option>
+              <option value="ARCHITECT">Architect / สถาปนิก</option>
+              <option value="SECURITY_REVIEWER">Security reviewer / ผู้ตรวจความปลอดภัย</option>
+              <option value="COST_OPS_REVIEWER">Cost / Ops reviewer / ผู้ตรวจต้นทุนและปฏิบัติการ</option>
+              <option value="INDEPENDENT_AUDITOR">Independent auditor / ผู้ตรวจอิสระ</option>
+              <option value="CHAIR">Chair / ประธาน</option>
+              <option value="SECRETARY">Secretary / เลขานุการ</option>
             </select>
             <button type="button" data-command="ASK_ROLE">ถาม role</button>
             <button type="button" data-command="ASK_ALL">ถามทุกคน</button>
@@ -108,6 +108,6 @@
     </footer>
   </main>
 
-  <script type="module" src="./war-room.js"></script>
+  <script type="module" src="./war-room.js?v=20260923-thai-default"></script>
 </body>
 </html>
