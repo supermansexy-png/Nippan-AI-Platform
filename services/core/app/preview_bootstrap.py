@@ -108,12 +108,4 @@ def bootstrap_preview_database(
         if room_exists and room_exists[0]:
             return
 
-    previous_seed_dsn = os.environ.get("NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN")
-    os.environ["NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN"] = settings.database_url
-    try:
-        seed()
-    finally:
-        if previous_seed_dsn is None:
-            os.environ.pop("NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN", None)
-        else:
-            os.environ["NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN"] = previous_seed_dsn
+    seed(settings=settings, admin_dsn=settings.database_url)
