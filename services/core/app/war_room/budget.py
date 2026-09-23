@@ -7,7 +7,7 @@ from typing import AsyncIterator, Protocol
 
 from app.db import Database
 
-from .contracts import HaltReason
+from .contracts import HaltReason, RoomState
 from .interfaces import (
     BudgetDecision,
     BudgetLimit,
@@ -157,6 +157,10 @@ class UsageBackedBudgetAuthority:
 
 
 
+class RoomTurnGuardError(RuntimeError):
+    """Raised when the durable room cannot be resolved under the execution lock."""
+
+
 class PostgresRoomTurnGuard:
     """Serializes billable War Room turns per tenant/application/room.
 
@@ -174,7 +178,7 @@ class PostgresRoomTurnGuard:
         self,
         *,
         correlation: CorrelationContext,
-    ) -> AsyncIterator[None]:
+    ) -> AsyncIterator[RoomState]:
         lock_key = (
             f"{correlation.tenant_id}:"
             f"{correlation.application_id}:"
@@ -189,4 +193,23 @@ class PostgresRoomTurnGuard:
                 "select pg_advisory_xact_lock(hashtextextended(%s, 0))",
                 (lock_key,),
             )
-            yield
+            cursor = await conn.execute(
+                """
+                select state
+                from public.project_rooms
+                where tenant_id = %s
+                  and application_id = %s
+                  and room_id = %s
+                """,
+                (
+                    correlation.tenant_id,
+                    correlation.application_id,
+                    correlation.room_id,
+                ),
+            )
+            row = await cursor.fetchone()
+            if row is None:
+                raise RoomTurnGuardError(
+                    "room not found in durable scope under turn lock"
+                )
+            yield RoomState(row[0])
