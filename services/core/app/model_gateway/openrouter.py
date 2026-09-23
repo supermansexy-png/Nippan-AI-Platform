@@ -135,6 +135,8 @@ class OpenRouterGateway:
             body = response.json()
             choice = body["choices"][0]
             content = choice["message"]["content"]
+            provider_request_id = str(body["id"])
+            responded_model = str(body["model"])
             usage_raw = body["usage"]
             input_tokens = int(usage_raw["prompt_tokens"])
             output_tokens = int(usage_raw["completion_tokens"])
@@ -147,6 +149,14 @@ class OpenRouterGateway:
         if not isinstance(content, str) or not content.strip():
             raise OpenRouterGatewayError(
                 "non-retryable empty OpenRouter response"
+            )
+        if not provider_request_id.strip():
+            raise OpenRouterGatewayError(
+                "non-retryable missing OpenRouter request id"
+            )
+        if responded_model != route.model_id:
+            raise OpenRouterGatewayError(
+                "non-retryable OpenRouter model mismatch"
             )
 
         if input_tokens < 0 or output_tokens < 0:
@@ -163,9 +173,8 @@ class OpenRouterGateway:
                 normalized_cost=cost,
                 currency="USD",
             ),
-            provider_request_id=(
-                str(body["id"]) if body.get("id") is not None else None
-            ),
+            provider_request_id=provider_request_id,
+            responded_model=responded_model,
         )
 
     @staticmethod

@@ -82,8 +82,23 @@ def test_event_schema_freezes_wire_primitives_and_event_payloads() -> None:
     assert payload["additionalProperties"] is False
     assert "failure_kind" in payload["properties"]
     assert "automatic_retry_allowed" in payload["properties"]
-    assert "provider_request_id" in payload["properties"]
-    assert "model" in payload["properties"]
+    assert payload["properties"]["provider_request_id"]["type"] == "string"
+    assert payload["properties"]["model"]["type"] == "string"
+
+    agent_evidence_rules = [
+        item
+        for item in schema["allOf"]
+        if item.get("if", {})
+        .get("properties", {})
+        .get("message_type", {})
+        .get("enum")
+        == ["AGENT_MESSAGE", "CHAIR_SYNTHESIS"]
+    ]
+    assert len(agent_evidence_rules) == 1
+    required = agent_evidence_rules[0]["then"]["properties"]["payload"]["allOf"][1][
+        "required"
+    ]
+    assert required == ["provider_request_id", "model"]
 
 
 def test_snapshot_schema_serializes_decimal_cost_as_string() -> None:

@@ -316,6 +316,8 @@ class WarRoomOrchestrator:
                 "content_reference": result.content_reference,
                 "round_number": session.round_number,
                 "usage_tokens": result.usage.total_tokens,
+                "provider_request_id": result.provider_request_id,
+                "model": result.responded_model,
             },
             expected_state=RoomState.RUNNING,
         )

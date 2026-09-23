@@ -34,6 +34,8 @@ class Gateway:
             content_text=f"{request.role.value} response",
             content_reference=None,
             usage=UsageDelta(input_tokens=10, output_tokens=5),
+            provider_request_id="req-service-unit",
+            responded_model="model-service-unit",
         )
 
 

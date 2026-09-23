@@ -130,6 +130,7 @@ async def test_openrouter_uses_one_request_and_enforces_smallest_output_cap() ->
             200,
             json={
                 "id": "req-123",
+                "model": "model-primary",
                 "choices": [{"message": {"content": "bounded response"}}],
                 "usage": {
                     "prompt_tokens": 20,
@@ -164,6 +165,8 @@ async def test_openrouter_uses_one_request_and_enforces_smallest_output_cap() ->
         "order": ["Provider-A", "Provider-B"]
     }
     assert result.content_text == "bounded response"
+    assert result.provider_request_id == "req-123"
+    assert result.responded_model == "model-primary"
     assert result.usage.normalized_cost == Decimal("0.0123")
     assert result.usage.currency == "USD"
 
@@ -221,6 +224,7 @@ async def test_success_without_usage_fails_closed_instead_of_zero_accounting() -
             200,
             json={
                 "id": "req-no-usage",
+                "model": "model-primary",
                 "choices": [{"message": {"content": "response"}}],
             },
         )
@@ -244,6 +248,7 @@ async def test_success_without_cost_fails_closed() -> None:
             200,
             json={
                 "id": "req-no-cost",
+                "model": "model-primary",
                 "choices": [{"message": {"content": "response"}}],
                 "usage": {
                     "prompt_tokens": 20,
@@ -402,3 +407,32 @@ async def test_postgres_turn_guard_takes_room_scoped_advisory_lock() -> None:
     assert str(UUID(int=3)) in lock_params[0]
     assert "select state" in state_query.lower()
     assert state_params == (UUID(int=1), UUID(int=2), UUID(int=3))
+
+
+@pytest.mark.anyio
+async def test_openrouter_rejects_responded_model_mismatch() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "req-mismatch",
+                "model": "different-model",
+                "choices": [{"message": {"content": "wrong model"}}],
+                "usage": {
+                    "prompt_tokens": 20,
+                    "completion_tokens": 10,
+                    "cost": "0.0123",
+                },
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        gateway = OpenRouterGateway(
+            api_key="test-key",
+            policy_resolver=Resolver(
+                ModelPolicy(primary=ModelRoute("model-primary"))
+            ),
+            client=client,
+        )
+        with pytest.raises(OpenRouterGatewayError, match="model mismatch"):
+            await gateway.generate_turn(turn_request())
