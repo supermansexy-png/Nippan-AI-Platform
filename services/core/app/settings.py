@@ -29,6 +29,20 @@ class Settings(BaseSettings):
     war_room_preview_principal_id: str | None = Field(default=None)
     war_room_preview_poll_seconds: float = Field(default=1.0, ge=0.1, le=10.0)
 
+    # Optional remote preview gate. Loopback stays available in development.
+    # Remote traffic is accepted only after Cloudflare Access JWT verification
+    # and an exact owner-email match; the verified request is then mapped to
+    # the server-configured preview principal above.
+    war_room_preview_remote_access_enabled: bool = Field(default=False)
+    cloudflare_access_team_domain: str | None = Field(default=None)
+    cloudflare_access_audience: str | None = Field(default=None)
+    cloudflare_access_owner_email: str | None = Field(default=None)
+    cloudflare_access_jwks_ttl_seconds: int = Field(
+        default=3600,
+        ge=60,
+        le=21600,
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:
