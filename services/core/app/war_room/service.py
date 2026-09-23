@@ -25,6 +25,7 @@ from .interfaces import (
     RoomEventDraft,
     RoomEventSink,
     RoomEventType,
+    RoomFailureHistorySource,
     TrustedActorContext,
     TurnExecutionGuard,
     TurnFailureKind,
@@ -75,6 +76,7 @@ class WarRoomOrchestrator:
         budget_authority: BudgetAuthority,
         command_authorizer: RoomCommandAuthorizer,
         turn_execution_guard: TurnExecutionGuard,
+        failure_history_source: RoomFailureHistorySource,
         event_sink: RoomEventSink,
         scheduler: DeterministicTurnScheduler | None = None,
         clock: Callable[[], datetime] | None = None,
@@ -83,6 +85,7 @@ class WarRoomOrchestrator:
         self._budget_authority = budget_authority
         self._command_authorizer = command_authorizer
         self._turn_execution_guard = turn_execution_guard
+        self._failure_history_source = failure_history_source
         self._event_sink = event_sink
         self._scheduler = scheduler or DeterministicTurnScheduler()
         self._clock = clock or (lambda: datetime.now(UTC))
@@ -103,43 +106,56 @@ class WarRoomOrchestrator:
                 "trusted actor is not authorized as active owner for this room scope"
             )
 
-        if command.expected_state is not session.state:
-            raise StaleRoomCommand(
-                f"expected {command.expected_state.value}, found {session.state.value}"
-            )
+        async with self._turn_execution_guard.hold(
+            correlation=command.correlation,
+        ) as durable_state:
+            if (
+                command.expected_state is not session.state
+                or command.expected_state is not durable_state
+            ):
+                raise StaleRoomCommand(
+                    f"expected {command.expected_state.value}, "
+                    f"memory={session.state.value}, durable={durable_state.value}"
+                )
 
-        if command.command in {RoomCommandType.ASK_ROLE, RoomCommandType.ASK_ALL}:
-            return await self._emit(
+            if command.command in {
+                RoomCommandType.ASK_ROLE,
+                RoomCommandType.ASK_ALL,
+            }:
+                return await self._emit(
+                    session,
+                    command.correlation,
+                    RoomEventType.MESSAGE_APPENDED,
+                    message_type=MessageType.OWNER_MESSAGE,
+                    payload={
+                        "content_text": command.content_text,
+                        "content_reference": command.content_reference,
+                        "target_role": (
+                            command.target_role.value
+                            if command.target_role
+                            else None
+                        ),
+                    },
+                    expected_state=durable_state,
+                )
+
+            action = _LIFECYCLE_ACTIONS[command.command]
+            previous_state = durable_state
+            new_state = transition_room_state(previous_state, action)
+            event = await self._emit(
                 session,
                 command.correlation,
-                RoomEventType.MESSAGE_APPENDED,
-                message_type=MessageType.OWNER_MESSAGE,
-                payload={
-                    "content_text": command.content_text,
-                    "content_reference": command.content_reference,
-                    "target_role": (
-                        command.target_role.value if command.target_role else None
-                    ),
-                },
+                RoomEventType.ROOM_STATE_CHANGED,
+                room_state=new_state,
+                payload={"previous_state": previous_state.value},
+                expected_state=previous_state,
+                new_state=new_state,
             )
-
-        action = _LIFECYCLE_ACTIONS[command.command]
-        previous_state = session.state
-        new_state = transition_room_state(previous_state, action)
-        event = await self._emit(
-            session,
-            command.correlation,
-            RoomEventType.ROOM_STATE_CHANGED,
-            room_state=new_state,
-            payload={"previous_state": previous_state.value},
-            expected_state=previous_state,
-            new_state=new_state,
-        )
-        session.state = new_state
-        session.owner_decision_pending = (
-            new_state is RoomState.NEEDS_OWNER_DECISION
-        )
-        return event
+            session.state = new_state
+            session.owner_decision_pending = (
+                new_state is RoomState.NEEDS_OWNER_DECISION
+            )
+            return event
 
     async def run_next_turn(
         self,
@@ -151,7 +167,33 @@ class WarRoomOrchestrator:
         context_references: tuple[str, ...] = (),
         prior_round_synthesis: str | None = None,
     ) -> OrderedRoomEvent:
-        async with self._turn_execution_guard.hold(correlation=correlation):
+        async with self._turn_execution_guard.hold(
+            correlation=correlation,
+        ) as durable_state:
+            durable_failures = (
+                await self._failure_history_source.load_failed_participant_ids(
+                    correlation=correlation,
+                )
+            )
+            session.failed_participant_ids.update(durable_failures)
+
+            if durable_state is not RoomState.RUNNING:
+                event = await self._emit(
+                    session,
+                    correlation,
+                    RoomEventType.SCHEDULER_HALTED,
+                    room_state=durable_state,
+                    halt_reason=HaltReason.STATE_NOT_RUNNING,
+                    payload={"round_number": session.round_number},
+                    expected_state=durable_state,
+                )
+                session.state = durable_state
+                session.owner_decision_pending = (
+                    durable_state is RoomState.NEEDS_OWNER_DECISION
+                )
+                return event
+
+            session.state = durable_state
             return await self._run_next_turn_locked(
                 session,
                 correlation=correlation,
@@ -219,6 +261,7 @@ class WarRoomOrchestrator:
             RoomEventType.TURN_SCHEDULED,
             participant_id=participant.participant_id,
             payload={"round_number": session.round_number},
+            expected_state=RoomState.RUNNING,
         )
 
         try:
@@ -272,6 +315,7 @@ class WarRoomOrchestrator:
                 "round_number": session.round_number,
                 "usage_tokens": result.usage.total_tokens,
             },
+            expected_state=RoomState.RUNNING,
         )
         session.completed_participant_ids.add(participant.participant_id)
         session.last_speaker_id = participant.participant_id
@@ -317,6 +361,7 @@ class WarRoomOrchestrator:
             RoomEventType.SCHEDULER_HALTED,
             halt_reason=reason,
             payload={"round_number": next_round},
+            expected_state=session.state,
         )
         if reason is HaltReason.ROUND_COMPLETE:
             session.round_number = next_round
