@@ -210,7 +210,8 @@ class ModelTurnResult:
     content_text: str | None
     content_reference: str | None
     usage: UsageDelta
-    provider_request_id: str | None = None
+    provider_request_id: str
+    responded_model: str
 
     def __post_init__(self) -> None:
         if not any(
@@ -218,6 +219,10 @@ class ModelTurnResult:
             for value in (self.content_text, self.content_reference)
         ):
             raise InterfaceViolation("model result requires content text or reference")
+        if not self.provider_request_id.strip():
+            raise InterfaceViolation("provider_request_id must not be blank")
+        if not self.responded_model.strip():
+            raise InterfaceViolation("responded_model must not be blank")
 
 
 @dataclass(frozen=True, slots=True)
