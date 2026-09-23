@@ -1,11 +1,16 @@
 # Nippan AI War Room V1 — Implementation Plan
 
-Status: INCREMENT A AUTHORIZED / INCREMENTS B-F GATED
+Status: INCREMENTS A-B COMPLETE / INCREMENT C IN PROGRESS
 Date: 2026-09-23
 Parent design issue: #19
 Governance dependency: Phase 2 Independent Audit #18 — RESOLVED
 
-This plan decomposes the accepted design work into small implementation increments. Audit #18 is resolved. Increment A is authorized because it is deterministic contract work with no network/model calls and no schema migration. Increment B design may proceed, but schema/RLS migration or application requires an immediate Independent Audit. Increments C-F remain gated by their prerequisite increments and normal audit controls.
+This plan decomposes the accepted design work into small implementation
+increments. Increments A and B are complete; Increment B passed Independent
+Audit #28 and merged in PR #29. Increment C is tracked by Issue #30 and begins
+with the shared contract in Issue #31. Increments D-F remain gated by their
+prerequisites and normal audit controls. Production application remains
+unauthorized.
 
 ## Increment A — Contracts and orchestration rules
 

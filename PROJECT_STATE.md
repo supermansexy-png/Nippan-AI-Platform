@@ -127,12 +127,20 @@ Phase 2 catch-up status:
 - independent audit outcome: PENDING
 - milestone implementation advancement: ON HOLD until independent audit outcome permits continuation
 
-## Parallel design track — Nippan AI War Room V1
-Status: PROPOSAL ONLY / NO IMPLEMENTATION AUTHORIZED
+## Parallel implementation track — Nippan AI War Room V1
+Status: INCREMENT B MERGED / INCREMENT C STARTED
 
 Tracking:
 - Issue #19
+- Increment C: Issue #30
+- Frozen orchestrator contract: Issue #31
 - proposal: `docs/proposals/WAR_ROOM_V1_PROPOSAL.md`
+
+Completed:
+- Increment A deterministic contracts and bounded scheduler
+- Increment B seven-table PostgreSQL/RLS migration
+- Independent Audit #28: PASS_WITH_FINDINGS; all migration blockers closed
+- PR #29 merged at `3d4d4f0848bebfab2dfdd940c1bb4e4b39150717`
 
 Current design includes:
 - visible multi-agent project chat
@@ -145,7 +153,10 @@ Current design includes:
 - Free Discussion / Formal Meeting / Audit Review modes
 - formal Independent Audit remains separately governed
 
-This parallel design work does not count toward Phase 2 progress and must not bypass the current Audit #18 hold. Runtime code, migrations and deployment remain blocked.
+Increment C builds the Core orchestrator and `/war-room` skeleton from one
+frozen command/event/model/budget contract. This parallel track does not count
+toward Phase 2 progress. Supabase production application and all production
+deployment remain unauthorized.
 
 ## AI team policy
 Specialist models may draft/review work, but architecture remains governed by Foundation + ADRs + assigned issues.
@@ -163,14 +174,12 @@ Jev or any model never replaces deterministic authorization, risk or privacy pol
 Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1, Vectorize, Cloudflare Workflows, dedicated vector DB, Kubernetes and unnecessary microservices.
 
 ## Immediate next gate
-1. Run the Phase 2 catch-up 50% Independent Audit and record it under `docs/audits/`.
-2. Resolve and independently re-audit any BLOCKER findings before milestone advancement.
-3. Run `tests/sql/phase2_isolation_invariants.sql` with a CI/test principal allowed to `SET ROLE nippan_runtime`.
-4. Add request persistence/tracing service boundaries to FastAPI Core.
-5. Add deterministic policy/config interfaces.
-6. Add OpenRouter adapter interface without locking production model IDs.
-7. Add MCP authorization interface and synthetic end-to-end request path.
-8. Keep memory/pgvector tables deferred until embedding benchmarks choose model/dimension.
+1. Merge the Increment C orchestrator contract before implementation tracks.
+2. Implement backend, model/budget, verification and frontend tracks against it.
+3. Stop for the normal 75% Independent Audit when 12 of 16 Increment C
+   deliverables have acceptance evidence, or sooner for an immediate trigger.
+4. Keep memory/pgvector tables deferred until embedding benchmarks choose
+   model/dimension.
 
 ## Production migration
 Not allowed in current phase.
