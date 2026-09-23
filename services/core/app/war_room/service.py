@@ -22,9 +22,11 @@ from .interfaces import (
     ModelTurnRequest,
     OrderedRoomEvent,
     RoomCommand,
+    RoomCommandAuthorizer,
     RoomCommandType,
     RoomEventSink,
     RoomEventType,
+    TrustedActorContext,
     TurnFailureKind,
 )
 from .orchestration import DeterministicTurnScheduler, TurnRequest
@@ -33,6 +35,10 @@ from .state_machine import RoomAction, transition_room_state
 
 class StaleRoomCommand(ValueError):
     """Raised when a command was prepared against an obsolete room state."""
+
+
+class UnauthorizedRoomCommand(PermissionError):
+    """Raised when the trusted actor is not the active owner for the room scope."""
 
 
 @dataclass(slots=True)
@@ -71,12 +77,14 @@ class WarRoomOrchestrator:
         *,
         model_gateway: ModelGateway,
         budget_authority: BudgetAuthority,
+        command_authorizer: RoomCommandAuthorizer,
         event_sink: RoomEventSink,
         scheduler: DeterministicTurnScheduler | None = None,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._model_gateway = model_gateway
         self._budget_authority = budget_authority
+        self._command_authorizer = command_authorizer
         self._event_sink = event_sink
         self._scheduler = scheduler or DeterministicTurnScheduler()
         self._clock = clock or (lambda: datetime.now(UTC))
@@ -85,7 +93,18 @@ class WarRoomOrchestrator:
         self,
         session: RoomSession,
         command: RoomCommand,
+        *,
+        actor: TrustedActorContext,
     ) -> OrderedRoomEvent:
+        authorized = await self._command_authorizer.authorize(
+            command=command,
+            actor=actor,
+        )
+        if not authorized:
+            raise UnauthorizedRoomCommand(
+                "trusted actor is not authorized as active owner for this room scope"
+            )
+
         if command.expected_state is not session.state:
             raise StaleRoomCommand(
                 f"expected {command.expected_state.value}, found {session.state.value}"

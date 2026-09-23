@@ -16,6 +16,7 @@ from app.war_room import (
     RoomMode,
     RoomSession,
     RoomState,
+    TrustedActorContext,
     UsageDelta,
     WarRoomOrchestrator,
 )
@@ -49,6 +50,11 @@ class Budget:
 
     async def record_usage(self, **values):
         self.recorded.append(values)
+
+
+class Authorizer:
+    async def authorize(self, **_) -> bool:
+        return True
 
 
 class Sink:
@@ -113,6 +119,7 @@ async def test_lifecycle_start_and_one_model_turn_are_ordered() -> None:
     orchestrator = WarRoomOrchestrator(
         model_gateway=gateway,
         budget_authority=Budget(),
+        command_authorizer=Authorizer(),
         event_sink=sink,
     )
     room = session()
@@ -123,6 +130,12 @@ async def test_lifecycle_start_and_one_model_turn_are_ordered() -> None:
             command=RoomCommandType.START,
             correlation=correlation(),
             expected_state=RoomState.READY,
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner",
         ),
     )
     event = await orchestrator.run_next_turn(
@@ -147,6 +160,7 @@ async def test_budget_denial_stops_before_provider_call() -> None:
     orchestrator = WarRoomOrchestrator(
         model_gateway=gateway,
         budget_authority=Budget(allowed=False),
+        command_authorizer=Authorizer(),
         event_sink=sink,
     )
 
@@ -170,6 +184,7 @@ async def test_round_completion_is_not_reported_as_turn_failure() -> None:
     orchestrator = WarRoomOrchestrator(
         model_gateway=Gateway(),
         budget_authority=Budget(),
+        command_authorizer=Authorizer(),
         event_sink=Sink(),
     )
 

@@ -52,6 +52,14 @@ Commands include `expected_state`. The service rejects a stale command rather
 than silently applying it to a different lifecycle state. `ASK_ROLE` requires
 a target role. Owner content may be bounded inline text or a durable reference.
 
+Every V1 room command is owner-authorized. The command payload is not authority:
+Core supplies a separate trusted actor context containing `tenant_id`,
+`application_id`, canonical `principal_type + principal_id`, and the
+authorizer binds that actor to the command's tenant/application/room scope.
+Authorization succeeds only for the active OWNER participant recorded in
+`project_room_participants`; scope mismatch or missing ownership fails closed
+before any room-state mutation or owner message append.
+
 ## Ordered events
 
 The service emits monotonically ordered room events:

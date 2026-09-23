@@ -7,7 +7,7 @@ from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
 
-from .contracts import HaltReason, MessageType, ParticipantRole, RoomState
+from .contracts import HaltReason, MessageType, ParticipantRole, ParticipantType, RoomState
 
 
 class InterfaceViolation(ValueError):
@@ -61,6 +61,20 @@ class CorrelationContext:
             raise InterfaceViolation(
                 "trace_id must be 32 lowercase hexadecimal characters"
             )
+
+
+@dataclass(frozen=True, slots=True)
+class TrustedActorContext:
+    """Server-established actor scope. Never trust model/client-supplied scope as authority."""
+
+    tenant_id: UUID
+    application_id: UUID
+    principal_type: ParticipantType
+    principal_id: str
+
+    def __post_init__(self) -> None:
+        if not self.principal_id.strip():
+            raise InterfaceViolation("principal_id must not be blank")
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,6 +244,15 @@ class BudgetAuthority(Protocol):
         participant_id: str,
         usage: UsageDelta,
     ) -> None: ...
+
+
+class RoomCommandAuthorizer(Protocol):
+    async def authorize(
+        self,
+        *,
+        command: RoomCommand,
+        actor: TrustedActorContext,
+    ) -> bool: ...
 
 
 class RoomEventSink(Protocol):
