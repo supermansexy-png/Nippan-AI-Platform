@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     war_room_preview_poll_seconds: float = Field(default=1.0, ge=0.1, le=10.0)
 
     # Optional remote access for the non-production War Room preview. This is
-    # off by default. When enabled, every non-test War Room request requires a
+    # off by default. When enabled, every War Room request requires a
     # signed session established from the server-only access token.
     war_room_preview_remote_auth_enabled: bool = Field(default=False)
     war_room_preview_remote_auth_token: str | None = Field(default=None, min_length=32)
