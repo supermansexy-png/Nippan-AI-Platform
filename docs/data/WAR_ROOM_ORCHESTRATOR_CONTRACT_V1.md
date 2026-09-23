@@ -129,6 +129,15 @@ When a hard limit is reached:
 - default and maximum automatic round limit is two for V1;
 - no participant can directly trigger itself;
 - a completed participant is not scheduled twice in one round;
+- one failed automatic provider turn exhausts that participant's automatic
+  failure allowance for the room; it is not automatically retried in the same
+  or later round;
+- a non-Chair turn failure moves the room to `NEEDS_OWNER_DECISION`; a Chair
+  failure pauses the room;
+- after owner resume, healthy participants may continue but a failed
+  participant remains excluded from automatic scheduling;
+- session reconstruction must restore failed participant IDs from durable
+  `TURN_FAILED` events before any new automatic scheduling;
 - pause, stop and owner-decision state halt scheduling before model invocation;
 - the Chair failing pauses the room; it does not release uncontrolled turns;
 - exactly one state transition is committed for an accepted command;
@@ -158,10 +167,11 @@ comes back from the Core service and PostgreSQL event replay.
 
 ## Failure policy
 
-- timeout and provider errors produce `TURN_FAILED` with a stable failure kind;
+- timeout and provider errors produce `TURN_FAILED` with a stable failure kind
+  and `PARTICIPANT_FAILURE_LIMIT_REACHED`;
 - War Room V1 performs no application-level automatic provider retry/model
-  fallback after a billable request; the failure becomes a bounded turn
-  failure;
+  fallback after a billable request; the failed participant is exhausted for
+  automatic turns for the remainder of the room;
 - invalid responses are not persisted as successful agent messages;
 - database/event persistence failure halts the turn before another agent runs.
 
