@@ -49,6 +49,11 @@ class Budget:
         return None
 
 
+class FailingSink:
+    async def append(self, event, *, expected_state=None, new_state=None):
+        raise RuntimeError("persistence failed")
+
+
 class Authorizer:
     def __init__(self, allowed: bool = True) -> None:
         self.allowed = allowed
@@ -361,3 +366,40 @@ async def test_authorization_receives_trusted_actor_and_command_scope() -> None:
     assert call["actor"] == actor
     assert call["command"].correlation.tenant_id == UUID(int=1)
     assert call["command"].correlation.application_id == UUID(int=2)
+
+
+@pytest.mark.anyio
+async def test_state_does_not_mutate_when_persistence_fails() -> None:
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.READY,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        event_sink=FailingSink(),
+    )
+
+    with pytest.raises(RuntimeError, match="persistence failed"):
+        await orchestrator.apply_command(
+            room,
+            RoomCommand(
+                command=RoomCommandType.START,
+                correlation=correlation(),
+                expected_state=RoomState.READY,
+            ),
+            actor=TrustedActorContext(
+                tenant_id=UUID(int=1),
+                application_id=UUID(int=2),
+                principal_type=ParticipantType.HUMAN,
+                principal_id="owner",
+            ),
+        )
+
+    assert room.state is RoomState.READY
+    assert room.owner_decision_pending is False
