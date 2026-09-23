@@ -186,15 +186,24 @@ class PostgresRoomSnapshotSource:
                         and request_id is not null
                     )
                     select
-                      coalesce(sum(a.input_tokens), 0),
-                      coalesce(sum(a.output_tokens), 0),
-                      count(*) filter (
-                        where a.input_tokens is null or a.output_tokens is null
-                      )
-                    from public.ai_calls a
-                    join room_requests r on r.request_id = a.request_id
-                    where a.tenant_id = %s
-                      and a.application_id = %s
+                      coalesce(sum(
+                        case
+                          when u.event_type = 'ai_tokens'
+                           and u.unit = 'input_tokens'
+                          then u.quantity else 0
+                        end
+                      ), 0),
+                      coalesce(sum(
+                        case
+                          when u.event_type = 'ai_tokens'
+                           and u.unit = 'output_tokens'
+                          then u.quantity else 0
+                        end
+                      ), 0)
+                    from public.usage_events u
+                    join room_requests r on r.request_id = u.request_id
+                    where u.tenant_id = %s
+                      and u.application_id = %s
                     """,
                     (
                         tenant_id,
@@ -242,11 +251,7 @@ class PostgresRoomSnapshotSource:
 
         if token_row is None:
             raise RoomUsageProjectionError("directional token query returned no row")
-        input_tokens, output_tokens, incomplete_calls = token_row
-        if int(incomplete_calls or 0) > 0:
-            raise RoomUsageProjectionError(
-                "room contains AI calls with incomplete token metrics"
-            )
+        input_tokens, output_tokens = token_row
 
         currencies = {
             row[2]
