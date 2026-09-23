@@ -144,3 +144,22 @@ async def test_non_owner_lookup_fails_closed() -> None:
     )
 
     assert allowed is False
+
+
+@pytest.mark.anyio
+async def test_agent_principal_cannot_authorize_owner_command() -> None:
+    database = FakeDatabase(result=True)
+    authorizer = DatabaseRoomCommandAuthorizer(database)  # type: ignore[arg-type]
+
+    allowed = await authorizer.authorize(
+        command=command(),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.AGENT,
+            principal_id="agent-owner-row",
+        ),
+    )
+
+    assert allowed is False
+    assert database.calls == []
