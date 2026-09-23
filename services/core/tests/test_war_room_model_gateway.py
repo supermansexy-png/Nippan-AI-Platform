@@ -1,4 +1,5 @@
 import json
+from contextlib import asynccontextmanager
 from decimal import Decimal
 from uuid import UUID
 
@@ -20,6 +21,7 @@ from app.war_room import (
 )
 from app.war_room.budget import (
     BudgetPolicy,
+    PostgresRoomTurnGuard,
     UsageBackedBudgetAuthority,
     UsageTotals,
 )
@@ -53,6 +55,25 @@ class UsageStore:
         self.recorded.append(values)
 
 
+class LockConnection:
+    def __init__(self) -> None:
+        self.executed = []
+
+    async def execute(self, query, params) -> None:
+        self.executed.append((query, params))
+
+
+class LockDatabase:
+    def __init__(self) -> None:
+        self.connection = LockConnection()
+        self.scopes = []
+
+    @asynccontextmanager
+    async def tenant_transaction(self, **scope):
+        self.scopes.append(scope)
+        yield self.connection
+
+
 @pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
@@ -69,31 +90,35 @@ def correlation() -> CorrelationContext:
     )
 
 
-def turn_request(role: ParticipantRole = ParticipantRole.BUILDER) -> ModelTurnRequest:
+def turn_request(
+    role: ParticipantRole = ParticipantRole.BUILDER,
+    *,
+    max_output_tokens: int = 120,
+) -> ModelTurnRequest:
     return ModelTurnRequest(
         correlation=correlation(),
         participant_id="agent-1",
         role=role,
         model_policy_ref="policy/agent-1",
         agenda_objective="Review the implementation",
+        max_output_tokens=max_output_tokens,
         context_references=("github://evidence/1",),
     )
 
 
 @pytest.mark.anyio
-async def test_openrouter_falls_back_to_configured_model_route() -> None:
-    seen_models: list[str] = []
+async def test_openrouter_uses_one_request_and_enforces_smallest_output_cap() -> None:
+    calls = []
+    payloads = []
 
     def handler(request: httpx.Request) -> httpx.Response:
-        body = json.loads(request.content.decode())
-        seen_models.append(body["model"])
-        if body["model"] == "model-primary":
-            return httpx.Response(503, json={"error": "busy"})
+        calls.append(request)
+        payloads.append(json.loads(request.content.decode()))
         return httpx.Response(
             200,
             json={
                 "id": "req-123",
-                "choices": [{"message": {"content": "fallback response"}}],
+                "choices": [{"message": {"content": "bounded response"}}],
                 "usage": {
                     "prompt_tokens": 20,
                     "completion_tokens": 10,
@@ -107,55 +132,55 @@ async def test_openrouter_falls_back_to_configured_model_route() -> None:
             api_key="test-key",
             policy_resolver=Resolver(
                 ModelPolicy(
-                    primary=ModelRoute("model-primary"),
-                    fallbacks=(ModelRoute("model-fallback"),),
-                    max_retries_per_route=0,
+                    primary=ModelRoute(
+                        "model-primary",
+                        provider_order=("Provider-A", "Provider-B"),
+                    ),
+                    max_output_tokens=80,
                 )
             ),
             client=client,
         )
-        result = await gateway.generate_turn(turn_request())
+        result = await gateway.generate_turn(
+            turn_request(max_output_tokens=120)
+        )
 
-    assert seen_models == ["model-primary", "model-fallback"]
-    assert result.content_text == "fallback response"
-    assert result.provider_request_id == "req-123"
-    assert result.usage.input_tokens == 20
-    assert result.usage.output_tokens == 10
+    assert len(calls) == 1
+    assert payloads[0]["model"] == "model-primary"
+    assert payloads[0]["max_tokens"] == 80
+    assert payloads[0]["provider"] == {
+        "order": ["Provider-A", "Provider-B"]
+    }
+    assert result.content_text == "bounded response"
     assert result.usage.normalized_cost == Decimal("0.0123")
     assert result.usage.currency == "USD"
 
 
 @pytest.mark.anyio
-async def test_independent_auditor_never_silently_switches_model_identity() -> None:
-    seen_models: list[str] = []
+async def test_transient_provider_failure_is_not_retried_by_application() -> None:
+    calls = 0
 
-    def handler(request: httpx.Request) -> httpx.Response:
-        body = json.loads(request.content.decode())
-        seen_models.append(body["model"])
+    def handler(_request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
         return httpx.Response(503, json={"error": "busy"})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         gateway = OpenRouterGateway(
             api_key="test-key",
             policy_resolver=Resolver(
-                ModelPolicy(
-                    primary=ModelRoute("auditor-primary"),
-                    fallbacks=(ModelRoute("different-model"),),
-                    max_retries_per_route=0,
-                )
+                ModelPolicy(primary=ModelRoute("model-primary"))
             ),
             client=client,
         )
         with pytest.raises(OpenRouterGatewayError):
-            await gateway.generate_turn(
-                turn_request(ParticipantRole.INDEPENDENT_AUDITOR)
-            )
+            await gateway.generate_turn(turn_request())
 
-    assert seen_models == ["auditor-primary"]
+    assert calls == 1
 
 
 @pytest.mark.anyio
-async def test_openrouter_timeout_kind_survives_retry_exhaustion() -> None:
+async def test_timeout_is_one_billable_attempt_and_preserves_failure_kind() -> None:
     calls = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -167,25 +192,122 @@ async def test_openrouter_timeout_kind_survives_retry_exhaustion() -> None:
         gateway = OpenRouterGateway(
             api_key="test-key",
             policy_resolver=Resolver(
-                ModelPolicy(
-                    primary=ModelRoute("model-primary"),
-                    max_retries_per_route=1,
-                    retry_backoff_seconds=0,
-                )
+                ModelPolicy(primary=ModelRoute("model-primary"))
             ),
             client=client,
         )
         with pytest.raises(TimeoutError):
             await gateway.generate_turn(turn_request())
 
-    assert calls == 2
+    assert calls == 1
+
+
+@pytest.mark.anyio
+async def test_success_without_usage_fails_closed_instead_of_zero_accounting() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "req-no-usage",
+                "choices": [{"message": {"content": "response"}}],
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        gateway = OpenRouterGateway(
+            api_key="test-key",
+            policy_resolver=Resolver(
+                ModelPolicy(primary=ModelRoute("model-primary"))
+            ),
+            client=client,
+        )
+        with pytest.raises(OpenRouterGatewayError):
+            await gateway.generate_turn(turn_request())
+
+
+@pytest.mark.anyio
+async def test_success_without_cost_fails_closed() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "id": "req-no-cost",
+                "choices": [{"message": {"content": "response"}}],
+                "usage": {
+                    "prompt_tokens": 20,
+                    "completion_tokens": 10,
+                },
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        gateway = OpenRouterGateway(
+            api_key="test-key",
+            policy_resolver=Resolver(
+                ModelPolicy(primary=ModelRoute("model-primary"))
+            ),
+            client=client,
+        )
+        with pytest.raises(OpenRouterGatewayError):
+            await gateway.generate_turn(turn_request())
+
+
+@pytest.mark.anyio
+async def test_budget_authority_grants_only_remaining_output_allowance() -> None:
+    policy = BudgetPolicy(
+        room=BudgetLimit(
+            token_limit=1000,
+            cost_limit=Decimal("10"),
+            currency="USD",
+        ),
+        agenda=BudgetLimit(
+            token_limit=500,
+            cost_limit=Decimal("5"),
+            currency="USD",
+        ),
+        participant=BudgetLimit(
+            token_limit=200,
+            cost_limit=Decimal("1"),
+            currency="USD",
+        ),
+    )
+    store = UsageStore(
+        UsageTotals(
+            room_tokens=100,
+            agenda_tokens=50,
+            participant_tokens=20,
+            room_cost=Decimal("1"),
+            agenda_cost=Decimal("0.5"),
+            participant_cost=Decimal("0.1"),
+        )
+    )
+    authority = UsageBackedBudgetAuthority(
+        policy_resolver=BudgetResolver(policy),
+        usage_store=store,
+    )
+
+    decision = await authority.authorize_turn(
+        correlation=correlation(),
+        participant_id="agent-1",
+    )
+
+    assert decision.allowed is True
+    assert decision.max_output_tokens == 180
 
 
 @pytest.mark.anyio
 async def test_usage_backed_budget_authority_denies_before_provider_at_limit() -> None:
     policy = BudgetPolicy(
-        room=BudgetLimit(token_limit=1000, cost_limit=Decimal("10"), currency="USD"),
-        agenda=BudgetLimit(token_limit=500, cost_limit=Decimal("5"), currency="USD"),
+        room=BudgetLimit(
+            token_limit=1000,
+            cost_limit=Decimal("10"),
+            currency="USD",
+        ),
+        agenda=BudgetLimit(
+            token_limit=500,
+            cost_limit=Decimal("5"),
+            currency="USD",
+        ),
         participant=BudgetLimit(
             token_limit=200,
             cost_limit=Decimal("1"),
@@ -214,6 +336,7 @@ async def test_usage_backed_budget_authority_denies_before_provider_at_limit() -
 
     assert decision.allowed is False
     assert decision.halt_reason.value == "PARTICIPANT_BUDGET_EXHAUSTED"
+    assert decision.max_output_tokens is None
 
 
 @pytest.mark.anyio
@@ -228,7 +351,12 @@ async def test_usage_record_is_forwarded_to_platform_usage_owner() -> None:
         policy_resolver=BudgetResolver(policy),
         usage_store=store,
     )
-    usage = UsageDelta(input_tokens=7, output_tokens=3)
+    usage = UsageDelta(
+        input_tokens=7,
+        output_tokens=3,
+        normalized_cost=Decimal("0.001"),
+        currency="USD",
+    )
 
     await authority.record_usage(
         correlation=correlation(),
@@ -238,3 +366,24 @@ async def test_usage_record_is_forwarded_to_platform_usage_owner() -> None:
 
     assert len(store.recorded) == 1
     assert store.recorded[0]["usage"] == usage
+
+
+@pytest.mark.anyio
+async def test_postgres_turn_guard_takes_room_scoped_advisory_lock() -> None:
+    database = LockDatabase()
+    guard = PostgresRoomTurnGuard(database)  # type: ignore[arg-type]
+
+    async with guard.hold(correlation=correlation()):
+        pass
+
+    assert database.scopes == [
+        {
+            "tenant_id": UUID(int=1),
+            "application_id": UUID(int=2),
+            "request_id": UUID(int=5),
+        }
+    ]
+    assert len(database.connection.executed) == 1
+    query, params = database.connection.executed[0]
+    assert "pg_advisory_xact_lock" in query
+    assert str(UUID(int=3)) in params[0]
