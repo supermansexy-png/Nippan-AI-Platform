@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     # identity; tenant/application/principal scope is established by server
     # configuration and still must pass the database-backed room authorizers.
     war_room_preview_enabled: bool = Field(default=False)
-    war_room_preview_local_only: bool = Field(default=True)
     war_room_preview_tenant_id: UUID | None = Field(default=None)
     war_room_preview_application_id: UUID | None = Field(default=None)
     war_room_preview_principal_id: str | None = Field(default=None)
