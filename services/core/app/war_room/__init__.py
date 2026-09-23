@@ -70,6 +70,7 @@ from .service import (
     UnauthorizedRoomCommand,
     WarRoomOrchestrator,
 )
+from .reconstruction import RoomSessionFailureReconstructor
 
 __all__ = [
     "AgendaPolicy",
@@ -120,6 +121,7 @@ __all__ = [
     "RoomPersistenceError",
     "RoomState",
     "RoomSession",
+    "RoomSessionFailureReconstructor",
     "RoomTurnGuardError",
     "RoomEventSink",
     "RoomEventType",
