@@ -1,7 +1,7 @@
 # Nippan AI Platform — Current State
 
 Last updated: 2026-09-23
-Status: ACTIVE — SECURITY REMEDIATION REQUIRED
+Status: ACTIVE — REMOTE AUTH REMEDIATION DEPLOYED
 
 ## Repository
 
@@ -12,15 +12,14 @@ Integration branch:
 phase2/postgres-logical-schema
 
 Verified integration head:
-0cead2215e6b3f4cd0f678d66925f576e20f5dca
+4ab568f157a8ffb20f3fb7332e41f5c8cc7024b1
 
 Local workspace:
 C:\opencode\nippan
 
-The remediation branch is `security/war-room-access-remediation`, created
-directly from the verified integration head. The historical
-`war-room/increment-b-schema-implementation` branch must not be used as the
-base for this remediation.
+Remote Auth remediation was developed on
+`security/war-room-access-remediation` and merged through PR #79. The current
+documentation follow-up branch is `docs/post-remediation-state`.
 
 ## Current Platform State
 
@@ -53,21 +52,19 @@ the War Room UI, snapshot, SSE and owner-command surfaces. Remote access is
 disabled by default in repository settings, but repository defaults do not
 prove the current Render environment configuration.
 
-Issue #74 is OPEN and contains a real technical security blocker. The merged
-transport currently permits authentication bypass before Cloudflare JWT
-verification for test environments and loopback-looking ASGI clients. A public
-reverse proxy client address must not be treated as proof of local access.
+Issue #74 is CLOSED after remediation, exact-head CI and deployed runtime
+verification. The historical finding remains valid evidence for the vulnerable
+PR #73 implementation.
 
-PR #75 is OPEN with merge state DIRTY and mergeability CONFLICTING. It changes
-the design to shared-token and signed-session authentication and must not be
-merged. Replacing Cloudflare Access with that architecture is
-NEEDS_OWNER_DECISION.
+PR #75 is CLOSED as obsolete. It changes the design to shared-token and
+signed-session authentication and was not merged. Replacing Cloudflare Access
+with that architecture remains NEEDS_OWNER_DECISION.
 
 ## Required Remediation
 
-PR #79 is OPEN from `security/war-room-access-remediation` and must not be
-merged before Project Owner review. It was created from the exact integration
-head and preserves the Cloudflare Access architecture.
+PR #79 is MERGED as
+`4ab568f157a8ffb20f3fb7332e41f5c8cc7024b1`. It preserves the Cloudflare
+Access architecture.
 
 Implementation commit `faf6e052aa3a1e506656ba0c00f7564116680b0a` makes the
 smallest fail-closed change. The verified remediation code head is
@@ -94,11 +91,12 @@ trigger forced JWKS refresh attempts. Authentication still fails closed. Route
 protection is also manually repeated, so future War Room routes must be added to
 the authorization coverage matrix.
 
-Do not merge remediation until the Project Owner reviews the evidence.
+The Project Owner approved merge, deployment verification and closure of Issue
+#74 and obsolete PR #75.
 
 ## Runtime Containment
 
-Status: `RUNTIME_CONTAINMENT_FAILED`
+Status: `RUNTIME_CONTAINMENT_VERIFIED`
 
 No Render CLI or Render API credential was available to inspect active
 environment variables. Read-only public probes against
@@ -109,16 +107,17 @@ environment variables. Read-only public probes against
 - the same unauthenticated request with loopback-looking `X-Forwarded-For` and
   `X-Real-IP` headers returned HTTP 200 with the War Room HTML.
 
-This proves that the deployed proxy/runtime path can turn spoofed forwarding
-headers into the loopback client value trusted by the merged transport. Do not
-enable or advertise remote/public War Room access. Deployment configuration was
-not changed during verification.
+Those probes proved the pre-remediation vulnerability. After PR #79 deployment,
+read-only verification confirmed:
 
-The custom domain `https://warroom.nippan.org/war-room/` currently redirects
-unauthenticated requests to Cloudflare Access even when loopback-looking
-forwarding headers are supplied. The direct Render origin remains reachable and
-returned HTTP 200 for the spoofed request, so origin containment remains failed
-until remediation is merged, deployed and verified.
+- `GET /health` returns HTTP 200;
+- direct Render UI, assets, snapshot, SSE and owner-command requests with
+  loopback-looking forwarding headers return HTTP 403;
+- an invalid Cloudflare JWT returns HTTP 403;
+- `https://warroom.nippan.org/war-room/` redirects unauthenticated requests to
+  Cloudflare Access with HTTP 302.
+
+Deployment configuration was not changed manually during verification.
 
 ## Audit
 
@@ -135,10 +134,10 @@ authorizes changes. Do not modify its service, data, credentials or workflows.
 
 ## Immediate Next Step
 
-1. Report PR #79 evidence and residual risks to the Project Owner.
-2. Do not merge or deploy without Project Owner instruction.
-3. After remediation disposition, create a separate feature branch for
-   deterministic `ASK_ALL` rotation and non-destructive clear-view UI.
+1. Do not start additional War Room feature work from the remediation branch.
+2. Review priorities and agree a new plan with the Project Owner before starting
+   `ASK_ALL` rotation, clear-view UI or unrelated platform work.
+3. Track JWKS refresh throttling as non-blocking security hardening.
 
 ## Source-of-Truth Rule
 
