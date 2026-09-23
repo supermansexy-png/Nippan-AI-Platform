@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     war_room_preview_application_id: UUID | None = Field(default=None)
     war_room_preview_principal_id: str | None = Field(default=None)
     war_room_preview_poll_seconds: float = Field(default=1.0, ge=0.1, le=10.0)
+    # Optional billable preview turns. Disabled by default; when enabled, the
+    # preview uses a tightly bounded low-cost OpenRouter model and per-room cap.
+    war_room_preview_model_turns_enabled: bool = Field(default=False)
+    war_room_preview_model_id: str = Field(default="poolside/laguna-s-2.1")
+    war_room_preview_max_output_tokens: int = Field(default=160, ge=32, le=512)
+    war_room_preview_max_turns_per_command: int = Field(default=3, ge=1, le=5)
+    war_room_preview_room_token_limit: int = Field(default=6000, ge=256, le=50000)
+    war_room_preview_room_cost_limit_usd: float = Field(default=0.01, ge=0.0, le=1.0)
 
     # Optional remote preview gate. Loopback stays available in development.
     # Remote traffic is accepted only after Cloudflare Access JWT verification
