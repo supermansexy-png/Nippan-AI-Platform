@@ -143,6 +143,14 @@ When a hard limit is reached:
 - exactly one state transition is committed for an accepted command;
 - Builder/Auditor independence remains enforced by the database and contracts.
 
+## Read-side contract
+
+Track D read surfaces must consume
+`docs/data/WAR_ROOM_READ_SNAPSHOT_CONTRACT_V1.md` and the normative
+`war-room-event-v1.schema.json` / `war-room-snapshot-v1.schema.json` schemas.
+Read authorization is separate from owner command authorization and fails
+closed by default.
+
 ## Frontend projection
 
 `/war-room` consumes the typed `RoomSnapshot` plus ordered
