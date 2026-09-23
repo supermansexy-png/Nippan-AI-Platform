@@ -87,6 +87,9 @@ jobs:
 
       - name: Run Core Python tests with auditable summary
         working-directory: services/core
+        env:
+          NIPPAN_TEST_POSTGRES_ADMIN_DSN: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+          NIPPAN_TEST_POSTGRES_RUNTIME_DSN: postgresql://nippan_runtime:runtime_test@127.0.0.1:5432/postgres
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check -e ".[test]"
