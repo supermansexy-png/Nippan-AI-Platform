@@ -61,9 +61,51 @@ cannot invoke a provider. Owner commands register their request trace in the
 existing `requests` table and persist through the existing War Room event sink;
 no new ledger, migration, schema, RLS or grant is introduced.
 
-HTTP access is always limited to the loopback client in development. There is no
-remote-preview override. This preview is not a production authentication mechanism.
+By default, HTTP access remains limited to the loopback client in development.
+Remote access is opt-in and never weakens the existing tenant/application/principal
+scope or database-backed room authorization.
 
+### Secure remote/mobile preview
+
+Remote preview access is disabled by default. To expose the non-production preview
+through an HTTPS origin such as the isolated Render service, configure:
+
+```text
+NIPPAN_WAR_ROOM_PREVIEW_REMOTE_AUTH_ENABLED=true
+NIPPAN_WAR_ROOM_PREVIEW_REMOTE_AUTH_TOKEN=<high-entropy token, at least 32 characters>
+NIPPAN_WAR_ROOM_PREVIEW_REMOTE_ORIGIN=https://<exact-preview-host>
+```
+
+Generate the token outside source control, for example:
+
+```bash
+python -c 'import secrets; print(secrets.token_urlsafe(48))'
+```
+
+The access token is submitted only in the login request body. It is never placed in
+the URL, browser JavaScript, localStorage, repository or database. Successful login
+creates a short-lived signed session cookie that is `Secure`, `HttpOnly`,
+`SameSite=Strict` and scoped to `/war-room`. The separate CSRF cookie is bound to
+the signed session and must be echoed in the `X-War-Room-CSRF` header for owner
+commands and logout.
+
+Remote mode also requires the exact configured HTTPS `Origin` for login, SSE and
+state-changing requests. Failed logins have a fixed delay and per-client/global
+in-memory caps. The access token is the session-signing root key; rotating it
+invalidates all existing sessions.
+
+When remote auth is enabled, **all** non-test War Room requests require authentication,
+including loopback requests. This avoids relying on proxy-forwarded client IP headers
+for the exposed mode. When remote auth is disabled, the original loopback-only
+boundary remains in effect.
+
+The remote-auth layer only protects transport access. The browser still cannot supply
+tenant/application/principal authority, active-participant reads still pass the
+database authorizer, OWNER commands still require the active HUMAN OWNER row, and the
+preview still exposes no turn/tick/auto-advance/provider endpoint.
+
+This remains a non-production preview authentication mechanism and is subject to the
+security/authentication independent-audit gate before deployment.
 
 ### Seed a complete local room
 
