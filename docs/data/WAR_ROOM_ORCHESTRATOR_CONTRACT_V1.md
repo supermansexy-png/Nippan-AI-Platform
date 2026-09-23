@@ -58,6 +58,7 @@ The service emits monotonically ordered room events:
 
 - `ROOM_STATE_CHANGED`
 - `TURN_SCHEDULED`
+- `SCHEDULER_HALTED`
 - `MESSAGE_APPENDED`
 - `OWNER_DECISION_REQUIRED`
 - `BUDGET_HARD_STOP`
