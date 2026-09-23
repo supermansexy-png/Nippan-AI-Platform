@@ -108,14 +108,11 @@ class WarRoomOrchestrator:
 
         async with self._turn_execution_guard.hold(
             correlation=command.correlation,
-        ) as durable_state:
-            if (
-                command.expected_state is not session.state
-                or command.expected_state is not durable_state
-            ):
+        ):
+            if command.expected_state is not session.state:
                 raise StaleRoomCommand(
                     f"expected {command.expected_state.value}, "
-                    f"memory={session.state.value}, durable={durable_state.value}"
+                    f"memory={session.state.value}"
                 )
 
             if command.command in {
@@ -136,11 +133,11 @@ class WarRoomOrchestrator:
                             else None
                         ),
                     },
-                    expected_state=durable_state,
+                    expected_state=command.expected_state,
                 )
 
             action = _LIFECYCLE_ACTIONS[command.command]
-            previous_state = durable_state
+            previous_state = command.expected_state
             new_state = transition_room_state(previous_state, action)
             event = await self._emit(
                 session,
