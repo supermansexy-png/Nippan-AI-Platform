@@ -106,8 +106,8 @@ Rules:
 
 - when there are zero matching AI calls, directional token counts are 0;
 - when any matching call has missing input/output metrics, the producer must not
-  guess zero for that call; snapshot production must surface an incomplete
-  usage projection rather than fabricate directional totals;
+  guess zero for that call; V1 snapshot production fails closed with a typed
+  usage-projection error rather than returning incomplete directional totals;
 - a later implementation may add an explicit completeness field only through
   the frozen-contract change process.
 
