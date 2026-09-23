@@ -102,6 +102,8 @@ class OpenRouterGateway:
                         policy.retry_backoff_seconds * (2**attempt)
                     )
 
+        if isinstance(last_error, httpx.TimeoutException):
+            raise TimeoutError("all configured model routes timed out") from last_error
         raise OpenRouterGatewayError("all configured model routes failed") from last_error
 
     async def _call_route(
