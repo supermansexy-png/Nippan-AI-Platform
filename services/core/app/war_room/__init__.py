@@ -1,3 +1,4 @@
+from .auth import DatabaseRoomCommandAuthorizer
 from .contracts import (
     AgendaPolicy,
     BudgetSnapshot,
@@ -29,9 +30,11 @@ from .interfaces import (
     ModelTurnResult,
     OrderedRoomEvent,
     RoomCommand,
+    RoomCommandAuthorizer,
     RoomCommandType,
     RoomEventSink,
     RoomEventType,
+    TrustedActorContext,
     TurnFailureKind,
     UsageDelta,
 )
@@ -40,7 +43,12 @@ from .state_machine import (
     RoomAction,
     transition_room_state,
 )
-from .service import RoomSession, StaleRoomCommand, WarRoomOrchestrator
+from .service import (
+    RoomSession,
+    StaleRoomCommand,
+    UnauthorizedRoomCommand,
+    WarRoomOrchestrator,
+)
 
 __all__ = [
     "AgendaPolicy",
@@ -50,6 +58,7 @@ __all__ = [
     "BudgetLimit",
     "CorrelationContext",
     "ContractViolation",
+    "DatabaseRoomCommandAuthorizer",
     "DeterministicTurnScheduler",
     "EvidenceKind",
     "HaltReason",
@@ -65,6 +74,7 @@ __all__ = [
     "ParticipantType",
     "RoomAction",
     "RoomCommand",
+    "RoomCommandAuthorizer",
     "RoomCommandType",
     "RoomContract",
     "RoomMessageContract",
@@ -76,7 +86,9 @@ __all__ = [
     "ScheduleDecision",
     "StaleRoomCommand",
     "TurnRequest",
+    "TrustedActorContext",
     "TurnFailureKind",
+    "UnauthorizedRoomCommand",
     "UsageDelta",
     "WarRoomOrchestrator",
     "transition_room_state",
