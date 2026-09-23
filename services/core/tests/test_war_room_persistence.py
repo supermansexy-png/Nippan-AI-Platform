@@ -11,7 +11,10 @@ from app.war_room import (
     PostgresRoomFailureHistorySource,
     RoomEventDraft,
     RoomEventType,
+    RoomMode,
     RoomPersistenceConflict,
+    RoomSession,
+    RoomSessionFailureReconstructor,
     RoomState,
 )
 
@@ -200,3 +203,39 @@ async def test_failure_history_restores_only_failure_limit_turn_events() -> None
     assert "message_type = 'ERROR'" in query
     assert "order by sequence" in query.lower()
     assert params == (UUID(int=1), UUID(int=2), UUID(int=3))
+
+
+@pytest.mark.anyio
+async def test_fresh_session_reconstructs_failure_cap_from_durable_turn_failed_event() -> None:
+    failed_id = UUID(int=12)
+    database = FakeDatabase(
+        fetch_rows=[
+            (
+                failed_id,
+                json.dumps(
+                    {
+                        "event_type": "TURN_FAILED",
+                        "halt_reason": "PARTICIPANT_FAILURE_LIMIT_REACHED",
+                        "payload": {
+                            "failure_kind": "TIMEOUT",
+                            "automatic_retry_allowed": False,
+                        },
+                    }
+                ),
+            ),
+        ]
+    )
+    source = PostgresRoomFailureHistorySource(database)  # type: ignore[arg-type]
+    reconstructor = RoomSessionFailureReconstructor(source)
+    session = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(),
+    )
+
+    await reconstructor.restore(
+        session,
+        correlation=correlation(),
+    )
+
+    assert session.failed_participant_ids == {str(failed_id)}
