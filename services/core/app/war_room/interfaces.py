@@ -49,6 +49,11 @@ class RealtimeTransport(StrEnum):
     SERVER_SENT_EVENTS = "SERVER_SENT_EVENTS"
 
 
+class RoomReadKind(StrEnum):
+    SNAPSHOT = "SNAPSHOT"
+    EVENT_STREAM = "EVENT_STREAM"
+
+
 @dataclass(frozen=True, slots=True)
 class CorrelationContext:
     tenant_id: UUID
@@ -79,6 +84,19 @@ class TrustedActorContext:
     def __post_init__(self) -> None:
         if not self.principal_id.strip():
             raise InterfaceViolation("principal_id must not be blank")
+
+
+@dataclass(frozen=True, slots=True)
+class RoomReadRequest:
+    tenant_id: UUID
+    application_id: UUID
+    room_id: UUID
+    read_kind: RoomReadKind
+    after_sequence: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.after_sequence is not None and self.after_sequence < 0:
+            raise InterfaceViolation("after_sequence must not be negative")
 
 
 @dataclass(frozen=True, slots=True)
@@ -418,6 +436,26 @@ class TurnExecutionGuard(Protocol):
         *,
         correlation: CorrelationContext,
     ) -> AsyncContextManager[None]: ...
+
+
+class RoomReadAuthorizer(Protocol):
+    async def authorize_read(
+        self,
+        *,
+        request: RoomReadRequest,
+        actor: TrustedActorContext,
+    ) -> bool: ...
+
+
+class RoomSnapshotSource(Protocol):
+    async def load_snapshot(
+        self,
+        *,
+        tenant_id: UUID,
+        application_id: UUID,
+        room_id: UUID,
+        recent_event_limit: int = 100,
+    ) -> RoomSnapshot: ...
 
 
 class RoomCommandAuthorizer(Protocol):

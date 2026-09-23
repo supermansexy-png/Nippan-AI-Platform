@@ -87,3 +87,16 @@ room authorization boundary. SSE transport itself grants no authorization.
 - the browser remains a projection and command client, not scheduler/budget/
   authorization authority;
 - transport can be revisited later only with measured need.
+
+
+## N-10 wire/read contract freeze
+
+Track D consumes the normative machine-readable wire contracts:
+
+- `schemas/war-room-event-v1.schema.json`
+- `schemas/war-room-snapshot-v1.schema.json`
+
+Read authorization and snapshot source-of-truth mapping are frozen in
+`docs/data/WAR_ROOM_READ_SNAPSHOT_CONTRACT_V1.md`. Snapshot/SSE reads must
+pass `RoomReadAuthorizer`; the default implementation is deny-all. This ADR
+does not authorize a browser or endpoint to infer its own read policy.
