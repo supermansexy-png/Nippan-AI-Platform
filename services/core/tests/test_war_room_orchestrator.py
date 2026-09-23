@@ -255,7 +255,9 @@ async def test_chair_provider_failure_pauses_room() -> None:
     )
 
     assert event.event_type is RoomEventType.TURN_FAILED
+    assert event.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
     assert room.state is RoomState.PAUSED
+    assert "chair" in room.failed_participant_ids
 
 
 @pytest.mark.anyio
@@ -421,3 +423,122 @@ async def test_state_does_not_mutate_when_persistence_fails() -> None:
 
     assert room.state is RoomState.READY
     assert room.owner_decision_pending is False
+
+
+@pytest.mark.anyio
+async def test_non_chair_failure_enters_owner_gate_and_is_not_retried_after_resume() -> None:
+    gateway = Gateway(fail_roles={ParticipantRole.BUILDER})
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+            participant("security", ParticipantRole.SECURITY_REVIEWER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=gateway,
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        event_sink=Sink(),
+    )
+
+    failed = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Review implementation",
+    )
+
+    assert failed.event_type is RoomEventType.TURN_FAILED
+    assert failed.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+    assert room.state is RoomState.NEEDS_OWNER_DECISION
+    assert room.owner_decision_pending is True
+    assert room.failed_participant_ids == {"builder"}
+    assert [request.participant_id for request in gateway.calls] == ["builder"]
+
+    await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.SUBMIT_OWNER_DECISION,
+            correlation=correlation(),
+            expected_state=RoomState.NEEDS_OWNER_DECISION,
+            content_text="Continue with remaining healthy agents.",
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner",
+        ),
+    )
+
+    resumed = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Continue review",
+    )
+
+    assert resumed.event_type is RoomEventType.MESSAGE_APPENDED
+    assert [request.participant_id for request in gateway.calls] == [
+        "builder",
+        "security",
+    ]
+
+
+@pytest.mark.anyio
+async def test_all_failed_participants_halt_without_new_provider_call() -> None:
+    gateway = Gateway(fail_roles={ParticipantRole.BUILDER})
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=gateway,
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        event_sink=Sink(),
+    )
+
+    await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Review implementation",
+    )
+
+    await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.SUBMIT_OWNER_DECISION,
+            correlation=correlation(),
+            expected_state=RoomState.NEEDS_OWNER_DECISION,
+            content_text="Resume once to verify failure cap.",
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner",
+        ),
+    )
+
+    halted = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Should not call provider again",
+    )
+
+    assert halted.event_type is RoomEventType.SCHEDULER_HALTED
+    assert halted.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+    assert room.state is RoomState.NEEDS_OWNER_DECISION
+    assert [request.participant_id for request in gateway.calls] == ["builder"]
