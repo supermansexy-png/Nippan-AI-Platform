@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Protocol
+from typing import AsyncIterator, Protocol
+
+from app.db import Database
 
 from .contracts import HaltReason
 from .interfaces import (
@@ -119,9 +122,13 @@ class UsageBackedBudgetAuthority:
             ),
         )
 
+        remaining_tokens: list[int] = []
         for used_tokens, used_cost, limit, reason in checks:
-            if used_tokens >= limit.token_limit:
+            token_remaining = limit.token_limit - used_tokens
+            if token_remaining <= 0:
                 return BudgetDecision(allowed=False, halt_reason=reason)
+            remaining_tokens.append(token_remaining)
+
             if limit.cost_limit is not None:
                 if totals.currency != limit.currency:
                     raise ValueError(
@@ -130,7 +137,10 @@ class UsageBackedBudgetAuthority:
                 if used_cost >= limit.cost_limit:
                     return BudgetDecision(allowed=False, halt_reason=reason)
 
-        return BudgetDecision(allowed=True)
+        return BudgetDecision(
+            allowed=True,
+            max_output_tokens=min(remaining_tokens),
+        )
 
     async def record_usage(
         self,
@@ -144,3 +154,39 @@ class UsageBackedBudgetAuthority:
             participant_id=participant_id,
             usage=usage,
         )
+
+
+
+class PostgresRoomTurnGuard:
+    """Serializes billable War Room turns per tenant/application/room.
+
+    The advisory transaction lock is held across budget authorization, the
+    single provider request, usage recording, and event persistence. This
+    removes the War Room check-then-act race without introducing a second
+    reservation ledger.
+    """
+
+    def __init__(self, database: Database) -> None:
+        self._database = database
+
+    @asynccontextmanager
+    async def hold(
+        self,
+        *,
+        correlation: CorrelationContext,
+    ) -> AsyncIterator[None]:
+        lock_key = (
+            f"{correlation.tenant_id}:"
+            f"{correlation.application_id}:"
+            f"{correlation.room_id}"
+        )
+        async with self._database.tenant_transaction(
+            tenant_id=correlation.tenant_id,
+            application_id=correlation.application_id,
+            request_id=correlation.request_id,
+        ) as conn:
+            await conn.execute(
+                "select pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                (lock_key,),
+            )
+            yield
