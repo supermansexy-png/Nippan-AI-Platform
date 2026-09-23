@@ -1,3 +1,12 @@
+from .read_model import (
+    PostgresRoomSnapshotSource,
+    RoomEventProjectionError,
+    RoomSnapshotError,
+    RoomSnapshotNotFound,
+    RoomUsageProjectionError,
+    serialize_ordered_event,
+    serialize_room_snapshot,
+)
 from .budget import PostgresRoomTurnGuard, RoomTurnGuardError
 from .persistence import (
     PostgresRoomEventSink,
@@ -5,7 +14,11 @@ from .persistence import (
     RoomPersistenceConflict,
     RoomPersistenceError,
 )
-from .auth import DatabaseRoomCommandAuthorizer, DenyAllRoomReadAuthorizer
+from .auth import (
+    DatabaseRoomCommandAuthorizer,
+    DatabaseRoomReadAuthorizer,
+    DenyAllRoomReadAuthorizer,
+)
 from .contracts import (
     AgendaPolicy,
     BudgetSnapshot,
@@ -81,6 +94,7 @@ __all__ = [
     "CorrelationContext",
     "ContractViolation",
     "DatabaseRoomCommandAuthorizer",
+    "DatabaseRoomReadAuthorizer",
     "DenyAllRoomReadAuthorizer",
     "DeterministicTurnScheduler",
     "EvidenceKind",
@@ -94,6 +108,7 @@ __all__ = [
     "OrderedRoomEvent",
     "PostgresRoomEventSink",
     "PostgresRoomFailureHistorySource",
+    "PostgresRoomSnapshotSource",
     "PostgresRoomTurnGuard",
     "RealtimeTransport",
     "RoomAgendaSnapshot",
@@ -110,7 +125,10 @@ __all__ = [
     "RoomReadKind",
     "RoomReadRequest",
     "RoomSnapshot",
+    "RoomSnapshotError",
+    "RoomSnapshotNotFound",
     "RoomSnapshotSource",
+    "RoomUsageProjectionError",
     "RoomUsageSnapshot",
     "RoomCommandAuthorizer",
     "RoomCommandType",
@@ -123,6 +141,7 @@ __all__ = [
     "RoomSession",
     "RoomSessionFailureReconstructor",
     "RoomTurnGuardError",
+    "RoomEventProjectionError",
     "RoomEventSink",
     "RoomEventType",
     "RoomFailureHistorySource",
@@ -135,6 +154,8 @@ __all__ = [
     "UnauthorizedRoomCommand",
     "UsageDelta",
     "WarRoomOrchestrator",
+    "serialize_ordered_event",
+    "serialize_room_snapshot",
     "transition_room_state",
 ]
 

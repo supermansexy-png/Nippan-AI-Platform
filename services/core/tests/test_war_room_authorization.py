@@ -6,7 +6,10 @@ import pytest
 from app.war_room import (
     CorrelationContext,
     DatabaseRoomCommandAuthorizer,
+    DatabaseRoomReadAuthorizer,
     ParticipantType,
+    RoomReadKind,
+    RoomReadRequest,
     RoomCommand,
     RoomCommandType,
     RoomState,
@@ -43,13 +46,16 @@ class FakeConnection:
 
 
 class FakeDatabase:
-    def __init__(self, result: bool = True) -> None:
+    def __init__(self, result: bool = True, *, fail: bool = False) -> None:
         self.cursor = FakeCursor(result)
         self.calls = []
+        self.fail = fail
 
     @asynccontextmanager
     async def tenant_transaction(self, **scope):
         self.calls.append(scope)
+        if self.fail:
+            raise RuntimeError("database unavailable")
         yield FakeConnection(self.cursor)
 
 
@@ -163,3 +169,104 @@ async def test_agent_principal_cannot_authorize_owner_command() -> None:
 
     assert allowed is False
     assert database.calls == []
+
+
+
+def read_request(
+    *,
+    tenant_id: UUID = UUID(int=1),
+    application_id: UUID = UUID(int=2),
+) -> RoomReadRequest:
+    return RoomReadRequest(
+        tenant_id=tenant_id,
+        application_id=application_id,
+        room_id=UUID(int=3),
+        read_kind=RoomReadKind.SNAPSHOT,
+    )
+
+
+@pytest.mark.anyio
+async def test_read_scope_mismatch_denies_before_database_query() -> None:
+    database = FakeDatabase()
+    authorizer = DatabaseRoomReadAuthorizer(database)  # type: ignore[arg-type]
+
+    allowed = await authorizer.authorize_read(
+        request=read_request(),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=99),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="member-1",
+        ),
+    )
+
+    assert allowed is False
+    assert database.calls == []
+
+
+@pytest.mark.anyio
+async def test_active_non_owner_participant_may_read_room() -> None:
+    database = FakeDatabase(result=True)
+    authorizer = DatabaseRoomReadAuthorizer(database)  # type: ignore[arg-type]
+
+    allowed = await authorizer.authorize_read(
+        request=read_request(),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.AGENT,
+            principal_id="security-reviewer",
+        ),
+    )
+
+    assert allowed is True
+    assert database.calls == [
+        {
+            "tenant_id": UUID(int=1),
+            "application_id": UUID(int=2),
+        }
+    ]
+    assert database.cursor.params == (
+        UUID(int=1),
+        UUID(int=2),
+        UUID(int=3),
+        "AGENT",
+        "security-reviewer",
+    )
+    assert "role = 'OWNER'" not in database.cursor.query
+
+
+@pytest.mark.anyio
+async def test_inactive_or_missing_participant_read_fails_closed() -> None:
+    database = FakeDatabase(result=False)
+    authorizer = DatabaseRoomReadAuthorizer(database)  # type: ignore[arg-type]
+
+    allowed = await authorizer.authorize_read(
+        request=read_request(),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="not-active",
+        ),
+    )
+
+    assert allowed is False
+
+
+@pytest.mark.anyio
+async def test_database_failure_on_read_authorization_fails_closed() -> None:
+    database = FakeDatabase(fail=True)
+    authorizer = DatabaseRoomReadAuthorizer(database)  # type: ignore[arg-type]
+
+    allowed = await authorizer.authorize_read(
+        request=read_request(),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="member-1",
+        ),
+    )
+
+    assert allowed is False
