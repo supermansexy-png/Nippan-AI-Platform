@@ -317,7 +317,7 @@ class WarRoomOrchestrator:
                 "round_number": session.round_number,
                 "usage_tokens": result.usage.total_tokens,
                 "provider_request_id": result.provider_request_id,
-                "responded_model": result.responded_model,
+                "model": result.responded_model,
             },
             expected_state=RoomState.RUNNING,
         )
