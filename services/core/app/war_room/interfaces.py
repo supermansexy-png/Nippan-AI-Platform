@@ -7,7 +7,7 @@ from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
 
-from .contracts import HaltReason, MessageType, ParticipantRole, ParticipantType, RoomState
+from .contracts import HaltReason, MessageType, ParticipantRole, ParticipantType, RoomMode, RoomState
 
 
 class InterfaceViolation(ValueError):
@@ -43,6 +43,10 @@ class TurnFailureKind(StrEnum):
     PROVIDER_UNAVAILABLE = "PROVIDER_UNAVAILABLE"
     INVALID_RESPONSE = "INVALID_RESPONSE"
     POLICY_REJECTED = "POLICY_REJECTED"
+
+
+class RealtimeTransport(StrEnum):
+    SERVER_SENT_EVENTS = "SERVER_SENT_EVENTS"
 
 
 @dataclass(frozen=True, slots=True)
@@ -235,6 +239,134 @@ class OrderedRoomEvent:
     def __post_init__(self) -> None:
         if self.sequence <= 0:
             raise InterfaceViolation("event sequence must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class RoomParticipantSnapshot:
+    participant_id: UUID
+    role: ParticipantRole
+    display_name: str
+    active: bool
+
+    def __post_init__(self) -> None:
+        if not self.display_name.strip():
+            raise InterfaceViolation("display_name must not be blank")
+
+
+@dataclass(frozen=True, slots=True)
+class RoomAgendaSnapshot:
+    agenda_item_id: UUID
+    sequence: int
+    title: str
+    objective: str
+    status: str
+    round_limit: int
+
+    def __post_init__(self) -> None:
+        if self.sequence <= 0:
+            raise InterfaceViolation("agenda sequence must be positive")
+        if not self.title.strip() or not self.objective.strip():
+            raise InterfaceViolation("agenda title/objective must not be blank")
+        if not self.status.strip():
+            raise InterfaceViolation("agenda status must not be blank")
+        if not 1 <= self.round_limit <= 2:
+            raise InterfaceViolation("agenda round_limit must be between 1 and 2")
+
+
+@dataclass(frozen=True, slots=True)
+class RoomFindingSnapshot:
+    finding_id: UUID
+    severity: str
+    status: str
+    summary: str
+
+    def __post_init__(self) -> None:
+        if not self.severity.strip() or not self.status.strip():
+            raise InterfaceViolation("finding severity/status must not be blank")
+        if not self.summary.strip():
+            raise InterfaceViolation("finding summary must not be blank")
+
+
+@dataclass(frozen=True, slots=True)
+class RoomDecisionSnapshot:
+    decision_id: UUID
+    decision_type: str
+    status: str
+    decision: str
+    owner_principal_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.decision_type.strip() or not self.status.strip():
+            raise InterfaceViolation("decision type/status must not be blank")
+        if not self.decision.strip():
+            raise InterfaceViolation("decision text must not be blank")
+        if (
+            self.owner_principal_id is not None
+            and not self.owner_principal_id.strip()
+        ):
+            raise InterfaceViolation("owner_principal_id must not be blank")
+
+
+@dataclass(frozen=True, slots=True)
+class RoomUsageSnapshot:
+    input_tokens: int
+    output_tokens: int
+    normalized_cost: Decimal | None = None
+    currency: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.input_tokens < 0 or self.output_tokens < 0:
+            raise InterfaceViolation("snapshot token usage must not be negative")
+        if self.normalized_cost is not None and self.normalized_cost < 0:
+            raise InterfaceViolation("snapshot cost must not be negative")
+        if (self.normalized_cost is None) != (self.currency is None):
+            raise InterfaceViolation("snapshot cost and currency must be set together")
+
+    @property
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+
+@dataclass(frozen=True, slots=True)
+class RoomSnapshot:
+    tenant_id: UUID
+    application_id: UUID
+    room_id: UUID
+    mode: RoomMode
+    state: RoomState
+    generated_at: datetime
+    last_sequence: int
+    participants: tuple[RoomParticipantSnapshot, ...]
+    agenda: tuple[RoomAgendaSnapshot, ...]
+    findings: tuple[RoomFindingSnapshot, ...]
+    decisions: tuple[RoomDecisionSnapshot, ...]
+    usage: RoomUsageSnapshot
+    recent_events: tuple[OrderedRoomEvent, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.last_sequence < 0:
+            raise InterfaceViolation("snapshot last_sequence must not be negative")
+        participant_ids = [item.participant_id for item in self.participants]
+        if len(participant_ids) != len(set(participant_ids)):
+            raise InterfaceViolation("snapshot participant IDs must be unique")
+
+        sequences = [event.sequence for event in self.recent_events]
+        if sequences != sorted(sequences) or len(sequences) != len(set(sequences)):
+            raise InterfaceViolation("snapshot recent_events must be strictly ordered")
+        if sequences and sequences[-1] > self.last_sequence:
+            raise InterfaceViolation(
+                "snapshot recent event cannot exceed last_sequence"
+            )
+        for event in self.recent_events:
+            correlation = event.correlation
+            if (
+                correlation.tenant_id != self.tenant_id
+                or correlation.application_id != self.application_id
+                or correlation.room_id != self.room_id
+            ):
+                raise InterfaceViolation(
+                    "snapshot event scope must match room scope"
+                )
 
 
 class ModelGateway(Protocol):
