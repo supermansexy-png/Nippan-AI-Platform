@@ -1,0 +1,44 @@
+name: War Room Remote Auth
+
+on:
+  pull_request:
+    branches:
+      - phase2/postgres-logical-schema
+    paths:
+      - "services/core/app/settings.py"
+      - "services/core/app/war_room/**"
+      - "services/core/tests/test_war_room_*.py"
+      - "services/control-plane-web/war-room/**"
+      - ".github/workflows/war-room-remote-auth.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  remote-auth:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/core
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/core/pyproject.toml
+
+      - name: Install Core with test dependencies
+        run: python -m pip install -e '.[test]'
+
+      - name: Run War Room transport and authorization tests
+        run: >-
+          pytest -q
+          tests/test_war_room_remote_auth.py
+          tests/test_war_room_transport.py
+          tests/test_war_room_authorization.py
+          tests/test_war_room_control_plane_assets.py
