@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     database_url: str | None = Field(default=None)
     database_pool_min_size: int = Field(default=1, ge=0)
     database_pool_max_size: int = Field(default=5, ge=1)
+    openrouter_api_key: str | None = Field(default=None)
+    openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
 
 
 @lru_cache
