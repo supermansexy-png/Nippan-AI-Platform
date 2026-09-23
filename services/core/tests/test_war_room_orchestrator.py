@@ -723,4 +723,4 @@ async def test_successful_agent_message_persists_provider_model_evidence() -> No
 
     assert event.event_type is RoomEventType.MESSAGE_APPENDED
     assert event.payload["provider_request_id"] == "req-orchestrator"
-    assert event.payload["responded_model"] == "model-orchestrator"
+    assert event.payload["model"] == "model-orchestrator"
