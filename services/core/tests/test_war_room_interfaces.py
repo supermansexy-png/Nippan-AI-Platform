@@ -69,7 +69,7 @@ def test_usage_delta_exposes_total_without_becoming_a_ledger() -> None:
 
 
 def test_budget_decision_is_unambiguous() -> None:
-    assert BudgetDecision(allowed=True).halt_reason is None
+    assert BudgetDecision(allowed=True, max_output_tokens=100).halt_reason is None
     assert BudgetDecision(
         allowed=False,
         halt_reason=HaltReason.ROOM_BUDGET_EXHAUSTED,

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
-from typing import Protocol
+from typing import AsyncContextManager, Protocol
 from uuid import UUID
 
 from .contracts import HaltReason, MessageType, ParticipantRole, ParticipantType, RoomMode, RoomState
@@ -169,6 +169,7 @@ class ModelTurnRequest:
     role: ParticipantRole
     model_policy_ref: str
     agenda_objective: str
+    max_output_tokens: int
     context_references: tuple[str, ...] = ()
     prior_round_synthesis: str | None = None
 
@@ -182,6 +183,8 @@ class ModelTurnRequest:
             raise InterfaceViolation("model turn identifiers and objective must not be blank")
         if any(not reference.strip() for reference in self.context_references):
             raise InterfaceViolation("context references must not be blank")
+        if self.max_output_tokens <= 0:
+            raise InterfaceViolation("max_output_tokens must be positive")
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,11 +206,21 @@ class ModelTurnResult:
 class BudgetDecision:
     allowed: bool
     halt_reason: HaltReason | None = None
+    max_output_tokens: int | None = None
 
     def __post_init__(self) -> None:
         if self.allowed == (self.halt_reason is not None):
             raise InterfaceViolation(
                 "allowed decisions cannot have a halt reason and denied decisions require one"
+            )
+        if self.allowed:
+            if self.max_output_tokens is None or self.max_output_tokens <= 0:
+                raise InterfaceViolation(
+                    "allowed budget decisions require positive max_output_tokens"
+                )
+        elif self.max_output_tokens is not None:
+            raise InterfaceViolation(
+                "denied budget decisions cannot grant output tokens"
             )
 
 
@@ -397,6 +410,14 @@ class BudgetAuthority(Protocol):
         participant_id: str,
         usage: UsageDelta,
     ) -> None: ...
+
+
+class TurnExecutionGuard(Protocol):
+    def hold(
+        self,
+        *,
+        correlation: CorrelationContext,
+    ) -> AsyncContextManager[None]: ...
 
 
 class RoomCommandAuthorizer(Protocol):

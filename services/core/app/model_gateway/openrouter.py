@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Protocol
@@ -34,18 +33,14 @@ class ModelRoute:
 @dataclass(frozen=True, slots=True)
 class ModelPolicy:
     primary: ModelRoute
-    fallbacks: tuple[ModelRoute, ...] = ()
     timeout_seconds: float = 30.0
-    max_retries_per_route: int = 1
-    retry_backoff_seconds: float = 0.5
+    max_output_tokens: int = 1024
 
     def __post_init__(self) -> None:
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
-        if self.max_retries_per_route < 0:
-            raise ValueError("max_retries_per_route must not be negative")
-        if self.retry_backoff_seconds < 0:
-            raise ValueError("retry_backoff_seconds must not be negative")
+        if self.max_output_tokens <= 0:
+            raise ValueError("max_output_tokens must be positive")
 
 
 class ModelPolicyResolver(Protocol):
@@ -72,39 +67,24 @@ class OpenRouterGateway:
 
     async def generate_turn(self, request: ModelTurnRequest) -> ModelTurnResult:
         policy = await self._policy_resolver.resolve(request.model_policy_ref)
-        routes = (policy.primary,) + policy.fallbacks
+        max_output_tokens = min(
+            policy.max_output_tokens,
+            request.max_output_tokens,
+        )
 
-        # Formal audit identity is governance-significant. Provider routing for
-        # the same model is allowed, but silently changing to a fallback model is not.
-        if request.role is ParticipantRole.INDEPENDENT_AUDITOR:
-            routes = routes[:1]
-
-        last_error: Exception | None = None
-        for route in routes:
-            for attempt in range(policy.max_retries_per_route + 1):
-                try:
-                    return await self._call_route(
-                        request=request,
-                        route=route,
-                        timeout_seconds=policy.timeout_seconds,
-                    )
-                except (httpx.TimeoutException, httpx.NetworkError) as exc:
-                    last_error = exc
-                except OpenRouterGatewayError as exc:
-                    last_error = exc
-                    # Retry only transient provider/server failures. Invalid
-                    # payloads are deterministic and should fail immediately.
-                    if "non-retryable" in str(exc):
-                        raise
-
-                if attempt < policy.max_retries_per_route:
-                    await asyncio.sleep(
-                        policy.retry_backoff_seconds * (2**attempt)
-                    )
-
-        if isinstance(last_error, httpx.TimeoutException):
-            raise TimeoutError("all configured model routes timed out") from last_error
-        raise OpenRouterGatewayError("all configured model routes failed") from last_error
+        # War Room V1 intentionally performs one billable OpenRouter request
+        # per automatic turn. Provider redundancy belongs inside OpenRouter's
+        # provider routing for the configured primary model; application-level
+        # retries/model fallback would create unaccounted repeated spend.
+        try:
+            return await self._call_route(
+                request=request,
+                route=policy.primary,
+                timeout_seconds=policy.timeout_seconds,
+                max_output_tokens=max_output_tokens,
+            )
+        except httpx.TimeoutException as exc:
+            raise TimeoutError("OpenRouter turn timed out") from exc
 
     async def _call_route(
         self,
@@ -112,10 +92,12 @@ class OpenRouterGateway:
         request: ModelTurnRequest,
         route: ModelRoute,
         timeout_seconds: float,
+        max_output_tokens: int,
     ) -> ModelTurnResult:
         payload: dict[str, object] = {
             "model": route.model_id,
             "messages": self._messages(request),
+            "max_tokens": max_output_tokens,
         }
         if route.provider_order:
             payload["provider"] = {"order": list(route.provider_order)}
@@ -153,7 +135,10 @@ class OpenRouterGateway:
             body = response.json()
             choice = body["choices"][0]
             content = choice["message"]["content"]
-            usage_raw = body.get("usage") or {}
+            usage_raw = body["usage"]
+            input_tokens = int(usage_raw["prompt_tokens"])
+            output_tokens = int(usage_raw["completion_tokens"])
+            cost = self._required_cost(usage_raw["cost"])
         except (KeyError, IndexError, TypeError, ValueError) as exc:
             raise OpenRouterGatewayError(
                 "non-retryable invalid OpenRouter response"
@@ -164,9 +149,10 @@ class OpenRouterGateway:
                 "non-retryable empty OpenRouter response"
             )
 
-        input_tokens = int(usage_raw.get("prompt_tokens") or 0)
-        output_tokens = int(usage_raw.get("completion_tokens") or 0)
-        cost = self._parse_cost(usage_raw.get("cost"))
+        if input_tokens < 0 or output_tokens < 0:
+            raise OpenRouterGatewayError(
+                "non-retryable invalid OpenRouter usage"
+            )
 
         return ModelTurnResult(
             content_text=content,
@@ -175,7 +161,7 @@ class OpenRouterGateway:
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 normalized_cost=cost,
-                currency="USD" if cost is not None else None,
+                currency="USD",
             ),
             provider_request_id=(
                 str(body["id"]) if body.get("id") is not None else None
@@ -210,11 +196,11 @@ class OpenRouterGateway:
         ]
 
     @staticmethod
-    def _parse_cost(value: object) -> Decimal | None:
-        if value is None:
-            return None
+    def _required_cost(value: object) -> Decimal:
         try:
             parsed = Decimal(str(value))
-        except (InvalidOperation, ValueError):
-            return None
-        return parsed if parsed >= 0 else None
+        except (InvalidOperation, ValueError) as exc:
+            raise ValueError("invalid provider cost") from exc
+        if parsed < 0:
+            raise ValueError("provider cost must not be negative")
+        return parsed

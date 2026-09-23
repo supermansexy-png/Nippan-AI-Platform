@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 import pytest
@@ -47,10 +48,21 @@ class Budget:
         return BudgetDecision(
             allowed=self.allowed,
             halt_reason=None if self.allowed else HaltReason.ROOM_BUDGET_EXHAUSTED,
+            max_output_tokens=128 if self.allowed else None,
         )
 
     async def record_usage(self, **values):
         self.recorded.append(values)
+
+
+class TurnGuard:
+    def __init__(self) -> None:
+        self.entries = 0
+
+    @asynccontextmanager
+    async def hold(self, **_):
+        self.entries += 1
+        yield
 
 
 class Authorizer:
@@ -134,6 +146,7 @@ async def test_lifecycle_start_and_one_model_turn_are_ordered() -> None:
         model_gateway=gateway,
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=sink,
     )
     room = session()
@@ -175,6 +188,7 @@ async def test_budget_denial_stops_before_provider_call() -> None:
         model_gateway=gateway,
         budget_authority=Budget(allowed=False),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=sink,
     )
 
@@ -199,6 +213,7 @@ async def test_round_completion_is_not_reported_as_turn_failure() -> None:
         model_gateway=Gateway(),
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
         event_sink=Sink(),
     )
 

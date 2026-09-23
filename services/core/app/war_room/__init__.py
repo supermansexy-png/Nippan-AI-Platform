@@ -1,3 +1,4 @@
+from .budget import PostgresRoomTurnGuard
 from .persistence import (
     PostgresRoomEventSink,
     RoomPersistenceConflict,
@@ -48,6 +49,7 @@ from .interfaces import (
     RoomEventSink,
     RoomEventType,
     TrustedActorContext,
+    TurnExecutionGuard,
     TurnFailureKind,
     UsageDelta,
 )
@@ -83,6 +85,7 @@ __all__ = [
     "ModelTurnResult",
     "OrderedRoomEvent",
     "PostgresRoomEventSink",
+    "PostgresRoomTurnGuard",
     "RealtimeTransport",
     "RoomAgendaSnapshot",
     "RoomDecisionSnapshot",
@@ -111,6 +114,7 @@ __all__ = [
     "StaleRoomCommand",
     "TurnRequest",
     "TrustedActorContext",
+    "TurnExecutionGuard",
     "TurnFailureKind",
     "UnauthorizedRoomCommand",
     "UsageDelta",

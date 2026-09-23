@@ -26,6 +26,7 @@ from .interfaces import (
     RoomEventSink,
     RoomEventType,
     TrustedActorContext,
+    TurnExecutionGuard,
     TurnFailureKind,
 )
 from .orchestration import DeterministicTurnScheduler, TurnRequest
@@ -72,6 +73,7 @@ class WarRoomOrchestrator:
         model_gateway: ModelGateway,
         budget_authority: BudgetAuthority,
         command_authorizer: RoomCommandAuthorizer,
+        turn_execution_guard: TurnExecutionGuard,
         event_sink: RoomEventSink,
         scheduler: DeterministicTurnScheduler | None = None,
         clock: Callable[[], datetime] | None = None,
@@ -79,6 +81,7 @@ class WarRoomOrchestrator:
         self._model_gateway = model_gateway
         self._budget_authority = budget_authority
         self._command_authorizer = command_authorizer
+        self._turn_execution_guard = turn_execution_guard
         self._event_sink = event_sink
         self._scheduler = scheduler or DeterministicTurnScheduler()
         self._clock = clock or (lambda: datetime.now(UTC))
@@ -147,6 +150,26 @@ class WarRoomOrchestrator:
         context_references: tuple[str, ...] = (),
         prior_round_synthesis: str | None = None,
     ) -> OrderedRoomEvent:
+        async with self._turn_execution_guard.hold(correlation=correlation):
+            return await self._run_next_turn_locked(
+                session,
+                correlation=correlation,
+                budget=budget,
+                agenda_objective=agenda_objective,
+                context_references=context_references,
+                prior_round_synthesis=prior_round_synthesis,
+            )
+
+    async def _run_next_turn_locked(
+        self,
+        session: RoomSession,
+        *,
+        correlation: CorrelationContext,
+        budget: BudgetSnapshot,
+        agenda_objective: str,
+        context_references: tuple[str, ...] = (),
+        prior_round_synthesis: str | None = None,
+    ) -> OrderedRoomEvent:
         decision = self._scheduler.choose_next(
             TurnRequest(
                 room_state=session.state,
@@ -202,6 +225,7 @@ class WarRoomOrchestrator:
                     role=participant.role,
                     model_policy_ref=participant.model_policy_ref or "",
                     agenda_objective=agenda_objective,
+                    max_output_tokens=authorization.max_output_tokens or 1,
                     context_references=context_references,
                     prior_round_synthesis=prior_round_synthesis,
                 )
