@@ -5,6 +5,10 @@ from fastapi import FastAPI, HTTPException
 from .config_repository import ConfigRepository
 from .db import Database
 from .settings import get_settings
+from .war_room.transport import (
+    create_war_room_preview_router,
+    preview_mount_allowed,
+)
 
 settings = get_settings()
 database = Database(settings)
@@ -25,6 +29,14 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+if preview_mount_allowed(settings):
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=database,
+        )
+    )
 
 
 @app.get("/health")
