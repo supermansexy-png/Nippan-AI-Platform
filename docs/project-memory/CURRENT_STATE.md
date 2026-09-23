@@ -65,9 +65,12 @@ NEEDS_OWNER_DECISION.
 
 ## Required Remediation
 
-Create remediation from the exact integration head, not from the historical
-local branch. Preserve the Cloudflare Access architecture and make the smallest
-fail-closed change that:
+PR #79 is OPEN from `security/war-room-access-remediation` and must not be
+merged before Project Owner review. It was created from the exact integration
+head and preserves the Cloudflare Access architecture.
+
+Implementation commit `faf6e052aa3a1e506656ba0c00f7564116680b0a` makes the
+smallest fail-closed change that:
 
 - requires valid remote authentication regardless of apparent client address;
 - makes local preview an explicit opt-in that is disabled by default;
@@ -76,6 +79,11 @@ fail-closed change that:
   an authentication boundary;
 - protects every War Room surface consistently;
 - adds negative-control tests and exact-head CI evidence.
+
+CI completed successfully on that implementation commit:
+
+- War Room Remote Auth run `35831960643` — SUCCESS;
+- Phase 2 PostgreSQL regression run `35831960483` — SUCCESS.
 
 Do not merge remediation until the Project Owner reviews the evidence.
 
@@ -112,10 +120,9 @@ authorizes changes. Do not modify its service, data, credentials or workflows.
 
 ## Immediate Next Step
 
-1. Remediate Issue #74 while preserving Cloudflare Access.
-2. Run negative-control tests and obtain exact-head CI evidence.
-3. Perform normal internal security and diff review.
-4. Report results to the Project Owner without merging.
+1. Verify final-head CI after all documentation updates.
+2. Perform normal internal security and diff review.
+3. Report results to the Project Owner without merging.
 
 ## Source-of-Truth Rule
 
