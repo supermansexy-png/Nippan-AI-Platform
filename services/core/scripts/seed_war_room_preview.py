@@ -160,7 +160,7 @@ def seed() -> tuple[UUID, UUID, UUID, str]:
             insert into public.project_rooms (
               room_id, tenant_id, application_id, project_key, title,
               mode, state, created_by_principal_id,
-              token_budget, cost_budget, currency
+              token_budget, cost_budget, cost_currency
             ) values (
               %s, %s, %s, 'local-preview', 'Nippan AI War Room — Local Preview',
               'FORMAL_MEETING', 'DRAFT', %s,
@@ -224,12 +224,12 @@ def seed() -> tuple[UUID, UUID, UUID, str]:
             insert into public.project_room_agenda_items (
               agenda_item_id, tenant_id, application_id, room_id,
               sequence, title, objective, status,
-              round_limit, token_budget, cost_budget
+              round_limit, token_budget
             ) values (
               %s, %s, %s, %s,
               1, 'Meeting #001 — Local Preview',
               'Exercise the non-billable War Room UI, owner controls and replay.',
-              'OPEN', 2, 6000, 2.50
+              'OPEN', 2, 6000
             )
             """,
             (agenda_id, tenant_id, application_id, room_id),
