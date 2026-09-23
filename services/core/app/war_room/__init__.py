@@ -40,6 +40,7 @@ from .state_machine import (
     RoomAction,
     transition_room_state,
 )
+from .service import RoomSession, StaleRoomCommand, WarRoomOrchestrator
 
 __all__ = [
     "AgendaPolicy",
@@ -69,11 +70,14 @@ __all__ = [
     "RoomMessageContract",
     "RoomMode",
     "RoomState",
+    "RoomSession",
     "RoomEventSink",
     "RoomEventType",
     "ScheduleDecision",
+    "StaleRoomCommand",
     "TurnRequest",
     "TurnFailureKind",
     "UsageDelta",
+    "WarRoomOrchestrator",
     "transition_room_state",
 ]
