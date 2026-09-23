@@ -92,3 +92,31 @@ room URL ends with:
 The seed contains no provider credentials and creates no model calls. Pressing
 owner controls exercises only durable lifecycle/owner-message paths until a
 separately governed turn driver is introduced.
+
+
+### Render preview database bootstrap
+
+For an isolated development preview database, Core can apply the already-reviewed
+repository migrations and seed the deterministic preview room at startup.
+
+Required settings:
+
+```text
+NIPPAN_ENVIRONMENT=development
+NIPPAN_DATABASE_URL=<isolated preview database URL>
+NIPPAN_WAR_ROOM_PREVIEW_ENABLED=true
+NIPPAN_WAR_ROOM_PREVIEW_BOOTSTRAP=true
+```
+
+Bootstrap behavior is fail-closed:
+
+- a completely empty database receives only the existing reviewed migration files,
+  in repository order, after the same Supabase-compatibility role/schema preparation
+  used by CI;
+- an already-complete database skips migration replay;
+- a partially initialized database is rejected instead of being repaired or guessed;
+- the deterministic preview room is seeded only when absent, so service restarts do
+  not reset durable room state;
+- bootstrap refuses any non-development environment.
+
+This does not expose the preview remotely and does not enable provider/model turns.

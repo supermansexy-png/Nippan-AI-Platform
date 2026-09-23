@@ -51,8 +51,12 @@ def _preview_scope(settings: Settings) -> tuple[UUID, UUID, str]:
     return tenant_id, application_id, principal_id
 
 
-def seed() -> tuple[UUID, UUID, UUID, str]:
-    settings = Settings()
+def seed(
+    *,
+    settings: Settings | None = None,
+    admin_dsn: str | None = None,
+) -> tuple[UUID, UUID, UUID, str]:
+    settings = settings or Settings()
     if settings.environment.lower() != "development":
         raise RuntimeError("preview seed refuses non-development environment")
     if not settings.war_room_preview_enabled:
@@ -60,7 +64,7 @@ def seed() -> tuple[UUID, UUID, UUID, str]:
             "set NIPPAN_WAR_ROOM_PREVIEW_ENABLED=true before seeding"
         )
 
-    admin_dsn = _required_admin_dsn()
+    admin_dsn = admin_dsn or _required_admin_dsn()
     tenant_id, application_id, principal_id = _preview_scope(settings)
     room_id = DEFAULT_ROOM_ID
     agenda_id = DEFAULT_AGENDA_ID
