@@ -38,7 +38,6 @@ Required server-side settings:
 
 ```text
 NIPPAN_WAR_ROOM_PREVIEW_ENABLED=true
-NIPPAN_WAR_ROOM_PREVIEW_LOCAL_ONLY=true
 NIPPAN_WAR_ROOM_PREVIEW_TENANT_ID=<tenant UUID>
 NIPPAN_WAR_ROOM_PREVIEW_APPLICATION_ID=<application UUID>
 NIPPAN_WAR_ROOM_PREVIEW_PRINCIPAL_ID=<active HUMAN OWNER principal_id>
@@ -62,5 +61,5 @@ cannot invoke a provider. Owner commands register their request trace in the
 existing `requests` table and persist through the existing War Room event sink;
 no new ledger, migration, schema, RLS or grant is introduced.
 
-With `NIPPAN_WAR_ROOM_PREVIEW_LOCAL_ONLY=true`, HTTP access is limited to the
-loopback client. This preview is not a production authentication mechanism.
+HTTP access is always limited to the loopback client in development. There is no
+remote-preview override. This preview is not a production authentication mechanism.
