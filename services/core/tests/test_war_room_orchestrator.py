@@ -46,10 +46,17 @@ class Gateway:
 
 
 class Budget:
+    def __init__(self, *, fail_record: bool = False) -> None:
+        self.fail_record = fail_record
+        self.record_calls = 0
+
     async def authorize_turn(self, **_):
         return BudgetDecision(allowed=True, max_output_tokens=128)
 
     async def record_usage(self, **_):
+        self.record_calls += 1
+        if self.fail_record:
+            raise RuntimeError("usage store failed")
         return None
 
 
@@ -724,3 +731,72 @@ async def test_successful_agent_message_persists_provider_model_evidence() -> No
     assert event.event_type is RoomEventType.MESSAGE_APPENDED
     assert event.payload["provider_request_id"] == "req-orchestrator"
     assert event.payload["model"] == "model-orchestrator"
+
+
+@pytest.mark.anyio
+async def test_post_spend_accounting_failure_is_durable_and_not_retried() -> None:
+    gateway = Gateway()
+    budget = Budget(fail_record=True)
+    sink = Sink()
+    room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=gateway,
+        budget_authority=budget,
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(state=RoomState.RUNNING),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    failed = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Exercise accounting failure",
+    )
+
+    assert failed.event_type is RoomEventType.TURN_FAILED
+    assert failed.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+    assert failed.payload["failure_kind"] == "ACCOUNTING_FAILED"
+    assert failed.payload["automatic_retry_allowed"] is False
+    assert failed.payload["provider_request_id"] == "req-orchestrator"
+    assert failed.payload["model"] == "model-orchestrator"
+    assert room.state is RoomState.NEEDS_OWNER_DECISION
+    assert room.failed_participant_ids == {"builder"}
+    assert budget.record_calls == 1
+    assert [request.participant_id for request in gateway.calls] == ["builder"]
+
+    await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.SUBMIT_OWNER_DECISION,
+            correlation=correlation(),
+            expected_state=RoomState.NEEDS_OWNER_DECISION,
+            content_text="Acknowledge accounting failure without retry.",
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner",
+        ),
+    )
+
+    halted = await orchestrator.run_next_turn(
+        room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Must not repeat paid turn",
+    )
+
+    assert halted.event_type is RoomEventType.SCHEDULER_HALTED
+    assert halted.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+    assert [request.participant_id for request in gateway.calls] == ["builder"]
+    assert budget.record_calls == 1
