@@ -2,11 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+from html import escape
 from pathlib import Path
+from urllib.parse import parse_qs, urlencode
 from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    RedirectResponse,
+    Response,
+    StreamingResponse,
+)
 from pydantic import BaseModel, ConfigDict
 
 from app.db import Database
@@ -28,6 +36,19 @@ from .persistence import (
     PostgresRoomEventSink,
     PostgresRoomFailureHistorySource,
     RoomPersistenceConflict,
+)
+from .preview_auth import (
+    CSRF_COOKIE_NAME,
+    CSRF_HEADER_NAME,
+    SESSION_COOKIE_NAME,
+    PreviewLoginRateLimiter,
+    PreviewSession,
+    access_token_matches,
+    csrf_matches,
+    issue_preview_session,
+    remote_auth_configured,
+    request_origin_allowed,
+    verify_preview_session,
 )
 from .read_model import (
     PostgresRoomSnapshotSource,
@@ -130,12 +151,168 @@ def trusted_preview_actor(settings: Settings) -> TrustedActorContext:
     )
 
 
-def _enforce_local_preview(request: Request, settings: Settings) -> None:
+def _client_key(request: Request) -> str:
+    client = request.scope.get("client")
+    if isinstance(client, tuple) and client:
+        return str(client[0])
+    return "unknown"
+
+
+def _safe_room_id(value: str | None) -> str | None:
+    if value is None or not value.strip():
+        return None
+    try:
+        return str(UUID(value.strip()))
+    except ValueError:
+        return None
+
+
+def _login_url(request: Request) -> str:
+    room_id = _safe_room_id(request.query_params.get("room_id"))
+    if room_id is None:
+        return "/war-room/login"
+    return f"/war-room/login?{urlencode({'room_id': room_id})}"
+
+
+def _post_login_url(room_id: str | None) -> str:
+    safe_room_id = _safe_room_id(room_id)
+    if safe_room_id is None:
+        return "/war-room/"
+    return f"/war-room/?{urlencode({'room_id': safe_room_id})}"
+
+
+def _remote_session(
+    request: Request,
+    settings: Settings,
+) -> PreviewSession | None:
+    if not settings.war_room_preview_remote_auth_enabled:
+        return None
+    if not remote_auth_configured(settings):
+        raise HTTPException(
+            status_code=503,
+            detail="war_room_preview_remote_auth_misconfigured",
+        )
+    return verify_preview_session(
+        request.cookies.get(SESSION_COOKIE_NAME),
+        settings,
+    )
+
+
+def _enforce_preview_access(
+    request: Request,
+    settings: Settings,
+) -> PreviewSession | None:
     if settings.environment.lower() == "test":
-        return
+        return None
+
+    if settings.war_room_preview_remote_auth_enabled:
+        session = _remote_session(request, settings)
+        if session is None:
+            raise HTTPException(
+                status_code=401,
+                detail="war_room_preview_remote_auth_required",
+            )
+        return session
+
     host = request.client.host if request.client is not None else ""
     if host not in {"127.0.0.1", "::1", "localhost"}:
         raise HTTPException(status_code=403, detail="war_room_preview_loopback_only")
+    return None
+
+
+def _enforce_remote_origin(request: Request, settings: Settings) -> None:
+    if (
+        settings.environment.lower() == "test"
+        or not settings.war_room_preview_remote_auth_enabled
+    ):
+        return
+    if not request_origin_allowed(request.headers.get("origin"), settings):
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_origin_forbidden",
+        )
+
+
+def _enforce_remote_mutation(
+    request: Request,
+    settings: Settings,
+    session: PreviewSession | None,
+) -> None:
+    if (
+        settings.environment.lower() == "test"
+        or not settings.war_room_preview_remote_auth_enabled
+    ):
+        return
+    if session is None:
+        raise HTTPException(
+            status_code=401,
+            detail="war_room_preview_remote_auth_required",
+        )
+    _enforce_remote_origin(request, settings)
+    if not csrf_matches(
+        session=session,
+        cookie_value=request.cookies.get(CSRF_COOKIE_NAME),
+        header_value=request.headers.get(CSRF_HEADER_NAME),
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_csrf_forbidden",
+        )
+
+
+def _login_headers() -> dict[str, str]:
+    return {
+        "Cache-Control": "no-store",
+        "Content-Security-Policy": (
+            "default-src 'none'; style-src 'unsafe-inline'; "
+            "form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+        ),
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+    }
+
+
+def _login_page(*, room_id: str | None, error: str | None = None) -> str:
+    safe_room = escape(_safe_room_id(room_id) or "", quote=True)
+    error_html = (
+        f'<p class="error">{escape(error)}</p>'
+        if error
+        else ""
+    )
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nippan War Room Preview</title>
+  <style>
+    :root {{ color-scheme: dark; font-family: system-ui, sans-serif; }}
+    body {{ margin:0; min-height:100vh; display:grid; place-items:center; background:#0d1117; }}
+    main {{ width:min(92vw,420px); padding:28px; border:1px solid #30363d; border-radius:14px; background:#161b22; }}
+    h1 {{ margin-top:0; font-size:1.35rem; }}
+    p {{ color:#9da7b3; }}
+    .error {{ color:#ff7b72; }}
+    label {{ display:block; margin:18px 0 8px; }}
+    input,button {{ box-sizing:border-box; width:100%; padding:12px; border-radius:8px; border:1px solid #3d444d; }}
+    input {{ background:#0d1117; color:#f0f6fc; }}
+    button {{ margin-top:14px; cursor:pointer; font-weight:700; }}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Nippan War Room Preview</h1>
+    <p>Enter the server-issued preview access token.</p>
+    {error_html}
+    <form method="post" action="/war-room/login" autocomplete="off">
+      <input type="hidden" name="room_id" value="{safe_room}">
+      <label for="token">Access token</label>
+      <input id="token" name="token" type="password" minlength="32" required autofocus>
+      <button type="submit">Open War Room</button>
+    </form>
+  </main>
+</body>
+</html>"""
 
 
 def _validate_command_scope(
@@ -179,6 +356,7 @@ def create_war_room_preview_router(
     """Development-only Track D transport. No route invokes run_next_turn."""
 
     router = APIRouter()
+    login_rate_limiter = PreviewLoginRateLimiter()
     read_authorizer = DatabaseRoomReadAuthorizer(database)
     command_authorizer = DatabaseRoomCommandAuthorizer(database)
     snapshot_source = PostgresRoomSnapshotSource(database)
@@ -213,27 +391,182 @@ def create_war_room_preview_router(
             raise HTTPException(status_code=403, detail="room_read_forbidden")
         return read_request
 
+    @router.get("/war-room/login")
+    async def war_room_login_page(request: Request):
+        if not settings.war_room_preview_remote_auth_enabled:
+            raise HTTPException(status_code=404, detail="not_found")
+        if not remote_auth_configured(settings):
+            raise HTTPException(
+                status_code=503,
+                detail="war_room_preview_remote_auth_misconfigured",
+            )
+
+        if verify_preview_session(
+            request.cookies.get(SESSION_COOKIE_NAME),
+            settings,
+        ) is not None:
+            return RedirectResponse(
+                url=_post_login_url(request.query_params.get("room_id")),
+                status_code=303,
+                headers=_login_headers(),
+            )
+
+        return HTMLResponse(
+            _login_page(room_id=request.query_params.get("room_id")),
+            headers=_login_headers(),
+        )
+
+    @router.post("/war-room/login")
+    async def war_room_login(request: Request):
+        if not settings.war_room_preview_remote_auth_enabled:
+            raise HTTPException(status_code=404, detail="not_found")
+        if not remote_auth_configured(settings):
+            raise HTTPException(
+                status_code=503,
+                detail="war_room_preview_remote_auth_misconfigured",
+            )
+        _enforce_remote_origin(request, settings)
+
+        content_type = request.headers.get("content-type", "").split(";", 1)[0].strip()
+        if content_type != "application/x-www-form-urlencoded":
+            raise HTTPException(status_code=415, detail="unsupported_media_type")
+
+        raw_body = await request.body()
+        if len(raw_body) > 4096:
+            raise HTTPException(status_code=413, detail="login_payload_too_large")
+        try:
+            fields = parse_qs(
+                raw_body.decode("utf-8"),
+                keep_blank_values=True,
+                strict_parsing=False,
+            )
+        except UnicodeDecodeError as exc:
+            raise HTTPException(status_code=400, detail="invalid_login_payload") from exc
+
+        token = fields.get("token", [""])[0]
+        room_id = fields.get("room_id", [""])[0]
+        client_key = _client_key(request)
+
+        if not login_rate_limiter.allowed(client_key):
+            raise HTTPException(
+                status_code=429,
+                detail="war_room_preview_login_rate_limited",
+            )
+
+        if not access_token_matches(token, settings):
+            login_rate_limiter.record_failure(client_key)
+            await asyncio.sleep(
+                settings.war_room_preview_remote_login_failure_delay_seconds
+            )
+            return HTMLResponse(
+                _login_page(
+                    room_id=room_id,
+                    error="Invalid access token.",
+                ),
+                status_code=401,
+                headers=_login_headers(),
+            )
+
+        login_rate_limiter.record_success(client_key)
+        cookie_value, session = issue_preview_session(settings)
+        response = RedirectResponse(
+            url=_post_login_url(room_id),
+            status_code=303,
+            headers=_login_headers(),
+        )
+        response.set_cookie(
+            SESSION_COOKIE_NAME,
+            cookie_value,
+            max_age=settings.war_room_preview_remote_session_seconds,
+            secure=True,
+            httponly=True,
+            samesite="strict",
+            path="/war-room",
+        )
+        response.set_cookie(
+            CSRF_COOKIE_NAME,
+            session.csrf_token,
+            max_age=settings.war_room_preview_remote_session_seconds,
+            secure=True,
+            httponly=False,
+            samesite="strict",
+            path="/war-room",
+        )
+        return response
+
+    @router.post("/war-room/logout")
+    async def war_room_logout(request: Request):
+        session = _enforce_preview_access(request, settings)
+        _enforce_remote_mutation(request, settings, session)
+        response = Response(status_code=204, headers={"Cache-Control": "no-store"})
+        response.delete_cookie(
+            SESSION_COOKIE_NAME,
+            path="/war-room",
+            secure=True,
+            httponly=True,
+            samesite="strict",
+        )
+        response.delete_cookie(
+            CSRF_COOKIE_NAME,
+            path="/war-room",
+            secure=True,
+            httponly=False,
+            samesite="strict",
+        )
+        return response
+
     @router.get("/war-room")
     async def war_room_redirect(request: Request):
-        _enforce_local_preview(request, settings)
+        if (
+            settings.environment.lower() != "test"
+            and settings.war_room_preview_remote_auth_enabled
+        ):
+            if not remote_auth_configured(settings):
+                raise HTTPException(
+                    status_code=503,
+                    detail="war_room_preview_remote_auth_misconfigured",
+                )
+            if verify_preview_session(
+                request.cookies.get(SESSION_COOKIE_NAME),
+                settings,
+            ) is None:
+                return RedirectResponse(url=_login_url(request), status_code=307)
+        else:
+            _enforce_preview_access(request, settings)
+
         suffix = f"?{request.url.query}" if request.url.query else ""
         return RedirectResponse(url=f"/war-room/{suffix}", status_code=307)
 
     @router.get("/war-room/")
     async def war_room_index(request: Request):
-        _enforce_local_preview(request, settings)
+        if (
+            settings.environment.lower() != "test"
+            and settings.war_room_preview_remote_auth_enabled
+        ):
+            if not remote_auth_configured(settings):
+                raise HTTPException(
+                    status_code=503,
+                    detail="war_room_preview_remote_auth_misconfigured",
+                )
+            if verify_preview_session(
+                request.cookies.get(SESSION_COOKIE_NAME),
+                settings,
+            ) is None:
+                return RedirectResponse(url=_login_url(request), status_code=307)
+
+        _enforce_preview_access(request, settings)
         trusted_preview_actor(settings)
         return FileResponse(_ASSET_ROOT / "index.html")
 
     @router.get("/war-room/war-room.css")
     async def war_room_css(request: Request):
-        _enforce_local_preview(request, settings)
+        _enforce_preview_access(request, settings)
         trusted_preview_actor(settings)
         return FileResponse(_ASSET_ROOT / "war-room.css", media_type="text/css")
 
     @router.get("/war-room/war-room.js")
     async def war_room_js(request: Request):
-        _enforce_local_preview(request, settings)
+        _enforce_preview_access(request, settings)
         trusted_preview_actor(settings)
         return FileResponse(
             _ASSET_ROOT / "war-room.js",
@@ -242,7 +575,7 @@ def create_war_room_preview_router(
 
     @router.get("/war-room/rooms/{room_id}/snapshot")
     async def room_snapshot(room_id: UUID, request: Request):
-        _enforce_local_preview(request, settings)
+        _enforce_preview_access(request, settings)
         actor = trusted_preview_actor(settings)
         await authorize_read(
             actor=actor,
@@ -268,7 +601,8 @@ def create_war_room_preview_router(
         after_sequence: int | None = Query(default=None, ge=0),
         last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     ):
-        _enforce_local_preview(request, settings)
+        _enforce_preview_access(request, settings)
+        _enforce_remote_origin(request, settings)
         actor = trusted_preview_actor(settings)
         cursor = _cursor_from_inputs(
             after_sequence=after_sequence,
@@ -344,7 +678,8 @@ def create_war_room_preview_router(
         payload: RoomCommandPayload,
         request: Request,
     ):
-        _enforce_local_preview(request, settings)
+        session = _enforce_preview_access(request, settings)
+        _enforce_remote_mutation(request, settings, session)
         actor = trusted_preview_actor(settings)
         command = payload.to_contract()
         _validate_command_scope(
