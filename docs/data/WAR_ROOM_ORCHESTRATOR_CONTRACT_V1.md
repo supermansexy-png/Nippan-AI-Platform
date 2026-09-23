@@ -87,14 +87,33 @@ Increment C model boundary. Requests identify a `model_policy_ref`, role,
 agenda objective and selected context references. Results return displayable
 content plus provider usage. Provider/model selection is configuration-owned.
 
-The adapter must support bounded timeout and retry behavior. A formal Auditor
-identity must never be silently replaced by fallback routing.
+War Room V1 permits at most **one application-level billable OpenRouter request
+per automatic turn**. Provider redundancy may be configured through
+OpenRouter's provider routing for the selected primary model, but the War Room
+adapter does not issue an automatic second model request after timeout,
+rate-limit or provider failure. This prevents hidden retry/fallback spend and
+keeps a failed attempt bounded.
+
+Every request carries an explicit positive `max_tokens` cap equal to the
+smaller of the model policy cap and the remaining token allowance returned by
+the budget authority. A successful provider response must contain prompt
+tokens, completion tokens and normalized/provider cost evidence. Missing or
+invalid usage is an accounting failure and fails closed; it is never converted
+to zero usage/cost.
+
+A formal Auditor identity must never be silently replaced by fallback routing.
 
 ## Budget authority
 
 `BudgetAuthority` authorizes a turn before provider invocation and records its
 usage afterward through the platform usage owner. Enforcement covers room,
 agenda and participant token/cost limits.
+
+Billable automatic turns are serialized per tenant/application/room with a
+PostgreSQL transaction-scoped advisory lock held across budget authorization,
+the single provider request, usage recording and event persistence. This
+removes concurrent War Room check-then-act spending without introducing a
+second reservation ledger.
 
 When a hard limit is reached:
 
@@ -140,8 +159,9 @@ comes back from the Core service and PostgreSQL event replay.
 ## Failure policy
 
 - timeout and provider errors produce `TURN_FAILED` with a stable failure kind;
-- retry count and backoff are configuration, not model decisions;
-- retry occurs only while state remains `RUNNING` and budget still authorizes;
+- War Room V1 performs no application-level automatic provider retry/model
+  fallback after a billable request; the failure becomes a bounded turn
+  failure;
 - invalid responses are not persisted as successful agent messages;
 - database/event persistence failure halts the turn before another agent runs.
 
