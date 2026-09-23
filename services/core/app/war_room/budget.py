@@ -165,9 +165,14 @@ class PostgresRoomTurnGuard:
     """Serializes billable War Room turns per tenant/application/room.
 
     The advisory transaction lock is held across budget authorization, the
-    single provider request, usage recording, and event persistence. This
-    removes the War Room check-then-act race without introducing a second
-    reservation ledger.
+    single provider request, usage recording, and event persistence. Nested
+    tenant transactions on the same Database/task/scope reuse this guard's
+    connection, so one in-flight turn consumes one pooled connection.
+
+    The guarded transaction disables PostgreSQL's idle-in-transaction timeout
+    locally. The provider HTTP client remains the bounded wait authority. This
+    avoids a Supabase idle timeout killing the room lock mid-turn while keeping
+    the one-request/no-retry policy intact.
     """
 
     def __init__(self, database: Database) -> None:
@@ -189,6 +194,9 @@ class PostgresRoomTurnGuard:
             application_id=correlation.application_id,
             request_id=correlation.request_id,
         ) as conn:
+            await conn.execute(
+                "select set_config('idle_in_transaction_session_timeout', '0', true)"
+            )
             await conn.execute(
                 "select pg_advisory_xact_lock(hashtextextended(%s, 0))",
                 (lock_key,),
