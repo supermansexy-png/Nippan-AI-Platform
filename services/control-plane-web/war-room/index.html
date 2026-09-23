@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nippan AI War Room</title>
+  <link rel="stylesheet" href="./war-room.css">
+</head>
+<body>
+  <main class="war-room" data-war-room-app>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Nippan AI Platform</p>
+        <h1>War Room</h1>
+      </div>
+      <div class="room-loader">
+        <label for="room-id">Room ID</label>
+        <div class="row">
+          <input id="room-id" name="room-id" autocomplete="off" placeholder="UUID">
+          <button id="load-room" type="button">Load room</button>
+        </div>
+      </div>
+      <div class="status-wrap">
+        <span id="connection-status" class="connection" data-state="idle">Disconnected</span>
+        <span id="room-state" class="state-pill">—</span>
+      </div>
+    </header>
+
+    <section id="notice" class="notice" role="status" aria-live="polite"></section>
+
+    <div class="layout">
+      <aside class="panel sidebar" aria-label="Participants and usage">
+        <div class="panel-heading">
+          <h2>Participants</h2>
+          <span id="participant-count" class="muted">0</span>
+        </div>
+        <div id="participant-roster" class="roster empty">Load a room to see participants.</div>
+
+        <div class="divider"></div>
+
+        <h2>Usage</h2>
+        <dl class="usage">
+          <div><dt>Input</dt><dd id="usage-input">0</dd></div>
+          <div><dt>Output</dt><dd id="usage-output">0</dd></div>
+          <div><dt>Total</dt><dd id="usage-total">0</dd></div>
+          <div><dt>Cost</dt><dd id="usage-cost">—</dd></div>
+        </dl>
+      </aside>
+
+      <section class="panel conversation" aria-label="Ordered room messages">
+        <div class="panel-heading">
+          <div>
+            <h2>Live room</h2>
+            <p id="sequence-label" class="muted">Sequence 0</p>
+          </div>
+          <button id="reconnect" type="button" class="ghost" disabled>Reconnect</button>
+        </div>
+
+        <div id="message-list" class="messages empty">
+          Durable room events will appear here in sequence order.
+        </div>
+
+        <form id="owner-message-form" class="composer">
+          <label for="owner-message">Owner message / decision</label>
+          <textarea id="owner-message" rows="3" placeholder="Ask the room or record an owner decision"></textarea>
+          <div class="composer-actions">
+            <select id="target-role" aria-label="Target role">
+              <option value="BUILDER">Builder</option>
+              <option value="ARCHITECT">Architect</option>
+              <option value="SECURITY_REVIEWER">Security reviewer</option>
+              <option value="COST_OPS_REVIEWER">Cost / Ops reviewer</option>
+              <option value="INDEPENDENT_AUDITOR">Independent auditor</option>
+              <option value="CHAIR">Chair</option>
+              <option value="SECRETARY">Secretary</option>
+            </select>
+            <button type="button" data-command="ASK_ROLE">Ask role</button>
+            <button type="button" data-command="ASK_ALL">Ask all</button>
+            <button type="button" data-command="SUBMIT_OWNER_DECISION" class="primary">Owner decision</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel context-panel" aria-label="Agenda, findings, and decisions">
+        <section>
+          <div class="panel-heading"><h2>Agenda</h2></div>
+          <div id="agenda-list" class="stack empty">No agenda loaded.</div>
+        </section>
+        <section>
+          <div class="panel-heading"><h2>Findings</h2></div>
+          <div id="finding-list" class="stack empty">No findings.</div>
+        </section>
+        <section>
+          <div class="panel-heading"><h2>Decisions</h2></div>
+          <div id="decision-list" class="stack empty">No decisions.</div>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="controls" aria-label="Owner room controls">
+      <button type="button" data-command="PREPARE">Prepare</button>
+      <button type="button" data-command="START" class="primary">Start</button>
+      <button type="button" data-command="PAUSE">Pause</button>
+      <button type="button" data-command="RESUME">Resume</button>
+      <button type="button" data-command="STOP" class="danger">Stop</button>
+      <button type="button" data-command="REQUEST_OWNER_DECISION">Request owner decision</button>
+      <button type="button" data-command="BEGIN_SUMMARY">Summarize</button>
+      <button type="button" data-command="CLOSE">Close</button>
+    </footer>
+  </main>
+
+  <script type="module" src="./war-room.js"></script>
+</body>
+</html>
