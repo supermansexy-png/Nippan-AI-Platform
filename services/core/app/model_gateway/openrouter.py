@@ -190,13 +190,17 @@ class OpenRouterGateway:
                 "role": "system",
                 "content": (
                     "You are participating in a bounded Nippan AI War Room turn. "
-                    "Stay within your assigned role and answer only the agenda objective."
+                    "Stay within your assigned role and answer only the agenda objective. "
+                    "Default to Thai for all participant-facing prose, even when role "
+                    "names and system identifiers are provided in English. Keep canonical "
+                    "role names unchanged when referring to system roles."
                 ),
             },
             {
                 "role": "user",
                 "content": (
                     f"Role: {request.role.value}\n"
+                    "Default response language: Thai\n"
                     f"Agenda objective: {request.agenda_objective}\n"
                     f"Context references:\n{references}\n"
                     f"Prior-round synthesis: {synthesis}"
