@@ -1,3 +1,8 @@
+from .persistence import (
+    PostgresRoomEventSink,
+    RoomPersistenceConflict,
+    RoomPersistenceError,
+)
 from .auth import DatabaseRoomCommandAuthorizer
 from .contracts import (
     AgendaPolicy,
@@ -29,6 +34,7 @@ from .interfaces import (
     ModelTurnRequest,
     ModelTurnResult,
     OrderedRoomEvent,
+    RoomEventDraft,
     RoomCommand,
     RoomCommandAuthorizer,
     RoomCommandType,
@@ -69,16 +75,20 @@ __all__ = [
     "ModelTurnRequest",
     "ModelTurnResult",
     "OrderedRoomEvent",
+    "PostgresRoomEventSink",
     "Participant",
     "ParticipantRole",
     "ParticipantType",
     "RoomAction",
     "RoomCommand",
+    "RoomEventDraft",
     "RoomCommandAuthorizer",
     "RoomCommandType",
     "RoomContract",
     "RoomMessageContract",
     "RoomMode",
+    "RoomPersistenceConflict",
+    "RoomPersistenceError",
     "RoomState",
     "RoomSession",
     "RoomEventSink",
