@@ -107,7 +107,7 @@ def test_preview_router_has_track_d_routes_and_model_turns_default_off() -> None
         / "app"
         / "war_room"
         / "transport.py"
-    ).read_text()
+    ).read_text(encoding="utf-8")
     assert "war_room_preview_model_turns_enabled" in source
 
 
