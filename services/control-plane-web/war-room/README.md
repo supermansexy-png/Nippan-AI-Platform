@@ -94,9 +94,9 @@ state-changing requests. Failed logins have a fixed delay and per-client/global
 in-memory caps. The access token is the session-signing root key; rotating it
 invalidates all existing sessions.
 
-When remote auth is enabled, **all** non-test War Room requests require authentication,
-including loopback requests. This avoids relying on proxy-forwarded client IP headers
-for the exposed mode. When remote auth is disabled, the original loopback-only
+When remote auth is enabled, **all** War Room requests require authentication,
+including loopback and test-environment requests. This avoids relying on proxy-forwarded client IP headers
+for the exposed mode. Remote requests must also carry the exact configured Host. When remote auth is disabled, the original loopback-only
 boundary remains in effect.
 
 The remote-auth layer only protects transport access. The browser still cannot supply
