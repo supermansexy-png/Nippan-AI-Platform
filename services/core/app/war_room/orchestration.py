@@ -22,6 +22,7 @@ class TurnRequest:
     participants: tuple[Participant, ...]
     completed_participant_ids: frozenset[str]
     budget: BudgetSnapshot
+    failed_participant_ids: frozenset[str] = frozenset()
     agenda_policy: AgendaPolicy = AgendaPolicy()
     triggered_by_participant_id: str | None = None
     owner_decision_pending: bool = False
@@ -78,8 +79,18 @@ class DeterministicTurnScheduler:
             if participant.automatic_turn_eligible
             and participant.role is not ParticipantRole.OWNER
         ]
+        healthy_participants = [
+            participant
+            for participant in automatic_participants
+            if participant.participant_id not in request.failed_participant_ids
+        ]
 
-        for participant in automatic_participants:
+        if automatic_participants and not healthy_participants:
+            return ScheduleDecision.halted(
+                HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+            )
+
+        for participant in healthy_participants:
             if participant.participant_id in request.completed_participant_ids:
                 continue
 
@@ -98,7 +109,7 @@ class DeterministicTurnScheduler:
 
         unfinished = [
             participant
-            for participant in automatic_participants
+            for participant in healthy_participants
             if participant.participant_id not in request.completed_participant_ids
         ]
 
