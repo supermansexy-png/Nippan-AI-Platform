@@ -129,6 +129,9 @@ When a hard limit is reached:
 - default and maximum automatic round limit is two for V1;
 - no participant can directly trigger itself;
 - a completed participant is not scheduled twice in one round;
+- before scheduling, failed participant IDs are restored from durable
+  `TURN_FAILED` / `PARTICIPANT_FAILURE_LIMIT_REACHED` room events and merged
+  into the session failure cap; reconnect/restart cannot clear that cap;
 - one failed automatic provider turn exhausts that participant's automatic
   failure allowance for the room; it is not automatically retried in the same
   or later round;
@@ -139,6 +142,11 @@ When a hard limit is reached:
 - session reconstruction must restore failed participant IDs from durable
   `TURN_FAILED` events before any new automatic scheduling;
 - pause, stop and owner-decision state halt scheduling before model invocation;
+- before every automatic turn, Core acquires the room-scoped execution lock and
+  reads authoritative `project_rooms.state`; a state other than `RUNNING`
+  halts before budget authorization or provider invocation;
+- owner lifecycle/decision commands acquire the same room-scoped execution lock
+  as automatic turns, so a committed Stop/Pause cannot race a new billable turn;
 - the Chair failing pauses the room; it does not release uncontrolled turns;
 - exactly one state transition is committed for an accepted command;
 - Builder/Auditor independence remains enforced by the database and contracts.
@@ -181,7 +189,9 @@ comes back from the Core service and PostgreSQL event replay.
   fallback after a billable request; the failed participant is exhausted for
   automatic turns for the remainder of the room;
 - invalid responses are not persisted as successful agent messages;
-- database/event persistence failure halts the turn before another agent runs.
+- database/event persistence failure halts the turn before another agent runs;
+- non-state-changing billable-path events such as `TURN_SCHEDULED` and
+  `MESSAGE_APPENDED` assert expected durable `RUNNING` state before append.
 
 ## Change control
 

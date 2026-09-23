@@ -435,7 +435,15 @@ class TurnExecutionGuard(Protocol):
         self,
         *,
         correlation: CorrelationContext,
-    ) -> AsyncContextManager[None]: ...
+    ) -> AsyncContextManager[RoomState]: ...
+
+
+class RoomFailureHistorySource(Protocol):
+    async def load_failed_participant_ids(
+        self,
+        *,
+        correlation: CorrelationContext,
+    ) -> frozenset[str]: ...
 
 
 class RoomReadAuthorizer(Protocol):

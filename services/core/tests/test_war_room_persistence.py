@@ -1,3 +1,4 @@
+import json
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from uuid import UUID
@@ -7,9 +8,13 @@ import pytest
 from app.war_room import (
     CorrelationContext,
     PostgresRoomEventSink,
+    PostgresRoomFailureHistorySource,
     RoomEventDraft,
     RoomEventType,
+    RoomMode,
     RoomPersistenceConflict,
+    RoomSession,
+    RoomSessionFailureReconstructor,
     RoomState,
 )
 
@@ -32,6 +37,11 @@ class FakeCursor:
         if not self.fetch_rows:
             return None
         return self.fetch_rows.pop(0)
+
+    async def fetchall(self):
+        rows = list(self.fetch_rows)
+        self.fetch_rows.clear()
+        return rows
 
 
 class FakeConnection:
@@ -126,3 +136,106 @@ async def test_durable_state_conflict_fails_before_event_insert() -> None:
     statements = [statement for statement, _ in database.cursor.statements]
     assert len(statements) == 1
     assert "for update" in statements[0].lower()
+
+
+@pytest.mark.anyio
+async def test_expected_state_only_append_rejects_stale_non_state_event() -> None:
+    database = FakeDatabase(fetch_rows=[("PAUSED",)])
+    sink = PostgresRoomEventSink(database)  # type: ignore[arg-type]
+    event = RoomEventDraft(
+        event_type=RoomEventType.TURN_SCHEDULED,
+        correlation=correlation(),
+        occurred_at=datetime(2026, 9, 23, 1, 31, tzinfo=UTC),
+        participant_id=str(UUID(int=10)),
+        payload={"round_number": 1},
+    )
+
+    with pytest.raises(RoomPersistenceConflict):
+        await sink.append(
+            event,
+            expected_state=RoomState.RUNNING,
+        )
+
+    statements = [statement for statement, _ in database.cursor.statements]
+    assert len(statements) == 1
+    assert "for update" in statements[0].lower()
+
+
+@pytest.mark.anyio
+async def test_failure_history_restores_only_failure_limit_turn_events() -> None:
+    failed_id = UUID(int=10)
+    other_id = UUID(int=11)
+    database = FakeDatabase(
+        fetch_rows=[
+            (
+                failed_id,
+                json.dumps(
+                    {
+                        "event_type": "TURN_FAILED",
+                        "halt_reason": "PARTICIPANT_FAILURE_LIMIT_REACHED",
+                        "payload": {
+                            "failure_kind": "PROVIDER_UNAVAILABLE",
+                            "automatic_retry_allowed": False,
+                        },
+                    }
+                ),
+            ),
+            (
+                other_id,
+                json.dumps(
+                    {
+                        "event_type": "OTHER_ERROR",
+                        "halt_reason": None,
+                        "payload": {},
+                    }
+                ),
+            ),
+        ]
+    )
+    source = PostgresRoomFailureHistorySource(database)  # type: ignore[arg-type]
+
+    failed = await source.load_failed_participant_ids(
+        correlation=correlation(),
+    )
+
+    assert failed == frozenset({str(failed_id)})
+    query, params = database.cursor.statements[0]
+    assert "message_type = 'ERROR'" in query
+    assert "order by sequence" in query.lower()
+    assert params == (UUID(int=1), UUID(int=2), UUID(int=3))
+
+
+@pytest.mark.anyio
+async def test_fresh_session_reconstructs_failure_cap_from_durable_turn_failed_event() -> None:
+    failed_id = UUID(int=12)
+    database = FakeDatabase(
+        fetch_rows=[
+            (
+                failed_id,
+                json.dumps(
+                    {
+                        "event_type": "TURN_FAILED",
+                        "halt_reason": "PARTICIPANT_FAILURE_LIMIT_REACHED",
+                        "payload": {
+                            "failure_kind": "TIMEOUT",
+                            "automatic_retry_allowed": False,
+                        },
+                    }
+                ),
+            ),
+        ]
+    )
+    source = PostgresRoomFailureHistorySource(database)  # type: ignore[arg-type]
+    reconstructor = RoomSessionFailureReconstructor(source)
+    session = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(),
+    )
+
+    await reconstructor.restore(
+        session,
+        correlation=correlation(),
+    )
+
+    assert session.failed_participant_ids == {str(failed_id)}

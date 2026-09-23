@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from app.db import Database
 
 from .contracts import MessageType, RoomState
-from .interfaces import OrderedRoomEvent, RoomEventDraft
+from .interfaces import CorrelationContext, OrderedRoomEvent, RoomEventDraft
 
 
 class RoomPersistenceError(RuntimeError):
@@ -35,9 +35,9 @@ class PostgresRoomEventSink:
         expected_state: RoomState | None = None,
         new_state: RoomState | None = None,
     ) -> OrderedRoomEvent:
-        if (expected_state is None) != (new_state is None):
+        if new_state is not None and expected_state is None:
             raise ValueError(
-                "expected_state and new_state must be provided together"
+                "new_state requires expected_state"
             )
 
         correlation = event.correlation
@@ -247,3 +247,62 @@ class PostgresRoomEventSink:
             separators=(",", ":"),
             sort_keys=True,
         )
+
+
+
+class PostgresRoomFailureHistorySource:
+    """Restores automatic failure caps from durable TURN_FAILED events."""
+
+    def __init__(self, database: Database) -> None:
+        self._database = database
+
+    async def load_failed_participant_ids(
+        self,
+        *,
+        correlation: CorrelationContext,
+    ) -> frozenset[str]:
+        async with self._database.tenant_transaction(
+            tenant_id=correlation.tenant_id,
+            application_id=correlation.application_id,
+            request_id=correlation.request_id,
+        ) as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    """
+                    select participant_id, content_text
+                    from public.project_room_messages
+                    where tenant_id = %s
+                      and application_id = %s
+                      and room_id = %s
+                      and participant_id is not null
+                      and message_type = 'ERROR'
+                    order by sequence
+                    """,
+                    (
+                        correlation.tenant_id,
+                        correlation.application_id,
+                        correlation.room_id,
+                    ),
+                )
+                rows = await cur.fetchall()
+
+        failed: set[str] = set()
+        for participant_id, content_text in rows:
+            try:
+                envelope = json.loads(content_text)
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise RoomPersistenceError(
+                    "invalid durable ERROR event envelope"
+                ) from exc
+
+            if envelope.get("event_type") != "TURN_FAILED":
+                continue
+            if (
+                envelope.get("halt_reason")
+                != "PARTICIPANT_FAILURE_LIMIT_REACHED"
+            ):
+                continue
+
+            failed.add(str(participant_id))
+
+        return frozenset(failed)

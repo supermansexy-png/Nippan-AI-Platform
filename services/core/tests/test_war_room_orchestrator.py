@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from uuid import UUID
 
@@ -55,14 +56,41 @@ class FailingSink:
         raise RuntimeError("persistence failed")
 
 
+class FailureHistory:
+    def __init__(self, failed=()) -> None:
+        self.failed = frozenset(failed)
+        self.calls = 0
+
+    async def load_failed_participant_ids(self, **_):
+        self.calls += 1
+        return self.failed
+
+
 class TurnGuard:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        state: RoomState = RoomState.RUNNING,
+        states: list[RoomState] | None = None,
+        block_first: bool = False,
+    ) -> None:
         self.entries = 0
+        self.state = state
+        self.states = list(states or [])
+        self.block_first = block_first
+        self.first_acquired = asyncio.Event()
+        self.release_first = asyncio.Event()
+        self._lock = asyncio.Lock()
 
     @asynccontextmanager
     async def hold(self, **_):
-        self.entries += 1
-        yield
+        async with self._lock:
+            self.entries += 1
+            if self.block_first and self.entries == 1:
+                self.first_acquired.set()
+                await self.release_first.wait()
+            state = self.states.pop(0) if self.states else self.state
+            yield state
 
 
 class Authorizer:
@@ -76,10 +104,15 @@ class Authorizer:
 
 
 class Sink:
-    def __init__(self) -> None:
+    def __init__(self, guard: TurnGuard | None = None) -> None:
         self.events = []
+        self.guard = guard
 
     async def append(self, event, *, expected_state=None, new_state=None):
+        if self.guard is not None and expected_state is not None:
+            assert self.guard.state is expected_state
+        if self.guard is not None and new_state is not None:
+            self.guard.state = new_state
         ordered = OrderedRoomEvent(
             event_id=UUID(int=100 + len(self.events)),
             sequence=len(self.events) + 1,
@@ -153,6 +186,7 @@ async def test_pause_resume_stop_are_authoritative_state_transitions() -> None:
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=sink,
     )
 
@@ -185,6 +219,10 @@ async def test_pause_resume_stop_are_authoritative_state_transitions() -> None:
 @pytest.mark.anyio
 async def test_owner_decision_gate_halts_before_model_invocation() -> None:
     gateway = Gateway()
+    guard = TurnGuard(states=[
+        RoomState.RUNNING,
+        RoomState.NEEDS_OWNER_DECISION,
+    ])
     room = RoomSession(
         mode=RoomMode.FORMAL_MEETING,
         state=RoomState.RUNNING,
@@ -197,7 +235,8 @@ async def test_owner_decision_gate_halts_before_model_invocation() -> None:
         model_gateway=gateway,
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
-        turn_execution_guard=TurnGuard(),
+        turn_execution_guard=guard,
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
 
@@ -244,6 +283,7 @@ async def test_chair_provider_failure_pauses_room() -> None:
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
 
@@ -278,6 +318,7 @@ async def test_synthetic_room_runs_two_bounded_rounds_with_ordered_trace() -> No
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=sink,
     )
 
@@ -326,6 +367,7 @@ async def test_owner_command_is_rejected_before_state_mutation_when_not_authoriz
         budget_authority=Budget(),
         command_authorizer=authorizer,
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
 
@@ -365,6 +407,7 @@ async def test_authorization_receives_trusted_actor_and_command_scope() -> None:
         budget_authority=Budget(),
         command_authorizer=authorizer,
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
     actor = TrustedActorContext(
@@ -402,6 +445,7 @@ async def test_state_does_not_mutate_when_persistence_fails() -> None:
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=FailingSink(),
     )
 
@@ -442,6 +486,7 @@ async def test_non_chair_failure_enters_owner_gate_and_is_not_retried_after_resu
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
 
@@ -505,6 +550,7 @@ async def test_all_failed_participants_halt_without_new_provider_call() -> None:
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
 
@@ -542,3 +588,105 @@ async def test_all_failed_participants_halt_without_new_provider_call() -> None:
     assert halted.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
     assert room.state is RoomState.NEEDS_OWNER_DECISION
     assert [request.participant_id for request in gateway.calls] == ["builder"]
+
+
+@pytest.mark.anyio
+async def test_durable_failure_reconstruction_prevents_provider_reschedule() -> None:
+    gateway = Gateway()
+    history = FailureHistory({"builder"})
+    fresh_room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=gateway,
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(state=RoomState.RUNNING),
+        failure_history_source=history,
+        event_sink=Sink(),
+    )
+
+    event = await orchestrator.run_next_turn(
+        fresh_room,
+        correlation=correlation(),
+        budget=snapshot(),
+        agenda_objective="Must not retry durable failure",
+    )
+
+    assert history.calls == 1
+    assert fresh_room.failed_participant_ids == {"builder"}
+    assert event.event_type is RoomEventType.SCHEDULER_HALTED
+    assert event.halt_reason is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+    assert gateway.calls == []
+
+
+@pytest.mark.anyio
+async def test_owner_stop_serializes_before_stale_turn_and_prevents_provider_call() -> None:
+    gateway = Gateway()
+    guard = TurnGuard(state=RoomState.RUNNING, block_first=True)
+    sink = Sink(guard)
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=gateway,
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=guard,
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+    owner_room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=(
+            participant("owner", ParticipantRole.OWNER, human=True),
+            participant("builder", ParticipantRole.BUILDER),
+        ),
+    )
+    stale_turn_room = RoomSession(
+        mode=RoomMode.FORMAL_MEETING,
+        state=RoomState.RUNNING,
+        participants=owner_room.participants,
+    )
+
+    stop_task = asyncio.create_task(
+        orchestrator.apply_command(
+            owner_room,
+            RoomCommand(
+                command=RoomCommandType.STOP,
+                correlation=correlation(),
+                expected_state=RoomState.RUNNING,
+            ),
+            actor=TrustedActorContext(
+                tenant_id=UUID(int=1),
+                application_id=UUID(int=2),
+                principal_type=ParticipantType.HUMAN,
+                principal_id="owner",
+            ),
+        )
+    )
+    await guard.first_acquired.wait()
+
+    turn_task = asyncio.create_task(
+        orchestrator.run_next_turn(
+            stale_turn_room,
+            correlation=correlation(),
+            budget=snapshot(),
+            agenda_objective="Must abort after durable stop",
+        )
+    )
+
+    guard.release_first.set()
+    stop_event = await stop_task
+    turn_event = await turn_task
+
+    assert stop_event.event_type is RoomEventType.ROOM_STATE_CHANGED
+    assert guard.state is RoomState.STOPPED
+    assert turn_event.event_type is RoomEventType.SCHEDULER_HALTED
+    assert turn_event.halt_reason is HaltReason.STATE_NOT_RUNNING
+    assert stale_turn_room.state is RoomState.STOPPED
+    assert gateway.calls == []
+    assert guard.entries == 2
