@@ -85,11 +85,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run War Room Increment C Python tests
+      - name: Run Core Python tests with auditable summary
         working-directory: services/core
         run: |
+          set -euo pipefail
           python -m pip install --disable-pip-version-check -e ".[test]"
-          python -m pytest -q tests/test_war_room_*.py
+          python -m pytest -q tests | tee /tmp/pytest-summary.txt
+
+          {
+            echo "### Core pytest summary"
+            echo
+            echo '~~~text'
+            cat /tmp/pytest-summary.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prove War Room privilege negative control fails
         run: |

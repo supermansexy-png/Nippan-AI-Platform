@@ -13,8 +13,11 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
+  "anyio>=4.4,<5",
   "pytest>=8.4,<9",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--strict-markers"
+filterwarnings = ["error"]
