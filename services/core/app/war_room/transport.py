@@ -36,6 +36,11 @@ from .read_model import (
     serialize_ordered_event,
     serialize_room_snapshot,
 )
+from .remote_auth import (
+    AccessAuthenticationError,
+    CloudflareAccessVerifier,
+    RemoteAccessVerifier,
+)
 from .service import (
     RoomSession,
     StaleRoomCommand,
@@ -130,12 +135,42 @@ def trusted_preview_actor(settings: Settings) -> TrustedActorContext:
     )
 
 
-def _enforce_local_preview(request: Request, settings: Settings) -> None:
+async def _authorize_preview_request(
+    request: Request,
+    settings: Settings,
+    remote_access_verifier: RemoteAccessVerifier | None,
+) -> None:
     if settings.environment.lower() == "test":
         return
+
     host = request.client.host if request.client is not None else ""
-    if host not in {"127.0.0.1", "::1", "localhost"}:
-        raise HTTPException(status_code=403, detail="war_room_preview_loopback_only")
+    if host in {"127.0.0.1", "::1", "localhost"}:
+        return
+
+    if not settings.war_room_preview_remote_access_enabled:
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_loopback_only",
+        )
+    if remote_access_verifier is None:
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_remote_auth_not_configured",
+        )
+
+    assertion = request.headers.get("Cf-Access-Jwt-Assertion")
+    if assertion is None or not assertion.strip():
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_remote_auth_required",
+        )
+    try:
+        await remote_access_verifier.authenticate(assertion)
+    except AccessAuthenticationError as exc:
+        raise HTTPException(
+            status_code=403,
+            detail="war_room_preview_remote_auth_failed",
+        ) from exc
 
 
 def _validate_command_scope(
@@ -175,10 +210,17 @@ def create_war_room_preview_router(
     *,
     settings: Settings,
     database: Database,
+    remote_access_verifier: RemoteAccessVerifier | None = None,
 ) -> APIRouter:
     """Development-only Track D transport. No route invokes run_next_turn."""
 
     router = APIRouter()
+    if (
+        remote_access_verifier is None
+        and settings.war_room_preview_remote_access_enabled
+    ):
+        remote_access_verifier = CloudflareAccessVerifier(settings)
+
     read_authorizer = DatabaseRoomReadAuthorizer(database)
     command_authorizer = DatabaseRoomCommandAuthorizer(database)
     snapshot_source = PostgresRoomSnapshotSource(database)
@@ -215,25 +257,41 @@ def create_war_room_preview_router(
 
     @router.get("/war-room")
     async def war_room_redirect(request: Request):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         suffix = f"?{request.url.query}" if request.url.query else ""
         return RedirectResponse(url=f"/war-room/{suffix}", status_code=307)
 
     @router.get("/war-room/")
     async def war_room_index(request: Request):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         trusted_preview_actor(settings)
         return FileResponse(_ASSET_ROOT / "index.html")
 
     @router.get("/war-room/war-room.css")
     async def war_room_css(request: Request):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         trusted_preview_actor(settings)
         return FileResponse(_ASSET_ROOT / "war-room.css", media_type="text/css")
 
     @router.get("/war-room/war-room.js")
     async def war_room_js(request: Request):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         trusted_preview_actor(settings)
         return FileResponse(
             _ASSET_ROOT / "war-room.js",
@@ -242,7 +300,11 @@ def create_war_room_preview_router(
 
     @router.get("/war-room/rooms/{room_id}/snapshot")
     async def room_snapshot(room_id: UUID, request: Request):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         actor = trusted_preview_actor(settings)
         await authorize_read(
             actor=actor,
@@ -268,7 +330,11 @@ def create_war_room_preview_router(
         after_sequence: int | None = Query(default=None, ge=0),
         last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     ):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         actor = trusted_preview_actor(settings)
         cursor = _cursor_from_inputs(
             after_sequence=after_sequence,
@@ -344,7 +410,11 @@ def create_war_room_preview_router(
         payload: RoomCommandPayload,
         request: Request,
     ):
-        _enforce_local_preview(request, settings)
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
         actor = trusted_preview_actor(settings)
         command = payload.to_contract()
         _validate_command_scope(
