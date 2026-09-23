@@ -77,7 +77,7 @@ function renderRoster() {
   $("#participant-count").textContent = String(items.length);
   if (!items.length) {
     root.className = "roster empty";
-    root.textContent = "No participants.";
+    root.textContent = "ยังไม่มีผู้เข้าร่วม";
     return;
   }
   root.className = "roster";
@@ -118,21 +118,21 @@ function renderContext() {
     card.append(el("div", "meta", `${item.status} · max ${item.round_limit} rounds`));
     card.append(el("div", "meta", item.objective));
     return card;
-  }, "No agenda.");
+  }, "ยังไม่มีวาระ");
 
   cardList("#finding-list", app.snapshot?.findings, (item) => {
     const card = el("article", "card");
     card.append(el("strong", "", item.summary));
     card.append(el("div", "meta", `${item.severity} · ${item.status}`));
     return card;
-  }, "No findings.");
+  }, "ยังไม่มีข้อค้นพบ");
 
   cardList("#decision-list", app.snapshot?.decisions, (item) => {
     const card = el("article", "card");
     card.append(el("strong", "", item.decision));
     card.append(el("div", "meta", `${item.decision_type} · ${item.status}`));
     return card;
-  }, "No decisions.");
+  }, "ยังไม่มีคำตัดสิน");
 }
 
 function eventContent(event) {
@@ -147,7 +147,7 @@ function renderMessages() {
   const events = [...app.events].sort((a, b) => a.sequence - b.sequence);
   if (!events.length) {
     root.className = "messages empty";
-    root.textContent = "No durable room events yet.";
+    root.textContent = "ยังไม่มีเหตุการณ์ในห้อง";
     return;
   }
   root.className = "messages";
@@ -176,7 +176,7 @@ function renderMessages() {
 
 function renderSnapshot() {
   $("#room-state").textContent = app.snapshot?.state || "—";
-  $("#sequence-label").textContent = `Sequence ${app.snapshot?.last_sequence || 0}`;
+  $("#sequence-label").textContent = `ลำดับ ${app.snapshot?.last_sequence || 0}`;
   $("#reconnect").disabled = !app.snapshot;
   renderRoster();
   renderUsage();
@@ -199,7 +199,7 @@ function mergeEvent(event) {
 function disconnect() {
   if (app.source) app.source.close();
   app.source = null;
-  setConnection("Disconnected", "idle");
+  setConnection("ยังไม่เชื่อมต่อ", "idle");
 }
 
 function connectEvents() {
@@ -216,15 +216,15 @@ function connectEvents() {
   const source = new EventSource(url, { withCredentials: true });
   app.source = source;
 
-  source.onopen = () => setConnection("Live", "live");
-  source.onerror = () => setConnection("Reconnecting", "error");
+  source.onopen = () => setConnection("เชื่อมต่อสด", "live");
+  source.onerror = () => setConnection("กำลังเชื่อมต่อใหม่", "error");
 
   for (const type of EVENT_TYPES) {
     source.addEventListener(type, (message) => {
       try {
         mergeEvent(JSON.parse(message.data));
       } catch {
-        setNotice(`Ignored invalid ${type} event payload.`);
+        setNotice(`ข้าม event ${type} เพราะข้อมูลไม่ถูกต้อง`);
       }
     });
   }
@@ -233,13 +233,13 @@ function connectEvents() {
 async function loadRoom(roomId) {
   disconnect();
   setNotice("");
-  setConnection("Loading", "idle");
+  setConnection("กำลังโหลด", "idle");
 
   const response = await fetch(
     `/war-room/rooms/${encodeURIComponent(roomId)}/snapshot`,
     { credentials: "same-origin", headers: { Accept: "application/json" } },
   );
-  if (!response.ok) throw new Error(`Snapshot request failed (${response.status}).`);
+  if (!response.ok) throw new Error(`โหลด snapshot ไม่สำเร็จ (${response.status})`);
 
   const snapshot = await response.json();
   app.roomId = snapshot.room_id;
@@ -256,7 +256,7 @@ async function loadRoom(roomId) {
 }
 
 async function sendCommand(command, extra = {}) {
-  if (!app.snapshot) throw new Error("Load a room first.");
+  if (!app.snapshot) throw new Error("กรุณาโหลดห้องก่อน");
 
   const body = {
     command,
@@ -276,7 +276,7 @@ async function sendCommand(command, extra = {}) {
   );
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Command ${command} failed (${response.status}): ${detail}`);
+    throw new Error(`คำสั่ง ${command} ไม่สำเร็จ (${response.status}): ${detail}`);
   }
 
   const event = await response.json();
@@ -289,11 +289,11 @@ async function handleCommand(button) {
   const extra = {};
 
   if (command === "ASK_ROLE") {
-    if (!text) throw new Error("Enter a message before Ask role.");
+    if (!text) throw new Error("กรุณาใส่ข้อความก่อนถาม role");
     extra.target_role = $("#target-role").value;
     extra.content_text = text;
   } else if (command === "ASK_ALL" || command === "SUBMIT_OWNER_DECISION") {
-    if (!text) throw new Error(`Enter content before ${command}.`);
+    if (!text) throw new Error(`กรุณาใส่ข้อความก่อนส่งคำสั่ง ${command}`);
     extra.content_text = text;
   }
 
@@ -312,10 +312,10 @@ async function handleCommand(button) {
 $("#load-room").addEventListener("click", async () => {
   try {
     const roomId = $("#room-id").value.trim();
-    if (!roomId) throw new Error("Enter a room ID.");
+    if (!roomId) throw new Error("กรุณาใส่ Room ID");
     await loadRoom(roomId);
   } catch (error) {
-    setConnection("Error", "error");
+    setConnection("ผิดพลาด", "error");
     setNotice(error.message);
   }
 });
@@ -340,7 +340,7 @@ const initialRoom = queryRoomId();
 if (initialRoom) {
   $("#room-id").value = initialRoom;
   loadRoom(initialRoom).catch((error) => {
-    setConnection("Error", "error");
+    setConnection("ผิดพลาด", "error");
     setNotice(error.message);
   });
 }

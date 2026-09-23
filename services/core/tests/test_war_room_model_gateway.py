@@ -164,6 +164,9 @@ async def test_openrouter_uses_one_request_and_enforces_smallest_output_cap() ->
     assert payloads[0]["provider"] == {
         "order": ["Provider-A", "Provider-B"]
     }
+    messages = payloads[0]["messages"]
+    assert "Default to Thai" in messages[0]["content"]
+    assert "Default response language: Thai" in messages[1]["content"]
     assert result.content_text == "bounded response"
     assert result.provider_request_id == "req-123"
     assert result.responded_model == "model-primary"

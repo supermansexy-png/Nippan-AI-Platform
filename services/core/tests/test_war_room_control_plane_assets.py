@@ -6,16 +6,16 @@ WAR_ROOM = ROOT / "services" / "control-plane-web" / "war-room"
 
 
 def test_war_room_surface_contains_required_track_d_controls() -> None:
-    html = (WAR_ROOM / "index.html").read_text()
-    script = (WAR_ROOM / "war-room.js").read_text()
+    html = (WAR_ROOM / "index.html").read_text(encoding="utf-8")
+    script = (WAR_ROOM / "war-room.js").read_text(encoding="utf-8")
 
     for label in (
-        "Participants",
-        "Live room",
-        "Agenda",
-        "Findings",
-        "Decisions",
-        "Usage",
+        "ผู้เข้าร่วม",
+        "ห้องสนทนาสด",
+        "วาระ",
+        "ข้อค้นพบ",
+        "คำตัดสิน",
+        "การใช้งาน",
     ):
         assert label in html
 
@@ -39,8 +39,8 @@ def test_war_room_surface_contains_required_track_d_controls() -> None:
 
 
 def test_war_room_browser_does_not_own_runtime_authority() -> None:
-    script = (WAR_ROOM / "war-room.js").read_text()
-    readme = (WAR_ROOM / "README.md").read_text()
+    script = (WAR_ROOM / "war-room.js").read_text(encoding="utf-8")
+    readme = (WAR_ROOM / "README.md").read_text(encoding="utf-8")
 
     forbidden_runtime_terms = (
         "run_next_turn",

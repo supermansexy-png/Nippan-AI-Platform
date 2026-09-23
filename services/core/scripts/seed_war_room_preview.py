@@ -17,13 +17,13 @@ DEFAULT_OWNER_PARTICIPANT_ID = UUID("c5555555-5555-4555-8555-555555555555")
 DEFAULT_OWNER_PRINCIPAL_ID = "preview-owner"
 
 AGENT_ROLES = (
-    ("CHAIR", "Preview Chair", "chair"),
-    ("ARCHITECT", "Preview Architect", "architect"),
-    ("BUILDER", "Preview Builder", "builder"),
-    ("SECURITY_REVIEWER", "Preview Security", "security"),
-    ("COST_OPS_REVIEWER", "Preview Cost & Ops", "cost-ops"),
-    ("INDEPENDENT_AUDITOR", "Preview Auditor", "auditor"),
-    ("SECRETARY", "Preview Secretary", "secretary"),
+    ("CHAIR", "ประธาน Preview", "chair"),
+    ("ARCHITECT", "สถาปนิก Preview", "architect"),
+    ("BUILDER", "ผู้พัฒนา Preview", "builder"),
+    ("SECURITY_REVIEWER", "ผู้ตรวจความปลอดภัย Preview", "security"),
+    ("COST_OPS_REVIEWER", "ผู้ตรวจต้นทุนและปฏิบัติการ Preview", "cost-ops"),
+    ("INDEPENDENT_AUDITOR", "ผู้ตรวจอิสระ Preview", "auditor"),
+    ("SECRETARY", "เลขานุการ Preview", "secretary"),
 )
 
 
@@ -166,7 +166,7 @@ def seed(
               mode, state, created_by_principal_id,
               token_budget, cost_budget, cost_currency
             ) values (
-              %s, %s, %s, 'local-preview', 'Nippan AI War Room — Local Preview',
+              %s, %s, %s, 'local-preview', 'Nippan AI War Room — Preview ภาษาไทย',
               'FORMAL_MEETING', 'DRAFT', %s,
               12000, 5.00, 'USD'
             )
@@ -182,7 +182,7 @@ def seed(
             ) values (
               %s, %s, %s, %s,
               'HUMAN', %s, null,
-              'HUMAN', 'OWNER', 'Project Owner', true
+              'HUMAN', 'OWNER', 'เจ้าของโปรเจกต์', true
             )
             """,
             (
@@ -231,8 +231,8 @@ def seed(
               round_limit, token_budget
             ) values (
               %s, %s, %s, %s,
-              1, 'Meeting #001 — Local Preview',
-              'Exercise the non-billable War Room UI, owner controls and replay.',
+              1, 'ประชุม #001 — Preview ภาษาไทย',
+              'ทดสอบหน้า War Room, คำสั่งเจ้าของห้อง, การ replay และให้ผู้เข้าร่วม AI สนทนาเป็นภาษาไทยเป็นค่าเริ่มต้น',
               'OPEN', 2, 6000
             )
             """,
@@ -247,7 +247,7 @@ def seed(
             ) values (
               %s, %s, %s, %s, %s, %s,
               'NOTE', 'OPEN',
-              'Local preview is intentionally non-billable; no provider turn is exposed.'
+              'ห้อง Preview นี้ใช้ตรวจการทำงานและภาษาไทยเป็นค่าเริ่มต้นก่อนเปิดใช้งาน provider traffic จริง'
             )
             """,
             (
@@ -268,7 +268,7 @@ def seed(
             ) values (
               %s, %s, %s, %s, %s,
               'PROPOSAL', %s,
-              'Use this room to verify Track D controls before funded provider traffic.',
+              'ใช้ห้องนี้ยืนยันว่า controls ของ Track D และข้อความภาษาไทยทำงานถูกต้องก่อนเริ่มใช้งานจริง',
               'PROPOSED'
             )
             """,

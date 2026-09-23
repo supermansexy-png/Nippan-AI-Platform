@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,17 +11,17 @@
     <header class="topbar">
       <div>
         <p class="eyebrow">Nippan AI Platform</p>
-        <h1>War Room</h1>
+        <h1>War Room ภาษาไทย</h1>
       </div>
       <div class="room-loader">
         <label for="room-id">Room ID</label>
         <div class="row">
           <input id="room-id" name="room-id" autocomplete="off" placeholder="UUID">
-          <button id="load-room" type="button">Load room</button>
+          <button id="load-room" type="button">โหลดห้อง</button>
         </div>
       </div>
       <div class="status-wrap">
-        <span id="connection-status" class="connection" data-state="idle">Disconnected</span>
+        <span id="connection-status" class="connection" data-state="idle">ยังไม่เชื่อมต่อ</span>
         <span id="room-state" class="state-pill">—</span>
       </div>
     </header>
@@ -31,38 +31,38 @@
     <div class="layout">
       <aside class="panel sidebar" aria-label="Participants and usage">
         <div class="panel-heading">
-          <h2>Participants</h2>
+          <h2>ผู้เข้าร่วม</h2>
           <span id="participant-count" class="muted">0</span>
         </div>
-        <div id="participant-roster" class="roster empty">Load a room to see participants.</div>
+        <div id="participant-roster" class="roster empty">โหลดห้องเพื่อดูผู้เข้าร่วม</div>
 
         <div class="divider"></div>
 
-        <h2>Usage</h2>
+        <h2>การใช้งาน</h2>
         <dl class="usage">
-          <div><dt>Input</dt><dd id="usage-input">0</dd></div>
-          <div><dt>Output</dt><dd id="usage-output">0</dd></div>
-          <div><dt>Total</dt><dd id="usage-total">0</dd></div>
-          <div><dt>Cost</dt><dd id="usage-cost">—</dd></div>
+          <div><dt>ขาเข้า</dt><dd id="usage-input">0</dd></div>
+          <div><dt>ขาออก</dt><dd id="usage-output">0</dd></div>
+          <div><dt>รวม</dt><dd id="usage-total">0</dd></div>
+          <div><dt>ค่าใช้จ่าย</dt><dd id="usage-cost">—</dd></div>
         </dl>
       </aside>
 
       <section class="panel conversation" aria-label="Ordered room messages">
         <div class="panel-heading">
           <div>
-            <h2>Live room</h2>
-            <p id="sequence-label" class="muted">Sequence 0</p>
+            <h2>ห้องสนทนาสด</h2>
+            <p id="sequence-label" class="muted">ลำดับ 0</p>
           </div>
-          <button id="reconnect" type="button" class="ghost" disabled>Reconnect</button>
+          <button id="reconnect" type="button" class="ghost" disabled>เชื่อมต่อใหม่</button>
         </div>
 
         <div id="message-list" class="messages empty">
-          Durable room events will appear here in sequence order.
+          เหตุการณ์ของห้องจะแสดงที่นี่ตามลำดับ
         </div>
 
         <form id="owner-message-form" class="composer">
-          <label for="owner-message">Owner message / decision</label>
-          <textarea id="owner-message" rows="3" placeholder="Ask the room or record an owner decision"></textarea>
+          <label for="owner-message">ข้อความหรือคำตัดสินของเจ้าของห้อง</label>
+          <textarea id="owner-message" rows="3" placeholder="ถามห้องประชุมหรือบันทึกคำตัดสิน"></textarea>
           <div class="composer-actions">
             <select id="target-role" aria-label="Target role">
               <option value="BUILDER">Builder</option>
@@ -73,38 +73,38 @@
               <option value="CHAIR">Chair</option>
               <option value="SECRETARY">Secretary</option>
             </select>
-            <button type="button" data-command="ASK_ROLE">Ask role</button>
-            <button type="button" data-command="ASK_ALL">Ask all</button>
-            <button type="button" data-command="SUBMIT_OWNER_DECISION" class="primary">Owner decision</button>
+            <button type="button" data-command="ASK_ROLE">ถาม role</button>
+            <button type="button" data-command="ASK_ALL">ถามทุกคน</button>
+            <button type="button" data-command="SUBMIT_OWNER_DECISION" class="primary">บันทึกคำตัดสิน</button>
           </div>
         </form>
       </section>
 
       <aside class="panel context-panel" aria-label="Agenda, findings, and decisions">
         <section>
-          <div class="panel-heading"><h2>Agenda</h2></div>
-          <div id="agenda-list" class="stack empty">No agenda loaded.</div>
+          <div class="panel-heading"><h2>วาระ</h2></div>
+          <div id="agenda-list" class="stack empty">ยังไม่มีวาระ</div>
         </section>
         <section>
-          <div class="panel-heading"><h2>Findings</h2></div>
-          <div id="finding-list" class="stack empty">No findings.</div>
+          <div class="panel-heading"><h2>ข้อค้นพบ</h2></div>
+          <div id="finding-list" class="stack empty">ยังไม่มีข้อค้นพบ</div>
         </section>
         <section>
-          <div class="panel-heading"><h2>Decisions</h2></div>
-          <div id="decision-list" class="stack empty">No decisions.</div>
+          <div class="panel-heading"><h2>คำตัดสิน</h2></div>
+          <div id="decision-list" class="stack empty">ยังไม่มีคำตัดสิน</div>
         </section>
       </aside>
     </div>
 
     <footer class="controls" aria-label="Owner room controls">
-      <button type="button" data-command="PREPARE">Prepare</button>
-      <button type="button" data-command="START" class="primary">Start</button>
-      <button type="button" data-command="PAUSE">Pause</button>
-      <button type="button" data-command="RESUME">Resume</button>
-      <button type="button" data-command="STOP" class="danger">Stop</button>
-      <button type="button" data-command="REQUEST_OWNER_DECISION">Request owner decision</button>
-      <button type="button" data-command="BEGIN_SUMMARY">Summarize</button>
-      <button type="button" data-command="CLOSE">Close</button>
+      <button type="button" data-command="PREPARE">เตรียมห้อง</button>
+      <button type="button" data-command="START" class="primary">เริ่ม</button>
+      <button type="button" data-command="PAUSE">พัก</button>
+      <button type="button" data-command="RESUME">ทำต่อ</button>
+      <button type="button" data-command="STOP" class="danger">หยุด</button>
+      <button type="button" data-command="REQUEST_OWNER_DECISION">ขอคำตัดสิน</button>
+      <button type="button" data-command="BEGIN_SUMMARY">สรุป</button>
+      <button type="button" data-command="CLOSE">ปิดห้อง</button>
     </footer>
   </main>
 
