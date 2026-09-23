@@ -55,6 +55,11 @@ class Budget:
         self.recorded.append(values)
 
 
+class FailureHistory:
+    async def load_failed_participant_ids(self, **_):
+        return frozenset()
+
+
 class TurnGuard:
     def __init__(self) -> None:
         self.entries = 0
@@ -62,7 +67,7 @@ class TurnGuard:
     @asynccontextmanager
     async def hold(self, **_):
         self.entries += 1
-        yield
+        yield RoomState.RUNNING
 
 
 class Authorizer:
@@ -147,6 +152,7 @@ async def test_lifecycle_start_and_one_model_turn_are_ordered() -> None:
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=sink,
     )
     room = session()
@@ -189,6 +195,7 @@ async def test_budget_denial_stops_before_provider_call() -> None:
         budget_authority=Budget(allowed=False),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=sink,
     )
 
@@ -214,6 +221,7 @@ async def test_round_completion_is_not_reported_as_turn_failure() -> None:
         budget_authority=Budget(),
         command_authorizer=Authorizer(),
         turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
         event_sink=Sink(),
     )
 
