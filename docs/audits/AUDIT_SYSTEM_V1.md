@@ -57,6 +57,27 @@ An independent audit is required immediately, regardless of percentage, for:
 - major security or authorization changes
 - major PostgreSQL/schema/RLS changes
 
+### Non-production preview infrastructure exception
+
+A change is **not** an Immediate Audit Trigger solely because it provisions or
+reuses isolated non-production preview infrastructure, such as a disposable
+preview web service or managed preview database, when all of the following are
+true:
+
+- the resource is explicitly development/preview only and is not production;
+- it is isolated from production data, credentials, repositories and workflows;
+- it does not apply new or modified PostgreSQL schema, migration, RLS or grant
+  behavior beyond already-reviewed source-controlled migrations;
+- it does not introduce or weaken authentication, authorization, secrets,
+  network trust or public-access policy;
+- it does not enable funded/provider execution, automatic turn chaining or a
+  new production traffic path;
+- creation/deletion/configuration is recorded as project evidence.
+
+This exception does not waive normal 25/50/75/90/100 audit gates. If preview
+work changes security/authorization, schema/RLS, production architecture, or
+another Immediate Audit Trigger, the audit requirement still applies.
+
 The Project Owner or Architect may also request an ad-hoc audit when evidence is conflicting or a critical assumption changes.
 
 ## Primary Independent Auditor
