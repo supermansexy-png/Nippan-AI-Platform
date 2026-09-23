@@ -8,6 +8,7 @@ from app.war_room import (
     CorrelationContext,
     HaltReason,
     ModelTurnResult,
+    OrderedRoomEvent,
     Participant,
     ParticipantRole,
     ParticipantType,
@@ -62,8 +63,21 @@ class Sink:
     def __init__(self) -> None:
         self.events = []
 
-    async def append(self, event):
-        self.events.append(event)
+    async def append(self, event, *, expected_state=None, new_state=None):
+        ordered = OrderedRoomEvent(
+            event_id=UUID(int=100 + len(self.events)),
+            sequence=len(self.events) + 1,
+            event_type=event.event_type,
+            correlation=event.correlation,
+            occurred_at=event.occurred_at,
+            room_state=event.room_state,
+            participant_id=event.participant_id,
+            message_type=event.message_type,
+            halt_reason=event.halt_reason,
+            payload=event.payload,
+        )
+        self.events.append(ordered)
+        return ordered
 
 
 @pytest.fixture
