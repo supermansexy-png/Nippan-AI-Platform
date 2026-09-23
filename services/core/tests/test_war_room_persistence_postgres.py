@@ -22,6 +22,7 @@ REQUEST_ID = UUID("93333333-3333-4333-8333-333333333333")
 ROOM_ID = UUID("94444444-4444-4444-8444-444444444444")
 AGENDA_ID = UUID("95555555-5555-4555-8555-555555555555")
 TRACE_ID = "abcdefabcdefabcdefabcdefabcdefab"
+MISSING_REQUEST_ID = UUID("96666666-6666-4666-8666-666666666666")
 
 
 @pytest.fixture
@@ -201,6 +202,52 @@ async def test_postgres_room_event_sink_writes_as_runtime_under_rls() -> None:
         assert message[1] == 1
         assert message[2] == REQUEST_ID
         assert '"event_type":"ROOM_STATE_CHANGED"' in message[3]
+
+        missing_request_correlation = CorrelationContext(
+            tenant_id=TENANT_ID,
+            application_id=APPLICATION_ID,
+            room_id=ROOM_ID,
+            agenda_item_id=AGENDA_ID,
+            request_id=MISSING_REQUEST_ID,
+            trace_id=TRACE_ID,
+        )
+        with pytest.raises(psycopg.errors.ForeignKeyViolation):
+            await sink.append(
+                RoomEventDraft(
+                    event_type=RoomEventType.ROOM_STATE_CHANGED,
+                    correlation=missing_request_correlation,
+                    occurred_at=datetime.now(UTC),
+                    room_state=RoomState.PAUSED,
+                    payload={"previous_state": RoomState.READY.value},
+                ),
+                expected_state=RoomState.READY,
+                new_state=RoomState.PAUSED,
+            )
+
+        with psycopg.connect(admin_dsn) as conn:
+            room_after_failure = conn.execute(
+                """
+                select state
+                from public.project_rooms
+                where tenant_id = %s
+                  and application_id = %s
+                  and room_id = %s
+                """,
+                (TENANT_ID, APPLICATION_ID, ROOM_ID),
+            ).fetchone()
+            message_count = conn.execute(
+                """
+                select count(*)
+                from public.project_room_messages
+                where tenant_id = %s
+                  and application_id = %s
+                  and room_id = %s
+                """,
+                (TENANT_ID, APPLICATION_ID, ROOM_ID),
+            ).fetchone()
+
+        assert room_after_failure == ("READY",)
+        assert message_count == (1,)
     finally:
         await database.close()
         _cleanup(admin_dsn)
