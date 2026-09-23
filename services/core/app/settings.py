@@ -29,6 +29,23 @@ class Settings(BaseSettings):
     war_room_preview_principal_id: str | None = Field(default=None)
     war_room_preview_poll_seconds: float = Field(default=1.0, ge=0.1, le=10.0)
 
+    # Optional remote access for the non-production War Room preview. This is
+    # off by default. When enabled, every non-test War Room request requires a
+    # signed session established from the server-only access token.
+    war_room_preview_remote_auth_enabled: bool = Field(default=False)
+    war_room_preview_remote_auth_token: str | None = Field(default=None, min_length=32)
+    war_room_preview_remote_origin: str | None = Field(default=None)
+    war_room_preview_remote_session_seconds: int = Field(
+        default=14_400,
+        ge=300,
+        le=43_200,
+    )
+    war_room_preview_remote_login_failure_delay_seconds: float = Field(
+        default=0.25,
+        ge=0.0,
+        le=2.0,
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:
