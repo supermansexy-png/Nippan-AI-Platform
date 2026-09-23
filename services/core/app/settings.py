@@ -37,10 +37,13 @@ class Settings(BaseSettings):
     war_room_preview_room_token_limit: int = Field(default=6000, ge=256, le=50000)
     war_room_preview_room_cost_limit_usd: float = Field(default=0.01, ge=0.0, le=1.0)
 
-    # Optional remote preview gate. Loopback stays available in development.
-    # Remote traffic is accepted only after Cloudflare Access JWT verification
-    # and an exact owner-email match; the verified request is then mapped to
-    # the server-configured preview principal above.
+    # Local access is a deployment-level opt-in for a process that is not
+    # network-accessible. Client addresses and forwarding headers are not an
+    # authentication boundary.
+    war_room_preview_local_access_enabled: bool = Field(default=False)
+    # Optional remote preview gate. Remote mode always requires Cloudflare
+    # Access JWT verification and an exact owner-email match; the verified
+    # request is then mapped to the server-configured preview principal above.
     war_room_preview_remote_access_enabled: bool = Field(default=False)
     cloudflare_access_team_domain: str | None = Field(default=None)
     cloudflare_access_audience: str | None = Field(default=None)

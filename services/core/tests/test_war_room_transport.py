@@ -32,6 +32,7 @@ def preview_settings(**overrides) -> Settings:
         "environment": "test",
         "database_url": "postgresql://example",
         "war_room_preview_enabled": True,
+        "war_room_preview_local_access_enabled": True,
         "war_room_preview_tenant_id": TENANT_ID,
         "war_room_preview_application_id": APPLICATION_ID,
         "war_room_preview_principal_id": "owner-preview",
@@ -58,6 +59,7 @@ def command_payload(**correlation_overrides) -> RoomCommandPayload:
 
 
 def test_preview_mount_is_explicit_and_non_production() -> None:
+    assert Settings().war_room_preview_local_access_enabled is False
     assert preview_mount_allowed(preview_settings()) is True
     assert preview_mount_allowed(
         preview_settings(war_room_preview_enabled=False)
@@ -105,7 +107,7 @@ def test_preview_router_has_track_d_routes_and_model_turns_default_off() -> None
         / "app"
         / "war_room"
         / "transport.py"
-    ).read_text()
+    ).read_text(encoding="utf-8")
     assert "war_room_preview_model_turns_enabled" in source
 
 
@@ -164,6 +166,7 @@ def anyio_backend() -> str:
 async def test_remote_preview_requires_verified_cloudflare_access_header() -> None:
     settings = preview_settings(
         environment="development",
+        war_room_preview_local_access_enabled=False,
         war_room_preview_remote_access_enabled=True,
         cloudflare_access_team_domain="https://nippan-test.cloudflareaccess.com",
         cloudflare_access_audience="war-room-preview-audience",
@@ -213,8 +216,11 @@ async def test_remote_preview_requires_verified_cloudflare_access_header() -> No
 
 
 @pytest.mark.anyio
-async def test_remote_preview_stays_loopback_only_until_explicitly_enabled() -> None:
-    settings = preview_settings(environment="development")
+async def test_preview_access_is_disabled_by_default() -> None:
+    settings = preview_settings(
+        environment="development",
+        war_room_preview_local_access_enabled=False,
+    )
     app = FastAPI()
     app.include_router(
         create_war_room_preview_router(
@@ -224,7 +230,7 @@ async def test_remote_preview_stays_loopback_only_until_explicitly_enabled() -> 
     )
     transport = ASGITransport(
         app=app,
-        client=("203.0.113.11", 43124),
+        client=("127.0.0.1", 43124),
     )
     async with AsyncClient(
         transport=transport,
@@ -233,5 +239,128 @@ async def test_remote_preview_stays_loopback_only_until_explicitly_enabled() -> 
         response = await client.get("/war-room/")
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "war_room_preview_loopback_only"
+    assert response.json()["detail"] == "war_room_preview_access_disabled"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("environment", "client_address", "headers"),
+    [
+        ("development", "127.0.0.1", {}),
+        ("test", "127.0.0.1", {}),
+        (
+            "development",
+            "203.0.113.12",
+            {"X-Forwarded-For": "127.0.0.1", "X-Real-IP": "127.0.0.1"},
+        ),
+    ],
+)
+async def test_remote_mode_never_trusts_client_or_forwarded_address(
+    environment: str,
+    client_address: str,
+    headers: dict[str, str],
+) -> None:
+    settings = preview_settings(
+        environment=environment,
+        war_room_preview_local_access_enabled=True,
+        war_room_preview_remote_access_enabled=True,
+        cloudflare_access_team_domain="https://nippan-test.cloudflareaccess.com",
+        cloudflare_access_audience="war-room-preview-audience",
+        cloudflare_access_owner_email="owner@example.com",
+    )
+    verifier = _FakeRemoteVerifier()
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+            remote_access_verifier=verifier,
+        )
+    )
+    transport = ASGITransport(app=app, client=(client_address, 43125))
+    async with AsyncClient(
+        transport=transport,
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.get("/war-room/", headers=headers)
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "war_room_preview_remote_auth_required"
+    assert verifier.assertions == []
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("method", "path", "json_body"),
+    [
+        ("GET", "/war-room", None),
+        ("GET", "/war-room/", None),
+        ("GET", "/war-room/war-room.css", None),
+        ("GET", "/war-room/war-room.js", None),
+        ("GET", f"/war-room/rooms/{ROOM_ID}/snapshot", None),
+        ("GET", f"/war-room/rooms/{ROOM_ID}/events", None),
+        (
+            "POST",
+            f"/war-room/rooms/{ROOM_ID}/commands",
+            command_payload().model_dump(mode="json"),
+        ),
+    ],
+)
+async def test_all_war_room_surfaces_require_remote_authentication(
+    method: str,
+    path: str,
+    json_body: dict[str, object] | None,
+) -> None:
+    settings = preview_settings(
+        war_room_preview_local_access_enabled=False,
+        war_room_preview_remote_access_enabled=True,
+        cloudflare_access_team_domain="https://nippan-test.cloudflareaccess.com",
+        cloudflare_access_audience="war-room-preview-audience",
+        cloudflare_access_owner_email="owner@example.com",
+    )
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+            remote_access_verifier=_FakeRemoteVerifier(),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43126)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.request(method, path, json=json_body)
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "war_room_preview_remote_auth_required"
+
+
+@pytest.mark.anyio
+async def test_remote_mode_rejects_incomplete_configuration() -> None:
+    settings = preview_settings(
+        war_room_preview_local_access_enabled=False,
+        war_room_preview_remote_access_enabled=True,
+        cloudflare_access_team_domain="https://nippan-test.cloudflareaccess.com",
+        cloudflare_access_audience=None,
+        cloudflare_access_owner_email="owner@example.com",
+    )
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.get(
+            "/war-room/",
+            headers={"Cf-Access-Jwt-Assertion": "not-a-token"},
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "war_room_preview_remote_auth_failed"
 
