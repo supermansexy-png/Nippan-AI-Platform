@@ -70,7 +70,9 @@ merged before Project Owner review. It was created from the exact integration
 head and preserves the Cloudflare Access architecture.
 
 Implementation commit `faf6e052aa3a1e506656ba0c00f7564116680b0a` makes the
-smallest fail-closed change that:
+smallest fail-closed change. The verified remediation code head is
+`295513a4005bec01d9abec0065f1f4a38a0f047d`, including a Windows-portable
+source check and Python artifact ignores. The remediation:
 
 - requires valid remote authentication regardless of apparent client address;
 - makes local preview an explicit opt-in that is disabled by default;
@@ -80,10 +82,17 @@ smallest fail-closed change that:
 - protects every War Room surface consistently;
 - adds negative-control tests and exact-head CI evidence.
 
-CI completed successfully on that implementation commit:
+Exact-head verification completed successfully:
 
-- War Room Remote Auth run `35831960643` — SUCCESS;
-- Phase 2 PostgreSQL regression run `35831960483` — SUCCESS.
+- local Python 3.12 dedicated suite: `39 passed`;
+- War Room Remote Auth run `35835142835` — SUCCESS;
+- Phase 2 PostgreSQL regression run `35835142839` — SUCCESS.
+
+Normal internal security review found no blocking Issue #74 finding. A residual
+availability risk remains because attacker-selected JWT key IDs/signatures can
+trigger forced JWKS refresh attempts. Authentication still fails closed. Route
+protection is also manually repeated, so future War Room routes must be added to
+the authorization coverage matrix.
 
 Do not merge remediation until the Project Owner reviews the evidence.
 
@@ -105,6 +114,12 @@ headers into the loopback client value trusted by the merged transport. Do not
 enable or advertise remote/public War Room access. Deployment configuration was
 not changed during verification.
 
+The custom domain `https://warroom.nippan.org/war-room/` currently redirects
+unauthenticated requests to Cloudflare Access even when loopback-looking
+forwarding headers are supplied. The direct Render origin remains reachable and
+returned HTTP 200 for the spoofed request, so origin containment remains failed
+until remediation is merged, deployed and verified.
+
 ## Audit
 
 Independent paid Audit is PAUSED by the Project Owner.
@@ -120,9 +135,10 @@ authorizes changes. Do not modify its service, data, credentials or workflows.
 
 ## Immediate Next Step
 
-1. Verify final-head CI after all documentation updates.
-2. Perform normal internal security and diff review.
-3. Report results to the Project Owner without merging.
+1. Report PR #79 evidence and residual risks to the Project Owner.
+2. Do not merge or deploy without Project Owner instruction.
+3. After remediation disposition, create a separate feature branch for
+   deterministic `ASK_ALL` rotation and non-destructive clear-view UI.
 
 ## Source-of-Truth Rule
 
