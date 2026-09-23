@@ -133,12 +133,9 @@ def trusted_preview_actor(settings: Settings) -> TrustedActorContext:
 def _enforce_local_preview(request: Request, settings: Settings) -> None:
     if settings.environment.lower() == "test":
         return
-    if not settings.war_room_preview_local_only:
-        return
-
     host = request.client.host if request.client is not None else ""
     if host not in {"127.0.0.1", "::1", "localhost"}:
-        raise HTTPException(status_code=403, detail="war_room_preview_local_only")
+        raise HTTPException(status_code=403, detail="war_room_preview_loopback_only")
 
 
 def _validate_command_scope(
