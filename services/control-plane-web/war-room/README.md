@@ -61,8 +61,34 @@ cannot invoke a provider. Owner commands register their request trace in the
 existing `requests` table and persist through the existing War Room event sink;
 no new ledger, migration, schema, RLS or grant is introduced.
 
-HTTP access is always limited to the loopback client in development. There is no
-remote-preview override. This preview is not a production authentication mechanism.
+By default, development HTTP access remains limited to the loopback client.
+Remote preview is a separate, explicit gate and remains disabled unless all of the
+following server-side settings are configured:
+
+```text
+NIPPAN_WAR_ROOM_PREVIEW_REMOTE_ACCESS_ENABLED=true
+NIPPAN_CLOUDFLARE_ACCESS_TEAM_DOMAIN=https://<team>.cloudflareaccess.com
+NIPPAN_CLOUDFLARE_ACCESS_AUDIENCE=<Access application AUD tag>
+NIPPAN_CLOUDFLARE_ACCESS_OWNER_EMAIL=<exact owner email>
+```
+
+For every non-loopback War Room request, Core requires the
+`Cf-Access-Jwt-Assertion` header, fetches Cloudflare Access signing keys from
+the configured team domain, verifies the RS256 signature plus issuer/audience
+and token lifetime claims, requires an Access application token, and requires
+an exact owner-email match. A verified remote request is then mapped to the
+same server-configured preview principal; tenant/application/principal scope is
+never accepted from the browser.
+
+Signing keys are cached briefly and refreshed when the key id/signature requires
+it. Missing or invalid remote auth fails closed with HTTP 403. Provider/model
+turns remain disabled.
+
+Cloudflare reference:
+https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/
+
+This is still a development/preview authentication path, not production traffic
+authorization.
 
 
 ### Seed a complete local room
