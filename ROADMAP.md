@@ -103,14 +103,19 @@ Exit:
 - isolation/invariant suite runs repeatably
 - no production traffic
 
-## Parallel Design Track — Nippan AI War Room V1
-Status: PROPOSAL ONLY / IMPLEMENTATION BLOCKED BY PHASE 2 AUDIT GATE
+## Parallel Implementation Track — Nippan AI War Room V1
+Status: INCREMENT B MERGED / INCREMENT C IN PROGRESS
 
 Tracking:
 - Issue #19
+- Increment C: Issue #30
+- Contract freeze: Issue #31
 - `docs/proposals/WAR_ROOM_V1_PROPOSAL.md`
 
-Design work may continue while Audit #18 is pending, but this track does not change Phase 2 progress and does not authorize runtime code, database migrations, production deployment or architecture acceptance.
+Increment B schema/RLS implementation passed Independent Audit #28 and merged
+in PR #29. Increment C Core orchestration work is authorized in source control
+under its frozen contract. This track does not change Phase 2 progress and
+does not authorize Supabase production application or production deployment.
 
 Planned capability:
 - visible multi-agent project chat room

@@ -130,19 +130,24 @@ audit:
 
 parallel_design_tracks:
   war_room_v1:
-    status: increment_a_complete_increment_b_design
+    status: increment_b_merged_increment_c_contract
     tracking_issue: 19
+    increment_c_issue: 30
+    increment_c_contract_issue: 31
     proposal: docs/proposals/WAR_ROOM_V1_PROPOSAL.md
     counts_toward_current_phase_progress: false
     implementation_authorized: true
     authorized_increments:
       - A
-    design_authorized_increments:
       - B
+      - C
+    design_authorized_increments: []
     schema_design: docs/proposals/WAR_ROOM_V1_SCHEMA_RLS_DESIGN.md
-    schema_design_status: ready_for_independent_audit
-    schema_migration_authorized: false
+    schema_design_status: audited_and_merged
+    schema_migration_authorized: true
+    schema_production_application_authorized: false
     blocked_by_audit_issue: null
+    next_audit_gate_percent: 75
     owner_final_authority: true
     autonomous_round_limit_default: 2
     infinite_agent_loops_allowed: false
