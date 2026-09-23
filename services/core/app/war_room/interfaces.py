@@ -208,6 +208,18 @@ class BudgetDecision:
 
 
 @dataclass(frozen=True, slots=True)
+class RoomEventDraft:
+    event_type: RoomEventType
+    correlation: CorrelationContext
+    occurred_at: datetime
+    room_state: RoomState | None = None
+    participant_id: str | None = None
+    message_type: MessageType | None = None
+    halt_reason: HaltReason | None = None
+    payload: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
 class OrderedRoomEvent:
     event_id: UUID
     sequence: int
@@ -256,4 +268,10 @@ class RoomCommandAuthorizer(Protocol):
 
 
 class RoomEventSink(Protocol):
-    async def append(self, event: OrderedRoomEvent) -> None: ...
+    async def append(
+        self,
+        event: RoomEventDraft,
+        *,
+        expected_state: RoomState | None = None,
+        new_state: RoomState | None = None,
+    ) -> OrderedRoomEvent: ...

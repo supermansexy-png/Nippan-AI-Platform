@@ -73,8 +73,12 @@ The service emits monotonically ordered room events:
 - `TURN_FAILED`
 
 Each event has a positive room sequence and the complete correlation context.
-Realtime delivery may reconnect and replay from the last observed sequence;
-delivery transport does not become the source of truth.
+The durable sequence is allocated by the PostgreSQL persistence layer, not by
+an in-memory room session. War Room V1 maps the ordered event stream onto the
+existing `project_room_messages` table as defined in ADR-0008. State-changing
+events update `project_rooms` and append the ordered message/event in one
+tenant-scoped transaction. Realtime delivery may reconnect and replay from the
+last observed sequence; delivery transport does not become the source of truth.
 
 ## Model gateway
 

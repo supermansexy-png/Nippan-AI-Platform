@@ -3,8 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Callable
-from uuid import uuid4
-
 from .contracts import (
     AgendaPolicy,
     BudgetSnapshot,
@@ -24,6 +22,7 @@ from .interfaces import (
     RoomCommand,
     RoomCommandAuthorizer,
     RoomCommandType,
+    RoomEventDraft,
     RoomEventSink,
     RoomEventType,
     TrustedActorContext,
@@ -51,11 +50,6 @@ class RoomSession:
     completed_participant_ids: set[str] = field(default_factory=set)
     owner_decision_pending: bool = False
     last_speaker_id: str | None = None
-    event_sequence: int = 0
-
-    def next_sequence(self) -> int:
-        self.event_sequence += 1
-        return self.event_sequence
 
 
 _LIFECYCLE_ACTIONS = {
@@ -127,18 +121,21 @@ class WarRoomOrchestrator:
 
         action = _LIFECYCLE_ACTIONS[command.command]
         previous_state = session.state
-        session.state = transition_room_state(session.state, action)
-        session.owner_decision_pending = (
-            session.state is RoomState.NEEDS_OWNER_DECISION
-        )
-
-        return await self._emit(
+        new_state = transition_room_state(previous_state, action)
+        event = await self._emit(
             session,
             command.correlation,
             RoomEventType.ROOM_STATE_CHANGED,
-            room_state=session.state,
+            room_state=new_state,
             payload={"previous_state": previous_state.value},
+            expected_state=previous_state,
+            new_state=new_state,
         )
+        session.state = new_state
+        session.owner_decision_pending = (
+            new_state is RoomState.NEEDS_OWNER_DECISION
+        )
+        return event
 
     async def run_next_turn(
         self,
@@ -229,15 +226,13 @@ class WarRoomOrchestrator:
             participant_id=participant.participant_id,
             usage=result.usage,
         )
-        session.completed_participant_ids.add(participant.participant_id)
-        session.last_speaker_id = participant.participant_id
 
         message_type = (
             MessageType.CHAIR_SYNTHESIS
             if participant.role is ParticipantRole.CHAIR
             else MessageType.AGENT_MESSAGE
         )
-        return await self._emit(
+        event = await self._emit(
             session,
             correlation,
             RoomEventType.MESSAGE_APPENDED,
@@ -250,6 +245,9 @@ class WarRoomOrchestrator:
                 "usage_tokens": result.usage.total_tokens,
             },
         )
+        session.completed_participant_ids.add(participant.participant_id)
+        session.last_speaker_id = participant.participant_id
+        return event
 
     async def _handle_scheduler_halt(
         self,
@@ -257,16 +255,22 @@ class WarRoomOrchestrator:
         correlation: CorrelationContext,
         reason: HaltReason,
     ) -> OrderedRoomEvent:
-        if reason is HaltReason.ROUND_COMPLETE:
-            session.round_number += 1
-            session.completed_participant_ids.clear()
-        return await self._emit(
+        next_round = (
+            session.round_number + 1
+            if reason is HaltReason.ROUND_COMPLETE
+            else session.round_number
+        )
+        event = await self._emit(
             session,
             correlation,
             RoomEventType.SCHEDULER_HALTED,
             halt_reason=reason,
-            payload={"round_number": session.round_number},
+            payload={"round_number": next_round},
         )
+        if reason is HaltReason.ROUND_COMPLETE:
+            session.round_number = next_round
+            session.completed_participant_ids.clear()
+        return event
 
     async def _hard_stop_for_budget(
         self,
@@ -275,11 +279,23 @@ class WarRoomOrchestrator:
         reason: HaltReason,
     ) -> OrderedRoomEvent:
         if session.state is RoomState.RUNNING:
-            session.state = transition_room_state(
-                session.state,
+            previous_state = session.state
+            new_state = transition_room_state(
+                previous_state,
                 RoomAction.REQUEST_OWNER_DECISION,
             )
+            event = await self._emit(
+                session,
+                correlation,
+                RoomEventType.BUDGET_HARD_STOP,
+                room_state=new_state,
+                halt_reason=reason,
+                expected_state=previous_state,
+                new_state=new_state,
+            )
+            session.state = new_state
             session.owner_decision_pending = True
+            return event
         return await self._emit(
             session,
             correlation,
@@ -295,12 +311,26 @@ class WarRoomOrchestrator:
         participant_id: str,
         failure: TurnFailureKind,
     ) -> OrderedRoomEvent:
-        if any(
+        is_chair = any(
             participant.participant_id == participant_id
             and participant.role is ParticipantRole.CHAIR
             for participant in session.participants
-        ):
-            session.state = transition_room_state(session.state, RoomAction.PAUSE)
+        )
+        if is_chair:
+            previous_state = session.state
+            new_state = transition_room_state(previous_state, RoomAction.PAUSE)
+            event = await self._emit(
+                session,
+                correlation,
+                RoomEventType.TURN_FAILED,
+                room_state=new_state,
+                participant_id=participant_id,
+                payload={"failure_kind": failure.value},
+                expected_state=previous_state,
+                new_state=new_state,
+            )
+            session.state = new_state
+            return event
         return await self._emit(
             session,
             correlation,
@@ -321,10 +351,10 @@ class WarRoomOrchestrator:
         message_type: MessageType | None = None,
         halt_reason: HaltReason | None = None,
         payload: dict[str, object] | None = None,
+        expected_state: RoomState | None = None,
+        new_state: RoomState | None = None,
     ) -> OrderedRoomEvent:
-        event = OrderedRoomEvent(
-            event_id=uuid4(),
-            sequence=session.next_sequence(),
+        draft = RoomEventDraft(
             event_type=event_type,
             correlation=correlation,
             occurred_at=self._clock(),
@@ -334,5 +364,8 @@ class WarRoomOrchestrator:
             halt_reason=halt_reason,
             payload=payload or {},
         )
-        await self._event_sink.append(event)
-        return event
+        return await self._event_sink.append(
+            draft,
+            expected_state=expected_state,
+            new_state=new_state,
+        )
