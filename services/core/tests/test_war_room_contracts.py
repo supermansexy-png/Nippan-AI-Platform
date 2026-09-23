@@ -209,3 +209,31 @@ def test_audit_review_with_distinct_builder_and_auditor_is_valid() -> None:
     )
 
     assert contract.mode is RoomMode.AUDIT_REVIEW
+
+
+def test_scheduler_skips_failed_participant_and_uses_next_healthy_agent() -> None:
+    scheduler = DeterministicTurnScheduler()
+
+    decision = scheduler.choose_next(
+        request(failed_participant_ids=frozenset({"builder"}))
+    )
+
+    assert decision.participant_id == "security"
+    assert decision.halt_reason is None
+
+
+def test_scheduler_halts_when_all_automatic_participants_hit_failure_cap() -> None:
+    scheduler = DeterministicTurnScheduler()
+
+    decision = scheduler.choose_next(
+        request(
+            participants=(OWNER, BUILDER),
+            failed_participant_ids=frozenset({"builder"}),
+        )
+    )
+
+    assert decision.participant_id is None
+    assert (
+        decision.halt_reason
+        is HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED
+    )
