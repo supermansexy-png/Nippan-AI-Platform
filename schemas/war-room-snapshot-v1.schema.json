@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nippan.org/schemas/war-room-snapshot-v1.schema.json",
+  "title": "Nippan War Room Snapshot v1",
+  "description": "Read-only War Room snapshot. UUIDs are strings; timestamps are RFC3339 date-time strings; normalized_cost is a base-10 decimal string to preserve Decimal precision across JSON.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_id",
+    "application_id",
+    "room_id",
+    "mode",
+    "state",
+    "generated_at",
+    "last_sequence",
+    "participants",
+    "agenda",
+    "findings",
+    "decisions",
+    "usage",
+    "recent_events"
+  ],
+  "properties": {
+    "tenant_id": {"type": "string", "format": "uuid"},
+    "application_id": {"type": "string", "format": "uuid"},
+    "room_id": {"type": "string", "format": "uuid"},
+    "mode": {
+      "type": "string",
+      "enum": ["FREE_DISCUSSION", "FORMAL_MEETING", "AUDIT_REVIEW"]
+    },
+    "state": {"$ref": "#/$defs/room_state"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "last_sequence": {"type": "integer", "minimum": 0},
+    "participants": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/participant"}
+    },
+    "agenda": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/agenda_item"}
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "decisions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/decision"}
+    },
+    "usage": {"$ref": "#/$defs/usage"},
+    "recent_events": {
+      "type": "array",
+      "items": {
+        "$ref": "https://nippan.org/schemas/war-room-event-v1.schema.json"
+      }
+    }
+  },
+  "$defs": {
+    "room_state": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "READY",
+        "RUNNING",
+        "PAUSED",
+        "NEEDS_OWNER_DECISION",
+        "SUMMARIZING",
+        "CLOSED",
+        "STOPPED"
+      ]
+    },
+    "participant_role": {
+      "type": "string",
+      "enum": [
+        "OWNER",
+        "CHAIR",
+        "ARCHITECT",
+        "BUILDER",
+        "SECURITY_REVIEWER",
+        "COST_OPS_REVIEWER",
+        "INDEPENDENT_AUDITOR",
+        "SECRETARY"
+      ]
+    },
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["participant_id", "role", "display_name", "active"],
+      "properties": {
+        "participant_id": {"type": "string", "format": "uuid"},
+        "role": {"$ref": "#/$defs/participant_role"},
+        "display_name": {"type": "string", "minLength": 1},
+        "active": {"type": "boolean"}
+      }
+    },
+    "agenda_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agenda_item_id",
+        "sequence",
+        "title",
+        "objective",
+        "status",
+        "round_limit"
+      ],
+      "properties": {
+        "agenda_item_id": {"type": "string", "format": "uuid"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1},
+        "objective": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "round_limit": {"type": "integer", "minimum": 1, "maximum": 2}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "severity", "status", "summary"],
+      "properties": {
+        "finding_id": {"type": "string", "format": "uuid"},
+        "severity": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "decision_type",
+        "status",
+        "decision",
+        "owner_principal_id"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "format": "uuid"},
+        "decision_type": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "decision": {"type": "string", "minLength": 1},
+        "owner_principal_id": {
+          "type": ["string", "null"],
+          "minLength": 1
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "normalized_cost",
+        "currency"
+      ],
+      "properties": {
+        "input_tokens": {"type": "integer", "minimum": 0},
+        "output_tokens": {"type": "integer", "minimum": 0},
+        "normalized_cost": {
+          "type": ["string", "null"],
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        "currency": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z]{3}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"normalized_cost": {"type": "string"}}
+          },
+          "then": {
+            "properties": {"currency": {"type": "string", "pattern": "^[A-Z]{3}$"}}
+          }
+        },
+        {
+          "if": {
+            "properties": {"normalized_cost": {"type": "null"}}
+          },
+          "then": {
+            "properties": {"currency": {"type": "null"}}
+          }
+        }
+      ]
+    }
+  }
+}
