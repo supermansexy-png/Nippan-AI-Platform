@@ -321,6 +321,15 @@ class RoomUsageSnapshot:
             raise InterfaceViolation("snapshot cost must not be negative")
         if (self.normalized_cost is None) != (self.currency is None):
             raise InterfaceViolation("snapshot cost and currency must be set together")
+        if self.currency is not None and (
+            len(self.currency) != 3
+            or not self.currency.isascii()
+            or not self.currency.isalpha()
+            or not self.currency.isupper()
+        ):
+            raise InterfaceViolation(
+                "snapshot currency must be a three-letter uppercase code"
+            )
 
     @property
     def total_tokens(self) -> int:
