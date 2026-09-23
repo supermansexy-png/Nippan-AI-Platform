@@ -48,6 +48,7 @@ class Budget:
         return BudgetDecision(
             allowed=self.allowed,
             halt_reason=None if self.allowed else HaltReason.ROOM_BUDGET_EXHAUSTED,
+            max_output_tokens=128 if self.allowed else None,
         )
 
     async def record_usage(self, **values):
