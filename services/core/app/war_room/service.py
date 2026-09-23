@@ -294,11 +294,21 @@ class WarRoomOrchestrator:
                 TurnFailureKind.PROVIDER_UNAVAILABLE,
             )
 
-        await self._budget_authority.record_usage(
-            correlation=correlation,
-            participant_id=participant.participant_id,
-            usage=result.usage,
-        )
+        try:
+            await self._budget_authority.record_usage(
+                correlation=correlation,
+                participant_id=participant.participant_id,
+                usage=result.usage,
+            )
+        except Exception:
+            return await self._turn_failed(
+                session,
+                correlation,
+                participant.participant_id,
+                TurnFailureKind.ACCOUNTING_FAILED,
+                provider_request_id=result.provider_request_id,
+                responded_model=result.responded_model,
+            )
 
         message_type = (
             MessageType.CHAIR_SYNTHESIS
@@ -410,6 +420,9 @@ class WarRoomOrchestrator:
         correlation: CorrelationContext,
         participant_id: str,
         failure: TurnFailureKind,
+        *,
+        provider_request_id: str | None = None,
+        responded_model: str | None = None,
     ) -> OrderedRoomEvent:
         is_chair = any(
             participant.participant_id == participant_id
@@ -423,6 +436,15 @@ class WarRoomOrchestrator:
             else RoomAction.REQUEST_OWNER_DECISION
         )
         new_state = transition_room_state(previous_state, action)
+        failure_payload: dict[str, object] = {
+            "failure_kind": failure.value,
+            "automatic_retry_allowed": False,
+        }
+        if provider_request_id is not None:
+            failure_payload["provider_request_id"] = provider_request_id
+        if responded_model is not None:
+            failure_payload["model"] = responded_model
+
         event = await self._emit(
             session,
             correlation,
@@ -430,10 +452,7 @@ class WarRoomOrchestrator:
             room_state=new_state,
             participant_id=participant_id,
             halt_reason=HaltReason.PARTICIPANT_FAILURE_LIMIT_REACHED,
-            payload={
-                "failure_kind": failure.value,
-                "automatic_retry_allowed": False,
-            },
+            payload=failure_payload,
             expected_state=previous_state,
             new_state=new_state,
         )
