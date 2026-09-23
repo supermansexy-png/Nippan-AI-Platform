@@ -23,6 +23,8 @@ class DatabaseRoomCommandAuthorizer:
     ) -> bool:
         correlation = command.correlation
 
+        if actor.principal_type.value != "HUMAN":
+            return False
         if actor.tenant_id != correlation.tenant_id:
             return False
         if actor.application_id != correlation.application_id:
