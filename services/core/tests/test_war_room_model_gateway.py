@@ -17,6 +17,7 @@ from app.war_room import (
     CorrelationContext,
     ModelTurnRequest,
     ParticipantRole,
+    RoomState,
     UsageDelta,
 )
 from app.war_room.budget import (
@@ -55,12 +56,23 @@ class UsageStore:
         self.recorded.append(values)
 
 
+class LockResult:
+    def __init__(self, row=None) -> None:
+        self.row = row
+
+    async def fetchone(self):
+        return self.row
+
+
 class LockConnection:
     def __init__(self) -> None:
         self.executed = []
 
-    async def execute(self, query, params) -> None:
+    async def execute(self, query, params):
         self.executed.append((query, params))
+        if "select state" in query.lower():
+            return LockResult(("RUNNING",))
+        return LockResult()
 
 
 class LockDatabase:
@@ -373,8 +385,8 @@ async def test_postgres_turn_guard_takes_room_scoped_advisory_lock() -> None:
     database = LockDatabase()
     guard = PostgresRoomTurnGuard(database)  # type: ignore[arg-type]
 
-    async with guard.hold(correlation=correlation()):
-        pass
+    async with guard.hold(correlation=correlation()) as durable_state:
+        assert durable_state is RoomState.RUNNING
 
     assert database.scopes == [
         {
@@ -383,7 +395,10 @@ async def test_postgres_turn_guard_takes_room_scoped_advisory_lock() -> None:
             "request_id": UUID(int=5),
         }
     ]
-    assert len(database.connection.executed) == 1
-    query, params = database.connection.executed[0]
-    assert "pg_advisory_xact_lock" in query
-    assert str(UUID(int=3)) in params[0]
+    assert len(database.connection.executed) == 2
+    lock_query, lock_params = database.connection.executed[0]
+    state_query, state_params = database.connection.executed[1]
+    assert "pg_advisory_xact_lock" in lock_query
+    assert str(UUID(int=3)) in lock_params[0]
+    assert "select state" in state_query.lower()
+    assert state_params == (UUID(int=1), UUID(int=2), UUID(int=3))
