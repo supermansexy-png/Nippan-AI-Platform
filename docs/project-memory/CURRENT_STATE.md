@@ -1,130 +1,93 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-23
-Status: ACTIVE — REMOTE AUTH REMEDIATION DEPLOYED
+Last updated: 2026-09-24
+Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
 
-## Repository
+## Repository & Workspace
 
 Repository:
 supermansexy-png/Nippan-AI-Platform
 
-Integration branch:
-phase2/postgres-logical-schema
+Working location (single source):
+C:\opencode\nippan — branch `dev-workspace`, created from
+`docs/post-remediation-state @ 71c0640` (real code + full history).
 
-Verified integration head:
-4ab568f157a8ffb20f3fb7332e41f5c8cc7024b1
+The template folder
+`C:\Users\chetgo\Desktop\github\Nippan-AI-Platform-phase-a` was the design
+template only. On 2026-09-24 the owner approved copying the finished template
+set into the real workspace and **stopped using the template folder**.
+Do not read or edit the template folder anymore. Verified copy:
 
-Local workspace:
-C:\opencode\nippan
+- `.opencode/agents/*` — 7 dev-time agents, already present and identical
+  (builder, model-recruiter, ops, project-lead, researcher, reviewer, security)
+- `docs/warroom/*` — 10 files (AI_OPERATING_PROTOCOL, TASK_CONTROL, ROLES,
+  DEV_WORKING_GUIDE, STARTUP_PLAYBOOK, START_PROMPT, TASK_CONTROL, ai-scorecard,
+  DECISION_LOG_FORMAT, MONITORING)
+- `docs/product/*` — shown in git tree (incl. MODEL_POLICY.md)
+- `TASKS.md`, `WORKING_POLICY.md`
+- Missing-only merge of 29 other template files (docs/future/, LITE_SCHEMA_V1,
+  PIVOT_OPTION, PDPA_COMPLIANCE, FEASIBILITY_REVIEW.th.md, README.th.md, ...)
 
-Remote Auth remediation was developed on
-`security/war-room-access-remediation` and merged through PR #79. The current
-documentation follow-up branch is `docs/post-remediation-state`.
+Existing workspace files (AGENTS.md, PROJECT_STATE.md, README.md, ROADMAP.md,
+docs/decisions/ADR-*, docs/data contracts, etc.) were kept as-is (not
+overwritten) because they are project-specific.
 
-## Current Platform State
+## Primary working branch (new design)
 
-Nippan AI Platform Phase 2 is in progress.
+`dev-workspace` — created 2026-09-24 from `docs/post-remediation-state`
+(base for T-001 work on the real code). History of prior War Room remediation
+lives in `docs/post-remediation-state`.
 
-War Room has been implemented and deployed for an isolated non-production
-preview. Repository deployment evidence records:
+Default branch (template artifact): source of the copied set, kept as history.
 
-- GitHub as the source of truth for code, issues, PRs and CI;
-- Supabase PostgreSQL as the isolated preview database;
-- Render service `chetgo` as the preview runtime;
-- Cloudflare as the intended remote access layer;
-- one room, eight active participants and one agenda item in the preview seed.
+## Pivot Note
 
-The repository later added bounded low-cost model-turn capability. It remains
-disabled by default through `war_room_preview_model_turns_enabled = False`.
-Runtime enablement must be verified independently from repository defaults.
+On 2026-09-24 the owner approved pivoting the plan to Phase A market test:
+rent AI bots to up to 30 small Thai businesses at 299 THB/mo, running on a
+self-hosted n8n + PostgreSQL lite schema, with OpenRouter as model gateway.
 
-## War Room Remote Auth
+The previous full-stack design (FastAPI + Cloudflare + pgvector/RLS etc.) was
+NOT deleted. It is preserved under `docs/future/` as the archived blueprint,
+and prior Git history remains in the repository.
 
-PR #73, `War Room: add Cloudflare Access remote preview authentication`, is
-MERGED.
+## Dev-Time Team (current working model)
 
-- PR head: `0f613ccc138d52e9146e350b87877584c3849537`
-- merge commit: `e328cfc880d93b290d520b6656a26a30664bc2d0`
-- exact-head CI run: `35823492418` — SUCCESS
+Dev-time team = the repo agents in `.opencode/agents/`:
+- `project-lead.md` — Project Lead (dev-time): owns repo work, picks the
+  smallest needed dev specialists, follows TASK_CONTROL / AI_OPERATING_PROTOCOL
+  (INTAKE/DELIVERY, L1–L3, WIP, budget stop), reports to owner in Thai.
+- `model-recruiter.md` — HR / Model Recruiter (dev-time): finds models for the
+  dev team under `MODEL_POLICY.md` cost/value rules ($0.25/$1.00 thresholds,
+  Zen free-only, retry/failover, quality-failure).
+- `builder.md`, `reviewer.md`, `security.md`, `ops.md`, `researcher.md` —
+  dev-time specialists, all following the same protocol.
 
-The implementation retains Cloudflare Access application JWT verification for
-the War Room UI, snapshot, SSE and owner-command surfaces. Remote access is
-disabled by default in repository settings, but repository defaults do not
-prove the current Render environment configuration.
+Runtime roster (Developer/Model Scout/Cost Guard/Onboarding/Support/Router
+etc.) in `docs/warroom/ROLES.md` is the post-launch ecosystem; it is not built
+at dev time.
 
-Issue #74 is CLOSED after remediation, exact-head CI and deployed runtime
-verification. The historical finding remains valid evidence for the vulnerable
-PR #73 implementation.
+## Model Policy
 
-PR #75 is CLOSED as obsolete. It changes the design to shared-token and
-signed-session authentication and was not merged. Replacing Cloudflare Access
-with that architecture remains NEEDS_OWNER_DECISION.
+`docs/product/MODEL_POLICY.md` — cost/value policy, OpenCode Zen exception,
+retry/failover, quality failure, work style, never-hardcode-a-model-into-a-role
+(applies to agent definitions; dev-time reporting may name the actual model).
 
-## Required Remediation
+## War Room Remote Auth (historical record)
 
-PR #79 is MERGED as
-`4ab568f157a8ffb20f3fb7332e41f5c8cc7024b1`. It preserves the Cloudflare
-Access architecture.
-
-Implementation commit `faf6e052aa3a1e506656ba0c00f7564116680b0a` makes the
-smallest fail-closed change. The verified remediation code head is
-`295513a4005bec01d9abec0065f1f4a38a0f047d`, including a Windows-portable
-source check and Python artifact ignores. The remediation:
-
-- requires valid remote authentication regardless of apparent client address;
-- makes local preview an explicit opt-in that is disabled by default;
-- removes unconditional test-environment authentication bypass;
-- does not use proxy-derived client address or spoofable forwarding headers as
-  an authentication boundary;
-- protects every War Room surface consistently;
-- adds negative-control tests and exact-head CI evidence.
-
-Exact-head verification completed successfully:
-
-- local Python 3.12 dedicated suite: `39 passed`;
-- War Room Remote Auth run `35835142835` — SUCCESS;
-- Phase 2 PostgreSQL regression run `35835142839` — SUCCESS.
-
-Normal internal security review found no blocking Issue #74 finding. A residual
-availability risk remains because attacker-selected JWT key IDs/signatures can
-trigger forced JWKS refresh attempts. Authentication still fails closed. Route
-protection is also manually repeated, so future War Room routes must be added to
-the authorization coverage matrix.
-
-The Project Owner approved merge, deployment verification and closure of Issue
-#74 and obsolete PR #75.
+PR #73 and PR #79 remote auth remediation are MERGED (4ab568f). These remain
+verified evidence but the forward plan no longer builds on that runtime.
+JWKS refresh throttling from the old remediation is closed history.
 
 ## Runtime Containment
 
-Status: `RUNTIME_CONTAINMENT_VERIFIED`
-
-No Render CLI or Render API credential was available to inspect active
-environment variables. Read-only public probes against
-`https://chetgo.onrender.com` nevertheless confirmed the vulnerable boundary:
-
-- `GET /health` returned HTTP 200;
-- unauthenticated `GET /war-room/` returned HTTP 403;
-- the same unauthenticated request with loopback-looking `X-Forwarded-For` and
-  `X-Real-IP` headers returned HTTP 200 with the War Room HTML.
-
-Those probes proved the pre-remediation vulnerability. After PR #79 deployment,
-read-only verification confirmed:
-
-- `GET /health` returns HTTP 200;
-- direct Render UI, assets, snapshot, SSE and owner-command requests with
-  loopback-looking forwarding headers return HTTP 403;
-- an invalid Cloudflare JWT returns HTTP 403;
-- `https://warroom.nippan.org/war-room/` redirects unauthenticated requests to
-  Cloudflare Access with HTTP 302.
-
-Deployment configuration was not changed manually during verification.
+Historical: pre-remediation War Room runtime `https://chetgo.onrender.com`
+verified; after PR #79 direct Render requests returned HTTP 403 and Cloudflare
+Access handled auth. This runtime is no longer the forward plan.
 
 ## Audit
 
-Independent paid Audit is PAUSED by the Project Owner.
-
-Do not call OpenRouter, Claude Opus or another paid Independent Auditor unless
-the Project Owner explicitly re-enables Independent Audit. Normal code review,
+Independent paid Audit is PAUSED by the Project Owner. Do not invoke paid
+Independent Auditor unless the Project Owner re-enables it. Normal code review,
 security review, tests, CI and evidence verification remain allowed.
 
 ## Protected Production System
@@ -134,10 +97,18 @@ authorizes changes. Do not modify its service, data, credentials or workflows.
 
 ## Immediate Next Step
 
-1. Do not start additional War Room feature work from the remediation branch.
-2. Review priorities and agree a new plan with the Project Owner before starting
-   `ASK_ALL` rotation, clear-view UI or unrelated platform work.
-3. Track JWKS refresh throttling as non-blocking security hardening.
+Forward plan is the Phase A market test build order in
+`docs/warroom/STARTUP_PLAYBOOK.md`. Continue from Step 0 foundations
+(self-hosted n8n + PostgreSQL, lite schema tables, data-access/usage-tracker/
+monitor-log tools, owner alert channel, legal review). Work cards live in
+`TASKS.md` (T-001..T-004 READY).
+
+1. DO NOT build further War Room feature work from the old runtime history.
+2. Treat `docs/future/` as archived blueprint; a step needing it must be
+   flagged NEEDS_DECISION for Project Lead.
+3. Do not use the template folder anymore — it is merged into this workspace.
+4. Dev-time team = repo agents in `.opencode/agents/`; do not confuse them with
+   runtime roles.
 
 ## Source-of-Truth Rule
 

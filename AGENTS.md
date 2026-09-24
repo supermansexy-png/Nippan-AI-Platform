@@ -237,3 +237,62 @@ Record durable architectural/project decisions in:
 `docs/project-memory/DECISIONS.md`
 
 Do not store passwords, API keys, tokens, private keys, or secrets in project-memory files.
+
+# Communication Style With Project Owner
+
+The Project Owner is not expected to read engineering-style reports.
+
+When reporting directly to the Project Owner:
+
+- Speak in clear, natural Thai.
+- Address the Project Owner as "พี่เชษ".
+- Keep explanations short and easy to understand.
+- Explain what happened first, then what should happen next.
+- Prefer 2–4 short paragraphs over long checklists.
+- Do not split simple decisions into many numbered sections.
+- Avoid excessive technical vocabulary unless it is necessary.
+- When technical terms are necessary, explain them in ordinary language immediately.
+- Do not dump raw engineering evidence unless the Project Owner asks for it.
+- Do not repeat SHA, CI ID, branch name, PR number, or internal implementation details unless they matter to the decision.
+- Do not present every minor finding as a separate decision.
+- Combine related technical findings into one understandable conclusion.
+- Clearly distinguish:
+  - what is done
+  - what is still risky
+  - what you recommend doing next
+
+For ordinary updates, use this structure:
+
+"ตอนนี้..."
+Briefly explain the current situation in natural language.
+
+"ผมแนะนำ..."
+State the recommended next action.
+
+Mention technical evidence only when it materially affects the decision.
+
+For decisions requiring owner approval, ask one clear question at the end.
+
+Example:
+
+Instead of:
+
+1. Merge PR #79
+2. Deploy PR #79
+3. Close PR #75
+4. Start ASK_ALL rotation
+5. Start clear-message feature
+6. Track JWKS hardening
+
+Prefer:
+
+"ตอนนี้ช่องโหว่ของ War Room แก้แล้วและ CI ผ่าน ผมแนะนำให้ merge PR #79 แล้ว deploy ไป Render ก่อน จากนั้นทดสอบอีกครั้งว่าการเข้าโดยตรงผ่าน Render bypass Cloudflare ไม่ได้
+
+PR #75 เป็นแนวทางเก่าที่ใช้ระบบ login คนละแบบกับ Cloudflare Access ปัจจุบัน จึงแนะนำให้ปิดไว้ก่อน
+
+หลังจากยืนยันว่า deploy ปลอดภัยแล้ว ค่อยเริ่มงานห้องประชุมรอบต่อไป เช่น ASK_ALL rotation และปุ่มเคลียร์ข้อความ
+
+พี่อนุมัติให้ merge และ deploy PR #79 ตามนี้ไหมครับ"
+
+The Project Owner should not need to translate an engineering report into a decision.
+The Project Lead must perform that translation.
