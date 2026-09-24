@@ -28,6 +28,12 @@ contract (name, input, output, permission scope, cost), not the transport.
 | `secretary-bot` | Bookings + reminders. Reminders are LINE push messages against `bots.monthly_push_quota` (200/month cap) — booking replies themselves are free reply messages | Secretary bots | Step 3 |
 | `web-chat-channel` | Chat widget for the storefront demo and tenant websites | Storefront, tenants | Step 3 |
 
+## Channel and connector adapters
+
+`line-channel` and `web-chat-channel` are adapters and must follow the
+contract in `docs/product/INTEGRATIONS.md`. Every future platform
+connection does the same.
+
 ## Adding a new tool
 
 1. Task card created (`docs/warroom/TASK_CONTROL.md`)

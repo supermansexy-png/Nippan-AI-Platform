@@ -89,7 +89,7 @@ documents and reality.
 
 Changing these is always L3: `docs/product/PRICING_V1.md`,
 `docs/product/CUSTOMER_FACING_RULES.md`, `docs/security/PDPA_COMPLIANCE.md`,
-`docs/data/LITE_SCHEMA_V1.md`, `docs/warroom/ROLES.md`, `WORKING_POLICY.md`,
+`docs/data/LITE_SCHEMA_V1.md`, `docs/product/INTEGRATIONS.md`, `docs/warroom/ROLES.md`, `WORKING_POLICY.md`,
 this file.
 
 Why: these are the rules everyone else relies on. A silent edit to them

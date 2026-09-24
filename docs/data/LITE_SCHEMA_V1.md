@@ -49,7 +49,7 @@ Scope chain: **tenant → bot → channel → end customer → conversation**.
 |---|---|
 | `channel_id` | primary key |
 | `tenant_id`, `bot_id` | FK |
-| `channel_type` | `line_oa` / `web_chat` |
+| `channel_type` | adapter name from `docs/product/adapters/` — open list, not a fixed enum (Phase A: `line_oa`, `web_chat`) |
 | `credential_ref` | reference to the secret stored in n8n credentials — **never the token itself in this table** |
 
 ### `end_customers` — the tenant's own customers

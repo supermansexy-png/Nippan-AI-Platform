@@ -43,6 +43,9 @@ the order they come online.
 
 ## Key decisions (Phase A)
 
+- Any platform connects through one standard adapter contract; the core
+  never knows which platform it's talking to — `docs/product/INTEGRATIONS.md`
+
 - n8n is the runtime core, not a full FastAPI/Cloudflare Worker/
   PostgreSQL+pgvector stack — that stack is preserved in `docs/future/`
   for when scale actually needs it
@@ -71,7 +74,8 @@ the order they come online.
 5. `docs/warroom/ROLES.md` — the operating structure
 6. `docs/warroom/STARTUP_PLAYBOOK.md` — the concrete step-by-step build
    order from zero
-7. `docs/product/` — pricing, segments, onboarding, tools, model policy
+7. `docs/product/` — pricing, segments, onboarding, tools, model policy,
+   integrations
 8. `docs/security/PDPA_COMPLIANCE.md` — before onboarding any real tenant
 9. `docs/future/README.md` — the larger version this can grow into, and
    when to pull each piece back in
