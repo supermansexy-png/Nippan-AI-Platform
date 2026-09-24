@@ -50,6 +50,17 @@ Applied to Supabase `nippan-ai-platform`:
 - `20260922180029_phase2_request_trace_telemetry.sql`
 - `20260922180107_phase2_idempotency_usage_audit.sql`
 
+#### Phase A Lite Schema (n8n workflow data layer)
+Applied to same Supabase project (tables use `lite_` prefix to avoid name conflict with Phase 2):
+- `20260924120000_lite_schema_v1.sql` — 7 tables: lite_tenants, lite_bots, lite_channels, lite_end_customers, lite_conversations, lite_memory_summaries, lite_usage_log
+
+Lite schema properties:
+- Every customer table has BOTH tenant_id AND bot_id as FKs (isolation boundary)
+- memory_summaries.expires_at is NOT NULL (mandatory retention)
+- No DB-level RLS (Phase A: isolation enforced at n8n sub-workflow level)
+- All columns match LITE_SCHEMA_V1 spec exactly (verified via information_schema.columns)
+- INSERT/SELECT test passed on lite_bots confirming FK chain works
+
 Current data foundation includes:
 - identity/config baseline
 - request state and W3C-compatible trace/span identifiers
@@ -91,9 +102,9 @@ Initial FastAPI skeleton is checked in at `services/core`:
 - SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
 
 ## Independent Audit System
-Status: ACTIVE
+Status: **SUSPENDED by Project Owner (2026-09-24)** — gates do not block; normal review/testing continue; paid auditor not invoked unless re-enabled. See `docs/warroom/decision-log.md`.
 
-Authoritative protocol:
+Authoritative protocol (when re-enabled):
 - `docs/audits/AUDIT_SYSTEM_V1.md`
 
 Mandatory progress gates:

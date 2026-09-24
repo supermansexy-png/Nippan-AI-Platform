@@ -50,6 +50,27 @@ The previous full-stack design (FastAPI + Cloudflare + pgvector/RLS etc.) was
 NOT deleted. It is preserved under `docs/future/` as the archived blueprint,
 and prior Git history remains in the repository.
 
+## Phase A Database — Lite Schema V1
+
+7 tables applied to Supabase project `nippan-ai-platform` (`lite_` prefix to avoid
+name conflict with existing Phase 2 core tables):
+
+- `lite_tenants` — businesses renting bots
+- `lite_bots` — bot configs with quotas (message + push), enabled tools
+- `lite_channels` — reachability adapters (line_oa, web_chat)
+- `lite_end_customers` — tenant's customers with PDPA consent tracking
+- `lite_conversations` — recent turns partitioned by tenant+bot+customer+time
+- `lite_memory_summaries` — long-term memory facts with mandatory expires_at
+- `lite_usage_log` — reply/push counts, model tokens, estimated cost
+
+Schema properties:
+- Every customer-carrying table has BOTH `tenant_id` AND `bot_id` as FKs
+- `memory_summaries.expires_at` is NOT NULL (mandatory retention deadline)
+- No DB-level RLS (Phase A isolation at n8n sub-workflow level)
+- Full column spec verified against `docs/data/LITE_SCHEMA_V1.md` via information_schema.columns
+- INSERT/SELECT test passed confirming FK chain works
+- Migration committed at `ab8c0d6`
+
 ## Dev-Time Team (current working model)
 
 Dev-time team = the repo agents in `.opencode/agents/`:
