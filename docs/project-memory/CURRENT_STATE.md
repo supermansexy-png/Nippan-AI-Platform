@@ -180,6 +180,15 @@ T-011 doc, T-005 doc edits, SYSTEM_CONSTRAINTS), removed junk
 T-014 cross-check. Independently verified by reviewer (live DB: 7 `lite_*` tables
 confirmed) and security (no real secrets committed). See TASKS.md T-015.
 
+## Cost Reduction (T-018) — DONE (2026-09-25)
+
+Owner approved item 2 of the cost plan. Trimmed the always-read preamble and
+added report-length caps: `START_PROMPT.md` 112→53 lines; agent prompts
+`project-lead` 146→88 and `model-recruiter` 99→68, plus a 4-line output cap in
+`builder/reviewer/security/ops/researcher`. No protected doc touched. Evidence is
+line counts only (realized token saving not measured). Requires an opencode
+restart to reload the agent prompts.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.

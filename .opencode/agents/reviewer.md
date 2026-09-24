@@ -46,6 +46,10 @@ permission:
 
 ถ้าไม่พบ blocker ให้บอกตรง ๆ ว่าไม่พบ blocker อย่าสร้าง finding เพื่อให้ดูมีงาน
 
+## Output discipline (รายงานสั้น ~80%)
+
+INTAKE ≤ 8 บรรทัด, DELIVERY/verdict ≤ 15 บรรทัด; findings เฉพาะที่มีนัยสำคัญ; ตอบภาษาไทย
+
 ## ห้าม
 
 - แก้ไฟล์

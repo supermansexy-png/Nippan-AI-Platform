@@ -52,6 +52,10 @@ Memory: อย่าใส่ secret เป็นค่าถาวรใน rep
 - อะไรตรวจจาก runtime
 - อะไรยังยืนยันไม่ได้
 
+## Output discipline (รายงานสั้น ~80%)
+
+INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; แยก repo/runtime/unverified แบบสั้น; ตอบภาษาไทย
+
 ## ห้าม
 
 - force push

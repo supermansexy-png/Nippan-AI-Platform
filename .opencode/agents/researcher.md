@@ -37,6 +37,10 @@ provider/โมเดล ตรวจข้อกฎหมาย หรือห
 - source, benchmark, price, availability, test result,
   repository evidence
 
+## Output discipline (รายงานสั้น ~80%)
+
+สรุปสั้น กระชับ; แยกข้อเท็จจริง/ข้อสันนิษฐาน/คำแนะนำ; ตอบภาษาไทย
+
 ## ห้าม
 
 - แก้ code

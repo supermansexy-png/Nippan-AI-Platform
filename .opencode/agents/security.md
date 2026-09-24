@@ -43,6 +43,10 @@ permission:
 จาก code/config/tests จริง ไม่ใช่ summary ลอย ๆ
 แยกชัด: VERIFIED / INFERRED / UNKNOWN
 
+## Output discipline (รายงานสั้น ~80%)
+
+INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; findings ตามความสำคัญ; ตอบภาษาไทย
+
 ## ห้าม
 
 - แก้ code โดยตรง (ส่ง finding + remediation ไปให้ Builder)

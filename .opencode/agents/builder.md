@@ -43,6 +43,10 @@ permission:
 เขียน DELIVERY ลงการ์ด: สถานะ DONE/PARTIAL/FAILED + หลักฐานทดสอบจริง
 (ไม่ใช่ "ควรจะทำงานได้") + ไฟล์ที่เปลี่ยน + ที่ยังไม่ได้ทำ + ปัญหาที่เจอ
 
+## Output discipline (รายงานสั้น ~80%)
+
+INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; ไม่ทวนการ์ด; one line ต่อ Done-when; ตอบภาษาไทย
+
 ## ห้าม
 
 - deploy production เอง

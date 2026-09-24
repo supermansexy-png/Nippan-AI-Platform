@@ -47,6 +47,40 @@ Next: Any future task card marked DONE should be similarly archived per this pat
 
 ---
 
+### T-018 — Cost reduction: shrink always-read preamble + enforce short reports (item 2)
+Status: DONE (L1 self-check by Project Lead — independent reviewer deferred, would cost tokens)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (internal prompt/doc maintenance; no paid specialist called — Owner cost rule)
+Risk: L1 (reversible wording of internal prompts/docs; no customer impact; git-revertable)
+Goal: dev sessions carry a smaller always-read preamble and every agent writes much shorter INTAKE/DELIVERY reports
+Done when: 1) START_PROMPT.md deduplicated (one template + short checklist); 2) all 7 agent prompts carry an explicit output-length cap; 3) no protected doc (TASK_CONTROL §8) touched; 4) before/after line counts recorded; 5) owner told an opencode restart is needed to reload agent prompts
+Budget: 1 session
+Links: docs/warroom/START_PROMPT.md, .opencode/agents/*, decision-log (cost review 2026-09-25)
+
+INTAKE — T-018 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner approved item 2: "มาเริ่มข้อ2ต่อ")
+Understanding: Two token levers. (a) The always-read preamble (START_PROMPT.md + 7 agent prompts) duplicates rules already in AI_OPERATING_PROTOCOL / TASK_CONTROL / MODEL_POLICY. (b) Reports are long, inflating every later turn. Shrink both.
+Done when: see card. Needs: repo write access only — no model call, no cost. Missing: none.
+Plan: 1) dedupe START_PROMPT.md; 2) add an "Output discipline" cap to each agent prompt and trim the two largest (project-lead, model-recruiter); 3) record before/after counts; 4) leave protected docs untouched.
+Estimate: under budget. Risks: over-trimming could drop a load-bearing rule → every hard rule kept as a pointer to its source doc; only non-protected files touched.
+Decision: ACCEPT — doer = Project Lead itself (no paid agent, per Owner's item-2 framing). Independent reviewer pass deferred (would cost tokens) and flagged to Owner.
+
+DELIVERY — T-018 — Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Status claimed: DONE (L1 self-check)
+Done-when check:
+- [x] START_PROMPT.md deduplicated → VERIFIED (112→53 lines; one template + short checklist; duplicate template and verbose §②/③ removed)
+- [x] all 7 agent prompts carry an explicit output-length cap → VERIFIED (project-lead + model-recruiter condensed and capped; builder/reviewer/security/ops/researcher each +4-line cap)
+- [x] no protected doc touched → VERIFIED (git status: only .opencode/agents/*, START_PROMPT.md, TASKS.md; none in TASK_CONTROL §8)
+- [x] before/after line counts recorded → VERIFIED (see Changed)
+- [x] owner told restart needed → in report (opencode restart required to reload agent prompts)
+Changed: START_PROMPT.md 112→53; project-lead.md 146→88; model-recruiter.md 99→68; builder.md 54→58; reviewer.md 55→59; security.md 52→56; ops.md 62→66; researcher.md 45→49; TASKS.md (card). Total diff: 158 insertions, 267 deletions.
+Not done: independent reviewer verification (separate model would cost tokens — Owner to decide)
+Unverified: realized token saving (line-count proxy only; not measured)
+Problems: none
+Confidence: high on edits; medium on realized savings
+Next: restart opencode to reload agent prompts; optionally a cheap reviewer pass; then cost items 3/4.
+
+---
+
 ### T-012 â€” Staff the team: map all 7 dev roles to Primary + Backup models
 Status: READY
 Owner: â€”
