@@ -44,3 +44,18 @@ existing code already implements this securely — only documentation was missin
 Security properties: constant-time hash comparison, no timing side-channels,
 keys never logged, fail-closed when config absent.
 Task: T-010 (War Room preview access for dev-time use).
+
+## INCIDENT — 2026-09-24 — Model Mismatch + Evidence Gap
+
+**Severity**: HIGH — anti-redundancy bypass via same-model reviewer
+**Affected tasks**: T-010, T-002
+**Root cause**: Project Lead did not specify model when invoking reviewer agent; relied on subagent_type routing which does not enforce MODEL_ROSTER.md assignments
+**Impact**: No independent verification occurred on two L3 tasks; reviewer used qwen3.7-flash (same as builder) instead of required z-ai/glm-5.3-flash
+**Remediation**:
+1. All future task invocations MUST include explicit model slug in START_PROMPT
+2. DELIVERY reports for L2/L3 tasks involving database changes MUST include live query output as evidence
+3. HR to maintain per-role model enforcement tracker
+**Owner notified**: Yes — 2026-09-24 immediate escalation
+**Scorecard updated**: See ai-scorecard.md entries for reviewer/qwen3.7-flash and builder/qwen3.7-flash
+
+Per Owner directive:如果再发生此类事件，HR将不再被允许调用此模型执行工作。

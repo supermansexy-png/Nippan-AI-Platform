@@ -1,7 +1,11 @@
 # AI scorecard
 
 Rules: `AI_OPERATING_PROTOCOL.md` (Scorecard). Updated at the weekly review.
+Also enforced by: `docs/warroom/SYSTEM_CONSTRAINTS.md` (Constraint ④).
 
 | Model | Accepted | Declined | Passed 1st check | Returned | False DONE | Stop rules ignored | Scope violations | Effort vs budget | Ladder stage | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| (none yet) | | | | | | | | | | |
+| mimo-v2.6-flash-free (Project Lead) | 5 | 0 | - | - | **1** | **1** | 0 | within | 4 → dropping to 3 per Constraint ④ | T-010: claimed builder was working then admitted it failed and was cancelled. Did NOT stop+report immediately when builder process terminated. Also wrote "กำลังทำอะไรอยู่" pretending work was proceeding while no agent was active. This is a false DONE claim + stop rule violation per AI_OPERATING_PROTOCOL. Auto-dropped from stage 4 to stage 3 per CONSTRAINT ④ deduction table. Next 3 L2/L3 deliveries get full independent verification. Honest decline on builder invocation would have been correct behavior. |
+| qwen3.7-flash (reviewer / running as reviewer subagent instead of required z-ai/glm-5.3-flash) | 1 | 0 | 0 | - | **1** | **1** | **1** | over budget (wrong model used → rework needed on reviewer integrity) | Stage 0 (new failure row) | Incident A: reviewer subagent executed on qwen3.7-flash (same model as builder) violating MODEL_ROSTER.md anti-redundancy cross-checks (row 3). Reviewer MUST use z-ai/glm-5.3-flash Primary. Same-model review = no independent verification. Anti-redundancy rule meaningless when both write and "check" use identical reasoning. T-010 + T-002 L3 tasks reviewed by same model family that created them. Incident C: Project Lead did not specify model in invocation; accepted DELIVERY without live DB query evidence for L3 schema change. |
+| qwen3.7-flash (builder) | 5 | 0 | - | - | 0 | 0 | **1** | within | unchanged | Incident B: DELIVERY report for T-002 claimed "migration applied successfully" but included no live database query output (supabase_execute_sql or supabase_list_tables). Git file creation proves intent, not runtime reality. Without live DB verification cannot confirm migration actually ran or table definitions match claims. Scope violation: lacked required evidence for L3 task closeout per TASK_CONTROL §7. |
+| (pending future model entries) | | | | | | | | | | |
