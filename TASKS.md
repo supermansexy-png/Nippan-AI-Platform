@@ -174,7 +174,47 @@ ACTIVATION VERIFIED — T-020 — Project Lead — 2026-09-25 (closes the card)
 
 ---
 
-### T-012 â€” Staff the team: map all 7 dev roles to Primary + Backup models
+### T-021 — Long-session warning + `/handoff` (new session seeded with summary)
+Status: IN_PROGRESS (built; needs an opencode restart + one live test before DONE)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (opencode tooling; no paid specialist called)
+Risk: L1 (adds an opencode plugin + command; reversible, no customer impact)
+Goal: when a chat grows long the user is warned, and `/handoff` creates a new session pre-seeded with an AI summary so work continues there
+Done when: 1) plugin + command exist; 2) plugin loads with no error after restart; 3) live test shows the warning toast at threshold and `/handoff` creating a seeded session; 4) the no-auto-switch limitation is documented
+Budget: 1 session (build) + test after restart
+Links: `.opencode/plugins/handoff.ts`, `.opencode/commands/handoff.md`
+
+INTAKE — T-021 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner: "ครับทำเลย")
+Understanding: Owner wants a warning when the chat is long, plus a one-press path to a new chat seeded with an AI summary. Achievable via a plugin (`session.idle` event → `tui.showToast`) + a custom `handoff` tool (`session.create` + `session.prompt` with `noReply:true`) + a `/handoff` command. Hard limit: opencode has no API to switch the active session, so the user selects it once in `/sessions`.
+Plan: build plugin + command; restart to load; verify a live warning + a seeded new session; then DONE.
+Estimate: under budget. Risks: event payload shape / SDK response shape unverified at runtime → defensive code + try/catch; plugin errors must not break sessions.
+Decision: ACCEPT — doer = Project Lead (no paid agent; cost avoided).
+
+Design note (per Owner clarification 2026-09-25): the warning is about **accumulated chat context tokens** (every turn re-sends the history → opening a new chat saves tokens). Basis = latest assistant turn's `input + cache.read + output`; threshold 120k tokens (fallback 60 messages if token info is missing); re-warn at most every 5 min per session. `/handoff` still creates the seeded new session.
+
+---
+
+### T-021 — Test free OpenCode Zen models across all dev roles (Owner request "0pencode")
+Status: READY
+Owner: Project Lead (big-pickle — free Zen) — 2026-09-25
+Role: Project Lead (runs Zen probes directly; HR cannot reach Zen — established T-020)
+Risk: L2 (results may re-staff dev roles; no customer/runtime impact)
+Goal: role→model fit evidence for every usable free Zen (`opencode/*-free`) model, tested with real role-appropriate work, so Owner can staff roles with free models where fit is proven
+Done when:
+1) Every usable free Zen model (T-020 PASS list: big-pickle, muse-spark-1.3-contributor-free, muse-spark-1.2-contributor-free, mimo-v2.6-flash-free, space-bunny-free, ling-3.0-flash-fin-free, nemotron-3-ultra-free, nemotron-3.5-lightning-free) runs role batteries: builder (write fn+tests), security (find vuln), ops (config check), researcher (fact discipline), HR (integrity+precision)
+2) Raw outputs saved (temp) + key evidence VERIFIED; no paid model used ($0)
+3) Score table role×model produced (pass/fail + notes + latency)
+4) Recommendation: best free fit per role + anti-redundancy check vs builder sets; roster change ONLY after Owner approval
+5) No protected doc touched
+Budget: 1 session screening (max ~40 short runs, free; timebox, stop at 2×)
+Links: TASKS.md T-020 evidence, docs/product/MODEL_ROSTER.md, docs/product/MODEL_POLICY.md, docs/warroom/decision-log.md
+
+INTAKE — T-021 — Project Lead (big-pickle) — 2026-09-25
+Understanding: Owner wants every free opencode Zen model tested against our real dev roles (builder/reviewer/security/ops/researcher/HR) with actual role-appropriate work, then a recommendation of which model fits which role. T-020 already proved review ability (8/11 caught 2 planted bugs) — this card extends to ALL roles.
+Done when: see card. Needs: opencode CLI (have, v1.18.30) + temp dir for outputs. Missing: none.
+Plan: 1) Bounded role batteries (short prompts, answer-inline, temp workdir — no repo touch) 2) Run 8 PASS models × batteries via `opencode run --model opencode/<id>` 3) Record latency + outputs 4) Score + anti-redundancy check 5) Propose staffing to Owner.
+Estimate: within budget (free; ~40 short runs). Risks: free endpoint instability (already saw 3/11 fail); free tier logs data → all prompts synthetic, no secrets/customer data.
+Decision: ACCEPT — team: Project Lead runs probes (HR cannot reach Zen); optional reviewer pass by non-recommended free model after synthesis. No paid model, no roster change before Owner approval.
 Status: READY
 Owner: â€”
 Role: Model-recruiter (HR)
