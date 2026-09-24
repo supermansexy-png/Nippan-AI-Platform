@@ -1,22 +1,28 @@
 # AI Collaboration Protocol
 
+**Mandatory:** every AI session follows `docs/warroom/AI_OPERATING_PROTOCOL.md`
+— written intake before work, stop rules during work, evidence-backed
+delivery report after work. An honest decline is correct; an unproven
+"done" is the most serious violation.
+
 This file defines how any AI working on Nippan AI Platform must behave.
 
 ## Required reading order
 
 Before proposing or changing anything:
-1. `README.md`
-2. `.ai/project.yaml`
-3. `PROJECT_STATE.md`
-4. `ROADMAP.md`
-5. `WORKING_POLICY.md` and `docs/warroom/TASK_CONTROL.md` — how to operate,
+1. `docs/warroom/AI_OPERATING_PROTOCOL.md`
+2. `README.md`
+3. `.ai/project.yaml`
+4. `PROJECT_STATE.md`
+5. `ROADMAP.md`
+6. `WORKING_POLICY.md` and `docs/warroom/TASK_CONTROL.md` — how to operate,
    claim work, size review to risk, and hand off
-6. `TASKS.md` — the task board
-7. `docs/warroom/ROLES.md` — which role you're acting as, and its limits
-8. `docs/warroom/STARTUP_PLAYBOOK.md` — the current concrete step, if the
+7. `TASKS.md` — the task board
+8. `docs/warroom/ROLES.md` — which role you're acting as, and its limits
+9. `docs/warroom/STARTUP_PLAYBOOK.md` — the current concrete step, if the
    task is general "keep building Phase A" rather than a specific brief
-9. Relevant product/data/security documents for the task at hand
-10. The assigned task card
+10. Relevant product/data/security documents for the task at hand
+11. The assigned task card
 
 Do not pull anything from `docs/future/` into active work unless
 `docs/future/README.md`'s trigger condition for that document is actually

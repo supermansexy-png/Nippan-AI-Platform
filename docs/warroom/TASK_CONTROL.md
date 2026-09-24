@@ -77,7 +77,11 @@ than thought. Stopping to re-plan is cheaper than finishing the wrong thing.
 
 ## 7. The path to DONE
 
-READY → IN_PROGRESS → (test) → REVIEW → (audit / approval per risk level)
+Every AI follows `AI_OPERATING_PROTOCOL.md`: an Intake report before
+claiming a task, a Delivery report with evidence to finish it, and
+verification by a different model (or the owner) for L2/L3.
+
+READY → (Intake) → IN_PROGRESS → (test) → REVIEW → (audit / approval per risk level)
 → live → DONE after the "Done when" conditions are verified in the live
 system, `PROJECT_STATE.md` is updated if something new now exists, and the
 handoff note is written (`WORKING_POLICY.md` rule 5).
@@ -89,8 +93,8 @@ documents and reality.
 
 Changing these is always L3: `docs/product/PRICING_V1.md`,
 `docs/product/CUSTOMER_FACING_RULES.md`, `docs/security/PDPA_COMPLIANCE.md`,
-`docs/data/LITE_SCHEMA_V1.md`, `docs/product/INTEGRATIONS.md`, `docs/warroom/ROLES.md`, `WORKING_POLICY.md`,
-this file.
+`docs/data/LITE_SCHEMA_V1.md`, `docs/product/INTEGRATIONS.md`, `docs/warroom/ROLES.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`,
+`WORKING_POLICY.md`, this file.
 
 Why: these are the rules everyone else relies on. A silent edit to them
 changes the behavior of every AI that reads them next.
@@ -102,6 +106,7 @@ changes the behavior of every AI that reads them next.
 3. Cost: real cost per bot vs `PRICING_V1.md`
 4. Tenants: signups, cancellations, complaints
 5. Autonomy ladder: any role ready to move up — or needing to move down?
+   Update `ai-scorecard.md` (false DONE claims first).
 6. Decision Log: anything decided this week but not written down?
 
 Why: small drift is cheap to fix weekly and expensive to fix monthly.

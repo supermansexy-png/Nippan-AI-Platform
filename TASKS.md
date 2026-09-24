@@ -1,6 +1,8 @@
 # Tasks
 
-Board rules: `docs/warroom/TASK_CONTROL.md`. Build order:
+Board rules: `docs/warroom/TASK_CONTROL.md`. Every AI must write an
+INTAKE report under a card before starting and a DELIVERY report before
+claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 `docs/warroom/STARTUP_PLAYBOOK.md`.
 
 ## READY

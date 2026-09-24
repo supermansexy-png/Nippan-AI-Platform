@@ -16,6 +16,12 @@ contributing at different times, not one continuous operator. Every rule
 below exists because of that — assume the next person picking this up has
 zero memory of this conversation and only has the repo in front of them.
 
+## Rule 00 — The AI operating protocol comes first
+
+`docs/warroom/AI_OPERATING_PROTOCOL.md` governs how any AI accepts,
+performs and delivers work. Where this file and the protocol overlap, the
+protocol is stricter and wins.
+
 ## Rule 0 — Work only from a task card
 
 Every piece of work has a card in `TASKS.md`, claimed before starting.
