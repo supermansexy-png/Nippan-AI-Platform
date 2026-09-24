@@ -214,6 +214,8 @@ Design note (per Owner clarification 2026-09-25): the warning is about **accumul
 
 UPDATE — T-021 — 2026-09-25: `/handoff` now triggers a **visible summary reply** in the new session (was `noReply:true`, which left the new chat looking empty). Verified: the seed was present (continuing the seeded session with a free model recited the handoff). Root cause of "new chat has no summary": silent user message + users may open a blank `/new` instead of selecting the seeded session from `/sessions`.
 
+UPDATE — T-021 — 2026-09-25 (Owner decision): the Owner uses the **desktop app**, which has no easy session switcher (`/sessions` is TUI-only per opencode docs). Primary cost lever is therefore **`/compact`** in the same chat; the warning toast now recommends `/compact` first, with `/handoff` as an optional alternative.
+
 ---
 
 ### T-022 — Cost policy: free models for execution + paid GLM for L4 verification
