@@ -1,7 +1,7 @@
 ﻿---
 description: Developer (dev-time) ลงมือเขียนและแก้ code, tests และ implementation ตามการ์ดงานที่ Project Lead มอบหมาย ตาม AI_OPERATING_PROTOCOL
 mode: subagent
-model: opencode/mimo-v2.6-flash-free
+model: openrouter/qwen/qwen3.7-flash
 permission:
   edit: allow
   bash:

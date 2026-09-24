@@ -201,15 +201,16 @@ effect until the Owner connects Zen and opencode is restarted. A key was shared 
 chat and must be rotated. In the test, 8/11 free Zen models passed a planted-bug
 review task; `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed.
 
-## Model Policy — free execution + paid L4 (T-022) — DONE (2026-09-25)
+## Model Policy — paid builder + free helper roles + paid L4 (T-022/T-023) — DONE (2026-09-25)
 
-Owner policy: the Project Lead thinks/plans only; execution (builder/ops/researcher)
-and review/security for L1/L2/L3 run on **free OpenCode Zen** models; **L4 (critical /
-high-accuracy verification) uses the paid `z-ai/glm-5.3-flash`**. Applied to
-`MODEL_ROSTER.md`, `START_PROMPT.md`, the agent files and `opencode.json`
-(`small_model` also set to a free model, fixing "Insufficient account funds" on session
-titles). Needs an opencode restart to load. Free tier may log/train → no secrets in
-prompts.
+Owner policy (corrected by T-023): the Project Lead thinks/plans only. The **main builder
+stays on the paid model** (`qwen/qwen3.7-flash`); free OpenCode Zen models are used for the
+**helper positions** (assistant, ops, researcher) and for review/security at L1/L2/L3.
+**L4 (critical / high-accuracy verification) uses paid `z-ai/glm-5.3-flash`.** Reviewer
+(`nemotron-3-ultra-free`) and security (`big-pickle`) use **different** free models.
+Recorded in `MODEL_ROSTER.md`, `START_PROMPT.md`, the agent files and `opencode.json`
+(`small_model` free). Needs an opencode restart to load. Free tier may log/train → no
+secrets in prompts.
 
 ## Source-of-Truth Rule
 

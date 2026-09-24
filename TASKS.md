@@ -212,8 +212,25 @@ Decision: ACCEPT — doer = Project Lead (no paid agent; cost avoided).
 
 ---
 
+### T-023 — Team fix: paid builder + free assistant position + distinct security model
+Status: DONE (Owner approved 2026-09-25; applied — needs an opencode restart to load)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (model policy + config; no paid specialist called)
+Risk: L2 (dev model policy; no customer impact; reversible)
+Goal: the main builder returns to the paid model; add a free "assistant" helper position; security uses a free model different from the reviewer's
+Done when: 1) builder agent → paid `qwen/qwen3.7-flash`; 2) new `assistant` agent created (free); 3) security agent → free model ≠ reviewer; 4) roster / START_PROMPT / anti-redundancy updated; 5) no protected doc touched
+Budget: 1 session
+Links: docs/product/MODEL_ROSTER.md, docs/warroom/START_PROMPT.md, .opencode/agents/*
+
+INTAKE — T-023 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner order)
+Understanding: Owner corrects T-022 — the free models are for a **helper** position, not the main builder; the builder stays paid. Security must not reuse the reviewer's free model. Add an "assistant" position for free support work.
+Changes: builder → `qwen/qwen3.7-flash`; new `assistant` agent (free `opencode/mimo-v2.6-flash-free`); security → `opencode/big-pickle` (≠ reviewer `nemotron-3-ultra-free`); roster + START_PROMPT + anti-redundancy updated.
+Decision: ACCEPT — doer = Project Lead (no paid agent).
+
+---
+
 ### T-021 — Test free OpenCode Zen models across all dev roles (Owner request "0pencode")
-Status: READY
+Status: DONE (record only — no roster change; Owner order 2026-09-25)
 Owner: Project Lead (big-pickle — free Zen) — 2026-09-25
 Role: Project Lead (runs Zen probes directly; HR cannot reach Zen — established T-020)
 Risk: L2 (results may re-staff dev roles; no customer/runtime impact)
@@ -233,6 +250,33 @@ Done when: see card. Needs: opencode CLI (have, v1.18.30) + temp dir for outputs
 Plan: 1) Bounded role batteries (short prompts, answer-inline, temp workdir — no repo touch) 2) Run 8 PASS models × batteries via `opencode run --model opencode/<id>` 3) Record latency + outputs 4) Score + anti-redundancy check 5) Propose staffing to Owner.
 Estimate: within budget (free; ~40 short runs). Risks: free endpoint instability (already saw 3/11 fail); free tier logs data → all prompts synthetic, no secrets/customer data.
 Decision: ACCEPT — team: Project Lead runs probes (HR cannot reach Zen); optional reviewer pass by non-recommended free model after synthesis. No paid model, no roster change before Owner approval.
+
+PROBES RUN — T-021 — Project Lead (big-pickle) — 2026-09-25
+Method: 8 usable free Zen models × 5 role batteries via `opencode run -m opencode/<id> --dir <temp> --pure` (no repo touch, synthetic tasks, temp dir `C:\Users\chetgo\AppData\Local\Temp\opencode\T021\results`). 40/40 runs completed, 0 timeout, 0 crash. Latency ~6–28s each. Raw outputs saved as `<model>__<battery>.txt` (VERIFIED — read directly).
+Scoring (per battery, output inspected manually):
+- builder (write calc_quota_used(used,cap) + ValueError, no file writes): PASS 7/8 — big-pickle, ling-3.0, mimo-2.6, muse-1.2, muse-1.3, nemotron-ultra, space-bunny all returned correct code. FAIL: nemotron-3.5-lightning — attempted Write /tmp file, permission auto-rejected, never returned code (instruction violation).
+- security (SQL missing tenant_id/bot_id): PASS 8/8 — all named exactly the two missing filters.
+- ops (no restart policy risk): PASS 8/8 — all identified downtime after crash/reboot requiring manual restart.
+- researcher (VERIFIED/UNKNOWN discipline): PASS 8/8 — all marked (a) VERIFIED, (c) VERIFIED, (b) UNKNOWN (no invented price).
+- hr (PostgreSQL partial-index precision `WHERE col > now()`): PASS 5/8 — mimo-2.6, muse-1.2, muse-1.3, nemotron-ultra, space-bunny correctly said NO (predicate must be IMMUTABLE; now() is STABLE). FAIL 3/8 with confidently WRONG "Yes": big-pickle, ling-3.0, nemotron-3.5-lightning. Honesty qualifier: file-read claims were unverifiable (models inside opencode do have tools; treat as environment capability, not lie).
+Anti-redundancy: nemotron-3.5-lightning(-free) ≡ builder Backup → EXCLUDE from reviewer/security (already noted in roster). Remaining free reviewer/security candidates: nemotron-3-ultra-free, space-bunny-free, muse-*, mimo, ling — none equals builder Primary/Backup. big-pickle/ling failed the precision probe → weak for reviewer/HR; big-pickle has T-020 scorecard shortfall history.
+Verdict PENDING Owner: proposal in DELIVERY below.
+
+DELIVERY — T-021 — Project Lead (big-pickle) — 2026-09-25
+Status claimed: DONE (as RECORD ONLY — Owner order 2026-09-25: "แค่ให้ทำบันทึกไว้ เก็บไว้เป็นข้อมูลเวลาต้องการใช้")
+Done-when check:
+- [x] 8 free Zen models × 5 role batteries run → VERIFIED (40/40 files, 0 timeout; raw outputs read + reviewer ACCEPTED after reading all 40)
+- [x] Raw outputs + score table → VERIFIED (temp results dir; table written to docs/product/FREE_MODEL_ZEN_TEST_T021.md; no paid model, $0)
+- [x] Score table → VERIFIED (reviewer nemotron-3-ultra-free: ACCEPTED — matches raw files)
+- [x] Recommendation + anti-redundancy → VERIFIED (documented as "suggested use", NOT applied per Owner)
+- [x] No roster change → VERIFIED (MODEL_ROSTER.md untouched; Owner: record only)
+- [x] No protected doc touched → VERIFIED (new file docs/product/FREE_MODEL_ZEN_TEST_T021.md + this card only)
+Changed: docs/product/FREE_MODEL_ZEN_TEST_T021.md (new, reference record), TASKS.md (card)
+Not done: nothing — Owner explicitly chose record-only over staffing change
+Unverified: long-term reliability of free endpoints; multi-run consistency (single probe per role = weak signal, stated in file)
+Problems: none in final run (first script run had param placement bug + one aborted chunk; rerun clean, 40/40)
+Confidence: high on the recorded scores (reviewer-verified), intentionally low on applying them (per Owner, not applied)
+Next: when a staffing decision is needed, read FREE_MODEL_ZEN_TEST_T021.md + re-probe before committing.
 Status: READY
 Owner: â€”
 Role: Model-recruiter (HR)

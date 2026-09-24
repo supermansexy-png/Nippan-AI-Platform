@@ -1,7 +1,7 @@
 ﻿---
 description: Security (dev-time) ตรวจ authentication authorization secrets tenant/bot isolation attack surface และ security boundary แบบ read-only
 mode: subagent
-model: opencode/nemotron-3-ultra-free
+model: opencode/big-pickle
 permission:
   edit: deny
   bash:

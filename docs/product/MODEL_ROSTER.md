@@ -65,12 +65,13 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 | # | Role | Primary Model | Primary Provider | Backup Model | Backup Provider | Price (Primary in/out) | Price (Backup in/out) | Reasoning |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **project-lead** | `deepseek/deepseek-v4.1-flash` | DeepSeek | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.15 / $0.60 | $0.08 / $0.20 | **CHANGED 2026-09-24 (Owner order).** Previous: qwen3.7-flash — suspended for protocol violations. New: DeepSeek V4.1 Flash — Real-time, 1M context, Intelligence 39.5, supports tool_choice + structured_outputs + reasoning_effort. Only PL-capable real-time model within self-approval budget ($0.25/$1.00). Nemotron Lightning backup from different provider (NVIDIA ≠ DeepSeek). |
-| 2 | **builder** | `opencode/mimo-v2.6-flash-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022, Owner order): execution roles use free models.** Was `qwen/qwen3.7-flash`. Zen free tier works only inside opencode; free tier may log/train → no secrets in prompts. |
-| 3 | **reviewer** | `z-ai/glm-5.3-flash` | Z.ai | `thinkingmachines/inkling:free` | Thinking Machines | $0.15 / $0.50 | $0 / $0 | **CHANGED in T-014.** Previous: Llama-3.3-70B ($0.10/$0.32). New: GLM-5.3-flash ($0.15/$0.50). GLM wins on quality: intelligence 41.8 vs 11.9 (Llama), agentic 50.9 vs null, coding 71.5 vs 11.9, context 1.3M vs 131K, supported_params include structured_outputs+tool_choice+reasoning_effort. Gemini alternatives exceed budget. Review needs deep analytical reasoning — GLM delivers at only +$0.05/$0.18 incremental cost vs Llama. **Primary ≠ qwen3.7-flash AND ≠ nemotron-3-ultra — fully independent.** |
-| 4 | **security** | `z-ai/glm-5.3-flash` | Z.ai | `thinkingmachines/inkling:free` | Thinking Machines | $0.15 / $0.50 | $0 / $0 | **CHANGED in T-014.** Same rationale as reviewer. Security analysis demands precision, pattern recognition for vulnerabilities, and structured reasoning — GLM excels here. Pricing within self-approval. **Primary ≠ qwen3.7-flash AND ≠ nemotron-3-ultra — fully independent.** |
+| 2 | **builder** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | **REVERTED 2026-09-25 (T-023, Owner order): the builder stays on the paid model. The free models are for the helper/assistant position, not the main builder.** |
+| 3 | **reviewer** | L1–L3: `opencode/nemotron-3-ultra-free` · L4: `z-ai/glm-5.3-flash` | OpenCode Zen / Z.ai | `opencode/space-bunny-free` | OpenCode Zen | $0 · L4 $0.15/$0.50 | $0 / $0 | **CHANGED 2026-09-25 (T-020/T-023): free for L1–L3, paid GLM only for L4 critical verification.** |
+| 4 | **security** | L1–L3: `opencode/big-pickle` · L4: `z-ai/glm-5.3-flash` | OpenCode Zen / Z.ai | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 · L4 $0.15/$0.50 | $0 / $0 | **CHANGED 2026-09-25 (T-023, Owner order): security free model kept DIFFERENT from the reviewer's free model.** |
 | 5 | **ops** | `opencode/big-pickle` | OpenCode Zen | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
 | 6 | **researcher** | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
 | 7 | **model-recruiter** | `openai/gpt-6-luna` | OpenAI | `tencent/hy3-preview` | Tencent | $0.10 / $0.50 | $0.18 / $0.60 | **APPOINTED 2026-09-24 (Owner approved).** Replaces qwen3.7-flash (dismissed for False DONE). Spec: HIGH INTEGRITY + DETAIL-ORIENTED. Vetted with 2 live probes (precision: PostgreSQL partial-index bug; honesty: filesystem access claim) — gpt-6-luna PASS both; hy3-preview PASS both; ling-3.0-flash-vl FAILED precision. Both real-time, tool+structured_outputs capable, within budget. Primary provider OpenAI is distinct from all other team providers. |
+| 8 | **assistant** | `opencode/mimo-v2.6-flash-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **NEW 2026-09-25 (T-023, Owner order): a FREE "helper" position for support work (draft/summarize/collect), so the paid builder is not used for grunt work.** |
 
 ### Anti-redundancy cross-check (P+B verification — T-014 updated)
 
@@ -87,17 +88,19 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 The T-014 cross-check table above is historical. Current sets after T-020/T-022:
 
 ```
-Builder model set   = { opencode/mimo-v2.6-flash-free, opencode/big-pickle }
+Builder model set   = { qwen/qwen3.7-flash, nvidia/nemotron-3.5-lightning }   (paid)
 Reviewer model set  = { opencode/nemotron-3-ultra-free, opencode/space-bunny-free }
-Security model set  = { opencode/nemotron-3-ultra-free, opencode/space-bunny-free }
+Security model set  = { opencode/big-pickle, opencode/ling-3.0-flash-fin-free }
+Assistant model set = { opencode/mimo-v2.6-flash-free, opencode/big-pickle }
 L4 verify (paid)    = { z-ai/glm-5.3-flash }
 
 Intersection(builder, reviewer) = ∅
 Intersection(builder, security) = ∅
 Intersection(builder, L4)       = ∅
+Reviewer free model ≠ Security free model (Owner order, T-023)
 ```
 
-Reviewer/security never share a model name with builder (Primary or Backup). L4 (paid) is used only for critical verification and is independent of the free builder.
+Reviewer/security never share a model name with builder (Primary or Backup); reviewer and security also differ from each other. L4 (paid) is used only for critical verification. The assistant is a free helper and is never used as the reviewer.
 
 ## Failover order (per `MODEL_POLICY.md`)
 
@@ -131,7 +134,7 @@ Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 
 
 | Tier | reviewer / security Primary | Backup | Notes |
 |---|---|---|---|
-| L1/L2 (reversible, non-sensitive) | `opencode/nemotron-3-ultra-free` | `opencode/space-bunny-free` | Free; 1M ctx, tools. Caught both planted bugs in the T-020 test (2026-09-25). |
+| L1/L2 (reversible, non-sensitive) | reviewer: `opencode/nemotron-3-ultra-free` · security: `opencode/big-pickle` | `opencode/space-bunny-free` | Free; caught both planted bugs in the T-020 test. Reviewer free model ≠ security free model (T-023). |
 | L3 (hard to undo / sensitive) | `opencode/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention. L3 inputs must be redacted. |
 | **L4 (critical / high-accuracy verification)** | **`z-ai/glm-5.3-flash`** | `opencode/nemotron-3-ultra-free` | **Paid ($0.15/$0.50) — Owner requires the selected paid model for L4 (2026-09-25).** E.g. security boundary, tenant/bot isolation, data-handling reviews. |
 | Paid fallback (free endpoint down) | `z-ai/glm-5.3-flash` | — | $0.15/$0.50. |
@@ -140,7 +143,7 @@ Facts / caveats (verified 2026-09-25):
 - Zen free tier works ONLY inside opencode (`POST /zen/v1/chat/completions` → 403 `FreeTierError`). Requires the Zen provider connected in opencode auth.
 - Most Zen free models log/train on data during the free period (`muse-spark-*` = Meta trains; `nemotron-*` = trial, no confidential data). `space-bunny-free` is the only stated zero-retention one → use it for L3/sensitive.
 - Free endpoints can be unstable: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed the T-020 test.
-- Anti-redundancy: none of these equals builder Primary or Backup (see T-022 note below). `nemotron-3.5-lightning-free` is EXCLUDED (duplicates the old builder Backup).
+- Anti-redundancy: none of these equals builder Primary `qwen/qwen3.7-flash` or Backup `nvidia/nemotron-3.5-lightning`. `nemotron-3.5-lightning-free` is EXCLUDED (duplicates builder Backup). Reviewer and security free models also differ from each other.
 - **L4 is a review tier, not a TASK_CONTROL risk level.** `TASK_CONTROL.md §3` still defines only L1–L3 and is a protected document; formalising L4 as a task risk level would need its own L3 card.
 
 ## Enforcement (added 2026-09-24 per Owner incident order)
