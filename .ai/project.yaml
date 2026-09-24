@@ -1,108 +1,95 @@
 project: nippan-ai-platform
-status: foundation_v1_accepted
-date: 2026-09-22
+status: phase_a_market_test
+date: 2026-09-24
 
 principles:
   easy_to_operate: true
   easy_to_debug: true
-  high_performance: true
   cost_efficient: true
   flexible: true
   extensible: true
   complexity_requires_evidence: true
+  simple_setup: true
 
 product_model:
   multi_tenant: true
+  target: small_thai_businesses_bot_rental
+  tenant_ceiling_phase_a: 30
+  price_thb_per_bot_per_month: 299
+  channels:
+    - line_oa_owned_by_tenant
+    - web_chat
   supports:
-    - bots
-    - websites
-    - web_apps
-    - mobile_apps
-    - desktop_apps
-    - internal_agents
-    - future_rental_saas
+    - chat_bots
+    - secretary_bots
+    - future_underserved_segments
   hierarchy:
     - tenant
-    - workspace
-    - application
-    - agent
+    - bot
     - channel
+    - end_customer
     - conversation
 
 architecture:
-  edge_gateway: cloudflare_workers
-  realtime_runtime: fastapi
+  phase: A
+  runtime_core: n8n
   model_gateway: openrouter
-  orchestration_background: n8n
-  system_of_record: postgresql
-  vector_memory: pgvector
-  retrieval: hybrid
-  tool_interface: nippan_mcp
-  background_queue: cloudflare_queues
-  machine_file_store: cloudflare_r2
-  human_document_store: google_drive
-  reporting_surface: google_sheets
-  control_plane: dashboard
-  data_plane: core_runtime
+  model_gateway_exclusive: false
+  system_of_record: self_hosted_postgresql_lite_schema
+  vector_memory: none_yet
+  retrieval: keyword
+  tool_interface: mcp_tools
+  full_stack_blueprint: docs/future/
 
-context:
-  default: deterministic
-  preserve_raw_request: true
-  compiler:
-    enabled_by_default: false
-    benchmark_required: true
-    conditional_only: true
+customer_facing_rules:
+  never_reveal_model: true
+  never_claim_human: true
+  config_is_fixed_menu_only: true
+  see: docs/product/CUSTOMER_FACING_RULES.md
 
-risk_classes:
-  - READ
-  - WRITE_LOW
-  - WRITE_IMPORTANT
-  - DESTRUCTIVE
-  - FINANCIAL
+war_room:
+  roles:
+    - project_lead
+    - developer
+    - mcp_tool_builder
+    - auditor
+    - cost_guard
+    - onboarding_agent
+    - support_agent
+    - marketing
+    - model_scout
+  activation_order: docs/warroom/ROLES.md
+  autonomy_ladder: docs/warroom/ROLES.md
+  monitoring: docs/warroom/MONITORING.md
+  decision_log: docs/warroom/DECISION_LOG_FORMAT.md
 
-privacy_classes:
-  - PUBLIC_LOW_RISK
-  - INTERNAL
-  - PII
-  - FINANCIAL_CUSTOMER
-  - SECRET_CREDENTIAL
-
-policy:
-  model_cannot_downgrade_risk: true
-  tool_allowlist_required: true
-  schema_validation_required: true
-  side_effect_idempotency_required: true
-  privacy_gate_before_model: true
-  destructive_financial_human_approval_supported: true
+pdpa:
+  tenant_is_data_controller: true
+  platform_is_data_processor: true
+  never_train_on_tenant_data_without_consent: true
+  cross_tenant_leakage_forbidden: true
+  see: docs/security/PDPA_COMPLIANCE.md
 
 scope_keys:
   - tenant_id
-  - application_id
-  - agent_id
+  - bot_id
   - channel_id
-  - user_id
-  - conversation_id
-  - request_id
+  - end_customer_id
 
-observability:
-  shared_request_id: true
-  edge: cloudflare_logs_traces
-  ai: openrouter_usage
-  system_truth: postgresql_ops_audit
-  background: n8n_execution_history
+work_control:
+  task_board: TASKS.md
+  rules: docs/warroom/TASK_CONTROL.md
+  risk_levels: [L1, L2, L3]
+  wip_limit_in_progress: 3
 
-deferred:
-  - cloudflare_ai_gateway
-  - hyperdrive
-  - durable_objects
-  - analytics_engine
-  - redis
-  - d1
-  - vectorize
-  - cloudflare_workflows
-  - dedicated_vector_database
-  - kubernetes
-  - unnecessary_microservices
+deferred_to_future:
+  - fastapi_core_service
+  - cloudflare_worker_edge
+  - postgresql_pgvector_rls
+  - control_plane_dashboard
+  - saas_billing_metering
+  - formal_mcp_hub
+  - see: docs/future/README.md
 
 protected_systems:
   ai_nippan:
@@ -114,6 +101,6 @@ protected_systems:
     migrate_now: false
 
 current_phase:
-  name: contracts_and_data_foundation
+  name: phase_a_market_test
   production_migration_allowed: false
-  next_gate: contracts_and_schema_review
+  next_gate: first_tenant_onboarded

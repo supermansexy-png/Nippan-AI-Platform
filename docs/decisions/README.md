@@ -1,9 +1,11 @@
-# Architecture Decision Records (ADR)
+# Decisions
 
-Use this folder for durable architecture decisions after review.
+Durable decisions for the active phase live here.
 
-Naming: `ADR-0001-short-title.md`
+- `PIVOT_OPTION.md` — the standing option to switch to specialized,
+  high-price work.
 
-Each ADR should record: Status, Context, Decision, Alternatives, Consequences, Risks, Date, and related Issues/PRs.
-
-Do not erase history when a decision changes; supersede the old ADR with a newer one.
+Day-to-day decisions go in the Decision Log (`docs/warroom/DECISION_LOG_FORMAT.md`).
+The original ADR-0001…0006 are preserved in `docs/future/decisions/`.
+When a decision changes, add a new document that supersedes the old one —
+do not rewrite history.

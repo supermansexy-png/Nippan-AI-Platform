@@ -1,17 +1,7 @@
 # Schemas
 
-Machine-readable Foundation contracts.
+Phase A has no machine-readable schemas yet. The active data design is
+`docs/data/LITE_SCHEMA_V1.md`.
 
-Current:
-- `platform-identity-v1.schema.json`
-- `agent-config-v1.schema.json`
-- `request-envelope-v1.schema.json`
-
-These schemas are contracts, not final PostgreSQL DDL.
-
-Upcoming after review:
-- model policy
-- memory policy
-- tool policy
-- telemetry event schemas
-- database migrations
+The earlier full-scale JSON Schemas (identity, agent config, request
+envelope, usage event) are preserved in `docs/future/data/`.

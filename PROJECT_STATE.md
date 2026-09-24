@@ -1,80 +1,64 @@
 # Project State
 
-Updated: 2026-09-22
+Updated: 2026-09-24
 
 ## Phase
-FOUNDATION V1 ACCEPTED / PHASE 1 CONTRACTS IN REVIEW
+
+**PHASE A — MARKET TEST**
+
+Rewritten after a pivot decided 2026-09-24. See `ROADMAP.md` for the full
+3-phase structure and `docs/future/README.md` for what the original
+11-phase plan turned into.
 
 ## Current objective
-Finish and independently review the minimum durable contracts before database/runtime implementation.
 
-## Accepted architecture
-See:
-- `docs/architecture/FOUNDATION_V1.md`
-- `docs/decisions/ADR-0001-runtime-topology.md`
-- `docs/decisions/ADR-0002-control-plane-and-multitenancy.md`
-- `docs/decisions/ADR-0003-model-routing.md`
-- `docs/decisions/ADR-0004-data-memory-retrieval.md`
-- `docs/decisions/ADR-0005-policy-tools-and-approval.md`
-- `docs/decisions/ADR-0006-infrastructure-simplicity.md`
+Stand up the Phase A stack (n8n core, lite schema, starting MCP tools,
+Onboarding assistant, PDPA layer, War Room Operations) and onboard the
+first real tenants — up to 30, at 299 THB/month flat.
 
-## Phase 1 progress
+## What's built vs. what's designed but not yet implemented
 
-### REVIEW
-- Issue #7: Identity & Multi-Tenant Contract
-  - `docs/data/IDENTITY_TENANCY_CONTRACT_V1.md`
-  - `schemas/platform-identity-v1.schema.json`
-  - independent review: Issue #12
-- Issue #8: Agent Profile & Policy Contract
-  - `docs/data/AGENT_POLICY_CONTRACT_V1.md`
-  - `schemas/agent-config-v1.schema.json`
-  - independent review: Issue #13
-- Issue #9: Request / Trace / Usage Contract
-  - `docs/data/REQUEST_TRACE_USAGE_CONTRACT_V1.md`
-  - `schemas/request-envelope-v1.schema.json`
-  - independent review: Issue #14
-- Issue #11: Benchmark & Evaluation Specification
-  - `benchmarks/BENCHMARK_SPEC_V1.md`
+This project has a documentation-heavy history — see the note at the
+bottom of this file. Track actual build status here, separately from the
+design docs, so it stays honest.
 
-### BLOCKED
-- Issue #10: PostgreSQL + pgvector logical schema
-  - blocked until identity/policy contract review resolves blocking issues
+### Designed (documents exist, ready to build from)
+- Lite database schema — `docs/data/LITE_SCHEMA_V1.md`
+- PDPA compliance approach — `docs/security/PDPA_COMPLIANCE.md`
+- War Room roles, autonomy ladder, monitoring, decision log, task control, playbook — `docs/warroom/`
+- Product docs: pricing, segments, customer-facing rules, onboarding flow,
+  MCP tool catalog, model policy, storefront, business operations — `docs/product/`
 
-## Core direction
-- Thin Cloudflare Worker edge gateway
-- FastAPI Core AI Service for realtime runtime
-- PostgreSQL + pgvector source of truth
-- OpenRouter primary model gateway
-- deterministic context assembly; Context Compiler conditional only
-- modular Nippan MCP with deterministic permissions/risk policy
-- Cloudflare Queues + n8n for background/automation
-- R2 for machine files
-- Control Plane / Dashboard separated from runtime Data Plane
-- Tenant -> Application -> Agent/Channel -> Conversation ownership model
-- explicit Agent <-> Channel bindings
-- SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
+### Not yet built
+- Nothing is built yet: no n8n instance, no workflows
+- No database (lite schema is designed, not instantiated)
+- No MCP tools implemented (catalog is designed, not built)
+- No tenants onboarded
+- War Room roles are written policy, not staffed AI seats — see
+  `docs/warroom/ROLES.md`, "Activation order". Phase A starts with the
+  owner executing most of this manually.
 
-## AI team policy
-Specialist models may draft/review work, but architecture remains governed by Foundation + ADRs + assigned issues.
+## Next steps
 
-High-priority benchmark candidate:
-- Jev for structured routing/classification/decision support
+See `docs/warroom/STARTUP_PLAYBOOK.md` (build order) and `TASKS.md`
+(current task cards). They are deliberately not repeated here, so the
+three files can never disagree.
 
-Jev or any model never replaces deterministic authorization, risk or privacy policy.
+## A note on this project's history
 
-## Protected systems
-- `supermansexy-png/Ai-Nippan`: production; do not modify during foundation implementation
-- existing Personal Assistant / n8n workflows: do not migrate yet
+Earlier work on this repository (2026-09-22 to 2026-09-24, ~50 commits)
+produced an extensive full-scale architecture: identity/tenancy and agent
+policy contracts, 6 ADRs, a PostgreSQL/pgvector data model, and a Phase 1
+review gate — almost entirely documents, no working code. That work is not
+wrong; it was sized for a larger, more capital-intensive version of this
+business than the current plan. It's preserved in `docs/future/` as a
+blueprint for when this project's scale actually calls for it — see that
+folder's README for the trigger conditions per document.
 
-## Explicitly deferred
-Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1, Vectorize, Cloudflare Workflows, dedicated vector DB, Kubernetes and unnecessary microservices.
-
-## Immediate next gate
-1. Independent review Issues #12, #13 and #14.
-2. Resolve any blocking findings.
-3. Accept Phase 1 contracts.
-4. Begin Issue #10 PostgreSQL + pgvector logical schema.
-5. Build benchmark fixtures/runs before locking production model roles.
+The lesson carried forward: this file should reflect what's actually
+running, not what's been planned. Update the "built vs. designed" section
+above as things actually ship, not when a document about them is written.
 
 ## Production migration
-Not allowed in current phase.
+
+Not allowed in current phase. Protected systems: see `ROADMAP.md`.

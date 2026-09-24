@@ -1,149 +1,73 @@
-# Nippan AI Platform — Roadmap v1
+# Nippan AI Platform — Roadmap
 
-## Phase 0 — Foundation Architecture
-Status: DONE
+Status: **Phase A active**
 
-Completed:
-- independent architecture reviews
-- runtime topology decision
-- control-plane/data-plane decision
-- multi-tenant product model
-- data/memory direction
-- model gateway direction
-- tool/risk/privacy principles
-- infrastructure defer list
+Rewritten 2026-09-24 after a market-test pivot: 30-tenant, 299 THB/month AI
+bot rental, on n8n. The original 11-phase, FastAPI + Cloudflare +
+PostgreSQL/pgvector roadmap is preserved intact in `docs/future/` — see
+`docs/future/README.md` for what triggers pulling each piece back into
+active work.
 
-## Phase 1 — Contracts and Data Foundation
-Status: NEXT
+## Phase A — Market test foundation (current)
+
+Goal: prove the market wants this, at the lowest complexity that can carry
+real tenants safely.
 
 Deliver:
-- Tenant / Workspace / Application / Agent / Channel schemas
-- Agent Profile and versioned configuration
-- Model / Memory / Tool / Data / Risk / Privacy policies
-- request_id / trace envelope
-- usage/cost telemetry contract
-- PostgreSQL logical schema + pgvector
-- RLS/isolation design
-- idempotency contract
-- migration framework
-- benchmark/eval fixtures
+- n8n as the runtime core (not FastAPI — see `docs/future/decisions/
+  ADR-0001-runtime-topology.md` for why the full version chose otherwise,
+  and `docs/future/README.md` for when to revisit)
+- Lite database schema (`docs/data/LITE_SCHEMA_V1.md`)
+- 4-layer memory system, lightweight (same file)
+- Starting MCP tool set (`docs/product/MCP_TOOLS_V1.md`)
+- Onboarding assistant (`docs/product/ONBOARDING_FLOW.md`)
+- PDPA compliance layer (`docs/security/PDPA_COMPLIANCE.md`)
+- War Room, staffed per the activation order in
+  `docs/warroom/ROLES.md` — Operations first, other roles as volume
+  justifies them
+- Monitoring pipeline (`docs/warroom/MONITORING.md`)
+- Flat pricing, each tenant on its own LINE OA (`docs/product/PRICING_V1.md`)
+- Storefront with live demo (`docs/product/STOREFRONT.md`)
+- Outage, refund, payment and first-customer rules (`docs/product/BUSINESS_OPERATIONS.md`)
+- Task control and autonomy ladder (`docs/warroom/TASK_CONTROL.md`, `ROLES.md`)
 
-Exit:
-- contracts reviewed
-- schema migrations reproducible
-- isolation tests specified
-- no production bot migrated
+Build order: `docs/warroom/STARTUP_PLAYBOOK.md`. Checkpoints (go / adjust /
+stop): `docs/warroom/TASK_CONTROL.md` §10.
 
-## Phase 2 — Core Runtime Skeleton
+Exit: 25-30 tenants signed up, retained, and profitable at the estimated
+cost-per-tenant, or a clear signal the market isn't there.
 
-Deliver:
-- FastAPI Core AI Service
-- health/readiness endpoints
-- policy engine
-- config loader
-- request tracing
-- OpenRouter adapter
-- deterministic context assembler interface
-- MCP client/tool authorization interface
-- basic telemetry
+## Phase B — Expand breadth
 
-Exit:
-- synthetic end-to-end request works
-- no production traffic
-
-## Phase 3 — Edge and Reliability
+Goal: more bot types, more customer segments, same infrastructure.
 
 Deliver:
-- thin Cloudflare Worker gateway
-- signature/auth verification
-- rate limiting
-- request normalization
-- persistent idempotency
-- Cloudflare Queues for background jobs
-- DLQ/replay path
-- R2 file adapter
-- degraded-mode behavior
+- Additional MCP tools per `docs/product/CUSTOMER_SEGMENTS.md`'s
+  underserved-segment list, added one at a time as Marketing/Operations
+  surface real demand
+- Remaining War Room roles staffed as live AI seats (Development,
+  Marketing, Model Scout) if not already active from Phase A
+- First real use of Model Scout to swap in a new/cheaper model
 
-## Phase 4 — Memory and Context
+Exit: Nippan can onboard a genuinely new bot type/segment in days, not
+weeks, without touching core infrastructure.
 
-Deliver:
-- recent conversation
-- active state
-- rolling summary
-- long-term memory
-- provenance/conflict/expiry rules
-- hybrid exact/keyword/vector retrieval
-- token budgeting
-- Context Compiler benchmark and optional implementation only if justified
+## Phase C — Scale decision point
 
-## Phase 5 — Control Plane v1
+Trigger: Phase A/B succeeds and either (a) demand pushes past what n8n at
+~30-60 tenants can carry, or (b) the owner activates the specialized/
+high-value pivot (`docs/decisions/PIVOT_OPTION.md`).
 
-Deliver a minimal dashboard for:
-- tenants
-- applications
-- agents
-- channels
-- model/tool/memory/risk policies
-- config Draft -> Test -> Publish -> Rollback
-- requests/traces
-- usage/cost
-- errors
-- approval queue
+This is where `docs/future/` gets pulled back in — FastAPI Core Service,
+Cloudflare Worker edge, PostgreSQL + pgvector with RLS, a real Control
+Plane dashboard, and eventually the SaaS/rental-readiness work
+(entitlements, metering, billing) from the original roadmap. None of this
+is scoped in detail here; `docs/future/README.md` has the trigger table
+for which document to open first.
 
-Do not build full SaaS billing yet.
+## Protected production systems
 
-## Phase 6 — Personal Assistant Pilot
+- `supermansexy-png/Ai-Nippan` — production, do not modify
+- Existing Personal Assistant / n8n production workflows — do not migrate
 
-Migrate the Personal Assistant as the first conversational pilot:
-- feature flag
-- rollback path
-- memory v2
-- MCP policies
-- cost/trace visibility
-
-## Phase 7 — Slip Application
-
-Create Slip App/Agent:
-- LINE group intake
-- image extraction
-- duplicate detection
-- R2
-- Postgres transactions
-- reporting via n8n/Sheets when useful
-
-## Phase 8 — Nippan Website AI
-
-Connect nippan.org through platform APIs/Agents:
-- support
-- content/SEO/admin capabilities only as separately permissioned agents
-- WordPress/WooCommerce tools via MCP policies
-
-## Phase 9 — Ai-Nippan Migration
-
-Adapter-based migration only:
-- shadow/read-only comparison
-- feature flags / traffic split
-- gradual cutover
-- rollback
-- preserve proven commerce/order logic
-
-## Phase 10 — External Customer / Rental Readiness
-
-When business demand exists:
-- tenant onboarding
-- templates
-- plan/entitlement management
-- quotas
-- usage metering
-- billing integration
-- customer-facing admin surface
-
-## Optional infrastructure
-Adopt only from measured need:
-- Cloudflare AI Gateway
-- Hyperdrive
-- Durable Objects
-- Analytics Engine
-- Redis
-- dedicated vector database
-- service splitting
+These protections carry over unchanged from the original roadmap.
