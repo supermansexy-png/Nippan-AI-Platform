@@ -153,3 +153,15 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Note**: `openai/gpt-6-luna` (non-batch) is real-time and distinct from the earlier-rejected `gpt-6-luna:batch` (batch-only).
 
 ---
+
+## DECISION — 2026-09-24 — New HR appointed: openai/gpt-6-luna (per Owner)
+
+**Owner order**: "gpt-6-luna บรรจุเข้าทำงานเป็น hr ได้ และให้ hr ไล่ตรวจงานเก่าๆ ที่สั่ง hr ให้ทำแล้วบอกว่าทำแล้ว แต่เบื้องต้นตรวจแล้วไม่มี ให้รายงานกลับมา"
+
+**Decision**: Appoint `openai/gpt-6-luna` as model-recruiter (HR). Backup: `tencent/hy3-preview`.
+- `opencode.json` — `agent.model-recruiter.model = openrouter/openai/gpt-6-luna`
+- `docs/product/MODEL_ROSTER.md` — row 7 finalized (APPOINTED)
+
+**Immediate assignment to new HR**: Audit all prior completion claims (especially HR record-keeping claims) against actual file/git evidence; report discrepancies.
+
+---
