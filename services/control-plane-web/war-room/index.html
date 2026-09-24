@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nippan AI War Room</title>
+  <link rel="stylesheet" href="./war-room.css">
+</head>
+<body>
+  <main class="war-room" data-war-room-app>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Nippan AI Platform</p>
+        <h1>War Room ภาษาไทย</h1>
+      </div>
+      <div class="room-loader">
+        <label for="room-id">Room ID</label>
+        <div class="row">
+          <input id="room-id" name="room-id" autocomplete="off" placeholder="UUID">
+          <button id="load-room" type="button">โหลดห้อง</button>
+        </div>
+      </div>
+      <div class="status-wrap">
+        <span id="connection-status" class="connection" data-state="idle">ยังไม่เชื่อมต่อ</span>
+        <span id="room-state" class="state-pill">—</span>
+      </div>
+    </header>
+
+    <section id="notice" class="notice" role="status" aria-live="polite"></section>
+
+    <div class="layout">
+      <aside class="panel sidebar" aria-label="Participants and usage">
+        <div class="panel-heading">
+          <h2>ผู้เข้าร่วม</h2>
+          <span id="participant-count" class="muted">0</span>
+        </div>
+        <div id="participant-roster" class="roster empty">โหลดห้องเพื่อดูผู้เข้าร่วม</div>
+
+        <div class="divider"></div>
+
+        <h2>การใช้งาน</h2>
+        <dl class="usage">
+          <div><dt>ขาเข้า</dt><dd id="usage-input">0</dd></div>
+          <div><dt>ขาออก</dt><dd id="usage-output">0</dd></div>
+          <div><dt>รวม</dt><dd id="usage-total">0</dd></div>
+          <div><dt>ค่าใช้จ่าย</dt><dd id="usage-cost">—</dd></div>
+        </dl>
+      </aside>
+
+      <section class="panel conversation" aria-label="Ordered room messages">
+        <div class="panel-heading">
+          <div>
+            <h2>ห้องสนทนาสด</h2>
+            <p id="sequence-label" class="muted">ลำดับ 0</p>
+          </div>
+          <button id="reconnect" type="button" class="ghost" disabled>เชื่อมต่อใหม่</button>
+        </div>
+
+        <div id="message-list" class="messages empty">
+          เหตุการณ์ของห้องจะแสดงที่นี่ตามลำดับ
+        </div>
+
+        <form id="owner-message-form" class="composer">
+          <label for="owner-message">ข้อความหรือคำตัดสินของเจ้าของห้อง</label>
+          <textarea id="owner-message" rows="3" placeholder="ถามห้องประชุมหรือบันทึกคำตัดสิน"></textarea>
+          <div class="composer-actions">
+            <select id="target-role" aria-label="Target role">
+              <option value="BUILDER">Builder / ผู้พัฒนา</option>
+              <option value="ARCHITECT">Architect / สถาปนิก</option>
+              <option value="SECURITY_REVIEWER">Security reviewer / ผู้ตรวจความปลอดภัย</option>
+              <option value="COST_OPS_REVIEWER">Cost / Ops reviewer / ผู้ตรวจต้นทุนและปฏิบัติการ</option>
+              <option value="INDEPENDENT_AUDITOR">Independent auditor / ผู้ตรวจอิสระ</option>
+              <option value="CHAIR">Chair / ประธาน</option>
+              <option value="SECRETARY">Secretary / เลขานุการ</option>
+            </select>
+            <button type="button" data-command="ASK_ROLE">ถาม role</button>
+            <button type="button" data-command="ASK_ALL">ถามทุกคน</button>
+            <button type="button" data-command="SUBMIT_OWNER_DECISION" class="primary">บันทึกคำตัดสิน</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel context-panel" aria-label="Agenda, findings, and decisions">
+        <section>
+          <div class="panel-heading"><h2>วาระ</h2></div>
+          <div id="agenda-list" class="stack empty">ยังไม่มีวาระ</div>
+        </section>
+        <section>
+          <div class="panel-heading"><h2>ข้อค้นพบ</h2></div>
+          <div id="finding-list" class="stack empty">ยังไม่มีข้อค้นพบ</div>
+        </section>
+        <section>
+          <div class="panel-heading"><h2>คำตัดสิน</h2></div>
+          <div id="decision-list" class="stack empty">ยังไม่มีคำตัดสิน</div>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="controls" aria-label="Owner room controls">
+      <button type="button" data-command="PREPARE">เตรียมห้อง</button>
+      <button type="button" data-command="START" class="primary">เริ่ม</button>
+      <button type="button" data-command="PAUSE">พัก</button>
+      <button type="button" data-command="RESUME">ทำต่อ</button>
+      <button type="button" data-command="STOP" class="danger">หยุด</button>
+      <button type="button" data-command="REQUEST_OWNER_DECISION">ขอคำตัดสิน</button>
+      <button type="button" data-command="BEGIN_SUMMARY">สรุป</button>
+      <button type="button" data-command="CLOSE">ปิดห้อง</button>
+    </footer>
+  </main>
+
+  <script type="module" src="./war-room.js?v=20260923-thai-default"></script>
+</body>
+</html>

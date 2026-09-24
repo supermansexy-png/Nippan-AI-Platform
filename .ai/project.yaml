@@ -1,6 +1,6 @@
 project: nippan-ai-platform
-status: foundation_v1_accepted
-date: 2026-09-22
+status: phase2_in_progress
+date: 2026-09-23
 
 principles:
   easy_to_operate: true
@@ -91,6 +91,69 @@ observability:
   system_truth: postgresql_ops_audit
   background: n8n_execution_history
 
+audit:
+  enabled: true
+  protocol: docs/audits/AUDIT_SYSTEM_V1.md
+  report_template: docs/audits/AUDIT_REPORT_TEMPLATE.md
+  progress_basis: milestone_deliverables
+  gates_percent:
+    - 25
+    - 50
+    - 75
+    - 90
+    - 100
+  immediate_triggers:
+    - major_architecture_change
+    - major_security_or_authorization_change
+    - major_postgresql_schema_or_rls_change
+  independence:
+    builder_self_approval_allowed: false
+    independent_auditor_required: true
+    prefer_different_builder_model_family: true
+  primary_auditor:
+    gateway: openrouter
+    model: anthropic/claude-opus-5
+    replaceable_by_configuration: true
+  specialist_auditor_allowed: true
+  blocking:
+    blocker_halts_milestone: true
+    blocker_requires_independent_reaudit: true
+    milestone_done_requires_100_percent_pass: true
+  records_path: docs/audits
+  current_phase_baseline:
+    phase: 2
+    total_deliverables: 19
+    completed_deliverables: 11
+    progress_percent: 57.9
+    highest_crossed_gate_percent: 50
+    status: catch_up_50_audit_pass_with_findings_resolved
+
+parallel_design_tracks:
+  war_room_v1:
+    status: increment_b_merged_increment_c_contract
+    tracking_issue: 19
+    increment_c_issue: 30
+    increment_c_contract_issue: 31
+    proposal: docs/proposals/WAR_ROOM_V1_PROPOSAL.md
+    counts_toward_current_phase_progress: false
+    implementation_authorized: true
+    authorized_increments:
+      - A
+      - B
+      - C
+    design_authorized_increments: []
+    schema_design: docs/proposals/WAR_ROOM_V1_SCHEMA_RLS_DESIGN.md
+    schema_design_status: audited_and_merged
+    schema_migration_authorized: true
+    schema_production_application_authorized: false
+    blocked_by_audit_issue: null
+    next_audit_gate_percent: 75
+    owner_final_authority: true
+    autonomous_round_limit_default: 2
+    infinite_agent_loops_allowed: false
+    ai_consensus_is_binding: false
+    formal_audit_replacement_allowed: false
+
 deferred:
   - cloudflare_ai_gateway
   - hyperdrive
@@ -114,6 +177,18 @@ protected_systems:
     migrate_now: false
 
 current_phase:
-  name: contracts_and_data_foundation
+  name: core_runtime_skeleton
   production_migration_allowed: false
-  next_gate: contracts_and_schema_review
+  audit_gate:
+    required: true
+    gate_percent: 50
+    status: passed_with_findings_resolved
+    outcome: PASS_WITH_FINDINGS
+    tracking_issue: 18
+    evidence_packet: docs/audits/PHASE2_50_AUDIT_EVIDENCE_PACKET.md
+    remediation_finding: A-001
+    remediation_status: CLOSED_AND_PRODUCTION_VERIFIED
+    auditor: anthropic/claude-opus-5
+    auditor_generation: gen-1790110100-SVWHx2fQ0z9jpE2PZVif
+    implementation_advancement_allowed: true
+  next_gate: independent_75_percent_audit

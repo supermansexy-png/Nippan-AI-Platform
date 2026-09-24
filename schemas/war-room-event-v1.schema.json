@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nippan.org/schemas/war-room-event-v1.schema.json",
+  "title": "Nippan War Room Ordered Event v1",
+  "description": "Serialized ordered War Room event. UUIDs are strings, timestamps are RFC3339 date-time strings, enums use their canonical string values, and event payload fields are frozen by event type.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "sequence",
+    "event_type",
+    "correlation",
+    "occurred_at",
+    "room_state",
+    "participant_id",
+    "message_type",
+    "halt_reason",
+    "payload"
+  ],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "ROOM_STATE_CHANGED",
+        "TURN_SCHEDULED",
+        "SCHEDULER_HALTED",
+        "MESSAGE_APPENDED",
+        "OWNER_DECISION_REQUIRED",
+        "BUDGET_HARD_STOP",
+        "TURN_FAILED"
+      ]
+    },
+    "correlation": {"$ref": "#/$defs/correlation"},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "room_state": {
+      "anyOf": [
+        {"$ref": "#/$defs/room_state"},
+        {"type": "null"}
+      ]
+    },
+    "participant_id": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "message_type": {
+      "anyOf": [
+        {"$ref": "#/$defs/message_type"},
+        {"type": "null"}
+      ]
+    },
+    "halt_reason": {
+      "anyOf": [
+        {"$ref": "#/$defs/halt_reason"},
+        {"type": "null"}
+      ]
+    },
+    "payload": {"$ref": "#/$defs/payload"}
+  },
+  "$defs": {
+    "correlation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "application_id",
+        "room_id",
+        "agenda_item_id",
+        "request_id",
+        "trace_id"
+      ],
+      "properties": {
+        "tenant_id": {"type": "string", "format": "uuid"},
+        "application_id": {"type": "string", "format": "uuid"},
+        "room_id": {"type": "string", "format": "uuid"},
+        "agenda_item_id": {"type": "string", "format": "uuid"},
+        "request_id": {"type": "string", "format": "uuid"},
+        "trace_id": {
+          "type": "string",
+          "pattern": "^(?!0{32}$)[0-9a-f]{32}$"
+        }
+      }
+    },
+    "room_state": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "READY",
+        "RUNNING",
+        "PAUSED",
+        "NEEDS_OWNER_DECISION",
+        "SUMMARIZING",
+        "CLOSED",
+        "STOPPED"
+      ]
+    },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "OWNER_MESSAGE",
+        "AGENT_MESSAGE",
+        "CHAIR_PROMPT",
+        "CHAIR_SYNTHESIS",
+        "EVIDENCE_REQUEST",
+        "EVIDENCE_REFERENCE",
+        "FINDING",
+        "DECISION_PROPOSAL",
+        "OWNER_DECISION",
+        "ACTION_ITEM",
+        "SYSTEM_EVENT",
+        "BUDGET_WARNING",
+        "ERROR"
+      ]
+    },
+    "halt_reason": {
+      "type": "string",
+      "enum": [
+        "STATE_NOT_RUNNING",
+        "OWNER_DECISION_REQUIRED",
+        "ROUND_COMPLETE",
+        "ROUND_LIMIT_REACHED",
+        "ROOM_BUDGET_EXHAUSTED",
+        "AGENDA_BUDGET_EXHAUSTED",
+        "PARTICIPANT_BUDGET_EXHAUSTED",
+        "PARTICIPANT_FAILURE_LIMIT_REACHED",
+        "SELF_RECURSION_BLOCKED",
+        "NO_ELIGIBLE_PARTICIPANT"
+      ]
+    },
+    "participant_role": {
+      "type": "string",
+      "enum": [
+        "OWNER",
+        "CHAIR",
+        "ARCHITECT",
+        "BUILDER",
+        "SECURITY_REVIEWER",
+        "COST_OPS_REVIEWER",
+        "INDEPENDENT_AUDITOR",
+        "SECRETARY"
+      ]
+    },
+    "failure_kind": {
+      "type": "string",
+      "enum": [
+        "TIMEOUT",
+        "PROVIDER_UNAVAILABLE",
+        "INVALID_RESPONSE",
+        "POLICY_REJECTED",
+        "ACCOUNTING_FAILED"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content_text": {"type": ["string", "null"]},
+        "content_reference": {"type": ["string", "null"], "minLength": 1},
+        "target_role": {
+          "anyOf": [
+            {"$ref": "#/$defs/participant_role"},
+            {"type": "null"}
+          ]
+        },
+        "previous_state": {"$ref": "#/$defs/room_state"},
+        "round_number": {"type": "integer", "minimum": 1, "maximum": 2},
+        "usage_tokens": {"type": "integer", "minimum": 0},
+        "failure_kind": {"$ref": "#/$defs/failure_kind"},
+        "automatic_retry_allowed": {"type": "boolean"},
+        "provider_request_id": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"event_type": {"const": "ROOM_STATE_CHANGED"}}},
+      "then": {
+        "properties": {
+          "room_state": {"$ref": "#/$defs/room_state"},
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["previous_state"]}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "TURN_SCHEDULED"}}},
+      "then": {
+        "properties": {
+          "participant_id": {"type": "string", "minLength": 1},
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["round_number"]}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "SCHEDULER_HALTED"}}},
+      "then": {
+        "properties": {
+          "halt_reason": {"$ref": "#/$defs/halt_reason"},
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["round_number"]}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "MESSAGE_APPENDED"}}},
+      "then": {
+        "properties": {
+          "message_type": {"$ref": "#/$defs/message_type"},
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {
+                "anyOf": [
+                  {"required": ["content_text"]},
+                  {"required": ["content_reference"]}
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {"const": "MESSAGE_APPENDED"},
+          "message_type": {
+            "enum": ["AGENT_MESSAGE", "CHAIR_SYNTHESIS"]
+          }
+        },
+        "required": ["event_type", "message_type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["provider_request_id", "model"]}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "BUDGET_HARD_STOP"}}},
+      "then": {
+        "properties": {
+          "halt_reason": {"$ref": "#/$defs/halt_reason"}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "TURN_FAILED"}}},
+      "then": {
+        "properties": {
+          "participant_id": {"type": "string", "minLength": 1},
+          "halt_reason": {"const": "PARTICIPANT_FAILURE_LIMIT_REACHED"},
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["failure_kind", "automatic_retry_allowed"]}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {"const": "TURN_FAILED"},
+          "payload": {
+            "properties": {
+              "failure_kind": {"const": "ACCOUNTING_FAILED"}
+            },
+            "required": ["failure_kind"]
+          }
+        },
+        "required": ["event_type", "payload"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "allOf": [
+              {"$ref": "#/$defs/payload"},
+              {"required": ["provider_request_id", "model"]}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -10,11 +10,14 @@ Machine-readable contracts live under `/schemas`.
 
 ## Current gate
 
-These contracts are in REVIEW.
+These contracts are ACCEPTED / FROZEN V1.
 
-Do not implement production PostgreSQL DDL until the identity and policy contracts receive independent review and blocking issues are resolved.
+Do not implement production PostgreSQL DDL until the logical schema/RLS design is reviewed against the frozen contracts.
 
-The future PostgreSQL design will define:
+Phase 2 PostgreSQL design:
+- `POSTGRES_LOGICAL_SCHEMA_V1.md`
+
+This design defines:
 - source-of-truth ownership
 - schemas/tables
 - pgvector use

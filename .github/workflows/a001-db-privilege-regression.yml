@@ -1,0 +1,137 @@
+name: Phase 2 PostgreSQL regression
+
+on:
+  pull_request:
+    branches:
+      - phase2/postgres-logical-schema
+  push:
+    branches:
+      - phase2/postgres-logical-schema
+  workflow_dispatch:
+
+jobs:
+  postgres-regression:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare Supabase-compatible local roles/extensions
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create schema if not exists extensions;
+          create extension if not exists pgcrypto with schema extensions;
+          do $$
+          begin
+            if not exists (select 1 from pg_roles where rolname = 'anon') then
+              create role anon nologin;
+            end if;
+            if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+              create role authenticated nologin;
+            end if;
+            if not exists (select 1 from pg_roles where rolname = 'service_role') then
+              create role service_role nologin;
+            end if;
+          end
+          $$;
+          SQL
+
+      - name: Apply Phase 2 migrations in order
+        run: |
+          set -euo pipefail
+          for file in migrations/*.sql; do
+            echo "APPLY $file"
+            psql -v ON_ERROR_STOP=1 -f "$file"
+          done
+
+      - name: Run A-001 privilege regression
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
+
+      - name: Run Phase 2 isolation invariants
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_isolation_invariants.sql
+
+      - name: Run War Room isolation and integrity invariants
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_isolation_invariants.sql
+
+      - name: Run War Room multi-session governance races
+        run: |
+          python3 tests/sql/run_war_room_concurrency.py
+
+      - name: Set up Python for deterministic contract tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Core Python tests with auditable summary
+        working-directory: services/core
+        env:
+          NIPPAN_TEST_POSTGRES_ADMIN_DSN: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+          NIPPAN_TEST_POSTGRES_RUNTIME_DSN: postgresql://nippan_runtime:runtime_test@127.0.0.1:5432/postgres
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -e ".[test]"
+          python -m pytest -q tests | tee /tmp/pytest-summary.txt
+
+          {
+            echo "### Core pytest summary"
+            echo
+            echo '~~~text'
+            cat /tmp/pytest-summary.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prove War Room privilege negative control fails
+        run: |
+          set -euo pipefail
+          psql -v ON_ERROR_STOP=1 -c "grant update on public.project_room_participants to nippan_runtime"
+
+          set +e
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql > /tmp/war-room-negative-control.log 2>&1
+          status=$?
+          set -e
+
+          cat /tmp/war-room-negative-control.log
+
+          if [ "$status" -eq 0 ]; then
+            echo "negative control unexpectedly passed"
+            exit 1
+          fi
+
+          grep -Fq "nippan_runtime UPDATE mismatch on public.project_room_participants" /tmp/war-room-negative-control.log
+          psql -v ON_ERROR_STOP=1 -c "revoke update on public.project_room_participants from nippan_runtime"
+
+      - name: Clean privilege rerun after negative control
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
+
+      - name: Test War Room rollback path and clean reapply
+        run: |
+          set -euo pipefail
+          psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_rollback.sql
+          psql -v ON_ERROR_STOP=1 -f migrations/20260922231000_war_room_v1_increment_b.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/phase2_privilege_boundaries.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/war_room_isolation_invariants.sql
+          python3 tests/sql/run_war_room_concurrency.py
