@@ -37,6 +37,9 @@ permission:
 - โมเดลที่เคย approve แล้ว (roster) ถือว่าอนุมัติแล้ว ไม่ต้องถามซ้ำ
 - OpenCode Zen = FREE MODELS ONLY ห้ามเสนอ Zen แบบเสียเงิน
 - ทุกข้อเสนอต้องมี Primary + Backup (คนละ provider) + เหตุผล
+- Anti-redundancy (Owner ตั้งไว้): Primary + Backup ของ reviewer และ security
+  ต้องต่าง provider กับ Primary ของ builder เสมอ (ตรวจตอนจัดทีม และตรวจซ้ำ
+  เมื่อ builder เปลี่ยนตัว) — review ที่ใช้สมองเดียวกับคนเขียน ไม่นับว่าเป็นการตรวจ
 
 ## งานหลัก
 

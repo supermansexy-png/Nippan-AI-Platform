@@ -76,6 +76,23 @@ repeated scope violations.
 Allow **one** reasonable correction attempt. If the same model remains
 unsuitable, switch to Backup rather than repeatedly prompting it.
 
+### Anti-redundancy (independent review) policy
+
+Review and security work is only meaningful if it can catch the mistakes
+of the author that produced the work. Therefore:
+
+- The **Primary** and **Backup** of `reviewer` must both come from a
+  **different provider** than the current `builder` Primary.
+- The **Primary** and **Backup** of `security` must both come from a
+  **different provider** than the current `builder` Primary.
+- The anti-redundancy check applies to the model actually doing the work
+  (the current Primary), not only to the Backup. If the Builder's Primary
+  changes, the Reviewer/Security assignments must be re-checked.
+
+Rationale: if Reviewer runs on the same model (and provider) as the
+Builder, a systematic flaw in that model is invisible to the review. The
+reviewer must be a genuinely independent set of eyes, not the same brain.
+
 ## OpenCode Zen exception
 
 OpenCode Zen is **FREE MODELS ONLY**. Never apply OpenRouter's paid-model
