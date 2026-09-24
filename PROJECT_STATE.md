@@ -102,41 +102,12 @@ Initial FastAPI skeleton is checked in at `services/core`:
 - SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
 
 ## Independent Audit System
-Status: **SUSPENDED by Project Owner (2026-09-24)** — gates do not block; normal review/testing continue; paid auditor not invoked unless re-enabled. See `docs/warroom/decision-log.md`.
+Status: **SUSPENDED by Project Owner (2026-09-24)** — gates do not block; normal review/testing continue; historical audit records preserved; paid auditor not invoked unless re-enabled. See `docs/warroom/decision-log.md`.
 
-Authoritative protocol (when re-enabled):
+> Note: All gate blocks (25/50/75/90/100%), immediate trigger blocks, and PHASE 2 catch-up audit hold have been lifted. No milestone advancement requires audit approval while Suspended.
+
+Authoritative protocol (reference only — not active; re-enable via owner order):
 - `docs/audits/AUDIT_SYSTEM_V1.md`
-
-Mandatory progress gates:
-- 25%
-- 50%
-- 75%
-- 90%
-- 100%
-
-Immediate triggers:
-- major architecture changes
-- major security/authorization changes
-- major PostgreSQL/schema/RLS changes
-
-Independence:
-- Builder cannot self-approve
-- BLOCKER findings halt milestone advancement
-- remediation of a BLOCKER requires independent re-audit
-- 100% must PASS before milestone DONE
-- Primary Independent Auditor: Claude Opus 5 through OpenRouter, replaceable by configuration
-- specialist auditors may supplement the primary auditor
-
-Phase 2 catch-up status:
-- current ROADMAP enumerates 19 Phase 2 deliverables
-- 11 are recorded complete and 8 pending
-- equal-weight baseline progress: 57.9%
-- highest crossed gate: 50%
-- catch-up 50% audit is now due
-- evidence packet: `docs/audits/PHASE2_50_AUDIT_EVIDENCE_PACKET.md`
-- tracking: Issue #18
-- independent audit outcome: PENDING
-- milestone implementation advancement: ON HOLD until independent audit outcome permits continuation
 
 ## Parallel implementation track — Nippan AI War Room V1
 Status: INCREMENT B MERGED / INCREMENT C STARTED
