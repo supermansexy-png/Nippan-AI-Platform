@@ -1,0 +1,7 @@
+# Caddyfile — auto-HTTPS reverse proxy for n8n
+# Usage: caddy run --config services/dev/Caddyfile
+# Or mount as /etc/caddy/Caddyfile on production host
+
+ nippan.example.com {
+  reverse_proxy localhost:5678
+}
