@@ -1,4 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode/ling-3.0-flash-fin-free"
+  "model": "opencode/ling-3.0-flash-fin-free",
+  "mcp": {
+    "openrouter": {
+      "type": "remote",
+      "url": "https://mcp.openrouter.ai/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:OPENROUTER_API_KEY}"
+      }
+    }
+  }
 }
