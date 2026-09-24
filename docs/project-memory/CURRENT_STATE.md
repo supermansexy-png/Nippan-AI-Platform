@@ -62,6 +62,14 @@ Dev-time team = the repo agents in `.opencode/agents/`:
 - `builder.md`, `reviewer.md`, `security.md`, `ops.md`, `researcher.md` —
   dev-time specialists, all following the same protocol.
 
+All 7 roles are staffed (approved by owner 2026-09-24): Primary + Backup per
+role verified against the whole OpenRouter catalogue (T-014) with prices,
+provider diversity and anti-redundancy cross-checks passing — see
+`docs/product/MODEL_ROSTER.md` (single source for model choice; do not copy
+model names into role definitions). Rules enforced: value-first cost policy,
+catalogue-wide recruitment (Owner rule), anti-redundancy (reviewer/security
+must be a different model from builder's Primary AND Backup).
+
 Runtime roster (Developer/Model Scout/Cost Guard/Onboarding/Support/Router
 etc.) in `docs/warroom/ROLES.md` is the post-launch ecosystem; it is not built
 at dev time.
@@ -86,9 +94,24 @@ Access handled auth. This runtime is no longer the forward plan.
 
 ## Audit
 
-Independent paid Audit is PAUSED by the Project Owner. Do not invoke paid
-Independent Auditor unless the Project Owner re-enables it. Normal code review,
-security review, tests, CI and evidence verification remain allowed.
+Independent Audit System is **SUSPENDED** by the Project Owner (2026-09-24).
+Progress gates do not block milestones. Do not invoke the paid Independent
+Auditor unless the Project Owner re-enables it. Normal code review, security
+review, tests, CI and evidence verification remain allowed. Historical audit
+records under `docs/audits/` are preserved.
+
+## War Room (resumed 2026-09-24)
+
+Owner ordered War Room work brought back:
+1. for dev-time use in the AI team workflow
+2. as a backstage ecosystem for AI when the system runs
+
+Increment C audit-accepted progress remains 13/16 (81.25%); Track D
+(D-01/D-02/D-03) is the remaining acceptance work. Planning card: T-006
+(IN_PROGRESS). Draft cards: T-007 (D-01), T-008 (D-02), T-009 (D-03),
+T-010 (preview auth), T-011 (dual-use positioning).
+
+Dual-use positioning note written: `docs/proposals/WAR_ROOM_DUAL_USE_POSITIONING.md` (2026-09-24).
 
 ## Protected Production System
 
@@ -97,18 +120,20 @@ authorizes changes. Do not modify its service, data, credentials or workflows.
 
 ## Immediate Next Step
 
-Forward plan is the Phase A market test build order in
-`docs/warroom/STARTUP_PLAYBOOK.md`. Continue from Step 0 foundations
-(self-hosted n8n + PostgreSQL, lite schema tables, data-access/usage-tracker/
-monitor-log tools, owner alert channel, legal review). Work cards live in
-`TASKS.md` (T-001..T-004 READY).
+Owner accepted T-005 (audit suspension) and ordered War Room planning.
+T-006 IN_PROGRESS: draft cards T-007..T-011 ready for owner direction
+approval. Then execute Track D sequence T-007 → T-008 → T-009 (with T-010
+auth in parallel if scope allows) alongside Phase A Step 0 (T-001..T-004)
+within WIP limits (max 3 IN_PROGRESS).
 
-1. DO NOT build further War Room feature work from the old runtime history.
+1. War Room feature work is NO LONGER deferred — owner explicitly resumed it
+   for dev-time use and runtime backstage ecosystem.
 2. Treat `docs/future/` as archived blueprint; a step needing it must be
    flagged NEEDS_DECISION for Project Lead.
 3. Do not use the template folder anymore — it is merged into this workspace.
 4. Dev-time team = repo agents in `.opencode/agents/`; do not confuse them with
    runtime roles.
+5. Independent Audit System remains suspended — do not invoke paid auditor.
 
 ## Source-of-Truth Rule
 

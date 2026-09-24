@@ -8,12 +8,11 @@ claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 ## READY
 
 ### T-013 — Re-staff reviewer/security per anti-redundancy rule
-Status: REVIEW (รอพี่เชษอนุมัติ; ยังใช้ก่อนได้ แต่จะถูกแทนที่โดย T-014 catalog-wide scan)
-
+Status: DONE (พี่เชษอนุมัติ 2026-09-24; model picks superseded by T-014)
 
 
 ### T-014 — Catalog-wide scan: HR study the ENTIRE OpenRouter model catalogue and re-staff all 7 roles
-Status: READY
+Status: DONE (พี่เชษอนุมัติ 2026-09-24)
 Owner: —
 Role: Model-recruiter (HR)
 Risk: L1
