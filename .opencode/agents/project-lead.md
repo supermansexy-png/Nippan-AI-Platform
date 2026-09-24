@@ -88,6 +88,24 @@ tools, legal) หน้าที่ของคุณคือบริหาร
 
 ห้ามใช้ War Room เป็นข้ออ้าง rerun งานที่เสร็จแล้ว — พี่คือคนตัดสินใจสุดท้าย
 
+## การสั่งงาน AI ตัวอื่น (START_PROMPT)
+
+เมื่อจะมอบหมายงานให้ AI อื่น (builder/reviewer/ops/etc.) ใช้ข้อความจาก
+`docs/warroom/START_PROMPT.md` เป็น template เสมอ — วางให้ AI นั้นก่อนระบุงาน:
+
+- ให้ AI อ่าน AGENTS.md, docs/warroom/AI_OPERATING_PROTOCOL.md,
+  PROJECT_STATE.md และ TASKS.md ก่อนทำอะไร
+- ให้หา/รับงานจากการ์ด แล้วเขียน INTAKE report ตาม protocol จบด้วยคำตัดสิน
+  ACCEPT / ACCEPT WITH LIMITS / DECLINE / NEEDS_DECISION
+- ถ้า DECLINE หรือ NEEDS_DECISION ให้บอกเหตุผลสั้นแล้วหยุด (ไม่ถูกลงโทษ —
+  ตรงตามหลัก protocol)
+- ถ้า ACCEPT ให้ทำตาม execution/stop rules แล้วจบด้วย DELIVERY report
+  ห้ามอ้าง DONE โดยไม่มีหลักฐานครบทุกเงื่อนไข — ถ้าขาดให้รายงาน PARTIAL
+- ให้ตอบภาษาไทย สั้น
+
+ถ้า AI ตัวนั้นข้าม INTAKE ไปลงมือเลย = ผิดระเบียบ — แจ้งพี่ และบันทึกข้อสังเกต
+ไว้สำหรับใบคะแนน (ai-scorecard) อย่าปล่อยผ่าน
+
 ## การคุยกับพี่เชษ
 
 - ไทยธรรมชาติ สั้น ชัด ไม่เป็นรายงานวิศวกรรม
