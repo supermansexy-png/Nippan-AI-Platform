@@ -8,7 +8,7 @@ claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 ## READY
 
 ### T-015 — Repo Integrity Cleanup (commit real work, remove junk, correct card statuses)
-Status: REVIEW
+Status: DONE (Owner approved 2026-09-25; independent verification complete)
 Owner: builder (qwen3.7-flash) — 2026-09-24
 Role: Developer (builder) + Reviewer + Security
 Risk: L2
@@ -50,6 +50,15 @@ Security check: No secrets committed. Modified files contain only public model m
 Problems: None. All 4 conditional pass items addressed.
 Confidence: high — every factual claim cross-checked against live API data. All 23 transport tests pass (pytest -v).
 Next: Independent reviewer re-confirms CONDITIONAL PASS items resolved → card closes to DONE.
+
+CLOSURE — T-015 — Project Lead — 2026-09-25
+Status: DONE (Owner approved)
+Independent verification results:
+- Item 3 (T-002 live DB) → reviewer (z-ai/glm-5.3-flash) ran own SQL: all 7 lite_* tables exist, columns match LITE_SCHEMA_V1.md, RLS disabled per Phase A design. VERDICT: PASS. (Residual: anon/authenticated retain TRUNCATE grant — low, not API-exploitable.)
+- Item 4 (test exception narrowing) → Project Lead reviewed diff fb9ce5e: `except Exception` narrowed to (RuntimeError, ConnectionResetError, BrokenPipeError, ReadTimeout). Improved; residual: RuntimeError still broad but acceptable for an auth-focused test using a fake DB.
+- Items 1, 2, 5, 6, 7 previously verified (reviewer + security + PL/API).
+All done-when conditions met. Card closed DONE by Owner approval 2026-09-25.
+Commits: 9084c51, 08d6947, 32d50a6, 3713f84, 4b8a555, ccc4e8c, fb9ce5e, 20c3d44.
 
 ### T-013 â€” Re-staff reviewer/security per anti-redundancy rule
 Status: DONE (à¸žà¸µà¹ˆà¹€à¸Šà¸©à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´ 2026-09-24; model picks superseded by T-014)

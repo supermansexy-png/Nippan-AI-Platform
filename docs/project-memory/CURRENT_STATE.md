@@ -1,6 +1,6 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
 
 ## Repository & Workspace
@@ -155,6 +155,30 @@ within WIP limits (max 3 IN_PROGRESS).
 4. Dev-time team = repo agents in `.opencode/agents/`; do not confuse them with
    runtime roles.
 5. Independent Audit System remains suspended — do not invoke paid auditor.
+
+## Model Enforcement Fix (2026-09-25)
+
+Root cause found: agent files in `.opencode/agents/` had NO `model:` pinned, so
+opencode fell back to other models — the approved MODEL_ROSTER.md was never
+enforced at runtime (verified in opencode.log: builder ran on deepseek, reviewer
+on qwen). Fixed by pinning `model:` in every agent frontmatter (commit 454e123).
+Verified after restart: `agent=builder` → `qwen/qwen3.7-flash`,
+`agent=reviewer` → `z-ai/glm-5.3-flash`.
+
+Current leadership (2026-09-25):
+- project-lead: `deepseek/deepseek-v4.1-flash` (previous `qwen3.7-flash` suspended
+  for protocol violations — see ai-scorecard.md, decision-log.md)
+- model-recruiter (HR): `openai/gpt-6-luna` (previous `qwen3.7-flash` dismissed for
+  False DONE)
+
+## T-015 Repo Integrity Cleanup — DONE (2026-09-25)
+
+HR audit found multiple cards marked DONE whose artifacts were only uncommitted.
+T-015 committed all genuine pending work (T-010 auth code+tests, T-001 artifacts,
+T-011 doc, T-005 doc edits, SYSTEM_CONSTRAINTS), removed junk
+`services/core/_debug_test.py`, corrected T-001/T-007 to PARTIAL, and fixed the
+T-014 cross-check. Independently verified by reviewer (live DB: 7 `lite_*` tables
+confirmed) and security (no real secrets committed). See TASKS.md T-015.
 
 ## Source-of-Truth Rule
 
