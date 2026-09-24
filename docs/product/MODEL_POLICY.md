@@ -81,17 +81,20 @@ unsuitable, switch to Backup rather than repeatedly prompting it.
 Review and security work is only meaningful if it can catch the mistakes
 of the author that produced the work. Therefore:
 
-- The **Primary** and **Backup** of `reviewer` must both come from a
-  **different provider** than the current `builder` Primary.
-- The **Primary** and **Backup** of `security` must both come from a
-  **different provider** than the current `builder` Primary.
-- The anti-redundancy check applies to the model actually doing the work
-  (the current Primary), not only to the Backup. If the Builder's Primary
-  changes, the Reviewer/Security assignments must be re-checked.
+- The **reviewer** model must be a **different model** than the current
+  **builder** model — and this must hold whether the builder is running
+  its Primary or its Backup. Same rule for **security**.
+- Concretely: reviewer/security must not share a model with builder's
+  Primary **nor** builder's Backup. Checking "different provider" alone is
+  not enough — the actual model name must differ (a different provider
+  that happens to serve the same model still fails this rule).
+- If the Builder's Primary or Backup changes, the Reviewer/Security
+  assignments must be re-checked.
 
-Rationale: if Reviewer runs on the same model (and provider) as the
-Builder, a systematic flaw in that model is invisible to the review. The
-reviewer must be a genuinely independent set of eyes, not the same brain.
+Rationale: if Reviewer runs on the same model (even as a different
+provider, or only when the builder falls back) as the Builder, a
+systematic flaw in that model is invisible to the review. The reviewer
+must be a genuinely independent set of eyes, not the same brain.
 
 ## OpenCode Zen exception
 
@@ -138,6 +141,21 @@ Model choice lives in the current model roster, not in role definitions or
 agent prompts. A role (see `docs/warroom/ROLES.md`) is filled by whichever
 approved model is suitable at the time. Model Scout proposes swaps and
 Project Lead approves — no role permanently owns a specific model name.
+
+## Catalogue-wide recruitment (Owner rule)
+
+When recruiting a model for a role (choosing a Primary or Backup), the
+Model Scout / recruiter must scan the **whole OpenRouter catalogue**
+(500+ models) — not just the already-approved roster or previously known
+models. Scan systematically across multiple axes (price, popularity,
+recency, benchmarks) using server-side filters so every relevant slice of
+the catalogue is covered.
+
+Only after a full-catalogue scan may the recruiter conclude that a
+previously approved model is still the best pick — and the breadth of the
+scan (queries, rough coverage, date) must be recorded as evidence in the
+roster or DELIVERY. Picking from a stale shortlist without scanning is
+not allowed.
 
 ## What never changes because of this policy
 

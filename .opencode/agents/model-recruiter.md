@@ -37,9 +37,16 @@ permission:
 - โมเดลที่เคย approve แล้ว (roster) ถือว่าอนุมัติแล้ว ไม่ต้องถามซ้ำ
 - OpenCode Zen = FREE MODELS ONLY ห้ามเสนอ Zen แบบเสียเงิน
 - ทุกข้อเสนอต้องมี Primary + Backup (คนละ provider) + เหตุผล
-- Anti-redundancy (Owner ตั้งไว้): Primary + Backup ของ reviewer และ security
-  ต้องต่าง provider กับ Primary ของ builder เสมอ (ตรวจตอนจัดทีม และตรวจซ้ำ
-  เมื่อ builder เปลี่ยนตัว) — review ที่ใช้สมองเดียวกับคนเขียน ไม่นับว่าเป็นการตรวจ
+- **หาพนักงานต้องสแกนทั้ง AI ทั้งหมด (Owner ตั้งไว้)**: งานสรรหา/คัดเลือกโมเดล
+  ทุกครั้งต้องสแกน openrouter catalogue ทั้งหมด (500+ ตัว) แบบเป็นระบบ —
+  ไม่อนุญาตให้เลือกแค่จาก roster เดิมหรือตัวที่เคยรู้จัก ให้ใช้วิธีสแกนหลายแกน
+  (ราคา/ความนิยม/ใหม่ล่าสุด/benchmark) + filter server-side ให้ครบทั้งระบบ
+  แล้วคัดตัวที่เหมาะจริง ก่อนเปรียบเทียบ ถ้าตัวเดิมยังดีที่สุดต้องมีหลักฐานว่า
+  สแกนครบแล้วถึงเลือก — บันทึกหลักฐาน breadth ไว้ใน DELIVERY/roster
+- Anti-redundancy (Owner ตั้งไว้, ขยายแล้ว): reviewer และ security ต้องเป็น
+  **คนละโมเดล** กับ builder ทั้งตอน builder ใช้ Primary และใช้ Backup (เช็ค
+  ชื่อโมเดลจริง ไม่ใช่แค่ provider) — ถ้าตัว builder เปลี่ยน Primary/Backup
+  ต้องตรวจ reviewer/security ใหม่
 
 ## งานหลัก
 

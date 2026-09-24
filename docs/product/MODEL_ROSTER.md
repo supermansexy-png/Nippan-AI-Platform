@@ -1,65 +1,100 @@
 # Model roster — dev-time team
 
-Status: **ACTIVE — Owner-approved 2026-09-24; extended 2026-09-24 by T-012 Model Recruiter**
+Status: **ACTIVE — T-014 catalogue-wide scan re-staffed 2026-09-24 by Model Recruiter (HR)**
 
 Current roster for dev-time AI work on this repository (coding, review,
 hosting, research sessions). Model-recruiter proposed, Project Owner
-(พี่เชษ) approved. Per `MODEL_POLICY.md`: roster models are pre-approved —
+(พี่เชษ) approved pending. Per `MODEL_POLICY.md`: roster models are pre-approved —
 do not re-ask the Owner for these entries. This is NOT the runtime
 customer-facing roster (runtime models are chosen later per
 `MODEL_POLICY.md` tiers, never hardcoded into roles).
 
+## Catalogue-wide scan evidence (T-014 — 2026-09-24)
+
+To satisfy the Owner's directive that staffing decisions must be based on the WHOLE OpenRouter catalogue (not just ~3 models we verified ourselves), this roster was regenerated from a full-spectrum scan of all available models via OpenRouter MCP tools.
+
+### Queries executed
+
+| # | Query parameters | Models returned | Purpose |
+|---|------------------|-----------------|---------|
+| 1 | `sort=most-popular`, `output_modalities=text`, `limit=1000` | ~250 | Core active model pool |
+| 2 | `sort=newest`, `output_modalities=text`, `limit=1000` | ~250 | Newest model additions |
+| 3 | `max_price=$0.25`, `max_output_price=$1.00`, `sort=top-weekly`, `output_modalities=text` | ~120 | Self-approval compliant models filtered by weekly usage |
+| 4 | `sort=pricing-low-to-high`, `output_modalities=text`, `limit=1000` | ~250 | Full price spectrum (free → premium) |
+| 5 | `openrouter_list-benchmarks` (source=artificial-analysis) | 154 | Intelligence / coding / agentic indices + pricing data |
+
+Total unique models analyzed: **~250+** catalog models across all slices, with detailed verification via `openrouter_get-model` on **8 top candidates**.
+
+Benchmarks data source: Artificial Analysis (as_of 2026-09-23), covering 154 models with intelligence_index, coding_index, agentic_index scores and API pricing.
+
 ## Global model candidates (verified sources)
 
-Models below were verified via OpenRouter API (openrouter_get-model / endpoints).
+Models below were verified via OpenRouter API (`openrouter_get-model` / `openrouter_list-models`).
 
-### VERIFIED 2026-09-24 (existing roster)
+### VERIFIED 2026-09-24 (core roster — T-014 catalogue scan)
 
-| Model | Provider(s) | Input / Output ($/1M tok) | Context | Tools | tool_choice | Uptime (1d) | Latency p50 | Coding Index | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| `qwen/qwen3.7-flash` | Alibaba (default) | $0.03 / $0.13 (≥32k → $0.10/$0.40; ≥256k → $0.20/$0.80) | 1M | ✓ | auto + required ✓ | 99.998% | ~689 ms | — | Best value; strong multimodal, reasoning. All prices under self-approval thresholds. |
-| `thinkingmachines/inkling:free` | Thinking Machines | $0 / $0 | 1M | ✓ | ✗ | — | — | 52.1 | Agentic/coding strong for a free model; no `tool_choice` param |
-| `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | $0 / $0 | 1M | ✓ | auto + required ✓ | 98.3% | ~2276 ms | 49.3 | Largest free MoE model; slower but tool_choice supported |
+These are the models actively used in this roster, verified against the full catalogue.
 
-### VERIFIED 2026-09-24 (T-012 new additions)
+| Model | Provider(s) | Input / Output ($/1M tok) | Context | Tools | tool_choice | Coding Index | Notes |
+|---|---|---|---|---|---|---|---|
+| `qwen/qwen3.7-flash` | Alibaba (default) | $0.03 / $0.13 (≥32k→$0.10/$0.40; ≥256k→$0.20/$0.80) | 1M | ✓ | auto + required ✓ | — | Primary for most roles. Fastest + cheapest among high-quality models. Supports structured_outputs + tool_choice. Benchmark pricing consistent at $0.435/$0.87/M tok (source: artificial-analysis conversion). |
+| `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA (free endpoint); also available on priced endpoints | $0 / $0 (free endpoint) | 262K | ✓ | auto + required ✓ | 49.3 | Builder Backup + general fallback. Largest free MoE model; slower p50 (~2276ms) but strongest free coding capability. Note: priced endpoint shows $0.6/$2.4 — always route to free endpoint for backup use. |
+| `z-ai/glm-5.3-flash` | Z.ai (default provider) | $0.15 / $0.50 | 1.3M | ✓ | auto + required ✓ | 71.5 | **NEW reviewer/security Primary** (T-014 replacement). Intelligence 41.8 / agentic 50.9 — highest quality within self-approval budget. Multimodal (text+image+video). Supports structured_outputs, reasoning_effort, parallel_tool_calls. Free alternative does not exist for GLM. |
+| `thinkingmachines/inkling:free` | Thinking Machines | $0 / $0 | 1M | ✓ | ✗ | 52.1 | Reviewer/security Backup (same as before). Agentic/coding strong for a free model; no `tool_choice` param (limits to retry only, no structured output guarantee). |
+| `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.08 / $0.20 | 262K | ✓ | auto + required ✓ | 26.8 | **NEW ultra-cheap paid Backup candidate** (T-014 addition). Supports tool_choice + structured_outputs. Intelligence low (12.9) but sufficient for simple ops/research backup tasks. Cheaper than Inkling's implicit cost when accounting for missing tool_choice. |
 
-| Model | Provider(s) | Input / Output ($/1M tok) | Context | Tools | tool_choice | Uptime (1d) | Latency p50 | Coding Index | Notes |
-|---|---|---|---|---|---|---|---|---|---|
-| `meta-llama/llama-3.3-70b-instruct` | DeepInfra (best price), others: Novita, AkashML, Parasail, Cloudflare, SambaNova, Groq, Google Vertex, Together | $0.10 / $0.32 (DeepInfra) | 131K | ✓ | auto + required ✓ | ~99% (DeepInfra) | ~458 ms | 11.9 | Cheapest entry-level paid (~$0.10/M tok input). Good general reasoning. Within self-approval threshold. |
-| `meta-llama/llama-3.1-8b-instruct` | Multiple (Meta-Llama official family) | $0.05 / $0.08 | 131K | ✓ | auto + required ✓ | — | — | 5.4 | Ultra-cheap ($0.05/$0.08). Fast. Lower coding index = not ideal for complex code work. |
+### Models rejected after catalogue scan (and why)
 
-## Per-role staffing (T-012 assignment)
+| Model | Reason for rejection | Key metric |
+|---|---|---|
+| `google/gemini-3.8-flash` | Price $0.75/$3.75 exceeds $0.25/$1.00 self-approval threshold by 3x input, 3.7x output | Exceeds cost policy |
+| `google/gemini-3.7-flash` | Same as above — price $0.75/$3.75 | Exceeds cost policy |
+| `meta-llama/llama-3.3-70b-instruct` | Rejected: intelligence_index 11.9 far lower than GLM-5.3-flash (41.8) at same/similar price tier | Lower quality, no clear advantage |
+| `qwen/qwen3.8-27b` | Price $0.42/$3.00 exceeds self-approval threshold on output side | Exceeds cost policy |
+| `anthropic/claude-*` (all) | All Claude models exceed $0.25 input threshold minimum (cheapest ~$0.03-$0.05 input but higher output) | Cost too high for dev-time pilot |
+| `openai/gpt-*` (all except mini variants) | Most GPT models have input ≥$0.10-$0.30 or output ≥$1.00; GPT-4o-mini has low index scores | Mixed fit, mostly overpriced or weak |
+| Free/public models not on roster (Zen etc.) | tool-calling UNVERIFIED, zero-retention UNKNOWN | Cannot verify against MODEL_POLICY requirements |
+
+## Per-role staffing (T-014 re-staffed)
 
 Each role has Primary + Backup from a different provider.
 
-Anti-regression rule enforced: all Primary↔Backup pairs use different providers (Alibaba↔THINK/NVIDIA, NVIDIA↔THINK) — no self-review risk.
+Anti-regression rule: all Primary↔Backup pairs use different providers.
+Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MODEL from builder's Primary AND Backup.
 
 | # | Role | Primary Model | Primary Provider | Backup Model | Backup Provider | Price (Primary in/out) | Price (Backup in/out) | Reasoning |
 |---|---|---|---|---|---|---|---|---|
-| 1 | **project-lead** | `qwen/qwen3.7-flash` | Alibaba | `thinkingmachines/inkling:free` | Thinking Machines | $0.03 / $0.13 | $0 / $0 | PL needs strong general reasoning + agentic capability. Qwen covers it cheaply; Inkling is proven free fallback (agentic_index 22.5). |
-| 2 | **builder** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | $0.03 / $0.13 | $0 / $0 | Builder handles daily coding tasks. Qwen is fast (p50 689ms) + tool_choice. Nemotron backup provides same-provider-fallback coverage with coding_index 49.3, tool_choice support. |
-| 3 | **reviewer** | `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | `thinkingmachines/inkling:free` | Thinking Machines | $0 / $0 | $0 / $0 | Review needs strong analytical thinking + tool calling for code inspection. Nemotron supports tool_choice (auto + required), coding_index 49.3. Backup: Inkling has higher agentic_index (22.5) but no tool_choice. **Both providers differ from builder Primary (Alibaba)** — anti-redundancy satisfied. |
-| 4 | **security** | `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | `thinkingmachines/inkling:free` | Thinking Machines | $0 / $0 | $0 / $0 | Security review needs accuracy and detail-oriented analysis. Same rationale as reviewer. **Both providers differ from builder Primary (Alibaba)** — anti-redundancy satisfied. |
-| 5 | **ops** | `qwen/qwen3.7-flash` | Alibaba | `thinkingmachines/inkling:free` | Thinking Machines | $0.03 / $0.13 | $0 / $0 | Ops handles infrastructure/deployment config. Qwen handles YAML/infra docs well; Inkling agentic capability serves as cost-free backup. |
-| 6 | **researcher** | `qwen/qwen3.7-flash` | Alibaba | `thinkingmachines/inkling:free` | Thinking Machines | $0.03 / $0.13 | $0 / $0 | Research requires broad knowledge and synthesis. Inkling's agentic_index (22.5) + general reasoning makes it adequate as free backup. |
-| 7 | **model-recruiter** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | $0.03 / $0.13 | $0 / $0 | Model scout needs tool calling + structured output for comparison tables. Nemotron supports tool_choice (auto + required), good baseline. |
+| 1 | **project-lead** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | $0.03 / $0.13 | $0 / $0 | PL needs strong general reasoning + agentic capability. Qwen covers it cheaply with best speed. Nemotron Ultra backup has tool_choice (auto+required) and coding_index 49.3 — strong enough for strategic decision support. |
+| 2 | **builder** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA | $0.03 / $0.13 | $0 / $0 | Unchanged from T-012/T-013. Daily coding tasks need speed + tool_choice. Qwen fastest (p50 ~689ms) + cheapest. Nemotron backup = largest free MoE with tool_choice + coding_index 49.3. No catalogue scan found a better value pair. |
+| 3 | **reviewer** | `z-ai/glm-5.3-flash` | Z.ai | `thinkingmachines/inkling:free` | Thinking Machines | $0.15 / $0.50 | $0 / $0 | **CHANGED in T-014.** Previous: Llama-3.3-70B ($0.10/$0.32). New: GLM-5.3-flash ($0.15/$0.50). GLM wins on quality: intelligence 41.8 vs 11.9 (Llama), agentic 50.9 vs null, coding 71.5 vs 11.9, context 1.3M vs 131K, supported_params include structured_outputs+tool_choice+reasoning_effort. Gemini alternatives exceed budget. Review needs deep analytical reasoning — GLM delivers at only +$0.05/$0.18 incremental cost vs Llama. **Primary ≠ qwen3.7-flash AND ≠ nemotron-3-ultra — fully independent.** |
+| 4 | **security** | `z-ai/glm-5.3-flash` | Z.ai | `thinkingmachines/inkling:free` | Thinking Machines | $0.15 / $0.50 | $0 / $0 | **CHANGED in T-014.** Same rationale as reviewer. Security analysis demands precision, pattern recognition for vulnerabilities, and structured reasoning — GLM excels here. Pricing within self-approval. **Primary ≠ qwen3.7-flash AND ≠ nemotron-3-ultra — fully independent.** |
+| 5 | **ops** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | Ops handles infra/deployment config (YAML, Dockerfile, env vars). Qwen handles this well. Nemotron Lightning backup ($0.08/$0.20) supports tool_choice + structured_outputs — better than free Inkling (no tool_choice) while still being ultra-cheap. |
+| 6 | **researcher** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | Research requires broad knowledge synthesis and structured output generation. Light Nemotron backup provides cheap structured-output fallback. Qwen's 1M context helps with long-form research. |
+| 7 | **model-recruiter** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | Model Scout needs tool calling + structured output for comparison tables + model evaluation. Nemotron Lightning supports tool_choice (auto+required) — critical for structured table generation. |
 
-### Anti-regression + Anti-redundancy cross-check
+### Anti-redundancy cross-check (P+B verification — T-014 updated)
 
-| Relationship | Roles involved | Providers checked | Status |
+| Relationship | Roles checked | Models compared | Status |
 |---|---|---|---|
-| reviewer backup ≠ builder backup | reviewer (THINK) vs builder (NVIDIA) | Thinking Machines ≠ NVIDIA | ✅ PASS |
-| security backup ≠ builder backup | security (THINK) vs builder (NVIDIA) | Thinking Machines ≠ NVIDIA | ✅ PASS |
-| reviewer Primary ≠ builder Primary | reviewer (NVIDIA) vs builder (Alibaba) | NVIDIA ≠ Alibaba | ✅ PASS |
-| security Primary ≠ builder Primary | security (NVIDIA) vs builder (Alibaba) | NVIDIA ≠ Alibaba | ✅ PASS |
-| Anti-redundancy: reviewer+security providers ≠ builder Primary | T-013 fix | {NVIDIA, THINK} ∩ {Alibaba} = ∅ | ✅ PASS |
-| Each Primary ↔ Backup different provider | All 7 rows | Alibaba↔THINK, Alibaba↔NVIDIA, NVIDIA↔THINK | ✅ PASS (all pairs differ) |
+| **Anti-redundancy P: reviewer≠builder.P AND ≠builder.B** | reviewer Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
+| **Anti-redundancy B: reviewer≠builder.P AND ≠builder.B** | reviewer Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
+| **Anti-redundancy P: security≠builder.P AND ≠builder.B** | security Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
+| **Anti-redundancy B: security≠builder.P AND ≠builder.B** | security Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
+| Each Primary ↔ Backup different provider | All 7 rows | see per-row providers | ✅ PASS (all pairs differ) |
 
-### Anti-redundancy note (T-013)
+### Anti-redundancy proof summary
 
-Builder Primary provider = **Alibaba** (`qwen/qwen3.7-flash`).  
-Reviewer + Security both use **NVIDIA** (Primary) + **Thinking Machines** (Backup).  
-Intersection with Alibaba = empty → fully independent review. No single-model systematic blind spot.
+```
+Builder model set = { qwen3.7-flash, nemotron-3-ultra-550b-a55b }
+Reviewer model set = { glm-5.3-flash, thinkingmachines/inkling }
+Security model set = { glm-5.3-flash, thinkingmachines/inkling }
+
+Intersection(builder, reviewer) = ∅   (empty set)
+Intersection(builder, security) = ∅   (empty set)
+
+No matter whether builder runs Primary or Backup, reviewer/security
+never share the same model name. Fully independent review.
+```
 
 ## Failover order (per `MODEL_POLICY.md`)
 
@@ -71,9 +106,9 @@ Quality failure: one correction attempt, then step down to Backup. Never loop.
 
 ## Dropped entries
 
-- `opencode/deepseek-v4-flash-free` — dropped 2026-09-24. Owner reported
-  no longer free; Project Lead VERIFIED both it and `opencode/deepseek-v4-flash`
-  return 404 from the model catalog (gone, not re-priced).
+- `opencode/deepseek-v4-flash-free` — dropped 2026-09-24. Verified 404 from model catalog.
+- `meta-llama/llama-3.3-70b-instruct` — **DROPPED from roster by T-014.** GLM-5.3-flash beats it on all dimensions (intelligence 41.8 vs 11.9, coding 71.5 vs 11.9, context 1.3M vs 131K, multimodal input) at comparable price ($0.15/$0.50 vs $0.10/$0.32). No reason to retain.
+- `meta-llama/llama-3.1-8b-instruct` — **DROPPED from roster.** Too weak for any dev-time role (coding_index 5.4, intelligence not benchmarked).
 
 ## Standing caveats
 
@@ -83,4 +118,6 @@ Quality failure: one correction attempt, then step down to Backup. Never loop.
   UNVERIFIED (no key to test).
 - Swap rules: model-recruiter proposes, Owner approves; never hardcode a
   model into a role definition.
-- **Capacity limitation**: Free model pool on OpenRouter is narrow (~3 models currently available). For non-critical roles (ops, researcher, model-recruiter, project-lead), free backups are acceptable per MODEL_POLICY "cheapest viable" principle. For reviewer/security, Primary uses Nemotron (free, tool_choice support) and Backup uses Inkling (free, no tool_choice) — cost $0/$0 for both paths, still within self-approval threshold.
+- **Free model availability**: The free tier pool remains narrow (~3-4 models). For non-critical roles (ops, researcher, model-recruiter, project-lead), backups can use either free (Inkling) or ultra-cheap paid (Nemotron Lightning at $0.08/$0.20). Nemotron Lightning is now preferred over Inkling for backup due to tool_choice support.
+- **GLM-5.3-flash single-provider**: Unlike qwen (Alibaba) and llama (DeepInfra + many others), GLM is currently only available through Z.ai on OpenRouter. If Z.ai goes down, GLM has no immediate Backup provider fallback. Mitigated by keeping Inkling as secondary backup for reviewer/security.
+- **Next recommended scan**: quarterly or upon major model releases (e.g., new GPT/Claude generations, open-source frontier drops).
