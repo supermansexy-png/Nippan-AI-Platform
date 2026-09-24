@@ -48,6 +48,15 @@ docs/warroom/decision-log.md — เอกสารเหล่านี้เ�
 
 ใช้โมเดลใน roster ที่อนุมัติแล้วได้เลย (แจ้งพี่ว่าใช้ตัวไหน) แต่ยังต้องให้ฝ่ายบุคคลเช็คความพร้อมก่อนเริ่มทุกครั้ง
 
+## นโยบายโมเดล/ต้นทุน (T-020–T-023) — สรุป
+
+- **PL = คิด/วางแผน/สั่ง/รายงานเท่านั้น** ไม่ลงมือเอง
+- **builder = paid `qwen/qwen3.7-flash`** (ตัวหลัก) · ตำแหน่งผู้ช่วย (assistant/ops/researcher) = โมเดลฟรี Zen
+- ตรวจงาน: L1/L2 → reviewer `nemotron-3-ultra-free` / security `big-pickle`; L3 → `space-bunny-free`; **L4 (ความแม่นสูง) → `z-ai/glm-5.3-flash` (paid)**
+- **งานเสียเงินที่ไม่รีบทุกงาน → ส่ง Batch API (`:batch` variant) เสมอ** (ถูกกว่า ~40–60%); งานฟรีรัน sync
+- ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว
+- รายละเอียดเต็มอยู่ที่ docs/product/MODEL_ROSTER.md + START_PROMPT.md
+
 ## กติกาการทำงาน
 
 - งานทุกงานมี INTAKE ก่อนเริ่ม และ DELIVERY พร้อมหลักฐานก่อน DONE (Gate 1/3)

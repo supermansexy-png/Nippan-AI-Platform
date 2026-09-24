@@ -218,3 +218,19 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Task**: T-022 (Owner approved 2026-09-25).
 
 ---
+
+## DECISION — 2026-09-25 — Batch API for all non-urgent paid work (T-019)
+
+**Owner order**: "ใช้กับทุก l เลยที่ไม่รีบ" and "งานเสียเงินที่ไม่รีบทุกงานส่งเข้าที่นี้".
+
+**Decision**: every non-urgent **paid** task must be routed through the OpenRouter Batch API using the model's `:batch` variant (~40–60% cheaper, ≤24h window). Free-tier (OpenCode Zen) work stays synchronous. Batch is allowed at any risk level (L1–L4).
+
+**Constraint (VERIFIED)**: batch needs a `:batch` endpoint. Today only `z-ai/glm-5.3-flash:batch` ($0.06/$0.20) and `deepseek/deepseek-v4.1-flash:batch` ($0.112/$0.336) exist; the free Zen models have none.
+
+**Evidence**: T-019 smoke test — 5/5 completed via DeepInfra, 397 tokens = $0.00005, ~72 min.
+
+**Applied**: `MODEL_ROSTER.md`, `START_PROMPT.md`, `TASKS.md` (T-019).
+
+**Task**: T-019.
+
+---

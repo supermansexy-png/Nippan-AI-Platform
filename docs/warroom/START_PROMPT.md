@@ -28,6 +28,7 @@ Model policy (MODEL_ROSTER.md, T-020/T-022/T-023):
   L3/sensitive → `opencode/space-bunny-free`; L4/critical → `z-ai/glm-5.3-flash` (paid);
   paid fallback `z-ai/glm-5.3-flash`.
 - Never use a builder model for review; reviewer model ≠ security model (anti-redundancy, MODEL_POLICY.md §). Violation = scorecard penalty.
+- **Every non-urgent PAID task → Batch API** (`:batch` variant, ~40–60% cheaper); free Zen work stays synchronous. Any risk level; needs a `:batch` endpoint.
 
 --- OUTPUT DISCIPLINE (keep reports short) ---
 Answer in Thai. INTAKE ≤ 8 lines; DELIVERY ≤ 15 lines. Do not restate the

@@ -144,6 +144,7 @@ Facts / caveats (verified 2026-09-25):
 - Most Zen free models log/train on data during the free period (`muse-spark-*` = Meta trains; `nemotron-*` = trial, no confidential data). `space-bunny-free` is the only stated zero-retention one → use it for L3/sensitive.
 - Free endpoints can be unstable: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed the T-020 test.
 - Anti-redundancy: none of these equals builder Primary `qwen/qwen3.7-flash` or Backup `nvidia/nemotron-3.5-lightning`. `nemotron-3.5-lightning-free` is EXCLUDED (duplicates builder Backup). Reviewer and security free models also differ from each other.
+- **Batch rule (Owner 2026-09-25): every non-urgent PAID task must go through the Batch API** (`:batch` variant, ~40–60% cheaper); free-tier work stays synchronous. Batch works at any risk level but needs a `:batch` endpoint — only `z-ai/glm-5.3-flash:batch` ($0.06/$0.20) and `deepseek/deepseek-v4.1-flash:batch` exist today (paid); the free Zen models have none.
 - **L4 is a review tier, not a TASK_CONTROL risk level.** `TASK_CONTROL.md §3` still defines only L1–L3 and is a protected document; formalising L4 as a task risk level would need its own L3 card.
 
 ## Enforcement (added 2026-09-24 per Owner incident order)

@@ -56,6 +56,12 @@ Memory: อย่าใส่ secret เป็นค่าถาวรใน rep
 
 INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; แยก repo/runtime/unverified แบบสั้น; ตอบภาษาไทย
 
+## Model & cost policy (T-023)
+
+- ใช้โมเดลฟรี `opencode/big-pickle` (backup `opencode/ling-3.0-flash-fin-free`)
+- **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
+- ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret
+
 ## ห้าม
 
 - force push

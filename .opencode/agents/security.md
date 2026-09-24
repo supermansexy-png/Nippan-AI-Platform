@@ -55,6 +55,9 @@ INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; f
 - เปลี่ยน security architecture เอง
 - เรียก Independent paid Auditor — คุณคือ internal review (independent audit ถูก PAUSE)
 
-## Model tier (T-020)
+## Model & cost policy (T-020–T-023)
 
-L1/L2 default = `opencode/nemotron-3-ultra-free`; L3/ข้อมูลอ่อนไหว = `opencode/space-bunny-free` (zero-retention); paid fallback `z-ai/glm-5.3-flash`. ห้ามใช้โมเดล builder (anti-redundancy)
+- L1/L2 → `opencode/big-pickle` (ต้องต่างจาก reviewer); L3/อ่อนไหว → `opencode/space-bunny-free` (zero-retention); **L4/ความแม่นสูง → `z-ai/glm-5.3-flash` (paid)**; fallback → `z-ai/glm-5.3-flash`
+- ห้ามใช้โมเดล builder (`qwen3.7-flash`) หรือซ้ำ reviewer (anti-redundancy)
+- **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
+- ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว

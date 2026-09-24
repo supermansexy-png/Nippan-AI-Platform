@@ -83,7 +83,7 @@ Next: restart opencode to reload agent prompts; optionally a cheap reviewer pass
 ---
 
 ### T-019 — Batch API channel for non-urgent verification/review
-Status: IN_PROGRESS
+Status: DONE (smoke test completed 5/5; cost $0.00005)
 Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
 Role: Project Lead (tooling design; no paid specialist called yet)
 Risk: L2 (adds a paid async pipeline; non-customer-facing, but each run spends money)
@@ -103,6 +103,26 @@ SMOKE TEST — T-019 — Project Lead — 2026-09-25
 Batch id: batch-1790275398-ILOig9CLJodGDQi5paMF
 Submitted: 5 probes, model routed to `z-ai/glm-5.3-flash-20260826` (batch variant), endpoint /v1/chat/completions.
 Status at submit: validating → in_progress. Poll `get-batch` until terminal; record results + cost in DELIVERY.
+
+DELIVERY — T-019 — Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Status claimed: DONE
+Done-when check:
+- [x] batch eligibility recorded → VERIFIED (`z-ai/glm-5.3-flash:batch` $0.06/$0.20; `deepseek/deepseek-v4.1-flash:batch` $0.112/$0.336; `qwen/qwen3.7-flash` has none)
+- [x] smoke test completes end-to-end → VERIFIED (batch `batch-1790275398-ILOig9CLJodGDQi5paMF`: 5/5 completed, 0 failed, provider DeepInfra; created→finalized ≈72 min)
+- [x] workflow to feed results back → DEFINED: Project Lead polls `get-batch` until terminal, records the results/verdict into the task card + decision-log, then closes the review like a normal one; scope = **non-urgent L1/L2 only** (24h window)
+- [x] cost recorded → VERIFIED (usage 203 prompt + 194 completion tokens = **$0.00005**; matches batch rates → batch ≈ 40–60% cheaper than sync)
+- [x] owner informed → report
+Evidence: batch id + completed status + per-request results. probe-5 (17+25) = "42" correct; probe-1 answered "1" (wrong, but no context was given and the card's correct answer is 3); probes 2 and 4 hit the 60-token cap and returned no final answer — expected for a reasoning model with a tiny cap and no context.
+Changed: TASKS.md (card). No code/config.
+Not done: none
+Unverified: quality of batch reviews on real repo context (the smoke test intentionally gave no context)
+Problems: none
+Confidence: high that the batch mechanism + pricing work; low on smoke-test answer quality (by design)
+Next: use `z-ai/glm-5.3-flash:batch` for non-urgent L1/L2 reviews when ≤24h latency is acceptable.
+
+UPDATE — 2026-09-25 (Owner orders: "ใช้กับทุก l เลยที่ไม่รีบ" + "งานเสียเงินที่ไม่รีบทุกงานส่งเข้าที่นี้"):
+- **Rule: every non-urgent PAID task must be routed through the Batch API** (`:batch` variant, ~40–60% cheaper). Free-tier work stays synchronous.
+- Batch is allowed at any risk level (L1–L4); requires a `:batch` endpoint — today only `z-ai/glm-5.3-flash:batch` and `deepseek/deepseek-v4.1-flash:batch` (paid). The free OpenCode Zen models have NO batch endpoint.
 
 ---
 

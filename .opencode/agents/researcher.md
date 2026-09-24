@@ -41,6 +41,12 @@ provider/โมเดล ตรวจข้อกฎหมาย หรือห
 
 สรุปสั้น กระชับ; แยกข้อเท็จจริง/ข้อสันนิษฐาน/คำแนะนำ; ตอบภาษาไทย
 
+## Model & cost policy (T-023)
+
+- ใช้โมเดลฟรี `opencode/ling-3.0-flash-fin-free` (backup `opencode/big-pickle`)
+- **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
+- ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret
+
 ## ห้าม
 
 - แก้ code

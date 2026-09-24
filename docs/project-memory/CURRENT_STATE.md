@@ -80,8 +80,9 @@ Dev-time team = the repo agents in `.opencode/agents/`:
 - `model-recruiter.md` — HR / Model Recruiter (dev-time): finds models for the
   dev team under `MODEL_POLICY.md` cost/value rules ($0.25/$1.00 thresholds,
   Zen free-only, retry/failover, quality-failure).
-- `builder.md`, `reviewer.md`, `security.md`, `ops.md`, `researcher.md` —
-  dev-time specialists, all following the same protocol.
+- `builder.md`, `reviewer.md`, `security.md`, `ops.md`, `researcher.md`, `assistant.md` —
+  dev-time specialists, all following the same protocol. `assistant` (added 2026-09-25,
+  T-023) is a free-model general helper for support work.
 
 All 7 roles are staffed (approved by owner 2026-09-24): Primary + Backup per
 role verified against the whole OpenRouter catalogue (T-014) with prices,

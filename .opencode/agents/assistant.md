@@ -28,6 +28,13 @@ docs/warroom/TASK_CONTROL.md, PROJECT_STATE.md, TASKS.md
 
 INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; ตอบภาษาไทย; one line ต่อ Done-when
 
+## Model & cost policy (T-023)
+
+- คุณคือผู้ช่วย (helper) ใช้โมเดลฟรี `opencode/mimo-v2.6-flash-free` (backup `opencode/big-pickle`)
+- ไม่ใช่งาน builder ตัวหลัก (builder = paid `qwen3.7-flash`) และไม่ใช่ reviewer/security
+- **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
+- ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว
+
 ## ห้าม
 
 - ตัดสินใจ architecture/นโยบายแทน Project Lead หรือ Owner

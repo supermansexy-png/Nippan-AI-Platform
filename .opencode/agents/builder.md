@@ -47,6 +47,12 @@ permission:
 
 INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; ไม่ทวนการ์ด; one line ต่อ Done-when; ตอบภาษาไทย
 
+## Model & cost policy (T-023)
+
+- คุณคือ builder ตัวหลัก ใช้ `qwen/qwen3.7-flash` (paid) — โมเดลฟรีมีไว้ให้ตำแหน่งผู้ช่วย (assistant/ops/researcher) ไม่ใช่แทน builder
+- **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
+- ห้ามเปลี่ยน/ฮาร์ดโค้ดโมเดลเอง — เลือกตาม MODEL_ROSTER; ฟรี Zen ใช้ได้เฉพาะใน opencode
+
 ## ห้าม
 
 - deploy production เอง
