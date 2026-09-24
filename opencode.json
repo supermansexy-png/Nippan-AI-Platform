@@ -2,6 +2,11 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/ling-3.0-flash-fin-free",
   "default_agent": "project-lead",
+  "agent": {
+    "model-recruiter": {
+      "model": "openrouter/qwen/qwen3.7-flash"
+    }
+  },
   "mcp": {
     "openrouter": {
       "type": "remote",
