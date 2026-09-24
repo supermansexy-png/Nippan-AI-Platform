@@ -50,7 +50,9 @@ from .read_model import (
 )
 from .remote_auth import (
     AccessAuthenticationError,
+    ApiKeyValidationError,
     CloudflareAccessVerifier,
+    DevApiKeyAuthenticator,
     RemoteAccessVerifier,
 )
 from .service import (
@@ -336,6 +338,25 @@ async def _authorize_preview_request(
     settings: Settings,
     remote_access_verifier: RemoteAccessVerifier | None,
 ) -> None:
+    # 1. Try dev-time API key auth first (Bearer token path).
+    if settings.war_room_dev_api_key is not None:
+        try:
+            authenticator = DevApiKeyAuthenticator(
+                api_key=settings.war_room_dev_api_key,
+            )
+            bearer = request.headers.get("Authorization", "")
+            # Strip "Bearer " prefix if present; otherwise pass raw value.
+            token = bearer
+            if token.startswith("Bearer "):
+                token = token[7:].strip()
+            elif token.startswith("bearer "):
+                token = token[7:].strip()
+            if authenticator.authenticate(token):
+                return
+        except ApiKeyValidationError:
+            pass
+
+    # 2. Fall back to loopback-only when remote access is disabled.
     if not settings.war_room_preview_remote_access_enabled:
         if settings.war_room_preview_local_access_enabled:
             return
@@ -344,6 +365,8 @@ async def _authorize_preview_request(
             detail="war_room_preview_access_disabled",
         )
 
+    # 3. If remote access is enabled but no verifier is available and no API
+    #    key was configured, fail closed.
     if remote_access_verifier is None:
         raise HTTPException(
             status_code=403,

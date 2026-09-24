@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     # network-accessible. Client addresses and forwarding headers are not an
     # authentication boundary.
     war_room_preview_local_access_enabled: bool = Field(default=False)
+    # Dev-time API key for Bearer-token authenticated remote access.
+    # When set, requests presenting Authorization: Bearer <key> are accepted
+    # without Cloudflare Access or loopback checks. Unset means this path is
+    # unavailable (fail-closed). The value is compared using a constant-time
+    # hash so timing attacks cannot leak the key length.
+    war_room_dev_api_key: str | None = Field(default=None)
     # Optional remote preview gate. Remote mode always requires Cloudflare
     # Access JWT verification and an exact owner-email match; the verified
     # request is then mapped to the server-configured preview principal above.
