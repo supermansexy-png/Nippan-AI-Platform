@@ -8,8 +8,8 @@ claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 ## READY
 
 ### T-016 — Leftover consistency cleanup (docs + deployment config)
-Status: READY
-Owner: —
+Status: DONE (Owner approved 2026-09-25; reviewer PASS)
+Owner: builder (qwen3.7-flash) — 2026-09-25
 Role: Developer (builder) + Reviewer
 Risk: L2
 Goal: project docs and deployment config match verified reality (no stale/contradictory statements)
@@ -35,7 +35,7 @@ Done-when check:
 - [x] docker-compose ports bound to 127.0.0.1 → VERIFIED (postgres port: 127.0.0.1:5432:5432; n8n port: 127.0.0.1:5678:5678. DEPLOYMENT_GUIDE.md already uses localhost-only references — no edit needed there. Committed at bff6f5a.)
 - [x] Scope tight — no other files edited → VERIFIED (only PROJECT_STATE.md + TASKS.md touched; zero unrelated changes.)
 Changed: PROJECT_STATE.md (+2/-2 — residual "75% audit gate" line fixed), TASKS.md (+14 — honesty note in T-014 DELIVERY, follow-up note in T-016 DELIVERY), services/dev/docker-compose.yml (-2, +2)
-Commits: 2e7443d, ca6f093, bff6f5a, <follow-up>
+Commits: 2e7443d, ca6f093, bff6f5a, 1f3c0ea
 Unverified: None — all claims verified by diff inspection against source-of-truth docs and decision-log.
 Problems: Residual audit-gate language in "Immediate next gate" item 3 was missed in commit 2e7443d — same file, same scope, fixed immediately.
 Confidence: high — exact diffs match intended scope; git confirms working tree clean; no secrets or protected files touched.
