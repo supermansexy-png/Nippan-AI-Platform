@@ -14,3 +14,33 @@ Reason: all pass MODEL_POLICY self-approval thresholds; backups are free and
 from different providers than Primary; prices verified from live data.
 Task: roster recruitment (model-recruiter DELIVERY MR-DEV-ROSTER-REFRESH);
 owner approval in chat 2026-09-24.
+
+## 2026-09-24 — Project Lead — Independent Audit System suspended; War Room resumed
+Context: Owner pivoted to Phase A market test, then ordered War Room brought
+back for dev-time use and as a runtime backstage ecosystem, with the
+Independent Audit System removed from gating first.
+Decision: Suspend Independent Audit System progress gates (25/50/75/90/100)
+and immediate paid-audit triggers as blocking controls. Normal code review,
+tests, CI, security review and evidence verification continue. Historical
+audit records under docs/audits/ are preserved, not rewritten. Paid
+Independent Auditor remains not invoked unless the owner re-enables it.
+War Room V1 work (Track D and onward) may resume under normal task cards.
+Reason: Owner decision — audit pauses were blocking War Room completion;
+owner wants War Room available for dev workflow and future runtime ecosystem.
+Task: T-005 (audit suspension), T-006 (War Room resumption plan).
+
+## 2026-09-24 — Project Lead / Builder — War Room dev-time API key auth documented (fail-closed)
+Context: War Room preview endpoint needs a safe remote access path for owner
+to use from dev machine without exposing it publicly or relying solely on
+loopback. The code already supports Bearer-token API key auth via
+`DevApiKeyAuthenticator`; settings exist but were undocumented.
+Decision: Documented the existing auth path in `services/dev/WAR_ROOM_AUTH_GUIDE.md`,
+added auth-related env vars to `.env.example`. No code changes needed — the
+auth chain is: (1) try DevApiKeyAuthenticator with SHA-256 + hmac.compare_digest,
+(2) fallback to local-only if remote disabled, (3) Cloudflare JWT if remote enabled.
+Unauthenticated requests → HTTP 403. Fail-closed by design.
+Reason: Owner requested ability to access War Room from remote dev machine;
+existing code already implements this securely — only documentation was missing.
+Security properties: constant-time hash comparison, no timing side-channels,
+keys never logged, fail-closed when config absent.
+Task: T-010 (War Room preview access for dev-time use).
