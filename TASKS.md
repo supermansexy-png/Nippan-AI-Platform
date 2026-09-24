@@ -7,6 +7,26 @@ claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 
 ## READY
 
+### T-016 — Leftover consistency cleanup (docs + deployment config)
+Status: READY
+Owner: —
+Role: Developer (builder) + Reviewer
+Risk: L2
+Goal: project docs and deployment config match verified reality (no stale/contradictory statements)
+Done when: 1) PROJECT_STATE.md audit-gate text matches T-005 suspension (no active/on-hold contradiction); 2) T-014 card notes the scan-breadth limitation honestly (~250+ not confirmed 500+); 3) `services/dev/docker-compose.yml` ports bound to 127.0.0.1 (not all interfaces); 4) reviewer verdict
+Budget: ½ day
+Links: PROJECT_STATE.md, TASKS.md (T-014), services/dev/docker-compose.yml, docs/warroom/decision-log.md
+
+INTAKE — T-016 — Project Lead — 2026-09-25 (from HR audit residuals)
+Understanding: HR audit + reviewer found leftover inconsistencies: (a) PROJECT_STATE.md still describes audit gates as active/on-hold though T-005 suspended them; (b) T-014 claim does not state the scan-breadth limitation honestly; (c) docker-compose binds Postgres/n8n ports to all interfaces, exposing them if run on a public VM.
+Done when: (see card).
+Needs: git; edit rights.
+Missing: None.
+Plan: 1) builder edits PROJECT_STATE.md audit section to match T-005; 2) builder adds honest note to T-014 card; 3) builder changes docker-compose port bindings to 127.0.0.1; 4) reviewer verifies.
+Estimate: ½ day
+Risks: Over-editing docs beyond the flagged items (keep scope tight).
+Decision: ACCEPT — Team: builder(qwen3.7-flash P / nemotron-3.5-lightning B) + reviewer(z-ai/glm-5.3-flash P / inkling B). Readiness confirmed 2026-09-25 (direct probe: qwen3.7-flash READY, glm-5.3-flash READY).
+
 ### T-015 — Repo Integrity Cleanup (commit real work, remove junk, correct card statuses)
 Status: DONE (Owner approved 2026-09-25; independent verification complete)
 Owner: builder (qwen3.7-flash) — 2026-09-24
@@ -111,6 +131,7 @@ Done-when check:
 Changed: docs/product/MODEL_ROSTER.md (complete rewrite: scan evidence block, global candidates table with verified APIs, per-role staffing 7 rows, anti-redundancy cross-check extended to P+B verification)
 Not done: None
 Unverified: Free model real-time availability (known standing caveat); GLM-5.3-flash latency under concurrent load (single endpoint tested, not production load test)
+Note on scan breadth: The card's Goal stated "500+ models" but the actual verified scan covered ~250+ unique models across 5 catalogue slices (most-popular, newest, cheapest-budget, pricing-low-to-high, artificial-analysis benchmarks). The slice-based approach with limit=1000 per query and natural overlap means we never confirmed full catalogue enumeration of 500+. No attempt was made to enumerate every single OpenRouter model individually; evidence covers representative slices. This limitation should be considered for future full-catalogue verification tasks.
 Problems: 
 1. Gemini 3.7-flash à¹à¸¥à¸° 3.8-flash à¸—à¸±à¹‰à¸‡à¸«à¸¡à¸”à¸¡à¸µà¸£à¸²à¸„à¸² $0.75/$3.75 à¸‹à¸¶à¹ˆà¸‡à¹€à¸à¸´à¸™ self-approval threshold ($0.25/$1.00) à¸­à¸¢à¹ˆà¸²à¸‡à¸Šà¸±à¸”à¹€à¸ˆà¸™ â†’ à¸•à¹‰à¸­à¸‡à¸«à¸²à¸•à¸±à¸§à¸­à¸·à¹ˆà¸™à¸ªà¸³à¸«à¸£à¸±à¸š reviewer/security
 2. Nemotron-3-ultra à¸¡à¸µà¸—à¸±à¹‰à¸‡ free endpoint ($0/$0) à¹à¸¥à¸° priced endpoint ($0.6/$2.4) â€” roster à¸–à¸·à¸­à¸§à¹ˆà¸²à¹€à¸›à¹‡à¸™ free à¹à¸•à¹ˆ ranked availability à¸•à¹ˆà¸³à¸à¸§à¹ˆà¸²à¹€à¸¡à¸·à¹ˆà¸­à¹€à¸—à¸µà¸¢à¸šà¸à¸±à¸šà¸—à¸µà¹ˆà¸¡à¸µ pricelist à¸Šà¸±à¸”à¹€à¸ˆà¸™
