@@ -7,6 +7,32 @@ claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 
 ## READY
 
+### T-015 — Repo Integrity Cleanup (commit real work, remove junk, correct card statuses)
+Status: READY
+Owner: —
+Role: Developer (builder) + Reviewer + Security
+Risk: L2
+Goal: every DONE claim is backed by committed repository evidence; no stray/junk files; card statuses match reality
+Done when: 1) all legitimate pending work committed (T-010 auth code+tests, T-001 artifacts, T-011 doc, T-005 doc edits) after a no-secret check; 2) junk `services/core/_debug_test.py` removed; 3) T-001 and T-007 status corrected to PARTIAL; 4) T-014 cross-check corrected to current builder backup (nemotron-3.5-lightning); 5) T-002 migration re-verified against live DB; 6) reviewer verdict; 7) security confirms no secrets committed
+Budget: 1 working day
+Links: docs/warroom/ai-scorecard.md, docs/product/MODEL_ROSTER.md, TASKS.md (HR audit 2026-09-24)
+
+INTAKE — T-015 — Project Lead — 2026-09-24 (from HR audit findings)
+Understanding: The new HR audit (openai/gpt-6-luna) found multiple cards marked DONE whose real artifacts are only in the working tree (uncommitted) or whose DELIVERY itself says PARTIAL. Owner approved a Repo Integrity Cleanup card.
+Scope:
+- Commit real pending work: T-010 code (`services/core/app/war_room/remote_auth.py` DevApiKeyAuthenticator, `transport.py` integration, `settings.py` fields, 2 test files); T-001 artifacts (`services/dev/docker-compose.yml`, `Caddyfile`, `DEPLOYMENT_GUIDE.md`); T-011 doc (`docs/proposals/WAR_ROOM_DUAL_USE_POSITIONING.md`); T-005 doc edits (`ROADMAP.md`, `docs/audits/AUDIT_SYSTEM_V1.md`, `docs/project-memory/DECISIONS.md`); `docs/warroom/SYSTEM_CONSTRAINTS.md`.
+- Remove junk: `services/core/_debug_test.py`.
+- Correct statuses: T-001 → PARTIAL, T-007 → PARTIAL (both already effectively PARTIAL in DELIVERY).
+- Fix T-014 cross-check to reference current builder backup (nemotron-3.5-lightning, not nemotron-3-ultra).
+- Re-verify T-002 migration against live Supabase DB (live query evidence).
+Done when: (see card) all committed, junk gone, statuses corrected, cross-check fixed, live DB verified, reviewer verdict, security no-secret confirmation.
+Needs: git control; Supabase MCP for live verify; permission to delete `_debug_test.py`.
+Missing: None (owner approved).
+Plan: 1) security scans uncommitted files for secrets 2) builder commits legitimate work (grouped commits) + deletes junk 3) builder corrects card statuses + T-014 cross-check 4) builder/ops runs live DB verify for T-002 5) reviewer verifies 6) PL consolidates + reports Owner
+Estimate: ½–1 day
+Risks: A committed file could contain a secret (mitigated by security scan first); deleting the wrong file (mitigated by explicit path).
+Decision: ACCEPT — Team: builder(qwen3.7-flash P / nemotron-3.5-lightning B) + reviewer(z-ai/glm-5.3-flash P / inkling B) + security(z-ai/glm-5.3-flash P / inkling B). Anti-redundancy: reviewer/security (GLM) ≠ builder (qwen/nemotron) — PASS.
+
 ### T-013 â€” Re-staff reviewer/security per anti-redundancy rule
 Status: DONE (à¸žà¸µà¹ˆà¹€à¸Šà¸©à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´ 2026-09-24; model picks superseded by T-014)
 
@@ -312,7 +338,7 @@ Next: Owner sets NIPPAN_WAR_ROOM_DEV_API_KEY in .env, restarts service, verifies
 ## IN_PROGRESS
 
 ### T-001 â€” Choose and set up hosting for self-hosted n8n + PostgreSQL
-Status: DONE
+Status: PARTIAL
 Owner: Project Lead (mimo-v2.6-flash-free) â€” 2026-09-24
 Role: ops / Developer
 Risk: L2
@@ -387,7 +413,7 @@ Confidence: high
 Gate 4: owner APPROVED â†’ DONE.
 
 ### T-007 â€” War Room D-01: roster + ordered message surface (acceptance)
-Status: DONE
+Status: PARTIAL
 Owner: Project Lead (mimo-v2.6-flash-free) â€” 2026-09-24
 Role: Developer
 Risk: L2

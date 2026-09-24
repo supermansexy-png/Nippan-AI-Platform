@@ -38,7 +38,7 @@ These are the models actively used in this roster, verified against the full cat
 | Model | Provider(s) | Input / Output ($/1M tok) | Context | Tools | tool_choice | Coding Index | Notes |
 |---|---|---|---|---|---|---|---|
 | `qwen/qwen3.7-flash` | Alibaba (default) | $0.03 / $0.13 (≥32k→$0.10/$0.40; ≥256k→$0.20/$0.80) | 1M | ✓ | auto + required ✓ | — | Primary for most roles. Fastest + cheapest among high-quality models. Supports structured_outputs + tool_choice. Benchmark pricing consistent at $0.435/$0.87/M tok (source: artificial-analysis conversion). |
-| `nvidia/nemotron-3-ultra-550b-a55b:free` | NVIDIA (free endpoint); also available on priced endpoints | $0 / $0 (free endpoint) | 262K | ✓ | auto + required ✓ | 49.3 | Builder Backup + general fallback. Largest free MoE model; slower p50 (~2276ms) but strongest free coding capability. Note: priced endpoint shows $0.6/$2.4 — always route to free endpoint for backup use. |
+| `nvidia/nemotron-3.5-lightning:free` | NVIDIA (free endpoint); also available on priced endpoints | $0 / $0 (free endpoint) | 262K | ✓ | auto + required ✓ | 49.3 | Builder Backup + general fallback. Largest free MoE model; slower p50 (~2276ms) but strongest free coding capability. Note: priced endpoint shows $0.6/$2.4 — always route to free endpoint for backup use. |
 | `z-ai/glm-5.3-flash` | Z.ai (default provider) | $0.15 / $0.50 | 1.3M | ✓ | auto + required ✓ | 71.5 | **NEW reviewer/security Primary** (T-014 replacement). Intelligence 41.8 / agentic 50.9 — highest quality within self-approval budget. Multimodal (text+image+video). Supports structured_outputs, reasoning_effort, parallel_tool_calls. Free alternative does not exist for GLM. |
 | `thinkingmachines/inkling:free` | Thinking Machines | $0 / $0 | 1M | ✓ | ✗ | 52.1 | Reviewer/security Backup (same as before). Agentic/coding strong for a free model; no `tool_choice` param (limits to retry only, no structured output guarantee). |
 | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.08 / $0.20 | 262K | ✓ | auto + required ✓ | 26.8 | **NEW ultra-cheap paid Backup candidate** (T-014 addition). Supports tool_choice + structured_outputs. Intelligence low (12.9) but sufficient for simple ops/research backup tasks. Cheaper than Inkling's implicit cost when accounting for missing tool_choice. |
@@ -76,16 +76,16 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 
 | Relationship | Roles checked | Models compared | Status |
 |---|---|---|---|
-| **Anti-redundancy P: reviewer≠builder.P AND ≠builder.B** | reviewer Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
-| **Anti-redundancy B: reviewer≠builder.P AND ≠builder.B** | reviewer Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
-| **Anti-redundancy P: security≠builder.P AND ≠builder.B** | security Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
-| **Anti-redundancy B: security≠builder.P AND ≠builder.B** | security Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3-ultra-550b-a55b | ✅ PASS |
+| **Anti-redundancy P: reviewer≠builder.P AND ≠builder.B** | reviewer Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
+| **Anti-redundancy B: reviewer≠builder.P AND ≠builder.B** | reviewer Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
+| **Anti-redundancy P: security≠builder.P AND ≠builder.B** | security Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
+| **Anti-redundancy B: security≠builder.P AND ≠builder.B** | security Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
 | Each Primary ↔ Backup different provider | All 7 rows | see per-row providers | ✅ PASS (all pairs differ) |
 
 ### Anti-redundancy proof summary
 
 ```
-Builder model set = { qwen3.7-flash, nemotron-3-ultra-550b-a55b }
+Builder model set = { qwen3.7-flash, nemotron-3.5-lightning }
 Reviewer model set = { glm-5.3-flash, thinkingmachines/inkling }
 Security model set = { glm-5.3-flash, thinkingmachines/inkling }
 
