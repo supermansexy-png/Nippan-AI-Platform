@@ -1,7 +1,7 @@
 ﻿---
 description: Reviewer / Auditor (dev-time) ตรวจงานโดยคนละโมเดล หาบั๊ก regression และการอ้างเกินจริง ตามการ์ดงาน โดยไม่แก้ไฟล์
 mode: subagent
-model: openrouter/z-ai/glm-5.3-flash
+model: opencode/nemotron-3-ultra-free
 permission:
   edit: deny
   bash:
@@ -57,3 +57,7 @@ INTAKE ≤ 8 บรรทัด, DELIVERY/verdict ≤ 15 บรรทัด; fin
 - force push
 - เรียก paid auditor
 - ประดิษฐ์หลักฐาน
+
+## Model tier (T-020)
+
+L1/L2 default = `opencode/nemotron-3-ultra-free`; L3/ข้อมูลอ่อนไหว = `opencode/space-bunny-free` (zero-retention); paid fallback `z-ai/glm-5.3-flash`. ห้ามใช้โมเดล builder (anti-redundancy)

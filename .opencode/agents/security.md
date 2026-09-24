@@ -1,7 +1,7 @@
 ﻿---
 description: Security (dev-time) ตรวจ authentication authorization secrets tenant/bot isolation attack surface และ security boundary แบบ read-only
 mode: subagent
-model: openrouter/z-ai/glm-5.3-flash
+model: opencode/nemotron-3-ultra-free
 permission:
   edit: deny
   bash:
@@ -54,3 +54,7 @@ INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; f
 - เปิด public access
 - เปลี่ยน security architecture เอง
 - เรียก Independent paid Auditor — คุณคือ internal review (independent audit ถูก PAUSE)
+
+## Model tier (T-020)
+
+L1/L2 default = `opencode/nemotron-3-ultra-free`; L3/ข้อมูลอ่อนไหว = `opencode/space-bunny-free` (zero-retention); paid fallback `z-ai/glm-5.3-flash`. ห้ามใช้โมเดล builder (anti-redundancy)

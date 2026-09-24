@@ -189,6 +189,18 @@ added report-length caps: `START_PROMPT.md` 112→53 lines; agent prompts
 line counts only (realized token saving not measured). Requires an opencode
 restart to reload the agent prompts.
 
+## Review Tiers — free models for review (T-020) — DONE (2026-09-25)
+
+Owner approved using OpenCode Zen free models for reviewer/security at all levels:
+L1/L2 → `opencode/nemotron-3-ultra-free`; L3/sensitive → `opencode/space-bunny-free`
+(only stated zero-retention model); paid fallback `z-ai/glm-5.3-flash`. Applied to
+`MODEL_ROSTER.md` ("Review tiers"), `START_PROMPT.md` and the reviewer/security agent
+prompts. Zen's free tier works ONLY inside opencode (raw HTTP → 403 `FreeTierError`),
+and the Zen provider is NOT yet connected in opencode auth — so this does not take
+effect until the Owner connects Zen and opencode is restarted. A key was shared in
+chat and must be rotated. In the test, 8/11 free Zen models passed a planted-bug
+review task; `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.

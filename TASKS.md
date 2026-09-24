@@ -106,6 +106,69 @@ Status at submit: validating → in_progress. Poll `get-batch` until terminal; r
 
 ---
 
+### T-020 — Cost item 4: tier the review policy — free model for L1/L2, GLM-5.3 for L3
+Status: DONE (Owner approved 2026-09-25; applied to roster + agents + START_PROMPT — activation pending Zen connect + restart)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Model-recruiter (HR) proposes → Owner approves → Project Lead applies
+Risk: L2 (changes the dev review workflow; no customer impact; reversible)
+Goal: independent review/security checks for L1/L2 run on a free/cheap model; L3 and critical reviews stay on paid `z-ai/glm-5.3-flash`; anti-redundancy vs builder preserved
+Done when: 1) HR readiness evidence (availability/price/probe) for the free reviewer candidates; 2) anti-redundancy check vs builder set {qwen3.7-flash, nemotron-3.5-lightning}; 3) proposed tiering rows with prices; 4) Owner approval; 5) applied to MODEL_ROSTER.md + START_PROMPT.md enforcement line; 6) no protected doc touched
+Budget: 1 session planning; HR check bounded to the free-tier slice + direct probes (not a full 500+ catalogue sweep)
+Links: docs/product/MODEL_ROSTER.md, docs/product/MODEL_POLICY.md, docs/warroom/START_PROMPT.md, docs/warroom/DEV_WORKING_GUIDE.md
+
+INTAKE — T-020 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner approved item 4: "กลับมาทำข้อ 4 ตามระเบียบที่วาง")
+Understanding: Today every reviewer/security run uses paid z-ai/glm-5.3-flash. Tier it: L1/L2 (reversible, non-sensitive) reviewed by a free/cheap model; L3 (hard to undo / sensitive) stays GLM-5.3-flash. Follow DEV_WORKING_GUIDE process: plan → HR readiness → backup substitution → report → Owner approval → apply.
+Candidates (UNVERIFIED): `qwen/qwen3.8-27b:free` (coding 68.1, ctx 262k, tools+structured_outputs), `z-ai/glm-5.2:free` (coding 68.8, ctx only 32k), plus a bounded free-tier scan.
+Constraints: anti-redundancy (model name ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning); free-tier data-retention UNKNOWN → L1/L2 must be non-sensitive; no runtime/production impact.
+Plan: 1) HR checks candidate availability/price/probe + anti-redundancy; 2) HR proposes tiering + backups + how to record it; 3) report to Owner for approval; 4) apply to roster + START_PROMPT; 5) note restart needed.
+Estimate: under budget. Risks: free endpoint instability; free-tier logging; picking two models from the same family reduces review independence value.
+Decision: ACCEPT — team: model-recruiter (`openai/gpt-6-luna` P, `tencent/hy3-preview` B). HR scope bounded to the free-tier slice + direct probes (T-014 already did a full-catalogue scan 2026-09-24; this is a narrow tiering change). No specialist work called before Owner approves the final team (step 5).
+
+HR READINESS REPORT — T-020 — model-recruiter (openai/gpt-6-luna) — 2026-09-25
+Status: PARTIAL
+- `qwen/qwen3.8-27b:free`: metadata $0/$0, ctx 262k, tools + structured_outputs ✓, coding 68.1 — BUT probe failed twice with HTTP 404 "No allowed providers are specified" (no live free endpoint reached).
+- `z-ai/glm-5.2:free`: no tools, no structured_outputs, ctx 32k → unsuitable as reviewer.
+- Anti-redundancy: PASS by exact slug vs {qwen/qwen3.7-flash, nvidia/nemotron-3.5-lightning}; WEAKNESS flagged — same Qwen family as builder, weakens review independence.
+- Verdict: NEEDS_OWNER_DECISION — keep GLM-5.3 until a free endpoint is actually verified. Answer in Thai, said which model it used; no files edited.
+
+PL VERIFICATION — T-020 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (independent re-check of HR evidence)
+- VERIFIED via `openrouter_list-model-endpoints` on `qwen/qwen3.8-27b`: the endpoint list has NO $0 endpoint. Cheapest is Reka $0.094/$4.40 (output $4.40 far above the $1.00 budget). So the `:free` variant is not actually served → confirms HR's 404. The free option is NOT viable now.
+- Consequence: item 4 as written ("free model for L1/L2 review") cannot be implemented today. Per DEV_WORKING_GUIDE step 3 (backup substitution when the planned model is not ready) the fallback is the roster Backup → i.e. no change to the current paid reviewer.
+- Alternative that IS verified and cheaper: use the batch variant `z-ai/glm-5.3-flash:batch` ($0.06/$0.20, ~60% off; endpoint exists — proven by the T-019 smoke test) for non-urgent L1/L2 reviews, and keep sync `z-ai/glm-5.3-flash` for L3. Anti-redundancy unchanged; no new-model risk. Ties into T-019.
+- Awaiting Owner: A) adopt batch-first tiering for non-urgent L1/L2; B) keep the current policy.
+
+ZEN (opencode) CHECK — T-020 — Project Lead — 2026-09-25
+- Zen has many genuinely free models (models.dev provider "OpenCode Zen": ~33 free slugs, most with `tool_call=true`) — far better than OpenRouter's free tier, which had no live endpoint. Examples: `north-mini-code-free`, `glm-4.7-free`, `kimi-k2.5-free`, `deepseek-v4-flash-free`, `space-bunny-free` (zero-retention).
+- BLOCKER: opencode auth has ONLY `openrouter`; there is no OpenCode Zen API key. `GET https://opencode.ai/zen/v1/models` works without auth (200, public list) but `POST /zen/v1/chat/completions` returns **401 Unauthorized**. So no Zen model can be tested until Zen is connected.
+- Privacy caveat: most Zen free models log/train on data during the free period; `space-bunny-free` is the only stated zero-retention one. Anti-redundancy: avoid `nemotron-*-free` (builder Backup) and preferably `qwen*-free` (builder family).
+- Needed to run the Owner's "test all free Zen models" request: Owner connects Zen (opencode.ai/auth → `/connect`). Note Zen may ask for billing details; free models are $0 but auto-reload exists — Owner controls/disables it.
+
+ZEN FREE-MODEL TEST — T-020 — Project Lead — 2026-09-25 (Owner request: "เทสทั้งหมด")
+Method: Zen free tier works ONLY inside opencode — raw HTTP `POST /zen/v1/chat/completions` returns 403 `FreeTierError: OpenCode's free tier can only be used from within OpenCode` (verified with curl; `space-bunny-free` was the only raw-HTTP exception, 200). So each model was run via `opencode run --model opencode/<id>` on a code-review task with 2 planted bugs (missing `bot_id` filter = bot-isolation leak; off-by-one `range(len(rows)+1)`). Run by Project Lead because model-recruiter cannot reach Zen (no Zen credential in its toolset).
+Result: 8/11 usable; all 8 caught BOTH planted bugs.
+- PASS: `big-pickle` 16s · `muse-spark-1.3-contributor-free` 13s · `muse-spark-1.2-contributor-free` 13s · `mimo-v2.6-flash-free` 24s · `space-bunny-free` 16s (zero-retention) · `ling-3.0-flash-fin-free` 14s · `nemotron-3-ultra-free` 16s · `nemotron-3.5-lightning-free` 50s
+- FAIL: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` — all `UnknownError` ("Unexpected server error" / "Model is unavailable")
+Caveats: (a) every model also flagged a "SQL quote syntax error" that is likely an artifact of how the prompt text was passed through the CLI — treat that item as unreliable; (b) a single task is a weak quality signal — not a benchmark; (c) most free models log/train on data during the free period (only `space-bunny-free` is stated zero-retention; `muse-spark-*` = Meta trains; `nemotron-*` = trial, do not submit confidential data); (d) `nemotron-3.5-lightning-free` duplicates builder's Backup → anti-redundancy EXCLUDE.
+Recommendation (for Owner approval, step 5): L1/L2 reviewer+security Primary = `opencode/nemotron-3-ultra-free` (1M ctx, tools, 16s, caught both bugs); Backup = `opencode/space-bunny-free` (zero-retention) or `big-pickle`. L3 stays `z-ai/glm-5.3-flash`. Apply only after Owner approves + Zen provider is connected in opencode (auth currently has only `openrouter`). Supplied key was exposed in chat → rotate it.
+
+DELIVERY — T-020 — Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Status claimed: DONE (config/policy applied; runtime activation pending Zen connect + restart)
+Done-when check:
+- [x] HR readiness evidence → VERIFIED (HR PARTIAL; PL re-verified: OpenRouter free had no live endpoint, Zen free verified by direct test)
+- [x] anti-redundancy vs builder set → VERIFIED (nemotron-3-ultra-free / space-bunny-free / big-pickle ≠ qwen3.7-flash, ≠ nemotron-3.5-lightning; `nemotron-3.5-lightning-free` EXCLUDED)
+- [x] tiering rows with prices → VERIFIED (`MODEL_ROSTER.md` "Review tiers")
+- [x] Owner approval → VERIFIED (chat 2026-09-25: "อนุมัติ และให้ใช้งานกับ l1 2 3")
+- [x] applied to MODEL_ROSTER.md + START_PROMPT.md + reviewer/security agents → VERIFIED (edits applied)
+- [x] no protected doc touched → VERIFIED (START_PROMPT/MODEL_ROSTER/agent files are not in TASK_CONTROL §8)
+Changed: `docs/product/MODEL_ROSTER.md` (new "Review tiers" section + Enforcement item 2), `docs/warroom/START_PROMPT.md` (model rule), `.opencode/agents/reviewer.md` + `security.md` (model → `opencode/nemotron-3-ultra-free` + tier note)
+Not done: runtime activation (Zen provider not connected in opencode auth; agent prompts need a restart to reload)
+Unverified: free-model quality beyond the single planted-bug task; Zen free-tier stability; whether L3 using a free model is acceptable for sensitive inputs (privacy caveat recorded)
+Problems: raw-HTTP test first returned 403/400 — root-caused (FreeTierError + a quote artifact in the prompt text)
+Confidence: high on the config/policy change; medium on the free models as repeatable reviewers
+Next: Owner connects Zen (`/connect`) and rotates the exposed key; restart opencode; then run one real L1/L2 review as the first production proof.
+
+---
+
 ### T-012 â€” Staff the team: map all 7 dev roles to Primary + Backup models
 Status: READY
 Owner: â€”

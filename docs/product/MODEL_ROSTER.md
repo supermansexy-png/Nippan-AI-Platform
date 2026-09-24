@@ -122,12 +122,28 @@ Quality failure: one correction attempt, then step down to Backup. Never loop.
 - **GLM-5.3-flash single-provider**: Unlike qwen (Alibaba) and llama (DeepInfra + many others), GLM is currently only available through Z.ai on OpenRouter. If Z.ai goes down, GLM has no immediate Backup provider fallback. Mitigated by keeping Inkling as secondary backup for reviewer/security.
 - **Next recommended scan**: quarterly or upon major model releases (e.g., new GPT/Claude generations, open-source frontier drops).
 
+## Review tiers (T-020 — Owner approved 2026-09-25)
+
+Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 and L3.
+
+| Tier | reviewer / security Primary | Backup | Notes |
+|---|---|---|---|
+| L1/L2 (reversible, non-sensitive) | `opencode/nemotron-3-ultra-free` | `opencode/space-bunny-free` | Free; 1M ctx, tools. Caught both planted bugs in the T-020 test (2026-09-25). |
+| L3 (hard to undo / sensitive) | `opencode/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention. L3 inputs must be redacted. |
+| Paid fallback (free endpoint down) | `z-ai/glm-5.3-flash` | — | $0.15/$0.50. |
+
+Facts / caveats (verified 2026-09-25):
+- Zen free tier works ONLY inside opencode (`POST /zen/v1/chat/completions` → 403 `FreeTierError`). Requires the Zen provider connected in opencode auth.
+- Most Zen free models log/train on data during the free period (`muse-spark-*` = Meta trains; `nemotron-*` = trial, no confidential data). `space-bunny-free` is the only stated zero-retention one → use it for L3/sensitive.
+- Free endpoints can be unstable: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed the T-020 test.
+- Anti-redundancy: none of these equals builder Primary `qwen/qwen3.7-flash` or Backup `nvidia/nemotron-3.5-lightning`. `nemotron-3.5-lightning-free` is EXCLUDED (duplicates builder Backup).
+
 ## Enforcement (added 2026-09-24 per Owner incident order)
 
 Triggered by Incident: reviewer used `qwen3.7-flash` instead of required `z-ai/glm-5.3-flash`, violating anti-redundancy cross-checks. Also triggered by lack of live DB query evidence for L3 DELIVERY closeout.
 
 When Project Lead invokes specialist agents:
 1. Every task card INTAKE/DELIVERY must explicitly name the model slug being used (e.g., "builder (qwen3.7-flash)")
-2. Reviewer security reviews MUST use `z-ai/glm-5.3-flash` (Primary) — NO EXCEPTIONS. This is enforced by the START_PROMPT including "--model z-ai/glm-5.3-flash" parameter if supported, OR by explicitly stating the model requirement in the prompt.
+2. Reviewer/security reviews use the tiered model per "Review tiers" above: L1/L2 → `opencode/nemotron-3-ultra-free`; L3/sensitive → `opencode/space-bunny-free`; paid fallback `z-ai/glm-5.3-flash`. The builder model is never allowed (anti-redundancy). State the model in the START_PROMPT.
 3. Database-related tasks require live query evidence (`supabase_execute_sql` output or `supabase_list_tables` output) in DELIVERY reports. File existence alone is insufficient proof.
 4. Any future violation: HR will blacklist the non-compliant model from specialist roles immediately. 如果再发生类似事件 [model name] 将被禁止从 HR 调用执行工作.
