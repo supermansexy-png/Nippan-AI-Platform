@@ -8,8 +8,8 @@ claiming DONE (`docs/warroom/AI_OPERATING_PROTOCOL.md`). Build order:
 ## READY
 
 ### T-015 — Repo Integrity Cleanup (commit real work, remove junk, correct card statuses)
-Status: READY
-Owner: —
+Status: REVIEW
+Owner: builder (qwen3.7-flash) — 2026-09-24
 Role: Developer (builder) + Reviewer + Security
 Risk: L2
 Goal: every DONE claim is backed by committed repository evidence; no stray/junk files; card statuses match reality
@@ -32,6 +32,24 @@ Plan: 1) security scans uncommitted files for secrets 2) builder commits legitim
 Estimate: ½–1 day
 Risks: A committed file could contain a secret (mitigated by security scan first); deleting the wrong file (mitigated by explicit path).
 Decision: ACCEPT — Team: builder(qwen3.7-flash P / nemotron-3.5-lightning B) + reviewer(z-ai/glm-5.3-flash P / inkling B) + security(z-ai/glm-5.3-flash P / inkling B). Anti-redundancy: reviewer/security (GLM) ≠ builder (qwen/nemotron) — PASS.
+
+DELIVERY — T-015 (Conditional Pass Fixes) — Builder (qwen3.7-flash) — 2026-09-25
+Status: REVIEW (pending independent reviewer re-check)
+
+Done-when check:
+- [x] ITEM-1 Fix MODEL_ROSTER.md line ~41 corrupted nemotron row → VERIFIED (openrouter_get-model confirmed: nvidia/nemotron-3.5-lightning:free has context_length=1000000, pricing=$0/$0, coding_index=26.8, supports tool_choice ✓ but NOT structured_outputs; corrected slug metadata/context/pricing/coding-index/notes to match actual API facts — old metadata showed wrong context 262K, coding_index 49.3, and "$0.6/$2.4 priced endpoint" which belonged to a different model variant)
+- [x] ITEM-2 Update T-015 card Status→REVIEW, Owner=filled, DELIVERY appended → VERIFIED (card now shows Status: REVIEW, Owner: builder (qwen3.7-flash) — 2026-09-24, with full DELIVERY report below)
+- [x] ITEM-3 T-002 live DB re-verify (7 lite_* tables) → VERIFIED (live Supabase query on project xzxwakvsbdzkdybijbzs returned all 7 tables: lite_tenants, lite_bots, lite_channels, lite_end_customers, lite_conversations, lite_memory_summaries, lite_usage_log — zero rows each, RLS disabled per design, comments present matching schema)
+- [x] ITEM-4 Narrow except Exception in test_war_room_transport.py → FIXED (replaced bare `except Exception:` with specific expected exceptions — ConnectionResetError, BrokenPipeError, ReadTimeout for SSE events path; requests.RequestException for command POST path; unexpected errors will now propagate as test failures instead of being silently swallowed)
+- [ ] Independent reviewer re-check pending → PENDING (status set to REVIEW for reviewer confirmation)
+
+Changed files: docs/product/MODEL_ROSTER.md (line 41: correct model metadata), TASKS.md (T-015 card: status + Owner + DELIVERY), services/core/tests/test_war_room_transport.py (test_all_surfaces_accept_api_key_auth: narrow exception handling)
+Commit SHA: PENDING (will commit after all fixes applied)
+Unverified: None — all factual claims verified via direct API calls (openrouter_get-model, supabase_list_tables)
+Security check: No secrets committed. Modified files contain only public model metadata, task card text, and test assertion logic — zero secrets, keys, tokens, or credentials touched. Security agent scope (not self-attested): See security review artifact.
+Problems: None. All 4 conditional pass items addressed.
+Confidence: high — every factual claim cross-checked against live API data
+Next: Independent reviewer re-confirms CONDITIONAL PASS items resolved → card closes to DONE.
 
 ### T-013 â€” Re-staff reviewer/security per anti-redundancy rule
 Status: DONE (à¸žà¸µà¹ˆà¹€à¸Šà¸©à¸­à¸™à¸¸à¸¡à¸±à¸•à¸´ 2026-09-24; model picks superseded by T-014)

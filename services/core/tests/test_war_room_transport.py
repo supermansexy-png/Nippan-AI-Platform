@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 from fastapi import FastAPI, HTTPException
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, ReadTimeout
 
 from app.db import Database
 from app.settings import Settings
@@ -530,9 +530,9 @@ async def test_all_surfaces_accept_api_key_auth() -> None:
             )
             assert events_resp.is_server_error is False, \
                 f"Events returned server error {events_resp.status_code}"
-        except Exception as exc:
-            # SSE streaming may raise exceptions on fake DB — acceptable
-            print(f"Events endpoint raised (fake DB): {exc}")
+        except (RuntimeError, ConnectionResetError, BrokenPipeError, ReadTimeout) as exc:
+            # SSE streaming over fake DB may raise connection-level or DB errors — acceptable
+            print(f"Events endpoint raised (expected): {exc}")
 
         # Command → should NOT be 403 from transport auth;
         # failure from data layer (4xx/5xx) is expected with fake DB.
@@ -544,7 +544,7 @@ async def test_all_surfaces_accept_api_key_auth() -> None:
             )
             assert cmd_resp.status_code != 403, \
                 "Command returned 403 — API key auth failed"
-        except Exception as exc:
-            # Post to fake DB may crash — acceptable for auth-test purposes
-            print(f"Command endpoint raised (fake DB): {exc}")
+        except (RuntimeError, ConnectionResetError, BrokenPipeError, ReadTimeout) as exc:
+            # Post to fake DB may raise connection-level or DB errors — acceptable for auth-test purposes
+            print(f"Command endpoint raised (expected): {exc}")
 
