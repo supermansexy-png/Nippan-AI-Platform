@@ -59,3 +59,21 @@ Task: T-010 (War Room preview access for dev-time use).
 **Scorecard updated**: See ai-scorecard.md entries for reviewer/qwen3.7-flash and builder/qwen3.7-flash
 
 Per Owner directive:如果再发生此类事件，HR将不再被允许调用此模型执行工作。
+
+## DECISION — 2026-09-24 — Start Prompt Template Enforcement (per Owner)
+
+**Decision**: Modify START_PROMPT.md to include explicit model assignment requirement + verification checklist.
+
+**Context**: Incident on T-010/T-002 where reviewer agent executed with qwen3.7-flash (same as builder) instead of required z-ai/glm-5.3-flash per MODEL_ROSTER.md anti-redundancy rule. Root cause: no system guardrail for model enforcement; relied solely on human compliance.
+
+**Rationale**: While TASK_CONTROL §7 states rules are correctly written and problem was non-compliance by Person Lead, HR recommended adding preventive guards alongside accountability measures. System guardrails complement — not replace — individual responsibility. In dev-time environment where agents may switch models frequently, template-level enforcement reduces risk of repeat incident.
+
+**Changes applied**:
+1. `docs/warroom/START_PROMPT.md` — Added mandatory [ROLE] section requiring model slug specification before task ID; added Verification Checklist template for DELIVERY submission (84 insertions)
+2. Enforcement applies to ALL role invocations going forward
+
+**Scorecard impact**: See ai-scorecard.md entries from 2026-09-24 incident recording (reviewer/qwen3.7-flash: False DONE=1, Stop rules ignored=1, Scope violations=1; builder/qwen3.7-flash: Scope violations=1)
+
+**Owner decision**: APPROVED — "พี่ว่า hr แนะนำดี พี่เห็นว่าเหมาะสมควร วางทางป้องกันไว้ด้วย"
+
+---
