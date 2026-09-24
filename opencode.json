@@ -9,6 +9,11 @@
       "headers": {
         "Authorization": "Bearer {env:OPENROUTER_API_KEY}"
       }
+    },
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp",
+      "enabled": true
     }
   }
 }
