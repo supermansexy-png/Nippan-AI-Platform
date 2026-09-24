@@ -27,6 +27,20 @@ Estimate: ½ day
 Risks: Over-editing docs beyond the flagged items (keep scope tight).
 Decision: ACCEPT — Team: builder(qwen3.7-flash P / nemotron-3.5-lightning B) + reviewer(z-ai/glm-5.3-flash P / inkling B). Readiness confirmed 2026-09-25 (direct probe: qwen3.7-flash READY, glm-5.3-flash READY).
 
+DELIVERY — T-016 — Builder (qwen3.7-flash) — 2026-09-25
+Status claimed: DONE
+Done-when check:
+- [x] PROJECT_STATE.md audit-gate text matches T-005 suspension → VERIFIED (removed active-gate blocks: mandatory progress gates 25/50/75/90/100%, immediate triggers, independence rules, Phase 2 catch-up status with "ON HOLD" language. Added clear note that all blocks lifted. Changed "when re-enabled" → "reference only". Status line updated with "historical audit records preserved". Committed at 2e7443d.)
+- [x] T-014 card notes scan-breadth limitation honestly → VERIFIED (added Note on scan breadth after Unverified field: explains ~250+ unique models vs claimed 500+, slice-based approach limitation. Original DELIVERY text preserved intact. Committed at ca6f093.)
+- [x] docker-compose ports bound to 127.0.0.1 → VERIFIED (postgres port: 127.0.0.1:5432:5432; n8n port: 127.0.0.1:5678:5678. DEPLOYMENT_GUIDE.md already uses localhost-only references — no edit needed there. Committed at bff6f5a.)
+- [x] Scope tight — no other files edited → VERIFIED (only 3 files touched; zero unrelated changes.)
+Changed: PROJECT_STATE.md (-33 lines, +4), TASKS.md (+21 — honesty note in T-014 DELIVERY), services/dev/docker-compose.yml (-2, +2)
+Commits: 2e7443d, ca6f093, bff6f5a
+Unverified: None — all claims verified by diff inspection against source-of-truth docs and decision-log.
+Problems: None.
+Confidence: high — exact diffs match intended scope; git confirms working tree clean; no secrets or protected files touched.
+Next: Reviewer confirms DELIVERY against repo evidence; card can close to DONE.
+
 ### T-015 — Repo Integrity Cleanup (commit real work, remove junk, correct card statuses)
 Status: DONE (Owner approved 2026-09-25; independent verification complete)
 Owner: builder (qwen3.7-flash) — 2026-09-24
