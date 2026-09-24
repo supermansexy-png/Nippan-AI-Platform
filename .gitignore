@@ -1,0 +1,22 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Runtime
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# Tooling
+.DS_Store
+Thumbs.db
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
