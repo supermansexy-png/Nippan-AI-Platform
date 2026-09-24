@@ -73,6 +73,7 @@ Done-when check:
 - [x] before/after line counts recorded → VERIFIED (see Changed)
 - [x] owner told restart needed → in report (opencode restart required to reload agent prompts)
 Changed: START_PROMPT.md 112→53; project-lead.md 146→88; model-recruiter.md 99→68; builder.md 54→58; reviewer.md 55→59; security.md 52→56; ops.md 62→66; researcher.md 45→49; TASKS.md (card). Total diff: 158 insertions, 267 deletions.
+Commit: 7e074c4 (branch dev-workspace)
 Not done: independent reviewer verification (separate model would cost tokens — Owner to decide)
 Unverified: realized token saving (line-count proxy only; not measured)
 Problems: none
