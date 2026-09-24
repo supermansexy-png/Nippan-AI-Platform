@@ -177,4 +177,6 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 
 **Rationale**: The project is in the system-building phase; legal/compliance paperwork is not relevant to current build work.
 
+**Also removed (Owner order "ลบ")**: the STARTUP_PLAYBOOK Step 1 line "PDPA consent notice on first contact".
+
 ---

@@ -24,7 +24,6 @@ Exit: empty but real system; a red test event reaches the owner.
 - [ ] `chat-bot-core`, `memory-store` (layers 1 and 4 first)
 - [ ] `handoff-to-owner`, outage fallback message
 - [ ] `web-fetch`, `file-reader`, Onboarding flow (`docs/product/ONBOARDING_FLOW.md`)
-- [ ] PDPA consent notice on first contact
 - [ ] Auditor test pass: isolation between two test tenants; cannot reveal
       model; admits being an assistant when sincerely asked; hands off
       when unsure; replies fast enough for LINE's reply flow
