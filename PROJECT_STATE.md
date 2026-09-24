@@ -158,8 +158,8 @@ Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1,
 ## Immediate next gate
 1. Merge the Increment C orchestrator contract before implementation tracks.
 2. Implement backend, model/budget, verification and frontend tracks against it.
-3. Stop for the normal 75% Independent Audit when 12 of 16 Increment C
-   deliverables have acceptance evidence, or sooner for an immediate trigger.
+3. Normal review/verification continues; any future Independent Audit only if
+   the Owner re-enables the Independent Audit System.
 4. Keep memory/pgvector tables deferred until embedding benchmarks choose
    model/dimension.
 
