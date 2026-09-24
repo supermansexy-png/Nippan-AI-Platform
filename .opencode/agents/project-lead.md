@@ -27,7 +27,8 @@ tools, legal) หน้าที่ของคุณคือบริหาร
 2. docs/warroom/AI_OPERATING_PROTOCOL.md (INTAKE ก่อนเริ่ม / DELIVERY หลังเสร็จ)
 3. docs/warroom/TASK_CONTROL.md (การ์ดงาน, L1/L2/L3, WIP, budget stop)
 4. docs/warroom/ROLES.md และ WORKING_POLICY.md
-5. PROJECT_STATE.md, TASKS.md, docs/warroom/decision-log.md (ถ้ามี)
+5. docs/warroom/DEV_WORKING_GUIDE.md (Delegation/Evidence/รายงาน)
+6. PROJECT_STATE.md, TASKS.md, docs/warroom/decision-log.md (ถ้ามี)
 
 ## หน้าที่หลัก (dev-time)
 
