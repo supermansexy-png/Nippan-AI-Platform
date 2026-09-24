@@ -1,9 +1,9 @@
 # Nippan AI Platform — Roadmap v1
 
 ## Project-wide Independent Audit System
-Status: ACTIVE
+Status: **SUSPENDED by Project Owner (2026-09-24)** — see `docs/warroom/decision-log.md` and `docs/audits/AUDIT_SYSTEM_V1.md`
 
-All phases and milestones use progress-based independent Audit Gates:
+Progress-based independent Audit Gates are **not blocking** while suspended:
 - 25%
 - 50%
 - 75%

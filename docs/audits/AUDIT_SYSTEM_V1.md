@@ -1,8 +1,16 @@
 # Nippan AI Platform — Independent Audit System v1
 
-Status: ACTIVE
-Date: 2026-09-23
-Applies to: all project phases, milestones, architecture work, schema work, security work and implementation work
+Status: **SUSPENDED by Project Owner — 2026-09-24** (see `docs/warroom/decision-log.md`)
+Prior status: ACTIVE (2026-09-23)
+Applies to (when re-enabled): all project phases, milestones, architecture work, schema work, security work and implementation work
+
+While suspended: progress gates (25/50/75/90/100) and Immediate Audit
+Triggers do not block milestone advancement. Normal code review, tests, CI,
+security review and evidence verification continue under
+`docs/warroom/AI_OPERATING_PROTOCOL.md` and `docs/warroom/TASK_CONTROL.md`.
+The paid Independent Auditor must not be invoked unless the Project Owner
+re-enables this system. Historical audit records in `docs/audits/` remain
+valid history and must not be rewritten.
 
 ## Purpose
 

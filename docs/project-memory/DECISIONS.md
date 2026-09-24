@@ -40,9 +40,18 @@ Use models/tools according to the task.
 
 Avoid unnecessary paid-model calls.
 
-Independent Audit through OpenRouter/Claude Opus is currently paused.
+Independent Audit System (progress gates + paid auditor) is SUSPENDED by
+Project Owner (2026-09-24). Historical audit records are preserved.
+Do not restart it unless explicitly instructed by Project Owner.
 
-Do not restart Independent Audit unless explicitly instructed by Project Owner.
+## War Room
+
+War Room V1 work is RESUMED by Project Owner (2026-09-24) for:
+1. dev-time use in AI team workflow
+2. future runtime backstage ecosystem for AI
+
+Track D and onward proceed under normal task cards; audit gates no longer
+block.
 
 ## Governance
 
