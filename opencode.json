@@ -3,6 +3,9 @@
   "model": "opencode/ling-3.0-flash-fin-free",
   "default_agent": "project-lead",
   "agent": {
+    "project-lead": {
+      "model": "openrouter/deepseek/deepseek-v4.1-flash"
+    },
     "model-recruiter": {
       "model": "openrouter/qwen/qwen3.7-flash"
     }

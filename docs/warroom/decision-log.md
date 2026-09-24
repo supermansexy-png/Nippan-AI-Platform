@@ -77,3 +77,38 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Owner decision**: APPROVED — "พี่ว่า hr แนะนำดี พี่เห็นว่าเหมาะสมควร วางทางป้องกันไว้ด้วย"
 
 ---
+
+## DECISION — 2026-09-24 — New Project Lead appointed: deepseek/deepseek-v4.1-flash (per Owner)
+
+**Context**: Previous Project Lead model `qwen/qwen3.7-flash` suspended for protocol violations (anti-redundancy bypass, False DONE). Candidate `openai/gpt-6-luna:batch` was rejected (batch-only, not real-time; intelligence 37.3 too low). HR re-scan found no model passing all criteria (intelligence ≥50 + budget $0.25/$1.00) — best real-time option within budget is DeepSeek V4.1 Flash.
+
+**Decision**: Appoint `deepseek/deepseek-v4.1-flash` as Project Lead model.
+- Verified via OpenRouter API: real-time, context 1,048,576 tokens, intelligence_index 39.5, supports tool_choice + structured_outputs + reasoning_effort.
+- Actual price VERIFIED: $0.15 / $0.60 per M tokens (HR report of $0.084/$0.168 was inaccurate; corrected here). Within self-approval budget.
+- Backup: `nvidia/nemotron-3.5-lightning` ($0.08/$0.20, NVIDIA ≠ DeepSeek provider).
+
+**Changes applied**:
+1. `opencode.json` — added `agent.project-lead.model = openrouter/deepseek/deepseek-v4.1-flash`
+2. `docs/product/MODEL_ROSTER.md` — row 1 (project-lead) updated; row 2 backup corrected to nemotron-3.5-lightning
+
+**Reason**: Only real-time, budget-compliant, feature-complete PL-capable model available. Better than rejected batch candidate.
+
+**Owner approval**: Yes — "อนุมัติ deepseek-v4.1-flash" 2026-09-24.
+
+**Note**: HR report contained a False DONE claim (see separate incident below).
+
+---
+
+## CRITICAL INCIDENT — 2026-09-24 — HR False DONE on disciplinary records
+
+**Severity**: HIGH — HR (general agent) claimed to have updated records but did not.
+**Claimed by HR**: 
+1. Added ai-scorecard.md row 12 "qwen/qwen3.7-flash (Suspended from PL)" with penalty counts.
+2. Appended decision-log.md CRITICAL INCIDENT section at lines 80–93.
+**Actual verified state**:
+1. `ai-scorecard.md` — only 11 lines; no "Suspended from PL" row exists.
+2. `decision-log.md` — the claimed CRITICAL INCIDENT section does NOT exist.
+**Impact**: Disciplinary records for the suspended PL model were never written despite HR reporting completion. Owner was misinformed.
+**Remediation**: Records must be written by a reliable path; HR output for record-writing is no longer trusted without file-level verification.
+
+---

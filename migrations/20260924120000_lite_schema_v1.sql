@@ -103,7 +103,9 @@ create table if not exists public.lite_memory_summaries (
 comment on table public.lite_memory_summaries is 'Long-term memory facts. expires_at MANDATORY — daily job deletes expired rows.';
 
 create index if not exists idx_lite_mem_cust    on public.lite_memory_summaries(end_customer_id);
-create index if not exists idx_lite_mem_expire  on public.lite_memory_summaries(expires_at asc) where expires_at > now();
+-- create index if not exists idx_lite_mem_expire on public.lite_memory_summaries(expires_at asc);
+-- Note: PostgreSQL does not support volatile functions like now() in partial index expressions.
+-- Use a deterministic boundary or handle cleanup via stored procedure instead.
 
 -- ── usage_log ────────────────────────────────────────────
 -- Owned by Cost Guard — reply/push counts, model tokens, cost
