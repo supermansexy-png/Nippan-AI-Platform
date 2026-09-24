@@ -4,6 +4,12 @@ Status: **ACTIVE â€” the build order for `ROADMAP.md` Phase A**
 
 This file is the single source for "what comes next". `PROJECT_STATE.md`
 says what exists; `TASKS.md` holds the task cards for the current step.
+
+Scope note (2026-09-25): this playbook is the authoritative build plan for the Phase A
+market test. ROADMAP.md (full-stack Phases 0-10) is archived design reference. The War
+Room track remains an ACTIVE separate dev-time track (TASKS.md T-007/T-008/T-009) and
+is not part of this playbook.
+
 Steps are in dependency order. Each step ends with a go/adjust checkpoint
 from `docs/warroom/TASK_CONTROL.md` section 10.
 

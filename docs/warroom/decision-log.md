@@ -180,3 +180,21 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Also removed (Owner order "ลบ")**: the STARTUP_PLAYBOOK Step 1 line "PDPA consent notice on first contact".
 
 ---
+
+## DECISION — 2026-09-25 — Plan consolidated: Phase A playbook authoritative; ROADMAP archived; War Room stays ACTIVE
+
+**Owner order**: "ใช้ไม่พัก warroom" (do not park War Room).
+
+**Findings from plan review**:
+- The repo carried two divergent plans: `STARTUP_PLAYBOOK.md` (Phase A market test: n8n + lite schema) and `ROADMAP.md` (old full-stack Phases 0–10).
+- The War Room track is NOT merely planned — it is substantially IMPLEMENTED in code: `services/core/app/war_room/*` (RoomCommandType PREPARE/START/PAUSE/RESUME/STOP/ASK_ROLE/ASK_ALL/REQUEST_OWNER_DECISION/SUBMIT_OWNER_DECISION, full state machine, service mapping) and `services/control-plane-web/war-room/` (buttons for all lifecycle commands; renders agenda/findings/decisions/usage/cost). T-008/T-009 are ACCEPTANCE cards, not new builds.
+
+**Decision**:
+1. `STARTUP_PLAYBOOK.md` is the authoritative build plan for the Phase A market test.
+2. `ROADMAP.md` marked ARCHIVED BLUEPRINT (full-stack design reference; see `docs/future/`).
+3. `PROJECT_STATE.md` reframed: Phase A current; Phase 1/2 content archived.
+4. The War Room track stays ACTIVE as a separate dev-time track (T-007/T-008/T-009) — NOT parked, NOT archived.
+
+**Next**: verify War Room acceptance (T-008/T-009) against Issue #35 checklists since the features already exist.
+
+---

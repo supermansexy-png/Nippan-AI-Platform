@@ -1,4 +1,10 @@
-# Project State
+﻿# Project State
+
+> **STATUS (2026-09-25): Current plan = PHASE A MARKET TEST** (self-hosted n8n + PostgreSQL lite schema + OpenRouter).
+> Authoritative build order: `docs/warroom/STARTUP_PLAYBOOK.md`.
+> The "Phase 1 / Phase 2 - Core Runtime Skeleton" content below is archived full-stack
+> design reference (see `docs/future/`) and is NOT part of the Phase A system build.
+> The War Room (T-007/T-008/T-009) is a SEPARATE ACTIVE dev-time track, not this playbook.
 
 Updated: 2026-09-23
 
@@ -52,7 +58,7 @@ Applied to Supabase `nippan-ai-platform`:
 
 #### Phase A Lite Schema (n8n workflow data layer)
 Applied to same Supabase project (tables use `lite_` prefix to avoid name conflict with Phase 2):
-- `20260924120000_lite_schema_v1.sql` — 7 tables: lite_tenants, lite_bots, lite_channels, lite_end_customers, lite_conversations, lite_memory_summaries, lite_usage_log
+- `20260924120000_lite_schema_v1.sql` â€” 7 tables: lite_tenants, lite_bots, lite_channels, lite_end_customers, lite_conversations, lite_memory_summaries, lite_usage_log
 
 Lite schema properties:
 - Every customer table has BOTH tenant_id AND bot_id as FKs (isolation boundary)
@@ -102,14 +108,14 @@ Initial FastAPI skeleton is checked in at `services/core`:
 - SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
 
 ## Independent Audit System
-Status: **SUSPENDED by Project Owner (2026-09-24)** — gates do not block; normal review/testing continue; historical audit records preserved; paid auditor not invoked unless re-enabled. See `docs/warroom/decision-log.md`.
+Status: **SUSPENDED by Project Owner (2026-09-24)** â€” gates do not block; normal review/testing continue; historical audit records preserved; paid auditor not invoked unless re-enabled. See `docs/warroom/decision-log.md`.
 
 > Note: All gate blocks (25/50/75/90/100%), immediate trigger blocks, and PHASE 2 catch-up audit hold have been lifted. No milestone advancement requires audit approval while Suspended.
 
-Authoritative protocol (reference only — not active; re-enable via owner order):
+Authoritative protocol (reference only â€” not active; re-enable via owner order):
 - `docs/audits/AUDIT_SYSTEM_V1.md`
 
-## Parallel implementation track — Nippan AI War Room V1
+## Parallel implementation track â€” Nippan AI War Room V1
 Status: INCREMENT B MERGED / INCREMENT C STARTED
 
 Tracking:
