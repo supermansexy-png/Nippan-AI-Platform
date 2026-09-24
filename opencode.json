@@ -14,6 +14,11 @@
       "type": "remote",
       "url": "https://mcp.supabase.com/mcp",
       "enabled": true
+    },
+    "render": {
+      "type": "remote",
+      "url": "https://mcp.render.com/mcp",
+      "enabled": true
     }
   }
 }
