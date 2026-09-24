@@ -21,10 +21,12 @@ Role: [ROLE] (docs/product/MODEL_ROSTER.md row [ROW])
 Primary: `[PRIMARY_MODEL_SLUG]`   Backup: `[BACKUP_MODEL_SLUG]`
 Retry Primary at most once, then switch to Backup; if both fail, STOP and
 report. Name the model actually used in DELIVERY.
-Reviewer/security model by risk (MODEL_ROSTER.md "Review tiers", T-020):
-L1/L2 → `opencode/nemotron-3-ultra-free`; L3/sensitive → `opencode/space-bunny-free`
-(zero-retention); paid fallback `z-ai/glm-5.3-flash`. Never a builder model
-(anti-redundancy, MODEL_POLICY.md §). Violation = scorecard penalty.
+Model policy (MODEL_ROSTER.md, T-020/T-022):
+- Execution roles (builder/ops/researcher) = free Zen models (`opencode/...`).
+- Reviewer/security by risk: L1/L2 → `opencode/nemotron-3-ultra-free`;
+  L3/sensitive → `opencode/space-bunny-free`; L4/critical → `z-ai/glm-5.3-flash` (paid);
+  paid fallback `z-ai/glm-5.3-flash`.
+- Never use a builder model for review (anti-redundancy, MODEL_POLICY.md §). Violation = scorecard penalty.
 
 --- OUTPUT DISCIPLINE (keep reports short) ---
 Answer in Thai. INTAKE ≤ 8 lines; DELIVERY ≤ 15 lines. Do not restate the

@@ -198,3 +198,23 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Next**: verify War Room acceptance (T-008/T-009) against Issue #35 checklists since the features already exist.
 
 ---
+
+## DECISION — 2026-09-25 — Cost policy: free models for execution, paid GLM for L4 verification (T-022)
+
+**Owner order**: "งานตรวจสอบ หรืองานแก้ไขต่างๆ ใช้ของฟรี งานที่เราต้องทำเองไม่ต้อง เราแค่คิดพอ" and "งานตรวจสอบที่ต้องการความถูกต้องสูง l4 ควรเป็นตัวที่เสียเงินที่เราเลือกไว้".
+
+**Decision**:
+1. Project Lead = think/plan/orchestrate only (no hands-on execution).
+2. Execution roles (builder/ops/researcher) → free OpenCode Zen models.
+3. Reviewer/security tiered by risk: L1/L2/L3 → free Zen; **L4 (critical / high-accuracy) → paid `z-ai/glm-5.3-flash`**.
+4. `small_model` set to a free model (was a paid Zen model failing with "Insufficient account funds").
+
+**Applied**: `MODEL_ROSTER.md` (review tiers + per-role rows + anti-redundancy), `START_PROMPT.md`, `.opencode/agents/{builder,ops,researcher}.md`, `opencode.json`.
+
+**Reason**: cut dev-time cost to near zero while keeping a paid, high-accuracy path for critical verification.
+
+**Note**: L4 is a review tier, not a task risk level. `TASK_CONTROL.md §3` (L1–L3) is protected and unchanged; formalising L4 there would need an L3 card.
+
+**Task**: T-022 (Owner approved 2026-09-25).
+
+---

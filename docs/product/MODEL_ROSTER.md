@@ -65,11 +65,11 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 | # | Role | Primary Model | Primary Provider | Backup Model | Backup Provider | Price (Primary in/out) | Price (Backup in/out) | Reasoning |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **project-lead** | `deepseek/deepseek-v4.1-flash` | DeepSeek | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.15 / $0.60 | $0.08 / $0.20 | **CHANGED 2026-09-24 (Owner order).** Previous: qwen3.7-flash — suspended for protocol violations. New: DeepSeek V4.1 Flash — Real-time, 1M context, Intelligence 39.5, supports tool_choice + structured_outputs + reasoning_effort. Only PL-capable real-time model within self-approval budget ($0.25/$1.00). Nemotron Lightning backup from different provider (NVIDIA ≠ DeepSeek). |
-| 2 | **builder** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | Unchanged from T-012/T-013. Daily coding tasks need speed + tool_choice. Qwen fastest (p50 ~689ms) + cheapest. Backup swapped from nemotron-3-ultra-free to Lightning (2026-09-24) after free endpoint became unavailable. |
+| 2 | **builder** | `opencode/mimo-v2.6-flash-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022, Owner order): execution roles use free models.** Was `qwen/qwen3.7-flash`. Zen free tier works only inside opencode; free tier may log/train → no secrets in prompts. |
 | 3 | **reviewer** | `z-ai/glm-5.3-flash` | Z.ai | `thinkingmachines/inkling:free` | Thinking Machines | $0.15 / $0.50 | $0 / $0 | **CHANGED in T-014.** Previous: Llama-3.3-70B ($0.10/$0.32). New: GLM-5.3-flash ($0.15/$0.50). GLM wins on quality: intelligence 41.8 vs 11.9 (Llama), agentic 50.9 vs null, coding 71.5 vs 11.9, context 1.3M vs 131K, supported_params include structured_outputs+tool_choice+reasoning_effort. Gemini alternatives exceed budget. Review needs deep analytical reasoning — GLM delivers at only +$0.05/$0.18 incremental cost vs Llama. **Primary ≠ qwen3.7-flash AND ≠ nemotron-3-ultra — fully independent.** |
 | 4 | **security** | `z-ai/glm-5.3-flash` | Z.ai | `thinkingmachines/inkling:free` | Thinking Machines | $0.15 / $0.50 | $0 / $0 | **CHANGED in T-014.** Same rationale as reviewer. Security analysis demands precision, pattern recognition for vulnerabilities, and structured reasoning — GLM excels here. Pricing within self-approval. **Primary ≠ qwen3.7-flash AND ≠ nemotron-3-ultra — fully independent.** |
-| 5 | **ops** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | Ops handles infra/deployment config (YAML, Dockerfile, env vars). Qwen handles this well. Nemotron Lightning backup ($0.08/$0.20) supports tool_choice + structured_outputs — better than free Inkling (no tool_choice) while still being ultra-cheap. |
-| 6 | **researcher** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | Research requires broad knowledge synthesis and structured output generation. Light Nemotron backup provides cheap structured-output fallback. Qwen's 1M context helps with long-form research. |
+| 5 | **ops** | `opencode/big-pickle` | OpenCode Zen | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
+| 6 | **researcher** | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
 | 7 | **model-recruiter** | `openai/gpt-6-luna` | OpenAI | `tencent/hy3-preview` | Tencent | $0.10 / $0.50 | $0.18 / $0.60 | **APPOINTED 2026-09-24 (Owner approved).** Replaces qwen3.7-flash (dismissed for False DONE). Spec: HIGH INTEGRITY + DETAIL-ORIENTED. Vetted with 2 live probes (precision: PostgreSQL partial-index bug; honesty: filesystem access claim) — gpt-6-luna PASS both; hy3-preview PASS both; ling-3.0-flash-vl FAILED precision. Both real-time, tool+structured_outputs capable, within budget. Primary provider OpenAI is distinct from all other team providers. |
 
 ### Anti-redundancy cross-check (P+B verification — T-014 updated)
@@ -82,19 +82,22 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 | **Anti-redundancy B: security≠builder.P AND ≠builder.B** | security Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
 | Each Primary ↔ Backup different provider | All 7 rows | see per-row providers | ✅ PASS (all pairs differ) |
 
-### Anti-redundancy proof summary
+### Anti-redundancy proof summary (T-022 update 2026-09-25 — supersedes the T-014 table above)
+
+The T-014 cross-check table above is historical. Current sets after T-020/T-022:
 
 ```
-Builder model set = { qwen3.7-flash, nemotron-3.5-lightning }
-Reviewer model set = { glm-5.3-flash, thinkingmachines/inkling }
-Security model set = { glm-5.3-flash, thinkingmachines/inkling }
+Builder model set   = { opencode/mimo-v2.6-flash-free, opencode/big-pickle }
+Reviewer model set  = { opencode/nemotron-3-ultra-free, opencode/space-bunny-free }
+Security model set  = { opencode/nemotron-3-ultra-free, opencode/space-bunny-free }
+L4 verify (paid)    = { z-ai/glm-5.3-flash }
 
-Intersection(builder, reviewer) = ∅   (empty set)
-Intersection(builder, security) = ∅   (empty set)
-
-No matter whether builder runs Primary or Backup, reviewer/security
-never share the same model name. Fully independent review.
+Intersection(builder, reviewer) = ∅
+Intersection(builder, security) = ∅
+Intersection(builder, L4)       = ∅
 ```
+
+Reviewer/security never share a model name with builder (Primary or Backup). L4 (paid) is used only for critical verification and is independent of the free builder.
 
 ## Failover order (per `MODEL_POLICY.md`)
 
@@ -130,13 +133,15 @@ Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 
 |---|---|---|---|
 | L1/L2 (reversible, non-sensitive) | `opencode/nemotron-3-ultra-free` | `opencode/space-bunny-free` | Free; 1M ctx, tools. Caught both planted bugs in the T-020 test (2026-09-25). |
 | L3 (hard to undo / sensitive) | `opencode/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention. L3 inputs must be redacted. |
+| **L4 (critical / high-accuracy verification)** | **`z-ai/glm-5.3-flash`** | `opencode/nemotron-3-ultra-free` | **Paid ($0.15/$0.50) — Owner requires the selected paid model for L4 (2026-09-25).** E.g. security boundary, tenant/bot isolation, data-handling reviews. |
 | Paid fallback (free endpoint down) | `z-ai/glm-5.3-flash` | — | $0.15/$0.50. |
 
 Facts / caveats (verified 2026-09-25):
 - Zen free tier works ONLY inside opencode (`POST /zen/v1/chat/completions` → 403 `FreeTierError`). Requires the Zen provider connected in opencode auth.
 - Most Zen free models log/train on data during the free period (`muse-spark-*` = Meta trains; `nemotron-*` = trial, no confidential data). `space-bunny-free` is the only stated zero-retention one → use it for L3/sensitive.
 - Free endpoints can be unstable: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed the T-020 test.
-- Anti-redundancy: none of these equals builder Primary `qwen/qwen3.7-flash` or Backup `nvidia/nemotron-3.5-lightning`. `nemotron-3.5-lightning-free` is EXCLUDED (duplicates builder Backup).
+- Anti-redundancy: none of these equals builder Primary or Backup (see T-022 note below). `nemotron-3.5-lightning-free` is EXCLUDED (duplicates the old builder Backup).
+- **L4 is a review tier, not a TASK_CONTROL risk level.** `TASK_CONTROL.md §3` still defines only L1–L3 and is a protected document; formalising L4 as a task risk level would need its own L3 card.
 
 ## Enforcement (added 2026-09-24 per Owner incident order)
 

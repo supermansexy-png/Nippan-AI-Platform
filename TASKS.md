@@ -194,6 +194,24 @@ Design note (per Owner clarification 2026-09-25): the warning is about **accumul
 
 ---
 
+### T-022 — Cost policy: free models for execution + paid GLM for L4 verification
+Status: DONE (Owner approved 2026-09-25; applied — needs an opencode restart to load)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (model policy + config; no paid specialist called)
+Risk: L2 (changes the dev model policy/workflow; no customer impact; reversible)
+Goal: execution roles (builder/ops/researcher) run on free Zen models; reviewer/security are tiered (L1/L2/L3 free, **L4 critical = paid `z-ai/glm-5.3-flash`**); PL thinks/plans only
+Done when: 1) agent models changed; 2) MODEL_ROSTER review tiers + per-role rows + anti-redundancy updated; 3) START_PROMPT model rule updated; 4) `small_model` set to a free model; 5) no protected doc touched; 6) restart requirement noted
+Budget: 1 session
+Links: docs/product/MODEL_ROSTER.md, docs/warroom/START_PROMPT.md, opencode.json, .opencode/agents/*
+
+INTAKE — T-022 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner: "อนุมัติ")
+Understanding: Owner policy — PL = think/plan only; execution (build/fix) = free models; verification = free by default, but **L4 (critical / high-accuracy) = the selected paid model `z-ai/glm-5.3-flash`**. Also fixes failing session-title generation (`small_model` was a paid Zen model → "Insufficient account funds" in the app log).
+Changes: builder → `opencode/mimo-v2.6-flash-free` (backup `opencode/big-pickle`); ops → `opencode/big-pickle`; researcher → `opencode/ling-3.0-flash-fin-free`; reviewer/security unchanged (free, + L4 paid rule); `opencode.json` `small_model` → `opencode/ling-3.0-flash-fin-free`.
+Constraints: `TASK_CONTROL.md §3` defines only L1–L3 and is protected → L4 is recorded as a **review tier** in MODEL_ROSTER, not a new task risk level (formalising it would need an L3 card).
+Decision: ACCEPT — doer = Project Lead (no paid agent; cost avoided).
+
+---
+
 ### T-021 — Test free OpenCode Zen models across all dev roles (Owner request "0pencode")
 Status: READY
 Owner: Project Lead (big-pickle — free Zen) — 2026-09-25

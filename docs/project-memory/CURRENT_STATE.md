@@ -201,6 +201,16 @@ effect until the Owner connects Zen and opencode is restarted. A key was shared 
 chat and must be rotated. In the test, 8/11 free Zen models passed a planted-bug
 review task; `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed.
 
+## Model Policy — free execution + paid L4 (T-022) — DONE (2026-09-25)
+
+Owner policy: the Project Lead thinks/plans only; execution (builder/ops/researcher)
+and review/security for L1/L2/L3 run on **free OpenCode Zen** models; **L4 (critical /
+high-accuracy verification) uses the paid `z-ai/glm-5.3-flash`**. Applied to
+`MODEL_ROSTER.md`, `START_PROMPT.md`, the agent files and `opencode.json`
+(`small_model` also set to a free model, fixing "Insufficient account funds" on session
+titles). Needs an opencode restart to load. Free tier may log/train → no secrets in
+prompts.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.

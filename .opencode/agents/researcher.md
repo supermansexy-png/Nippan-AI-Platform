@@ -1,7 +1,7 @@
 ﻿---
 description: Researcher (dev-time) ค้นข้อมูล เอกสาร และเปรียบเทียบทางเลือกให้ Project Lead โดยไม่แก้ project
 mode: subagent
-model: openrouter/qwen/qwen3.7-flash
+model: opencode/ling-3.0-flash-fin-free
 permission:
   edit: deny
   bash: deny
