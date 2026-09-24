@@ -212,6 +212,8 @@ Decision: ACCEPT — doer = Project Lead (no paid agent; cost avoided).
 
 Design note (per Owner clarification 2026-09-25): the warning is about **accumulated chat context tokens** (every turn re-sends the history → opening a new chat saves tokens). Basis = latest assistant turn's `input + cache.read + output`; threshold 120k tokens (fallback 60 messages if token info is missing); re-warn at most every 5 min per session. `/handoff` still creates the seeded new session.
 
+UPDATE — T-021 — 2026-09-25: `/handoff` now triggers a **visible summary reply** in the new session (was `noReply:true`, which left the new chat looking empty). Verified: the seed was present (continuing the seeded session with a free model recited the handoff). Root cause of "new chat has no summary": silent user message + users may open a blank `/new` instead of selecting the seeded session from `/sessions`.
+
 ---
 
 ### T-022 — Cost policy: free models for execution + paid GLM for L4 verification
@@ -246,6 +248,29 @@ INTAKE — T-023 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner or
 Understanding: Owner corrects T-022 — the free models are for a **helper** position, not the main builder; the builder stays paid. Security must not reuse the reviewer's free model. Add an "assistant" position for free support work.
 Changes: builder → `qwen/qwen3.7-flash`; new `assistant` agent (free `opencode/mimo-v2.6-flash-free`); security → `opencode/big-pickle` (≠ reviewer `nemotron-3-ultra-free`); roster + START_PROMPT + anti-redundancy updated.
 Decision: ACCEPT — doer = Project Lead (no paid agent).
+
+---
+
+### T-024 — Test free OpenRouter models (`:free`) across dev roles (Owner request, same method as T-021)
+Status: IN PROGRESS (card+plan ready — awaiting Owner approval before running probes)
+Owner: Project Lead (big-pickle — free Zen) — 2026-09-25
+Role: Project Lead (runs OpenRouter free probes directly; no paid agent needed — all candidates $0)
+Risk: L2 (results may inform future staffing; no customer/runtime impact; record-only unless Owner orders)
+Goal: role→model fit evidence for every **live** OpenRouter free (`<author>/<model>:free`) model with tools, tested with the same 5 role batteries as T-021, so Owner has OpenRouter-side free options alongside the Zen test record
+Done when:
+1) 12 candidate models (all endpoint-VERIFIED live at $0/M) × 5 role batteries run via `opencode run -m openrouter/<id>`; raw outputs saved to temp + key evidence VERIFIED
+2) Score table role×model produced (pass/fail + notes + latency); reviewer (different model) accepts evidence
+3) Reference record written to docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md (record only — no roster change)
+4) No paid model used ($0); no protected doc touched
+Budget: 1 session screening (max ~60 short runs, free; timebox, stop at 2×)
+Links: TASKS.md T-021 (same method), docs/product/FREE_MODEL_ZEN_TEST_T021.md, docs/product/MODEL_ROSTER.md, docs/product/MODEL_POLICY.md
+
+INTAKE — T-024 — Project Lead (big-pickle) — 2026-09-25
+Understanding: Owner orders the same free-model role-suitability test as T-021 but for OpenRouter free models (`:free` variants). All selected candidates were endpoint-checked (openrouter_list-model-endpoints): all 12 have live $0/M endpoints as of 2026-09-25. NOTE: `qwen/qwen3.8-27b:free` was 404 in T-020 but now has a live ModelRun endpoint — included. `z-ai/glm-5.2:free` dropped (no tools support → can't do dev agentic work). `nex-agi/nex-n2.5-pro:free` flagged: 1d uptime 90.3%, p99 latency 187s → expected slow (keep, note in results). `nvidia/nemotron-3-ultra-550b-a55b:free` is the OpenRouter twin of the roster reviewer (`opencode/nemotron-3-ultra-free`) → data point in the test, but excluded from being this test's reviewer (anti-redundancy).
+Done when: see card. Needs: opencode CLI (have, v1.18.30) + temp dir for outputs. Missing: none.
+Plan: 1) Same 5 bounded role batteries as T-021 (builder/security/ops/researcher/hr — synthetic, answer-inline, temp workdir, no repo touch) 2) Run 12 models × batteries via `opencode run -m openrouter/<id>` 3) Record latency + outputs 4) Score + notes 5) Reviewer (`opencode/space-bunny-free`, ≠ any candidate family... except T-021 set — fine) checks raw files 6) Write record file; propose staffing ONLY if Owner asks.
+Estimate: within budget (free; ~60 short runs, est. 15–30 min). Risks: free endpoint instability (nex-n2.5-pro slow/90% uptime; gemma endpoints have no 30m data — AI Studio); free tier may log → all prompts synthetic, no secrets/customer data.
+Decision: ACCEPT — team: Project Lead runs probes (no paid model), reviewer pass by `opencode/space-bunny-free` after synthesis. $0 cost. Proposal to Owner in DELIVERY only — no roster change without Owner approval.
 
 ---
 

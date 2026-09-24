@@ -112,19 +112,23 @@ export const SessionHandoff: Plugin = async ({ client }) => {
             args.summary,
             "",
             "Working dir: this repo. Follow AGENTS.md and docs/warroom/AI_OPERATING_PROTOCOL.md.",
+            "",
+            "Instruction: นี่คือ handoff จากแชทก่อนหน้า — สรุปสั้น ๆ 2-4 บรรทัดว่าเรากำลังทำอะไร สถานะล่าสุด และงานถัดไปที่แนะนำ แล้วรอคำสั่งผู้ใช้",
           ].join("\n")
 
+          // Trigger a visible reply so the new chat immediately shows the summary
+          // and the assistant has consumed the handoff context.
           await client.session.prompt({
             path: { id },
-            body: { noReply: true, parts: [{ type: "text", text: seed }] },
+            body: { parts: [{ type: "text", text: seed }] },
           })
 
           await toast("สร้างแชทใหม่แล้ว — เปิด /sessions เพื่อไปทำงานต่อ", "success")
 
           return [
             `Created new session: ${id}`,
-            "It is seeded with the handoff summary (no AI reply triggered).",
-            "Tell the user (Thai): สรุปเสร็จแล้ว เปิด /sessions แล้วเลือกแชทใหม่เพื่อทำงานต่อ — opencode ยังไม่มี API สลับหน้าให้อัตโนมัติ จึงต้องเลือกเอง 1 ครั้ง",
+            "It is seeded with the handoff summary and a visible summary reply was triggered.",
+            "Tell the user (Thai): สรุปเสร็จแล้ว เปิด /sessions แล้วเลือกแชทใหม่ (จะเห็นข้อความสรุปในแชทใหม่ทันที) — opencode ยังไม่มี API สลับหน้าให้อัตโนมัติ จึงต้องเลือกเอง 1 ครั้ง",
           ].join("\n")
         },
       }),
