@@ -2,132 +2,87 @@
 
 Status: **ACTIVE — Phase A**
 
-## Principle
+## Principles
 
-Positions are fixed. Which AI model sits in a position can change. Never
-hardcode a model name into a role's behavior — route through policy/config
-so Model Scout (below) can propose a swap without a rewrite.
+1. **Positions are fixed; the occupant can change.** Any role may be filled
+   by the owner, by an AI model, or later by a different AI model. Never
+   hardcode a model name into a role — Model Scout proposes swaps,
+   Project Lead approves (`docs/product/MODEL_POLICY.md`).
+2. **A role is written policy before it is an AI seat.** In Phase A most
+   roles are performed by the owner by hand, following this document. A
+   role becomes an automated AI seat only when it climbs the autonomy
+   ladder at the end of this file.
+3. **Nobody approves their own work.** Whoever builds something is never
+   the one who approves it for real customers.
 
-Not every position is staffed from day one. See "Activation order" at the
-end of this document — most positions start as a written prompt/policy that
-a human (the owner) executes manually, and only become an automated AI seat
-once there is enough real data to trust it with the judgment calls below.
+## Project Lead (Phase A: the owner)
 
-## Project Lead
+Decides: approving/rejecting tenants, approving anything before it reaches
+real customers (until Auditor is proven), model swaps, business-mode switch
+(`docs/decisions/PIVOT_OPTION.md`), and conflicts between roles.
 
-**Decides:**
-- Approve/reject new customers
-- Approve any output before it reaches a real customer, until Auditor is
-  staffed and proven
-- Which model sits in which position (acts on Model Scout's proposals)
-- When to switch business mode (low-price/high-reach <-> specialized/
-  high-price/low-volume, per the owner's stated future option)
-- Resolves any conflicting signal from another role
+Owns: the Decision Log (`DECISION_LOG_FORMAT.md`).
 
-**Receives from:** every other role, via the Decision Log (see
-`DECISION_LOG_FORMAT.md`)
-
-**Constraint:** cannot downgrade a risk classification set by Auditor or
-Cost Guard. Cannot approve anything that violates `CUSTOMER_FACING_RULES.md`
-or `docs/security/PDPA_COMPLIANCE.md`.
-
----
+Cannot: downgrade a risk level set by Auditor or Cost Guard, or approve
+anything that breaks `docs/product/CUSTOMER_FACING_RULES.md` or
+`docs/security/PDPA_COMPLIANCE.md` Layer 3.
 
 ## Development
 
-### Developer
-- Builds/edits n8n workflows on Project Lead's instruction
-- Tests a workflow before handing it to Auditor
-- No authority to ship a workflow straight to a real customer
+**Developer** — builds/edits n8n workflows on an approved task card
+(`TASK_CONTROL.md`), tests them, hands them to Auditor. Cannot ship to
+real customers.
 
-### MCP tool builder
-- Builds new MCP tools (see `docs/product/MCP_TOOLS_V1.md` for the starting
-  set)
-- Registers each new tool with a name, capability, permission scope, and a
-  rough per-call cost estimate handed to Cost Guard
-- Removing/deprecating a tool goes through Project Lead first — customers
-  may depend on it
-
----
+**MCP tool builder** — builds new MCP tools, registers name, capability,
+permission scope and a per-call cost estimate for Cost Guard. Removing a
+tool goes through Project Lead (a tenant may depend on it).
 
 ## Audit
 
-### Auditor
-- Reviews a new/changed workflow before it reaches a real customer:
-  correctness, whether a customer could extract the underlying model name,
-  whether it stays on-topic
-- Periodic spot-check of real conversations (weekly, once volume justifies
-  it)
-- Escalates anything red-tier (see `docs/warroom/MONITORING.md`) to Project
-  Lead immediately, not on the weekly cadence
+**Auditor** — before anything reaches a real customer, checks: it works,
+tenant/bot isolation holds (no cross-tenant data), it cannot be made to
+name its underlying model, it never claims to be human, it stays on topic.
+Spot-checks real conversations weekly once volume exists. Reviews the
+monitoring log (`MONITORING.md`) and escalates red events immediately.
 
-### Cost Guard
-- Estimates real cost-per-call for every new tool/workflow before it ships
-- Tracks each tenant's usage against their quota (see
-  `docs/product/PRICING_V1.md`)
-- Flags a tenant approaching their quota before they blow through it
-- Doubles as the monitoring rollup point — see `MONITORING.md` for the
-  green/yellow/red pipeline this role owns
-
----
+**Cost Guard** — cost only: per-call cost estimates for new tools/
+workflows, per-bot usage against quota, early warning before a bot or
+tenant becomes unprofitable, proposals for cheaper model tiers. Writes
+cost events into the monitoring log; does not own the whole pipeline.
 
 ## Operations
 
-### Onboarding agent
-- Runs new-customer setup: conversational interview, and/or reading an
-  uploaded file/link, per `docs/product/ONBOARDING_FLOW.md`
-- Converts what the customer says into config values from a fixed menu —
-  never free-form prompt text the customer writes directly into the bot's
-  system behavior
-- Always summarizes the resulting bot behavior back to the customer for
-  confirmation before going live
-- Bound by `CUSTOMER_FACING_RULES.md`: never names the underlying AI model
-  or vendor, under any framing
+**Onboarding agent** — runs setup per `docs/product/ONBOARDING_FLOW.md`,
+turns what the owner says/uploads into fixed-menu config, shows a sample
+conversation for confirmation, never names the underlying model.
 
-### Support agent
-- Handles existing-customer questions and config changes after onboarding
-- Any change a customer requests that could raise cost (e.g., asking for an
-  unthrottled/always-on capability) gets flagged to Cost Guard before
-  applying it
-
----
+**Support agent** — handles existing tenants' questions and config
+changes; anything that could raise cost is flagged to Cost Guard first.
 
 ## Marketing
 
-- Watches for market signals surfaced by Operations (a question the current
-  bot can't answer, a request outside the current tool set)
-- Drafts real outbound content (posts, outreach copy) for the target
-  segments in `docs/product/CUSTOMER_SEGMENTS.md`
-- Feeds candidate new niches back to Project Lead with evidence (how many
-  times has this come up, from how many distinct prospects)
-
----
+Collects demand signals from Operations (questions bots can't answer,
+requests outside the tool set), drafts outreach for the segments in
+`docs/product/CUSTOMER_SEGMENTS.md`, and brings candidate niches to Project
+Lead **with evidence** (how often, from how many different prospects).
 
 ## Model Scout
 
-- Tracks new/changed models and pricing on OpenRouter and any other
-  provider added per `docs/product/MODEL_POLICY.md`
-- Proposes swaps when a cheaper or better model appears for a given role —
-  proposal goes to Project Lead, never an automatic swap
-- Is the mechanism that lets "more AI providers enter the market" become
-  "the system gets more capable" without anyone rewriting code
+Tracks models and prices on OpenRouter and any other provider, proposes
+swaps with a cost/quality comparison. Never swaps automatically.
 
----
+## Autonomy ladder (applies to every role)
 
-## Activation order
+| Stage | What the role does | Who approves its output | Move up when |
+|---|---|---|---|
+| 1. Manual | Owner does the job by hand using this document | Owner | The job is repetitive and well understood |
+| 2. Drafting | AI prepares the work, owner decides | Owner, every time | ~20 consecutive drafts accepted with no substantive correction |
+| 3. Supervised | AI acts on routine (green) cases itself; yellow/red go to owner | Owner reviews a weekly sample | A full month with no red incident caused by the role |
+| 4. Autonomous | AI acts; owner sees summaries and red alerts only | Monitoring + Auditor | — |
 
-Do not staff all of these as live AI seats on day one. Phase A activation
-order:
+Moving **down** is immediate: any red incident caused by a role drops it
+one stage until the cause is fixed. Stage changes are Decision Log entries.
 
-1. **Operations only** (Onboarding + Support) — everything else is the
-   owner acting directly, or not yet needed
-2. **Audit** (Auditor, then Cost Guard) — once real customers exist and
-   there's something to audit
-3. **Development, Marketing, Model Scout** — once the system is stable
-   enough that a bad decision in these roles is affordable to make, and
-   there's enough real usage data to make the decision well
-
-This is the same ladder as `docs/warroom/MONITORING.md`'s four-stage
-timeline. A role's written definition above is authoritative from day one
-even before it is staffed — a human filling the role manually should follow
-the same decision rules.
+Phase A starting points: Operations at stage 2; everything else at stage 1.
+Audit roles are the first candidates to climb, because every other role's
+autonomy depends on the checking being reliable.

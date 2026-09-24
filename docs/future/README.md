@@ -31,12 +31,15 @@ Pull a document back into active work when its trigger condition is met:
 | `decisions/ADR-0001` through `ADR-0006` | Same trigger as above — these are the reasoning behind the full-scale architecture |
 | `decisions/NIPPAN_AI_OS_ROADMAP_V2.md`, `mcp-hub/ROADMAP.md`, `mcp-hub/SERVER_REGISTRY.md` | Standing up a formal MCP Hub with GitHub/OpenRouter/Supabase connectors as separate services |
 | `reviews/PHASE1_REVIEW_GATE_FINAL.md` | Reference only — shows the review process (Project Lead + independent model review) once War Room's Auditor role is doing the same kind of gate at scale |
+| `AI_REVIEW_BRIEF.md` | Commissioning an independent review of the full-scale architecture |
 | `benchmarks/BENCHMARK_SPEC_V1.md` | Formal model benchmarking once Model Scout's informal tracking isn't enough |
 
 ## Do not
 
 - Do not implement anything from this folder while the active roadmap
   (`ROADMAP.md`) is still on Phase A/B.
+- Review gates and "do not implement" instructions inside these documents
+  applied to the full design only. They do not block Phase A work.
 - Do not delete anything here to "clean up" — it is deliberately preserved.
 - Do not treat this folder as documentation of the *current* system. See
   `PROJECT_STATE.md` at the repo root for that.

@@ -4,42 +4,37 @@ Status: **ACTIVE — Phase A**
 
 ## Purpose
 
-A running record of decisions made by any War Room role, so Project Lead
-(and the owner) can see why something was decided without having to ask.
-This is not the same as the monitoring log in `MONITORING.md` — monitoring
-is events that happened; this is decisions that were made.
+A running record of decisions and why they were made, so any person or AI
+picking up work can see the reasoning without asking. Different from the
+monitoring log: monitoring records events; this records decisions.
 
 ## When to log
 
-Any of these triggers a log entry:
-- A new customer is approved or rejected
-- A workflow/tool is approved to go live
-- A model is swapped in any role (Model Scout proposal + Project Lead
-  approval)
-- A customer's quota, pricing, or config is changed outside the normal
-  self-service flow
-- Business mode is switched (see `ROLES.md`, Project Lead)
-- Anything escalated at red-tier per `MONITORING.md`
+- tenant approved or rejected
+- a workflow/tool approved to go live
+- a model swapped in any role
+- a quota, price or config changed outside self-service
+- a role moved up or down the autonomy ladder (`ROLES.md`)
+- business mode switched
+- any red event and how it was resolved
 
-## Entry format
+## Format
 
-Plain text, one entry per decision, in a single running file
-(`docs/warroom/decision-log.md` — created on first use, append-only):
+One append-only file: `docs/warroom/decision-log.md` (created on first
+entry).
 
 ```
-## [DATE] — [ROLE] — [one-line summary]
-
-Context: what triggered this decision
+## YYYY-MM-DD — [role] — [one-line summary]
+Context: what triggered it
 Decision: what was decided
-Reasoning: why (1-2 sentences, not an essay)
+Reason: why, in 1–2 sentences
+Task: link to the task card, if any (TASK_CONTROL.md)
 ```
 
-Keep entries short. This is a log, not a report — if it needs more than a
-few sentences to explain, it belongs in a proper doc elsewhere and the log
-entry just links to it.
+Short entries. If it needs more than a few sentences, write a proper
+document and link to it.
 
 ## Ownership
 
-Cost Guard owns keeping this log complete (cross-checks that every
-trigger event above actually produced an entry). Project Lead is the
-primary reader.
+Project Lead owns the log. Whoever makes a decision writes its entry; the
+weekly review (`TASK_CONTROL.md`) checks nothing is missing.

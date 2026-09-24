@@ -15,13 +15,19 @@ product_model:
   multi_tenant: true
   target: small_thai_businesses_bot_rental
   tenant_ceiling_phase_a: 30
-  price_thb_per_month: 299
+  price_thb_per_bot_per_month: 299
+  channels:
+    - line_oa_owned_by_tenant
+    - web_chat
   supports:
     - chat_bots
     - secretary_bots
     - future_underserved_segments
   hierarchy:
     - tenant
+    - bot
+    - channel
+    - end_customer
     - conversation
 
 architecture:
@@ -29,7 +35,7 @@ architecture:
   runtime_core: n8n
   model_gateway: openrouter
   model_gateway_exclusive: false
-  system_of_record: lite_relational_schema
+  system_of_record: self_hosted_postgresql_lite_schema
   vector_memory: none_yet
   retrieval: keyword
   tool_interface: mcp_tools
@@ -37,6 +43,7 @@ architecture:
 
 customer_facing_rules:
   never_reveal_model: true
+  never_claim_human: true
   config_is_fixed_menu_only: true
   see: docs/product/CUSTOMER_FACING_RULES.md
 
@@ -52,6 +59,7 @@ war_room:
     - marketing
     - model_scout
   activation_order: docs/warroom/ROLES.md
+  autonomy_ladder: docs/warroom/ROLES.md
   monitoring: docs/warroom/MONITORING.md
   decision_log: docs/warroom/DECISION_LOG_FORMAT.md
 
@@ -64,7 +72,15 @@ pdpa:
 
 scope_keys:
   - tenant_id
+  - bot_id
+  - channel_id
   - end_customer_id
+
+work_control:
+  task_board: TASKS.md
+  rules: docs/warroom/TASK_CONTROL.md
+  risk_levels: [L1, L2, L3]
+  wip_limit_in_progress: 3
 
 deferred_to_future:
   - fastapi_core_service

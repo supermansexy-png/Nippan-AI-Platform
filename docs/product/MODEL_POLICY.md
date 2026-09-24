@@ -21,6 +21,19 @@ only path — see `docs/warroom/ROLES.md`, Model Scout.
 No tenant is on a permanently better or worse model because of who they
 are — tier is set by task type, applied uniformly.
 
+## Fallback
+
+Every tier keeps at least one alternative model from a different provider.
+If the primary fails or times out, the workflow retries once on the
+alternative; if both fail, the bot sends the outage message in
+`docs/product/BUSINESS_OPERATIONS.md` §1 and a red event is logged.
+
+## Speed matters on LINE
+
+Default models for end-customer replies must answer fast enough for LINE's
+reply flow (Auditor measures this in Step 1). A smarter but slow model is
+the wrong choice for chat replies.
+
 ## Free/cheap models
 
 Explicitly in scope for routine tasks. OpenRouter's free tier and

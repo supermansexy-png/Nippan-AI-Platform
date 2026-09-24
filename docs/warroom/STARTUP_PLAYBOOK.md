@@ -1,99 +1,70 @@
 # Startup playbook — Phase A, step by step
 
-Status: **ACTIVE — this is the execution order for `ROADMAP.md`'s Phase A**
+Status: **ACTIVE — the build order for `ROADMAP.md` Phase A**
 
-## How to use this file
+This file is the single source for "what comes next". `PROJECT_STATE.md`
+says what exists; `TASKS.md` holds the task cards for the current step.
+Steps are in dependency order. Each step ends with a go/adjust checkpoint
+from `docs/warroom/TASK_CONTROL.md` section 10.
 
-This is the concrete build order, not the design rationale (that's in
-`docs/product/`, `docs/data/`, `docs/security/`). Whoever is doing the
-next unit of work finds their current step here, does it, checks it off
-by updating `PROJECT_STATE.md`'s "built vs. designed" section, and hands
-off per `WORKING_POLICY.md` Rule 5.
+## Step 0 — Foundations (target: ~1–2 weeks)
 
-Steps are ordered by dependency, not by priority — most steps genuinely
-cannot start before the one above it exists.
+- [ ] Self-hosted n8n + PostgreSQL on a small VPS, HTTPS, daily backups
+      (self-hosting because a hosted n8n plan's execution limits would not
+      fit ~18,000 messages/month at 30 tenants; verify current plans)
+- [ ] Lite schema tables (`docs/data/LITE_SCHEMA_V1.md`)
+- [ ] `data-access`, `usage-tracker`, `monitor-log` tools
+- [ ] Owner's single alert channel working
+- [ ] Legal review of tenant agreement + privacy notice started (T-004)
 
-## Step 0 — Infrastructure exists (not yet done)
+Exit: empty but real system; a red test event reaches the owner.
 
-- [ ] n8n instance stood up
-- [ ] Lite schema (`docs/data/LITE_SCHEMA_V1.md`) implemented as real
-      tables
-- [ ] `usage-tracker` MCP tool built (Cost Guard depends on this from day
-      one — do not defer it past this step)
+## Step 1 — One bot, end to end, on LINE (target: ~2–3 weeks)
 
-Exit: an empty but real n8n + database exists. No bot yet.
+- [ ] `line-channel` — connect a *test* LINE OA with its own credentials
+- [ ] `chat-bot-core`, `memory-store` (layers 1 and 4 first)
+- [ ] `handoff-to-owner`, outage fallback message
+- [ ] `web-fetch`, `file-reader`, Onboarding flow (`docs/product/ONBOARDING_FLOW.md`)
+- [ ] PDPA consent notice on first contact
+- [ ] Auditor test pass: isolation between two test tenants; cannot reveal
+      model; admits being an assistant when sincerely asked; hands off
+      when unsure; replies fast enough for LINE's reply flow
 
-## Step 1 — One working bot type, end to end
+Exit: a test bot a real shop could use. Checkpoint: within ~4 weeks of start.
 
-- [ ] `chat-bot-core` MCP tool built
-- [ ] `memory-store` MCP tool built (at minimum: layers 1 and 4 — current
-      conversation and business info; layers 2-3 can follow once there's
-      real conversation volume to summarize)
-- [ ] `web-fetch` and `file-reader` MCP tools built
-- [ ] Onboarding assistant flow built per `docs/product/
-      ONBOARDING_FLOW.md`
-- [ ] PDPA consent notice wired into the bot's first message per
-      `docs/security/PDPA_COMPLIANCE.md`, Layer 1
-- [ ] `CUSTOMER_FACING_RULES.md`'s model-deflection behavior tested — try
-      to get the test bot to reveal its model, confirm it deflects
+## Step 2 — Tenant #1, watched closely (target: 2 weeks live)
 
-Exit: a single test bot (not a real customer yet) that a business owner
-could plausibly use for real, end to end, including Onboarding.
+- [ ] Legal texts done (T-004) — **hard prerequisite**
+- [ ] Onboard tenant #1 with the owner present; tenant uses their own LINE OA
+- [ ] Measure real cost per reply; update `PRICING_V1.md`
+- [ ] Confirm the monthly quota value
+- [ ] Daily read of the monitoring log
 
-## Step 2 — First real tenant, manually watched
+Exit: owner confident in quality; real cost within estimate.
 
-- [ ] Onboard tenant #1 manually, with a human (the owner) watching
-      closely — do not automate this step yet, even if Step 1's tooling
-      technically allows it
-- [ ] Confirm actual per-message cost against the estimate in
-      `docs/product/PRICING_V1.md`; update that document with real numbers
-      once available
-- [ ] Confirm the message quota number in `PRICING_V1.md` (currently a
-      placeholder range) against real usage
-- [ ] Set up the single monitoring channel per `docs/warroom/
-      MONITORING.md`
+## Step 3 — Tenants #2–10, storefront, second bot type
 
-Exit: one paying tenant, running for at least a few days, with the owner
-confident the cost model and quality bar both hold.
+- [ ] `web-chat-channel` + storefront with live demo (`docs/product/STOREFRONT.md`)
+- [ ] `secretary-bot` (reminders use the tenant's LINE push quota —
+      explain this during onboarding)
+- [ ] Rolling summary job (memory layer 2) and retention/deletion jobs
+- [ ] Onboard tenants from direct contacts (`BUSINESS_OPERATIONS.md` §6),
+      mixing expected and underserved segments
+- [ ] Weekly review running
 
-## Step 3 — Repeat onboarding, still manual
+Exit: ~10 tenants; patterns visible (which segments stay, where cost differs).
 
-- [ ] Onboard tenants #2 through roughly #5-10, still manually
-- [ ] Start the Decision Log (`docs/warroom/DECISION_LOG_FORMAT.md`) for
-      real, if not already running
-- [ ] Confirm Audit-role checks (per `docs/warroom/ROLES.md`) are actually
-      happening before each new bot type/workflow reaches a real customer
-      — this can still be the owner doing the Auditor's job manually
+## Step 4 — First roles climb the autonomy ladder
 
-Exit: enough tenants and enough real conversation data that patterns
-start showing up — which segments work, where cost estimates were wrong,
-what customers ask for that the current tool set can't do.
+- [ ] Auditor to stage 2–3, then Cost Guard (`ROLES.md` ladder)
+- [ ] Owner moves from doing checks to reading digests and red alerts
 
-## Step 4 — Staff the first automated War Room roles
+## Step 5 — Toward Phase B
 
-Per `docs/warroom/ROLES.md`'s activation order: Audit roles (Auditor, Cost
-Guard) become live AI seats once there's real conversation volume worth
-auditing and real usage data worth tracking automatically, rather than the
-owner doing it by hand.
+At 25–30 retained, profitable tenants, switch from this fixed list to
+demand-driven work (`ROADMAP.md` Phase B).
 
-- [ ] Auditor staffed
-- [ ] Cost Guard staffed, absorbing the manual usage-tracking from Step 2
+## Out of scope for this playbook
 
-Exit: the owner is reviewing summaries and red-tier alerts, not doing the
-checking personally.
-
-## Step 5 — Expand toward Phase B
-
-Once Phase A's exit condition in `ROADMAP.md` (25-30 tenants, retained,
-profitable) is in sight, this playbook hands off to Phase B's looser goal
-(add segments/tools) rather than a fixed step list — Phase B work is
-demand-driven, tracked via Marketing's signal-gathering per
-`docs/warroom/ROLES.md`, not a predetermined sequence.
-
-## What this playbook deliberately skips
-
-Nothing from `docs/future/` appears here. If a step above seems to need
-something from that folder (e.g., "we need real RLS" or "we need a proper
-dashboard"), that's the signal described in `docs/future/README.md`'s
-trigger table — flag it as `NEEDS_DECISION` for Project Lead, don't build
-it into this playbook.
+Anything in `docs/future/`. If a step seems to need it (real RLS, a
+dashboard, FastAPI), mark the task NEEDS_DECISION for Project Lead.

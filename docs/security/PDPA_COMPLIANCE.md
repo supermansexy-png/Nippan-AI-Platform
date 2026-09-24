@@ -6,8 +6,7 @@ Status: **ACTIVE — Phase A**
 public information about Thailand's Personal Data Protection Act (PDPA),
 current as of the research date on this document. Consult a lawyer or a
 PDPA compliance advisor before onboarding real customers, especially for
-the tenant contract described below. Anthropic/Claude is not providing
-legal counsel here.
+the tenant contract described below.
 
 ## Roles under PDPA
 
@@ -59,8 +58,9 @@ mistakes in Thai SME PDPA setups.
    to answer *that tenant's own customers* is fine and expected — that is
    the product. Using it to improve the platform generally, or any other
    tenant's bot, is not, without separate consent.
-2. **No cross-tenant data leakage.** Every table carries `tenant_id`
-   (see `docs/data/LITE_SCHEMA_V1.md`); every query is scoped by it. This
+2. **No cross-tenant data leakage.** Every table holding customer data carries
+   `tenant_id` and `bot_id` (see `docs/data/LITE_SCHEMA_V1.md`); every query
+   is scoped by both. This
    is already the design — this rule just makes it a hard, tested
    requirement, not just a convention.
 

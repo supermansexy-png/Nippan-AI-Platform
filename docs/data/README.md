@@ -1,31 +1,14 @@
-# Data Architecture
+# Data
 
-Foundation v1 contracts:
+## Active
 
-- `IDENTITY_TENANCY_CONTRACT_V1.md` — Tenant/Application/Agent/Channel/Subject/Conversation ownership and isolation
-- `AGENT_POLICY_CONTRACT_V1.md` — versioned Agent configuration and policy precedence
-- `REQUEST_TRACE_USAGE_CONTRACT_V1.md` — request correlation, tracing, usage, cost and Dashboard observability
+- `LITE_SCHEMA_V1.md` — the Phase A schema. This is the design to build
+  (task T-002 in `TASKS.md`). Changes to it are L3 (`docs/warroom/TASK_CONTROL.md`).
 
-Machine-readable contracts live under `/schemas`.
+## Archived
 
-## Active document
-
-- `LITE_SCHEMA_V1.md` — the Phase A schema actually in use. See
-  `docs/future/data/` for the full contracts this grows into later.
-
-## Current gate
-
-These contracts are in REVIEW.
-
-Do not implement production PostgreSQL DDL until the identity and policy contracts receive independent review and blocking issues are resolved.
-
-The future PostgreSQL design will define:
-- source-of-truth ownership
-- schemas/tables
-- pgvector use
-- tenant RLS
-- retention/deletion
-- idempotency
-- usage/audit
-- migrations
-- backup/restore
+The full-scale contracts (identity/tenancy, agent policy, request/trace/
+usage) and their JSON Schemas are preserved in `docs/future/data/`. Their
+earlier review gate ("do not implement PostgreSQL DDL until contracts are
+reviewed") applied to that full design and **does not block Phase A**.
+Pull them back in only when `docs/future/README.md` says to.

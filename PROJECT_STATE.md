@@ -25,12 +25,12 @@ design docs, so it stays honest.
 ### Designed (documents exist, ready to build from)
 - Lite database schema — `docs/data/LITE_SCHEMA_V1.md`
 - PDPA compliance approach — `docs/security/PDPA_COMPLIANCE.md`
-- War Room roles, monitoring, decision log format — `docs/warroom/`
+- War Room roles, autonomy ladder, monitoring, decision log, task control, playbook — `docs/warroom/`
 - Product docs: pricing, segments, customer-facing rules, onboarding flow,
-  MCP tool catalog, model policy — `docs/product/`
+  MCP tool catalog, model policy, storefront, business operations — `docs/product/`
 
 ### Not yet built
-- No n8n workflows exist yet
+- Nothing is built yet: no n8n instance, no workflows
 - No database (lite schema is designed, not instantiated)
 - No MCP tools implemented (catalog is designed, not built)
 - No tenants onboarded
@@ -38,18 +38,11 @@ design docs, so it stays honest.
   `docs/warroom/ROLES.md`, "Activation order". Phase A starts with the
   owner executing most of this manually.
 
-## Immediate next steps
+## Next steps
 
-Follow `docs/warroom/STARTUP_PLAYBOOK.md` for the concrete step-by-step
-order — it supersedes the numbered list below once work actually starts;
-this list is the same content, kept here as a quick-glance summary.
-
-1. Stand up n8n instance
-2. Implement the lite schema as real tables
-3. Build `chat-bot-core` and `memory-store` MCP tools — minimum needed for
-   one working bot type end to end
-4. Build the Onboarding assistant flow
-5. Onboard tenant #1 manually, watched closely, before opening to more
+See `docs/warroom/STARTUP_PLAYBOOK.md` (build order) and `TASKS.md`
+(current task cards). They are deliberately not repeated here, so the
+three files can never disagree.
 
 ## A note on this project's history
 

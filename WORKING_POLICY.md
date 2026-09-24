@@ -16,14 +16,23 @@ contributing at different times, not one continuous operator. Every rule
 below exists because of that — assume the next person picking this up has
 zero memory of this conversation and only has the repo in front of them.
 
+## Rule 0 — Work only from a task card
+
+Every piece of work has a card in `TASKS.md`, claimed before starting.
+The card system — risk levels, claiming, work-in-progress limits, budgets,
+the path to DONE, protected documents, weekly review, go/adjust/stop
+checkpoints — is defined in `docs/warroom/TASK_CONTROL.md`. The rules
+below assume it.
+
 ## Rule 1 — Read state before acting, every time
 
 Before doing anything, read in this order:
 1. `PROJECT_STATE.md` — what's actually built right now, not what's
    designed
 2. `ROADMAP.md` — which phase is active
-3. `docs/warroom/decision-log.md` if it exists — recent decisions and why
-4. The specific doc for the task at hand (`docs/product/`, `docs/data/`,
+3. `TASKS.md` — what is claimed, in review, or blocked
+4. `docs/warroom/decision-log.md` if it exists — recent decisions and why
+5. The specific doc for the task at hand (`docs/product/`, `docs/data/`,
    `docs/security/`, `docs/warroom/`)
 
 Never assume a document describes the live system. `PROJECT_STATE.md`'s
@@ -42,24 +51,12 @@ straight to a real customer. An Onboarding agent does not set pricing. If
 a task doesn't clearly belong to one role, flag it as `NEEDS_DECISION` (see
 `AGENTS.md`'s status protocol) rather than freelancing.
 
-## Rule 3 — Match effort to what's actually being decided
+## Rule 3 — Match effort to risk
 
-Not every task deserves the same weight. Use judgment, calibrated by what
-actually changes if the work is wrong:
-
-- **Routine, reversible** (a config tweak, a minor copy change, adding a
-  segment to a list) — just do it, log it per `docs/warroom/
-  DECISION_LOG_FORMAT.md`, move on.
-- **Meaningful but bounded** (a new MCP tool, a workflow change affecting
-  real customers) — build it, but route it through Audit before it goes
-  live (Rule 2's role boundaries exist for exactly this).
-- **High-risk or hard to reverse** (anything touching pricing, PDPA/data
-  handling, a new tenant's onboarding into an untested segment, switching
-  business mode) — this needs Project Lead sign-off and a Decision Log
-  entry with real reasoning, not just a note that it happened.
-
-See `AGENTS.md`'s "Cost and token discipline" section for the same
-principle applied specifically to how much review/token spend a change
+Use the risk levels L1/L2/L3 in `docs/warroom/TASK_CONTROL.md` section 3 —
+they decide how much checking a change needs. They are defined there only,
+so there is one definition to follow. `AGENTS.md`'s "Cost and token
+discipline" applies the same idea to how much review/token spend a change
 deserves.
 
 ## Rule 4 — Every change updates its own status, not just the code
@@ -99,13 +96,8 @@ to require breaking one of these, that's a `NEEDS_DECISION`, escalated to
 Project Lead — never a unilateral judgment call to bend the rule "just
 this once."
 
-## What "done" means for a Phase A task
+## What "done" means
 
-A task is done when:
-1. It works (tested, not just written)
-2. It's logged (`docs/warroom/DECISION_LOG_FORMAT.md` if it was a
-   decision, `docs/warroom/MONITORING.md`-tier if it was an event)
-3. `PROJECT_STATE.md` reflects it, if it changed what's built
-4. The handoff (Rule 5) is written
-
-A design document describing a feature is not "done" — see Rule 4.
+Defined once, in `docs/warroom/TASK_CONTROL.md` section 7: verified in the
+live system, `PROJECT_STATE.md` updated, handoff written. A design document
+describing a feature is not "done".

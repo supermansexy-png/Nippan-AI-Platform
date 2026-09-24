@@ -4,65 +4,51 @@ Status: **ACTIVE — Phase A**
 
 ## Principle
 
-The more autonomy War Room roles get, the more monitoring is needed — not
-less. Autonomy without monitoring is not efficiency, it's losing track of
-what the system is doing. This document exists so growing the ecosystem
-never outruns the owner's ability to see what it's doing.
+The more autonomy roles get (see the autonomy ladder in `ROLES.md`), the
+more monitoring is needed, not less. Monitoring is how the owner keeps
+seeing what the system is doing as it grows.
 
-## Three levels
+## Who does what
 
-Every event any role produces gets one of three levels. Cost Guard owns
-applying these consistently — see `ROLES.md`.
+- **Every workflow and every role** writes events to one monitoring log
+  (a database table or sheet — one place only).
+- **An automated n8n job** assigns each event its level using the rules
+  below and sends red events immediately.
+- **Auditor** reviews the log (daily in Phase A) and handles escalation.
+- **Cost Guard** contributes cost events; it does not own the pipeline.
+- **Project Lead (owner)** reads the daily digest and receives red alerts.
 
-### Green — normal
-Logged only. No notification. Owner can review the log anytime but is never
-interrupted by it.
+Levels are assigned by written rules, not by an AI's judgment of "how
+important this feels" — so a new or swapped model cannot quietly change
+what gets escalated.
 
-Examples: a new customer signs up successfully, a bot answers a routine
-question, a workflow passes Auditor review.
+## Levels
 
-### Yellow — should know
-Summarized into the next dashboard check-in (see below). Not urgent enough
-to interrupt.
+**Green — normal.** Logged only. Examples: routine reply, successful
+signup, workflow passing audit.
 
-Examples: a tenant approaching their message quota, Model Scout finds an
-interesting but non-urgent model option, Marketing surfaces a repeated
-niche request.
+**Yellow — should know.** In the daily digest. Examples: a bot above 80% of
+its quota, a repeated question no bot can answer, a model-price change
+spotted by Model Scout, error rate above normal but service working.
 
-### Red — must know now
-Sent to the owner immediately, through the single notification channel
-(Phase A: one channel only, e.g. LINE — see "Keep it simple" below).
-
-Examples: a tenant is on track to cost more than their subscription covers,
-Auditor finds a bot response serious enough to risk customer trust or
-safety, someone successfully gets a bot to reveal the underlying model
-name, any signal touching the at-risk segments called out in
-`docs/product/CUSTOMER_SEGMENTS.md` (elderly-companion class use cases, if
-ever activated).
+**Red — must know now.** Sent immediately to the single alert channel.
+Examples:
+- a bot or tenant projected to cost more than it pays this month
+- any sign of cross-tenant data exposure
+- a bot revealing its underlying model, or claiming to be human
+- a bot giving harmful, false-and-damaging, or off-policy answers
+- a data-deletion request that failed
+- service down (no replies) for more than 15 minutes
+- anything from a segment marked high-risk in `docs/product/CUSTOMER_SEGMENTS.md`
 
 ## Keep it simple (Phase A)
 
-- **One notification channel**, not three. Everything red-tier lands in
-  the same place (e.g. a single LINE chat to the owner). Splitting by
-  channel is a Phase B/C refinement once there's enough volume to justify
-  it.
-- **No dashboard software in Phase A.** A shared spreadsheet or a plain log
-  the owner checks daily is enough for up to 30 tenants. Building a real
-  dashboard is itself a Phase B trigger (see below).
-- Every role logs to the same place. No role's activity is invisible.
+- One alert channel (e.g., one LINE chat to the owner).
+- No dashboard software: the monitoring table plus a daily digest message.
+- Build a real dashboard only when a trigger below is hit.
 
-## Growth trigger
+## Growth triggers
 
-Move to a proper dashboard and multi-channel notification once any of:
-- Tenant count approaches 25-30 (nearing the Phase A ceiling)
-- Yellow-tier volume makes a daily manual check too slow to keep up with
-- A second person starts helping the owner monitor (multi-viewer need)
-
-## Relationship to War Room activation
-
-This monitoring pipeline runs from day one, before most War Room roles are
-staffed (see `ROLES.md` "Activation order"). Early on, "monitoring" mostly
-means the owner reading a log they wrote themselves. As roles activate,
-each one starts producing green/yellow/red events into the same pipeline —
-the pipeline doesn't change shape, only the number of producers into it
-grows.
+Move to a proper dashboard / multiple channels when: 25+ tenants, the
+daily digest takes more than ~15 minutes to read, or a second person helps
+monitor.

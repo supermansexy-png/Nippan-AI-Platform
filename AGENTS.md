@@ -9,13 +9,14 @@ Before proposing or changing anything:
 2. `.ai/project.yaml`
 3. `PROJECT_STATE.md`
 4. `ROADMAP.md`
-5. `WORKING_POLICY.md` — how to operate: which role you're in, how much
-   review a change needs, how to hand off
-6. `docs/warroom/ROLES.md` — which role you're acting as, and its limits
-7. `docs/warroom/STARTUP_PLAYBOOK.md` — the current concrete step, if the
+5. `WORKING_POLICY.md` and `docs/warroom/TASK_CONTROL.md` — how to operate,
+   claim work, size review to risk, and hand off
+6. `TASKS.md` — the task board
+7. `docs/warroom/ROLES.md` — which role you're acting as, and its limits
+8. `docs/warroom/STARTUP_PLAYBOOK.md` — the current concrete step, if the
    task is general "keep building Phase A" rather than a specific brief
-8. Relevant product/data/security documents for the task at hand
-9. Assigned task or review brief
+9. Relevant product/data/security documents for the task at hand
+10. The assigned task card
 
 Do not pull anything from `docs/future/` into active work unless
 `docs/future/README.md`'s trigger condition for that document is actually
@@ -23,7 +24,7 @@ met. It is a blueprint for later, not current scope.
 
 ## Work rules
 
-- Do not modify the production Nippan customer bot while reviewing this proposal.
+- Do not modify the protected production systems listed in `ROADMAP.md`.
 - Do not put secrets, API keys, tokens, passwords, customer PII, or production credentials in the repository.
 - Do not hard-code model names in distributed application logic. Use model policy/presets/config — see `docs/product/MODEL_POLICY.md` and `docs/warroom/ROLES.md` (Model Scout).
 - Prefer a single source of truth for each data domain.
@@ -33,9 +34,9 @@ met. It is a blueprint for later, not current scope.
 - A worker model must not be the sole approver of high-risk/destructive actions — see `docs/warroom/ROLES.md` (Auditor, Project Lead) and `docs/warroom/MONITORING.md` (red-tier escalation).
 - High-risk architecture/security/data changes require independent review — proportional to actual risk; do not default to two-model review for routine Phase A changes (see Cost/token discipline below).
 - Any new managed service must justify operational benefit versus added complexity and recurring cost.
-- Avoid duplicating capabilities across Cloudflare, OpenRouter, n8n, and PostgreSQL without a measurable reason.
-- Design every reusable component to be scoped by bot/tenant/user/channel where appropriate. Every Phase A table carries `tenant_id` with no exceptions — see `docs/data/LITE_SCHEMA_V1.md`.
-- Never reveal, confirm, or hint at the underlying AI model/vendor to an end customer — see `docs/product/CUSTOMER_FACING_RULES.md`.
+- Do not add a second tool/service for something n8n or the database already does, without a measured reason.
+- Design every reusable component to be scoped by bot/tenant/user/channel where appropriate. Every Phase A table holding customer data carries `tenant_id` and `bot_id` with no exceptions — see `docs/data/LITE_SCHEMA_V1.md`.
+- Never reveal the underlying AI model/vendor, and never let a bot claim to be human — see `docs/product/CUSTOMER_FACING_RULES.md`.
 - Never use tenant conversation data to train/fine-tune any model without separate, explicit, advance consent — see `docs/security/PDPA_COMPLIANCE.md`, Layer 3.
 
 ## Cost and token discipline

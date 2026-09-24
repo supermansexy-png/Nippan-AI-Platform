@@ -26,7 +26,13 @@ Deliver:
   `docs/warroom/ROLES.md` — Operations first, other roles as volume
   justifies them
 - Monitoring pipeline (`docs/warroom/MONITORING.md`)
-- Flat pricing (`docs/product/PRICING_V1.md`)
+- Flat pricing, each tenant on its own LINE OA (`docs/product/PRICING_V1.md`)
+- Storefront with live demo (`docs/product/STOREFRONT.md`)
+- Outage, refund, payment and first-customer rules (`docs/product/BUSINESS_OPERATIONS.md`)
+- Task control and autonomy ladder (`docs/warroom/TASK_CONTROL.md`, `ROLES.md`)
+
+Build order: `docs/warroom/STARTUP_PLAYBOOK.md`. Checkpoints (go / adjust /
+stop): `docs/warroom/TASK_CONTROL.md` §10.
 
 Exit: 25-30 tenants signed up, retained, and profitable at the estimated
 cost-per-tenant, or a clear signal the market isn't there.

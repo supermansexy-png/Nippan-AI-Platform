@@ -1,5 +1,7 @@
 # Nippan AI Platform
 
+ภาษาไทย: อ่าน `README.th.md` (สรุปทั้งโครงการ) และ `FEASIBILITY_REVIEW.th.md` (ประเมินความเป็นไปได้)
+
 Status: **Phase A — market test**
 
 Nippan AI Platform rents AI bots to small Thai businesses: chat, secretary,
@@ -23,15 +25,14 @@ larger version this can grow into.
 ## Phase A architecture
 
 ```text
-End customers (chat / LINE)
-              |
-              v
-         n8n (core)
-        /            \
-   MCP Tools      Lite database
-  (chat, memory,   (tenants, bot_configs,
-   web-fetch,       conversations,
-   file-reader...)  memory_summaries)
+End customers  ->  tenant's own LINE OA / web chat
+                          |
+                          v
+                 n8n (self-hosted core)
+                /                      \
+        MCP tools                   PostgreSQL (lite schema)
+  (chat, memory, onboarding,   tenants > bots > channels >
+   usage, monitoring, handoff)  end customers > conversations
 ```
 
 War Room (`docs/warroom/`) sits above this as the operating team — a mix
@@ -52,15 +53,18 @@ the order they come online.
   task type, not tenant
 - PDPA compliance is built in from Phase A, not deferred —
   `docs/security/PDPA_COMPLIANCE.md`
-- Every table is tenant-scoped with no exceptions — `docs/data/
-  LITE_SCHEMA_V1.md`
+- Every customer-data table is scoped by tenant and bot, no exceptions —
+  `docs/data/LITE_SCHEMA_V1.md`
+- Each business uses its own LINE Official Account — `docs/product/PRICING_V1.md`
+- Bots never name their model and never pretend to be human —
+  `docs/product/CUSTOMER_FACING_RULES.md`
 
 ## Start here
 
 1. `PROJECT_STATE.md` — what's actually built vs. designed
 2. `ROADMAP.md` — Phase A/B/C
-3. `WORKING_POLICY.md` — how anyone (AI or human) should operate on this
-   project day to day
+3. `WORKING_POLICY.md`, `docs/warroom/TASK_CONTROL.md`, `TASKS.md` — how
+   anyone (AI or human) operates day to day, and the current task board
 4. `AGENTS.md` — behavioral rules for any AI working on this repo
 5. `docs/warroom/ROLES.md` — the operating structure
 6. `docs/warroom/STARTUP_PLAYBOOK.md` — the concrete step-by-step build

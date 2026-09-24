@@ -4,47 +4,58 @@ Status: **ACTIVE**
 
 ## Price
 
-299 THB/month, flat. One tier. No annual discount, no multi-tier ladder in
-Phase A — the target segment wants a number they can decide on immediately,
-not a comparison table.
+**299 THB/month per bot**, flat. One tier. No annual plan in Phase A — the
+target customer should be able to decide on one number.
 
-## What's included
+A second bot for the same business is another 299 THB (a discount can be
+tested later; do not promise one now).
 
-- One bot type per subscription (chat / secretary / etc. — see
-  `CUSTOMER_SEGMENTS.md` for the catalog)
-- 500-800 messages/month (exact number set by Cost Guard based on real
-  observed cost per message; do not commit to a number until Phase A week
-  1-2 usage data exists)
-- Onboarding via the conversational assistant, free, one-time
+## Included
 
-## Multiple bots
+- one bot, on the business's own LINE Official Account and/or a web chat
+- a monthly message quota (starting value: 600 replies; confirm or adjust
+  after the first real tenants — see `docs/warroom/STARTUP_PLAYBOOK.md` Step 2)
+- conversational onboarding, free, once
 
-A customer wanting more than one bot type pays per additional bot — not
-folded into a single "unlimited" price. Never offer unlimited usage at this
-price point; see cost analysis below for why.
+## Who pays for LINE
 
-## Over-quota handling
+Each business connects **its own** LINE Official Account (free plan). The
+platform never runs one shared LINE account for all tenants.
 
-When a tenant approaches their quota (yellow-tier per `MONITORING.md`):
-1. Notify the customer before they hit the ceiling, not after
-2. Offer an easy top-up, not a hard cutoff — the bot should not go silent
-   mid-conversation with an end customer
-3. Never silently downgrade quality (e.g., swap to a worse model) without
-   telling the tenant
+Why: LINE OA's free plan includes a limited number of *push* messages per
+month (300 on the free plan at the time of writing; paid plans start
+around 1,280 THB/month). Replies to a customer's message are handled
+differently from pushes. A single shared account would put every tenant's
+reminders on our bill and destroy the margin. With each tenant on its own
+free account, normal replies cost the platform nothing, and only features
+that *push* (reminders, follow-ups) consume the tenant's own free quota.
 
-## Why flat pricing, no unlimited tier
+Onboarding must tell the owner this plainly: reminders are limited by
+their LINE plan. Re-check LINE's current terms before launch — they change.
 
-Cost per tenant at 600 messages/month on a cheap model
-(Gemini Flash-class, ~$0.075-0.84 per million tokens) runs roughly
-5-30 THB/month. Infrastructure (n8n hosting) adds roughly 20-60 THB/tenant
-at 30-tenant scale. Total cost is comfortably under the 299 THB price, but
-the margin only holds if usage stays bounded. An unlimited tier removes
-that bound and turns one heavy user into a loss.
+## Over quota
 
-## Trigger to revisit
+1. Warn the owner at 80% (yellow in `docs/warroom/MONITORING.md`)
+2. Offer a simple top-up — never let the bot go silent mid-conversation
+3. Never silently switch to a worse model without telling the owner
 
-Reconsider pricing structure (tiers, per-message pricing, or a specialized
-high-price low-volume track) when either:
-- Real Phase A cost data diverges meaningfully from the estimate above
-- The owner activates the specialized/high-value pivot option described in
-  `docs/decisions/PIVOT_OPTION.md`
+## Why flat, and why never "unlimited"
+
+Estimated platform cost per bot per month:
+
+| Item | Estimate |
+|---|---|
+| AI model (600 replies on cheap models, some mid-tier) | ~5–30 THB |
+| Server share (self-hosted n8n + database, ~30 bots) | ~20–60 THB |
+| One-time onboarding (stronger model) | ~5–10 THB, once |
+| **Total** | **~30–100 THB** vs 299 THB revenue |
+
+The margin holds only while usage is bounded. "Unlimited" removes the bound
+and lets one heavy user erase the profit of several others.
+
+These are estimates. Step 2 of the playbook replaces them with real numbers.
+
+## Revisit when
+
+- real cost differs from this table by more than ~50%
+- the specialized/high-value option is activated (`docs/decisions/PIVOT_OPTION.md`)
