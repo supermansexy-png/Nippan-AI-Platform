@@ -82,6 +82,30 @@ Next: restart opencode to reload agent prompts; optionally a cheap reviewer pass
 
 ---
 
+### T-019 — Batch API channel for non-urgent verification/review
+Status: IN_PROGRESS
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (tooling design; no paid specialist called yet)
+Risk: L2 (adds a paid async pipeline; non-customer-facing, but each run spends money)
+Goal: non-urgent review/verification jobs (independent reviews, doc-consistency, security scans) run through the OpenRouter Batch API at ~40–60% lower cost, with an explicit async result step
+Done when: 1) batch eligibility of roster models recorded; 2) a smoke-test batch completes end-to-end (submit → poll → results); 3) a defined workflow for feeding batch review results back into TASKS.md / decision-log; 4) smoke-test cost recorded; 5) owner informed
+Budget: 1 session (smoke test only); each real batch run needs its own cost approval
+Links: OpenRouter Batch API docs, docs/product/MODEL_ROSTER.md, TASK_CONTROL.md §3
+
+INTAKE — T-019 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner approved: "ทำให้หน่อย … จัดการเพิ่มลงไปในงาน")
+Understanding: Batch API is not a dashboard setting — it is an API call (`POST /api/v1/batches`), visible in dashboard Logs → Batches tab, 24h window, ~50% cheaper. Use it only for slow verification jobs that can wait.
+Batch eligibility (VERIFIED from catalogue 2026-09-25): `z-ai/glm-5.3-flash:batch` $0.06/$0.20 (sync $0.15/$0.50); `deepseek/deepseek-v4.1-flash:batch` $0.112/$0.336 (sync $0.15/$0.60); `qwen/qwen3.7-flash` has NO batch variant.
+Plan: 1) smoke test 5 probes on `z-ai/glm-5.3-flash:batch`; 2) poll to terminal status; 3) record evidence + cost; 4) define the async review workflow; 5) keep opt-in with per-run cost approval.
+Estimate: under budget (smoke test is cents). Risks: model must have a `:batch` endpoint (400 otherwise); 24h latency means it cannot be used inline by interactive agents.
+Decision: ACCEPT — Project Lead runs the smoke test itself (small, approved cost).
+
+SMOKE TEST — T-019 — Project Lead — 2026-09-25
+Batch id: batch-1790275398-ILOig9CLJodGDQi5paMF
+Submitted: 5 probes, model routed to `z-ai/glm-5.3-flash-20260826` (batch variant), endpoint /v1/chat/completions.
+Status at submit: validating → in_progress. Poll `get-batch` until terminal; record results + cost in DELIVERY.
+
+---
+
 ### T-012 â€” Staff the team: map all 7 dev roles to Primary + Backup models
 Status: READY
 Owner: â€”
