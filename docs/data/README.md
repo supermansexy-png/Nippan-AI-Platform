@@ -8,6 +8,11 @@ Foundation v1 contracts:
 
 Machine-readable contracts live under `/schemas`.
 
+## Active document
+
+- `LITE_SCHEMA_V1.md` — the Phase A schema actually in use. See
+  `docs/future/data/` for the full contracts this grows into later.
+
 ## Current gate
 
 These contracts are in REVIEW.
