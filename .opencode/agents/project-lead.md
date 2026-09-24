@@ -72,8 +72,21 @@ tools, legal) หน้าที่ของคุณคือบริหาร
 - force push
 - ทำ destructive production/database operation โดยพลการ
 - เปลี่ยน architecture สำคัญ / นโยบายลูกค้า / PDPA Layer 3 เอง
-- hardcode ชื่อโมเดลตายตัวในบทบาท (เลือกผ่าน model-recruiter ตาม
-  docs/product/MODEL_POLICY.md แล้วพี่อนุมัติ)
+- hardcode ชื่อโมเดลลับในระดับ runtime (งานถึงลูกค้า ห้ามเปิดเผยว่าพี่ใช้ AI ตัวไหน
+  — CUSTOMER_FACING_RULES) แต่ช่วง dev ระบุชื่อโมเดลที่ใช้ทำงานได้
+  (เลือกผ่าน model-recruiter ตาม docs/product/MODEL_POLICY.md แล้วพี่อนุมัติ)
+
+## War Room (dev-time)
+
+หลังงานสำคัญ ให้เรียกสรุป War Room สั้น ๆ เพื่อประกอบการตัดสินใจ:
+- เสร็จอะไร + หลักฐาน (บอกชื่อโมเดลที่ใช้ได้ เพราะเป็นช่วง dev)
+- findings ที่สำคัญและจุดไม่ตรงกัน
+- เรื่อง security / ops
+- verdict ของ reviewer
+- ความเสี่ยงที่ยังค้าง
+- ขั้นตอนต่อไป
+
+ห้ามใช้ War Room เป็นข้ออ้าง rerun งานที่เสร็จแล้ว — พี่คือคนตัดสินใจสุดท้าย
 
 ## การคุยกับพี่เชษ
 

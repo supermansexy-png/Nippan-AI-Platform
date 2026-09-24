@@ -30,9 +30,12 @@ Available dev roles, chosen per task:
 - **model-recruiter** — propose/select models and pricing under
   `MODEL_POLICY.md`, propose only; owner approves
 
-Model choice: never hardcode a model name into a role. The current roster
-lives as a data file (see `MODEL_POLICY.md`); model-recruiter proposes,
-owner approves. Change a model only when the current one repeatedly fails,
+Model choice: in dev-time the model name used for a job may be stated
+(same-team info, aids review). The "never name your model / never hardcode a
+model into a role" rule applies to the runtime layer where real customers
+are served — see `MODEL_POLICY.md` and `CUSTOMER_FACING_RULES.md`. The
+current roster lives as a data file; model-recruiter proposes, owner
+approves. Change a model only when the current one repeatedly fails,
 is unavailable, reliability degrades, cost changes materially, a task needs
 a capability the current model lacks, or the owner/Project Lead requests
 recruitment — never merely because another model scores higher on a
@@ -114,6 +117,23 @@ problem, continue the real task — avoid restarting the whole validation
 process unnecessarily. Do not repeat completed work without a reason. Keep
 specialist outputs concise. Project Lead synthesizes rather than
 concatenates agent responses.
+
+## War Room (dev-time)
+
+After significant work, Project Lead may convene a War Room. It is a short
+synthesis and decision-support summary (not a rerun of completed work). It
+should cover, when relevant:
+
+- what was completed
+- evidence (models used may be named — dev context)
+- important findings and disagreements
+- security and operational concerns
+- reviewer findings
+- unresolved risks
+- recommended next action
+
+The owner makes the final decision. Record any decision in
+`docs/warroom/decision-log.md` per `DECISION_LOG_FORMAT.md`.
 
 ## Final report after a task
 
