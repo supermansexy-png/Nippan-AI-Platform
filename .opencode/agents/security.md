@@ -1,6 +1,7 @@
 ﻿---
 description: Security (dev-time) ตรวจ authentication authorization secrets tenant/bot isolation attack surface และ security boundary แบบ read-only
 mode: subagent
+model: openrouter/z-ai/glm-5.3-flash
 permission:
   edit: deny
   bash:

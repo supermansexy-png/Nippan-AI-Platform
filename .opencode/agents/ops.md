@@ -1,6 +1,7 @@
 ﻿---
 description: Ops (dev-time) ดูแล GitHub CI Render Cloudflare Supabase hosting และ deployment evidence ตามการ์ดงาน โดยการเปลี่ยนสำคัญต้องได้รับอนุมัติ
 mode: subagent
+model: openrouter/qwen/qwen3.7-flash
 permission:
   edit: ask
   bash:

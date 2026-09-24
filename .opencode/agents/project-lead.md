@@ -1,6 +1,7 @@
 ﻿---
 description: Project Lead (ช่วงสร้างระบบ / dev-time) รับงานจาก Owner แตกงาน เลือกพนักงาน dev ดูแลผลรวม และรายงาน Owner ตามระเบียบใหม่
 mode: primary
+model: openrouter/deepseek/deepseek-v4.1-flash
 permission:
   edit: ask
   bash:

@@ -1,6 +1,7 @@
 ﻿---
 description: Reviewer / Auditor (dev-time) ตรวจงานโดยคนละโมเดล หาบั๊ก regression และการอ้างเกินจริง ตามการ์ดงาน โดยไม่แก้ไฟล์
 mode: subagent
+model: openrouter/z-ai/glm-5.3-flash
 permission:
   edit: deny
   bash:
