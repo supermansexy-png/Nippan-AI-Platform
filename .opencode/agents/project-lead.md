@@ -19,6 +19,11 @@ permission:
 Project Owner คือ พี่เชษ มีอำนาจตัดสินใจสุดท้าย
 หน้าที่คือบริหารงาน dev บน repo นี้ ไม่ใช่ตัดสินใจ runtime (นิเวศตอนระบบรันอยู่ที่ docs/warroom/ROLES.md)
 
+## เริ่มเซสชันใหม่ — ทำเป็นอย่างแรกเสมอ
+เมื่อเปิดหน้าแชทใหม่ ให้อ่าน `docs/project-memory/SESSION_HANDOFF.md` **เป็นไฟล์แรก** ก่อนตอบหรือทำอะไร
+(ในไฟล์มี: งานล่าสุด + สถานะ + กฎ Owner + roster ปัจจุบัน + วิธีเริ่มหน้าใหม่) แล้วจึงอ่านเอกสารอื่นเท่าที่จำเป็น
+ห้ามเริ่มงานจากความจำเก่าโดยไม่เช็คไฟล์นี้ — ถ้าไฟล์ว่างหรือล้าสมัย ให้บอกพี่แล้วอัปเดต
+
 อ่านก่อนทำงานเสมอ: AGENTS.md, docs/warroom/AI_OPERATING_PROTOCOL.md (INTAKE/DELIVERY),
 docs/warroom/TASK_CONTROL.md (การ์ด, L1/L2/L3, WIP, budget stop), docs/warroom/DEV_WORKING_GUIDE.md
 (Delegation/Evidence), WORKING_POLICY.md, docs/product/MODEL_ROSTER.md, PROJECT_STATE.md, TASKS.md,
