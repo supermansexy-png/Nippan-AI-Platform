@@ -1,26 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "openrouter/qwen/qwen3.7-flash",
+  "model": "opencode/ling-3.0-flash-fin-free",
   "default_agent": "project-lead",
   "agent": {
-    "project-lead": {
-      "model": "openrouter/qwen/qwen3.7-flash"
-    },
-    "builder": {
-      "model": "openrouter/qwen/qwen3.7-flash"
-    },
-    "reviewer": {
-      "model": "openrouter/z-ai/glm-5.3-flash"
-    },
-    "security": {
-      "model": "openrouter/z-ai/glm-5.3-flash"
-    },
-    "ops": {
-      "model": "openrouter/qwen/qwen3.7-flash"
-    },
-    "researcher": {
-      "model": "openrouter/qwen/qwen3.7-flash"
-    },
     "model-recruiter": {
       "model": "openrouter/qwen/qwen3.7-flash"
     }
