@@ -17,15 +17,15 @@ contract (name, input, output, permission scope, cost), not the transport.
 | Tool | Does | Used by | Build step |
 |---|---|---|---|
 | `data-access` | The only path to the database; every call requires `tenant_id` + `bot_id` | Every other tool | Step 0 |
-| `usage-tracker` | Logs messages/tokens/cost per bot | Cost Guard | Step 0 |
+| `usage-tracker` | Logs reply/push counts, tokens, cost per bot; enforces the 200/month push cap | Cost Guard | Step 0 |
 | `monitor-log` | Writes events to the monitoring log; sends red alerts | All workflows | Step 0 |
-| `line-channel` | Receives/replies to LINE OA messages using the tenant's own channel credentials | Bots on LINE | Step 1 |
+| `line-channel` | Receives + replies to LINE OA messages (free, uses reply token) using the tenant's own channel credentials | Bots on LINE | Step 1 |
 | `chat-bot-core` | Answers end customers from business info + memory | All bot types | Step 1 |
 | `memory-store` | Reads/writes the 4 memory layers | All bot types | Step 1 |
 | `web-fetch` | Reads the tenant's own website pages | Onboarding | Step 1 |
 | `file-reader` | Reads PDF/Excel/image menus and price lists | Onboarding | Step 1 |
 | `handoff-to-owner` | Notifies the business owner when the bot should not answer alone | All bot types | Step 1 |
-| `secretary-bot` | Bookings and reminders (reminders use LINE push quota — see `PRICING_V1.md`) | Secretary bots | Step 3 |
+| `secretary-bot` | Bookings + reminders. Reminders are LINE push messages against `bots.monthly_push_quota` (200/month cap) — booking replies themselves are free reply messages | Secretary bots | Step 3 |
 | `web-chat-channel` | Chat widget for the storefront demo and tenant websites | Storefront, tenants | Step 3 |
 
 ## Adding a new tool

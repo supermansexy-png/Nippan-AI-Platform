@@ -55,7 +55,9 @@ the order they come online.
   `docs/security/PDPA_COMPLIANCE.md`
 - Every customer-data table is scoped by tenant and bot, no exceptions —
   `docs/data/LITE_SCHEMA_V1.md`
-- Each business uses its own LINE Official Account — `docs/product/PRICING_V1.md`
+- Each business uses its own LINE Official Account; chat replies are free
+  and unlimited, bot-initiated reminders are capped at 200/month —
+  `docs/product/PRICING_V1.md`
 - Bots never name their model and never pretend to be human —
   `docs/product/CUSTOMER_FACING_RULES.md`
 

@@ -22,22 +22,46 @@ tested later; do not promise one now).
 Each business connects **its own** LINE Official Account (free plan). The
 platform never runs one shared LINE account for all tenants.
 
-Why: LINE OA's free plan includes a limited number of *push* messages per
-month (300 on the free plan at the time of writing; paid plans start
-around 1,280 THB/month). Replies to a customer's message are handled
-differently from pushes. A single shared account would put every tenant's
-reminders on our bill and destroy the margin. With each tenant on its own
-free account, normal replies cost the platform nothing, and only features
-that *push* (reminders, follow-ups) consume the tenant's own free quota.
+LINE has two different message mechanisms, and only one of them costs
+anything:
 
-Onboarding must tell the owner this plainly: reminders are limited by
-their LINE plan. Re-check LINE's current terms before launch — they change.
+- **Reply messages** — the bot answering a message the end customer sent
+  first (uses LINE's reply token). **Free, unlimited**, on any plan. This
+  covers the entire chat-bot use case: someone messages the shop, the bot
+  answers.
+- **Push messages** — the bot messaging someone who did not just message
+  it (e.g. a booking reminder sent ahead of time). LINE's free plan
+  includes a limited number of these per month (300 at the time of
+  writing; paid plans start around 1,280 THB/month if a tenant needs
+  more). Re-check LINE's current terms before launch — they change.
+
+**Platform rule: push messages are capped at 200/month per bot** — set
+below LINE's own free-plan ceiling (300) as a safety margin, so a bot can
+never push a tenant's account into LINE's paid tier on its own. Ordinary
+chat replies are unaffected by this cap; it only limits bot-initiated
+messages like reminders.
+
+Why one shared LINE account for all tenants is never an option: it would
+put every tenant's reminders on one bill and make usage impossible to
+separate per tenant. Each tenant on their own free account means normal
+chat replies cost the platform nothing regardless of volume, and only the
+push-based features (reminders) are capped and tracked per bot.
+
+Onboarding must tell the owner plainly: chat replies are unlimited;
+scheduled reminders are capped at 200/month.
 
 ## Over quota
 
-1. Warn the owner at 80% (yellow in `docs/warroom/MONITORING.md`)
-2. Offer a simple top-up — never let the bot go silent mid-conversation
-3. Never silently switch to a worse model without telling the owner
+Two independent quotas, checked separately:
+
+- **Chat replies** (the message quota above): warn the owner at 80%
+  (yellow, `docs/warroom/MONITORING.md`), offer a simple top-up, never let
+  the bot go silent mid-conversation, never silently downgrade the model
+  without telling the owner.
+- **Push/reminders** (200/month cap): warn at 80%; once the cap is hit,
+  reminders pause for the rest of the month rather than risk pushing the
+  tenant's own LINE account into a paid tier. Chat replies are unaffected
+  — they are free and have their own separate quota above.
 
 ## Why flat, and why never "unlimited"
 
@@ -45,13 +69,18 @@ Estimated platform cost per bot per month:
 
 | Item | Estimate |
 |---|---|
-| AI model (600 replies on cheap models, some mid-tier) | ~5–30 THB |
+| AI model, chat replies (LINE reply = free delivery; the cost is only the model call, ~600 messages) | ~5–30 THB |
+| AI model, push/reminders (capped at 200/month above) | ~2–10 THB |
 | Server share (self-hosted n8n + database, ~30 bots) | ~20–60 THB |
 | One-time onboarding (stronger model) | ~5–10 THB, once |
-| **Total** | **~30–100 THB** vs 299 THB revenue |
+| **Total** | **~30–110 THB** vs 299 THB revenue |
 
-The margin holds only while usage is bounded. "Unlimited" removes the bound
-and lets one heavy user erase the profit of several others.
+LINE delivery itself costs the platform nothing either way — reply
+messages are free and push messages stay under LINE's own free-tier limit
+by design. The AI model call is the real variable cost, and the message
+quota (chat) and push cap (reminders) both exist to keep it bounded.
+"Unlimited" on either would remove that bound and let one heavy user erase
+the profit of several others.
 
 These are estimates. Step 2 of the playbook replaces them with real numbers.
 

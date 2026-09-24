@@ -40,7 +40,8 @@ Scope chain: **tenant → bot → channel → end customer → conversation**.
 | `tone` | fixed-menu value (`docs/product/CUSTOMER_FACING_RULES.md`) |
 | `business_info` | structured fields (hours, prices, policies) — never raw customer-written prompt text |
 | `enabled_tools` | list of MCP tools this bot may call |
-| `monthly_quota` | message quota for this bot (`PRICING_V1.md`) |
+| `monthly_message_quota` | chat reply quota for this bot (`PRICING_V1.md`) |
+| `monthly_push_quota` | push/reminder cap for this bot — default 200 (`PRICING_V1.md`) |
 | `status` | active / paused |
 
 ### `channels` — where a bot is reachable
@@ -82,7 +83,8 @@ Scope chain: **tenant → bot → channel → end customer → conversation**.
 |---|---|
 | `tenant_id`, `bot_id` | FK |
 | `date` | |
-| `message_count` | |
+| `reply_count` | LINE reply messages — free delivery, cost is model call only |
+| `push_count` | LINE push messages — capped at `bots.monthly_push_quota` |
 | `model_tokens` | |
 | `estimated_cost_thb` | |
 
