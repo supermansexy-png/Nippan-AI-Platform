@@ -301,26 +301,6 @@ Estimate: 1-2 days (depends on n8n test env availability)
 Risks: If T-002 schema differs from expectation, tool queries fail. data-access bypass = tenant data leak = PDPA violation (L3 impact).
 Decision: ACCEPT WITH LIMITS â€” scope limited to Phase A tool implementations only (no production deployment, no user management). Team: builder(qwen3.7-flash/P, nemotron-3.ultra/B) + reviewer(glm-5.3-flash/P, inkling/B anti-redundancy check). Priority order: data-access â†’ usage-tracker â†’ monitor-log.
 
-### T-004 â€” Legal review of tenant agreement and privacy notice
-Status: READY
-Owner: owner
-Role: Project Lead
-Risk: L3
-Goal: lawyer-checked tenant agreement + end-customer notice
-Done when: reviewed texts stored in docs/security/
-Budget: arrange within 2 weeks; must finish before tenant #1
-Links: docs/security/PDPA_COMPLIANCE.md, docs/product/BUSINESS_OPERATIONS.md
-
-INTAKE â€” T-004 â€” Project Lead â€” 2026-09-24 (Step 1 planning)
-Understanding: PDPA compliance is mandatory for Phase A. Need two documents: (1) Tenant Agreement â€” contract between platform and business renting a bot (covers data handling, controller/processor roles under PDPA). (2) End-Customer Privacy Notice â€” what the tenant's customers see when interacting with the bot (Layer 1 PDPA notice per schema: consent_notice_shown_at in end_customers table). Must be reviewed by a Thai lawyer or legal advisor familiar with PDPA before any real tenant signs up. Deadline: "must finish before tenant #1". This is an L3 task because it involves data handling rules. Current status: need to draft initial texts first, then get lawyer review.
-Done when: 1) Draft tenant agreement written (docs/security/tenant-agreement-draft.md) 2) Draft end-customer privacy notice written (docs/security/end-customer-notice-draft.md) 3) Lawyer/legal reviewer has marked them acceptable 4) Final versions stored in docs/security/ 5) Reference updated in CURRENT_STATE.md
-Needs: Access to Thai PDPA legal expertise (lawyer, compliance consultant, or verified online PDPA template). Understanding of n8n-based deployment model for accurate controller/processor classification.
-Missing: Legal review resource. Not something we can do internally without proper legal qualification.
-Plan: 1) Read PDPA_COMPLIANCE.md for specific requirements 2) Read BUSINESS_OPERATIONS.md for operational context 3) Draft tenant agreement based on PDPA requirements + Phase A architecture 4) Draft end-customer notice covering Layer 1 consent requirements 5) Get external review (lawyer or qualified reviewer) 6) Store final versions
-Estimate: 1 week (depends on lawyer availability)
-Risks: No legal review = PDPA violation risk if tenants onboard. Can block tenant #1. Insurance: use established PDPA template from Thai government sources as starting point.
-Decision: ACCEPT WITH LIMITS â€” internal drafting OK, but requires external legal sign-off before go-live with real tenants. Team: project-lead(qwen3.7-flash/P, nemotron-3.ultra/B) for drafting only; external lawyer for actual legal review (out-of-model scope). Start drafting NOW even while arranging lawyer review.
-
 ### T-008 â€” War Room D-02: owner controls + decision input (acceptance)
 Status: READY
 Owner: â€”

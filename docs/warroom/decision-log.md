@@ -165,3 +165,16 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Immediate assignment to new HR**: Audit all prior completion claims (especially HR record-keeping claims) against actual file/git evidence; report discrepancies.
 
 ---
+
+## DECISION — 2026-09-25 — Legal work (T-004) cut from the dev-time plan (per Owner)
+
+**Owner order**: "อันนี้ต้องตัดออก เพราะตอนนี้อยู่ในช่วงทำระบบ งานนี้ไม่เกี่ยวข้องเลย" (referring to T-004 Legal review) and "ลบ".
+
+**Decision**: Remove T-004 (legal review of tenant agreement + privacy notice) from the active plan during the system-building phase.
+- T-004 card removed from TASKS.md.
+- STARTUP_PLAYBOOK.md: removed the T-004 references from Step 0 ("Legal review... started (T-004)") and Step 2 ("Legal texts done (T-004) — hard prerequisite").
+- T-004 remains recoverable from Git history and this log if legal work is needed when real tenants are onboarded later.
+
+**Rationale**: The project is in the system-building phase; legal/compliance paperwork is not relevant to current build work.
+
+---

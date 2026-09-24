@@ -1,13 +1,13 @@
-# Startup playbook — Phase A, step by step
+﻿# Startup playbook â€” Phase A, step by step
 
-Status: **ACTIVE — the build order for `ROADMAP.md` Phase A**
+Status: **ACTIVE â€” the build order for `ROADMAP.md` Phase A**
 
 This file is the single source for "what comes next". `PROJECT_STATE.md`
 says what exists; `TASKS.md` holds the task cards for the current step.
 Steps are in dependency order. Each step ends with a go/adjust checkpoint
 from `docs/warroom/TASK_CONTROL.md` section 10.
 
-## Step 0 — Foundations (target: ~1–2 weeks)
+## Step 0 â€” Foundations (target: ~1â€“2 weeks)
 
 - [ ] Self-hosted n8n + PostgreSQL on a small VPS, HTTPS, daily backups
       (self-hosting because a hosted n8n plan's execution limits would not
@@ -15,13 +15,12 @@ from `docs/warroom/TASK_CONTROL.md` section 10.
 - [ ] Lite schema tables (`docs/data/LITE_SCHEMA_V1.md`)
 - [ ] `data-access`, `usage-tracker`, `monitor-log` tools
 - [ ] Owner's single alert channel working
-- [ ] Legal review of tenant agreement + privacy notice started (T-004)
 
 Exit: empty but real system; a red test event reaches the owner.
 
-## Step 1 — One bot, end to end, on LINE (target: ~2–3 weeks)
+## Step 1 â€” One bot, end to end, on LINE (target: ~2â€“3 weeks)
 
-- [ ] `line-channel` — connect a *test* LINE OA with its own credentials
+- [ ] `line-channel` â€” connect a *test* LINE OA with its own credentials
 - [ ] `chat-bot-core`, `memory-store` (layers 1 and 4 first)
 - [ ] `handoff-to-owner`, outage fallback message
 - [ ] `web-fetch`, `file-reader`, Onboarding flow (`docs/product/ONBOARDING_FLOW.md`)
@@ -32,9 +31,8 @@ Exit: empty but real system; a red test event reaches the owner.
 
 Exit: a test bot a real shop could use. Checkpoint: within ~4 weeks of start.
 
-## Step 2 — Tenant #1, watched closely (target: 2 weeks live)
+## Step 2 â€” Tenant #1, watched closely (target: 2 weeks live)
 
-- [ ] Legal texts done (T-004) — **hard prerequisite**
 - [ ] Onboard tenant #1 with the owner present; tenant uses their own LINE OA
 - [ ] Measure real cost per reply; update `PRICING_V1.md`
 - [ ] Confirm the monthly quota value
@@ -42,26 +40,26 @@ Exit: a test bot a real shop could use. Checkpoint: within ~4 weeks of start.
 
 Exit: owner confident in quality; real cost within estimate.
 
-## Step 3 — Tenants #2–10, storefront, second bot type
+## Step 3 â€” Tenants #2â€“10, storefront, second bot type
 
 - [ ] `web-chat-channel` + storefront with live demo (`docs/product/STOREFRONT.md`)
-- [ ] `secretary-bot` (reminders use the tenant's LINE push quota —
+- [ ] `secretary-bot` (reminders use the tenant's LINE push quota â€”
       explain this during onboarding)
 - [ ] Rolling summary job (memory layer 2) and retention/deletion jobs
-- [ ] Onboard tenants from direct contacts (`BUSINESS_OPERATIONS.md` §6),
+- [ ] Onboard tenants from direct contacts (`BUSINESS_OPERATIONS.md` Â§6),
       mixing expected and underserved segments
 - [ ] Weekly review running
 
 Exit: ~10 tenants; patterns visible (which segments stay, where cost differs).
 
-## Step 4 — First roles climb the autonomy ladder
+## Step 4 â€” First roles climb the autonomy ladder
 
-- [ ] Auditor to stage 2–3, then Cost Guard (`ROLES.md` ladder)
+- [ ] Auditor to stage 2â€“3, then Cost Guard (`ROLES.md` ladder)
 - [ ] Owner moves from doing checks to reading digests and red alerts
 
-## Step 5 — Toward Phase B
+## Step 5 â€” Toward Phase B
 
-At 25–30 retained, profitable tenants, switch from this fixed list to
+At 25â€“30 retained, profitable tenants, switch from this fixed list to
 demand-driven work (`ROADMAP.md` Phase B).
 
 ## Out of scope for this playbook
