@@ -167,6 +167,11 @@ Problems: raw-HTTP test first returned 403/400 — root-caused (FreeTierError + 
 Confidence: high on the config/policy change; medium on the free models as repeatable reviewers
 Next: Owner connects Zen (`/connect`) and rotates the exposed key; restart opencode; then run one real L1/L2 review as the first production proof.
 
+ACTIVATION VERIFIED — T-020 — Project Lead — 2026-09-25 (closes the card)
+- Owner completed Zen connect (opencode auth now has `openrouter, opencode`) and restarted.
+- End-to-end proof: the `reviewer` subagent (invoked via task) ran on `opencode/nemotron-3-ultra-free` (it reported its model from MODEL_ROSTER "Review tiers") and returned `VERDICT: RETURNED`, correctly catching the missing `bot_id` = cross-bot isolation leak. The "SQL quote syntax error" seen in the earlier bulk test did not appear here → confirms it was a prompt-encoding artifact.
+- Conclusion: review tiering is LIVE and working. No paid model was used for this review (free tier). T-020 complete.
+
 ---
 
 ### T-012 â€” Staff the team: map all 7 dev roles to Primary + Backup models
