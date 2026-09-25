@@ -71,6 +71,11 @@ class CorrelationContext:
             raise InterfaceViolation(
                 "trace_id must be 32 lowercase hexadecimal characters"
             )
+        if self.trace_id == "0" * 32:
+            raise InterfaceViolation(
+                "trace_id must not be the all-zero sentinel "
+                "(the frozen schema pattern forbids it)"
+            )
 
 
 @dataclass(frozen=True, slots=True)
