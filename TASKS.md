@@ -190,7 +190,7 @@ Links: docs/data/LITE_SCHEMA_V1.md (PROTECTED - TASK_CONTROL section 8), TASKS.m
 Note: LITE_SCHEMA_V1.md deliberately left RLS out for Phase A. T-003 (2026-09-25) closed the runtime hole with a named-query registry and accepted the residual; this card closes it properly.
 
 ### T-029 — Frozen-contract hardening (from background recon 2026-09-25)
-Status: READY
+Status: REVIEW (implemented by PL 2026-09-25; reviewer gate pending)
 Owner: -
 Role: Developer (builder) + reviewer
 Risk: L2 (contract data + guard fixes; test-first)
@@ -202,6 +202,18 @@ Found (VERIFIED via `runs/2026-09-25T01-48-49Z-contract-sweep`, model `opencode/
 Done when: 1) a conformance test validates emitted events/snapshots against the frozen schemas; 2) all-zero trace_id is rejected at the boundary with a test; 3) the `metadata` export hazard is resolved or documented; 4) `python -m pytest -q` green from services/core; 5) reviewer (different model) confirms.
 Budget: ≤ 1 day.
 Links: `docs/warroom/DEV_ERROR_LOG.md`, `schemas/war-room-event-v1.schema.json`, `runs/2026-09-25T01-48-49Z-contract-sweep`
+
+INTAKE — T-029 — Project Lead — 2026-09-25
+Understanding: close three conformance gaps: (1) no test validates real JSON against `schemas/*.json` (T-008-class bug can slip); (2) all-zero `trace_id` passes `interfaces.py` / `transport.py` though the frozen pattern `^(?!0{32}$)[0-9a-f]{32}$` forbids it; (3) `transport.py` writes a storage-only `metadata` column absent from `usage-event-v1`.
+Decision: ACCEPT (scope: `interfaces.py`, `transport.py`, new conformance test file).
+
+DELIVERY — T-029 — 2026-09-25
+Status: DONE (code + tests + live DB); pending reviewer gate.
+- Item 1 → VERIFIED: new `services/core/tests/test_frozen_schema_conformance.py` reads the real schema files and validates the usage-event wire payload against `usage-event-v1.schema.json`.
+- Item 2 → VERIFIED: `CorrelationContext` rejects the all-zero sentinel; `CorrelationPayload` enforces `^[0-9a-f]{32}$` plus a `field_validator` (pydantic v2 Rust regex has no look-ahead, so the schema pattern is enforced as pattern + check). Tests cover both the contract and the HTTP boundary.
+- Item 3 → VERIFIED / DOCUMENTED: `metadata` is storage-only (the frozen schema uses `additionalProperties:false`); a test proves adding `metadata` fails validation, and a code comment marks the column at the insert. No wire export.
+Evidence: fast suite = 152 passed, 6 skipped; live PostgreSQL (embedded PG16) = **158 passed, 0 skipped**; the three SQL invariant scripts PASS.
+Model used: Project Lead (`deepseek-v4.1-flash`) implementation + PL run; reviewer gate pending.
 
 ## REVIEW
 

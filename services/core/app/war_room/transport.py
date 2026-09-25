@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.db import Database
 from app.model_gateway import ModelPolicy, ModelRoute, OpenRouterGateway
@@ -76,7 +76,16 @@ class CorrelationPayload(BaseModel):
     room_id: UUID
     agenda_item_id: UUID
     request_id: UUID
-    trace_id: str
+    trace_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+
+    @field_validator("trace_id")
+    @classmethod
+    def _reject_all_zero_trace_id(cls, value: str) -> str:
+        # pydantic v2 uses Rust regex (no look-ahead), so the frozen schema's
+        # ^(?!0{32}$)[0-9a-f]{32}$ is enforced as pattern + this check.
+        if value == "0" * 32:
+            raise ValueError("trace_id must not be the all-zero sentinel")
+        return value
 
 
 class RoomCommandPayload(BaseModel):
@@ -246,6 +255,10 @@ class _PreviewBudgetAuthority:
                 ("output_tokens", usage.output_tokens, "output"),
             )
             for unit, quantity, suffix in token_rows:
+                # `metadata` is a STORAGE-ONLY column: it is NOT part of the
+                # frozen wire contract `schemas/usage-event-v1.schema.json`
+                # (additionalProperties:false) and is written empty here. It must
+                # never be exported as a usage-event field (T-029 item 3).
                 await conn.execute(
                     """
                     insert into public.usage_events (
