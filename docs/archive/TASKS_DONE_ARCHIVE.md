@@ -1155,3 +1155,37 @@ CORRECTION: done-when #2 above ("runtime sets scope per transaction") was over-c
 FIX: `services/dev/tools/data_access.py::execute()` now forces one transaction (`autocommit = False` when the connection exposes it), calls `commit()` on success and `rollback()` on error — no driver import, public API unchanged. Regression tests added.
 
 RE-VERIFIED: probe `[('TENANT-A','BOT-A')]` for BOTH autocommit True and False; `python -m pytest -q services/dev/tools/test_data_access.py` = **29 passed**; core live suite (embedded PostgreSQL) = **156 passed / 3 skipped**; fallback reviewer ACCEPT. `tests/sql/lite_rls_isolation_invariants.sql` also wired into CI (`.github/workflows/a001-db-privilege-regression.yml`). Recorded in `docs/warroom/DEV_ERROR_LOG.md` + `decision-log.md`.
+
+---
+
+### T-RLS-01 — Live Supabase RLS + `nippan_n8n` runtime login role (retroactive record)
+
+Status: DONE (2026-09-25) — retroactive card, written after the work was already executed
+Owner: Project Lead — 2026-09-25
+Role: Project Lead (SQL via Supabase tooling) + reviewer (`opencode/space-bunny-free`)
+Risk: L3 (protected doc `docs/data/LITE_SCHEMA_V1.md`)
+Goal: the live Supabase project carries the same RLS model as local, plus a login role the n8n runtime can use
+Done when: 1) all 7 `lite_*` tables FORCE RLS live; 2) policy role + scope functions live; 3) a login role that is a member of `nippan_runtime` (not bypassing RLS) exists; 4) migration committed; 5) reviewer verdict
+Budget: —
+Links: `migrations/20260925130000_n8n_runtime_login_role.sql`, `docs/data/LITE_SCHEMA_V1.md`, PR #83, n8n folder `Nippan Phase A` (`zClFVASPRDPnaeuQ`)
+
+INTAKE (retroactive) — T-RLS-01 — 2026-09-25
+Understanding: `docs/warroom/STARTUP_PLAYBOOK.md` put real RLS outside Phase A, so the earlier T-026 card deferred it. The Owner directed the live RLS work to be executed anyway; the card was opened afterwards so the work stays traceable.
+Decision: ACCEPT (Owner-directed). Retroactive card — this records work already executed, it did not authorize it.
+
+DELIVERY — T-RLS-01 — Project Lead — 2026-09-25
+Status claimed: DONE
+Done-when check:
+- [x] 7 `lite_*` tables FORCE RLS live → VERIFIED (PR #83 merged; re-verified 2026-09-25 session 2 by direct query on `xzxwakvsbdzkdybijbzs`: `rls=true force=true` on `lite_bots`, `lite_channels`, `lite_conversations`, `lite_end_customers`, `lite_memory_summaries`, `lite_tenants`, `lite_usage_log`)
+- [x] Policy role + scope functions live → VERIFIED: policy role `nippan_runtime`; scope via `app_private.current_tenant_id()` / `current_bot_id()` reading `app.tenant_id` / `app.bot_id`
+- [x] Runtime login role exists, does not bypass RLS → VERIFIED (re-verified session 2): `nippan_n8n` rolcanlogin=true; `nippan_runtime` rolcanlogin=false; roles `nippan_analytics` / `nippan_control_plane` present
+- [x] Migration committed → VERIFIED: `migrations/20260925130000_n8n_runtime_login_role.sql` in commit `efe21c7`; `HEAD == origin/dev-workspace` (PR #83 merged 2026-09-25T14:06:40Z)
+- [x] Reviewer verdict → PASS (`opencode/space-bunny-free`, L1–L3): plan/scope checked, no secret leaked
+Evidence: `gh pr view 83` = MERGED; direct SQL on the live project (role + table flags above); `git log -- migrations/20260925130000_n8n_runtime_login_role.sql` = `efe21c7`.
+Changed: `migrations/20260925130000_n8n_runtime_login_role.sql` (new, committed in `efe21c7`); live Supabase project (RLS enabled, roles created).
+Not done: the n8n credential's own read/write RLS test — that is T-030, still open.
+Unverified: `SET ROLE nippan_n8n` from the SQL editor fails (42501) by design, so role impersonation is not a usable proof path; proof of the role's RLS behaviour must come from a real authenticated connection (T-030).
+Problems: none.
+Confidence: high (re-verified live in session 2).
+
+PL NOTE — 2026-09-25 (session 2): card reconstructed into the archive because the working-tree copy of `TASKS.md` was overwritten and the card was never committed (see the board-overwrite incident in `docs/warroom/decision-log.md`). All claims above were re-verified live before being recorded as DONE.

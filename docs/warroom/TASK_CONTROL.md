@@ -38,8 +38,8 @@ effort is reasonable.
 | Level | Examples | Before it counts as DONE |
 |---|---|---|
 | L1 — routine, reversible | wording, config value, doc fix | Doer self-checks; logged in the card |
-| L2 — affects real customers | new/changed workflow or tool, new bot type | Auditor check + owner approval |
-| L3 — hard to undo | pricing, PDPA/data handling, deleting data, rules in `CUSTOMER_FACING_RULES.md`, business mode | Auditor check + owner approval + Decision Log entry with reasons |
+| L2 — affects real customers | new/changed workflow or tool, new bot type | Auditor check + approval (owner; dev-time: or PL on the owner's behalf) |
+| L3 — hard to undo | pricing, PDPA/data handling, deleting data, rules in `CUSTOMER_FACING_RULES.md`, business mode | Auditor check + approval (as L2; §8 sets the runtime-only limits) + Decision Log entry with reasons |
 
 When unsure, pick the higher level.
 
@@ -95,6 +95,24 @@ Changing these is always L3: `docs/product/PRICING_V1.md`,
 `docs/product/CUSTOMER_FACING_RULES.md`, `docs/security/PDPA_COMPLIANCE.md`,
 `docs/data/LITE_SCHEMA_V1.md`, `docs/product/INTEGRATIONS.md`, `docs/warroom/ROLES.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`,
 `WORKING_POLICY.md`, this file.
+
+Who approves (Owner decision 2026-09-25) — depends on the phase:
+
+- **dev-time (now — no customers, nothing live)**: owner approval, **or the PL on the owner's
+  behalf** when the owner is unavailable — for **all** documents listed above, including pricing,
+  PDPA and customer-facing rules. Reason (owner): in dev-time these carry no customer exposure
+  yet, so they must not block work.
+- **runtime (system live for customers)**: owner approval, **or the PL on the owner's behalf**
+  for: `LITE_SCHEMA_V1.md`, `INTEGRATIONS.md`, `ROLES.md`, `AI_OPERATING_PROTOCOL.md`,
+  `WORKING_POLICY.md`, `TASK_CONTROL.md`. **Owner only — the PL may not substitute** for:
+  `PRICING_V1.md`, `PDPA_COMPLIANCE.md`, `CUSTOMER_FACING_RULES.md` (price, law/data
+  protection, what customers see).
+
+The phase switches when the owner declares the system live for customers.
+
+Never relaxed in either phase: a card first, a reviewer on a **different model**, and a Decision
+Log entry with reasons for L3. The PL substitutes only for the owner's *approval*, never for the
+review.
 
 Why: these are the rules everyone else relies on. A silent edit to them
 changes the behavior of every AI that reads them next.

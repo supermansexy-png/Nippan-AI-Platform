@@ -52,20 +52,89 @@ PL VERIFY — T-030 — 2026-09-25 (session 2, read-only, no code touched)
 
 ---
 
-### T-031 — Bridge AI: goal / allowed session / PAUSE removal / restart
+### T-031 — Bridge assistant (DROPPED — superseded by the Git work channel)
 
-Status: BLOCKED — NEEDS_OWNER_INPUT (INTAKE incomplete, no work may start)
+Status: DROPPED — Owner decision 2026-09-25: work is dispatched over **Git**, not over the bridge; the bridge is not opened and no message-relay/watcher service is built. Card kept here as the record; **to be moved to `docs/archive/TASKS_PARKED.md` on the next doc-cleanup pass** (mechanical move, delegated — not done in the main chat).
 Owner: Project Lead — 2026-09-25
-Role: unassigned (no builder may be called until the Owner input exists)
-Risk: L3 (touches bridge runtime guards + external session access)
-Goal: Owner defines what the bridge AI is for and which session is allowed, then PAUSE is removed and the bridge restarted under review
-Done when: 1) Owner-provided goal recorded; 2) allowed external session id recorded; 3) PAUSE removal + restart approved and executed; 4) bridge verified running the new code; 5) reviewer verdict
-Budget: —
-Links: docs/warroom/decision-log.md (2026-09-25 bridge entries), docs/archive/TASKS_PARKED.md (T-BRIDGE-01), `.opencode/bridge/`
+Role: external dev-time assistant (via `.opencode/bridge`) + PL + reviewer on a different model
+Risk: L3 (bridge runtime guards, external access into the dev machine)
+Goal: use the bridge assistant as an **on-demand specialist that is slotted into specific tasks** — never as permanent staff, never as a decision-maker, never the Owner's or PL's substitute
+Done when: 1) the tier model below is recorded and the Owner's role definition is on the card; 2) the bridge is reachable end-to-end with the allowlist set (evidence: a real message round-trip); 3) at least one **Tier 1** red-team has been run on a real critical item and its findings are recorded with a verdict; 4) a reviewer on a different model checks that evidence; 5) no secret was held by the bridge assistant
+Budget: ½ day for the first Tier-1 use
+Links: `.opencode/bridge/server.mjs` (guards), `docs/warroom/decision-log.md` (bridge entries 2026-09-25), `docs/archive/TASKS_PARKED.md` (T-BRIDGE-01), `docs/warroom/DEV_ERROR_LOG.md`
 
-INTAKE (partial) T-031 — 2026-09-25
-The original card text was lost from the working tree before it was committed (see the board-overwrite incident in `docs/warroom/decision-log.md`). This card is reconstructed from `SESSION_HANDOFF.md` + `decision-log.md`; treat the done-when list as PL-proposed until the Owner confirms it.
-Missing from Owner (all three, before any builder is called): (1) the bridge AI's goal, (2) which external session is allowlisted, (3) explicit approval to remove `.opencode/bridge/PAUSE` and restart the bridge.
+**Tier model (Owner-approved 2026-09-25 — help escalates by task level, on demand)**
+
+| Tier | What the bridge assistant does | Gate |
+|---|---|---|
+| **1 — red-team / reviewer (default, read-only)** | independent check of critical work (RLS/tenant isolation, bridge guard, secret handling); second opinion on a plan before we build | none — this is the default use |
+| **2 — design advisor** | review designs (n8n workflow, lite schema, migration plan) before implementation | PL assigns; scope-locked prompt |
+| **3 — author (write)** | draft code/docs instead of the paid builder | PL assigns **+ a different model checks the output** + must not hold any secret |
+| **4 — privileged tooling** (`opencode_start_task`/`abort_task`) | dispatching work into opencode | Owner enables `NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true` + token; **not part of this card** |
+
+**Hard boundaries (from the bridge's own instructions, verified in `server.mjs`)**: the caller is a dev-time ASSISTANT reporting to the PL — NOT the PL and NOT the Owner · do not create tasks, do not command other agents, do not approve or close work, do not change architecture · messages capped at 8000 chars.
+
+INTAKE T-031 — 2026-09-25 (session 2)
+Understanding: the Owner wants the bridge assistant slotted into work **by tier on demand**, not hired as a permanent team member. The original card text was lost from the working tree before it was committed (see the board-overwrite incident in `decision-log.md`); this version is written from the Owner's decision this session.
+Scope: use the bridge assistant as Tier 1 first (read-only red-team), on one real critical item, with evidence. Nothing else.
+Done when: see card.
+Needs: `.opencode/bridge` running with `NIPPAN_BRIDGE_ALLOWED_SESSIONS` set to the session we allow.
+Missing: 1) the **allowlist session id** (rule decided below — the value is captured when the chat is opened); 2) whether `watcher.mjs` is wanted at all (untested, untracked).
+Plan: 1) Owner opens the fixed bridge-assistant chat and captures its session id; 2) operator sets the env var and restarts the bridge; 3) PL runs the round-trip test; 4) PL scope-locks a Tier-1 red-team on T-030's RLS test plan; 5) findings recorded + reviewer verdict.
+Estimate: ½ day for the first use.
+Risks: external access into the dev machine (mitigated by the allowlist, the PAUSE kill switch, and privileged tools being off by default); the allowlist must be re-set after every restart — easy to forget (treat a missing allowlist as a blocker, not as "open").
+Decision: ACCEPT (Owner approved the tiered on-demand role 2026-09-25).
+
+**ALLOWLIST RULE — Owner decision 2026-09-25 (option ข)**
+The bridge talks to **one fixed chat**, never to "whichever PL chat happens to be open". The Owner opens a dedicated chat titled **"ผู้ช่วยสะพาน" (bridge assistant)** and keeps it open; `NIPPAN_BRIDGE_ALLOWED_SESSIONS` = that chat's session id. A PL chat is never allowlisted, so opening/closing PL chats does not change the setting.
+
+**RUNBOOK — first activation (operator = Owner)**
+1. Owner opens the dedicated "ผู้ช่วยสะพาน" chat, leaves it open, and notes its session id (`ses_...`).
+2. Operator sets `NIPPAN_BRIDGE_ALLOWED_SESSIONS=<ses_...>` (fail-closed: unset ⇒ every message rejected — expected, not a bug).
+3. Operator restarts the bridge so the env var takes effect.
+4. PL runs the **round-trip test**: bridge assistant → `opencode_send_message` → reply read via `opencode_get_result`; evidence recorded on this card.
+5. First Tier-1 use: scope-locked red-team of the **T-030 RLS test plan**, before the workflow is built.
+**Notes**: `PAUSE` must stay absent (`Test-Path .opencode/bridge/PAUSE` = False) for this to work · the env var must be re-set after any bridge restart · privileged tools stay OFF (Tier 4 is not part of this card).
+**Capture note (UNVERIFIED)**: the PL could not read opencode's session store from the sandbox (the command was refused by permission), so the session id is captured by the Owner when the chat is opened — or from the bridge watcher log once T-BRIDGE-01 is settled.
+
+**PL VERIFY — bridge guards (read-only, `server.mjs`, 2026-09-25 session 2)**
+- VERIFIED: `NIPPAN_BRIDGE_ALLOWED_SESSIONS` empty → `opencode_send_message` **rejects all** ("disabled") → fail-closed.
+- VERIFIED: a session id not in the allowlist is rejected.
+- VERIFIED: privileged tools are **OFF by default**; enabling needs `NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true` **and** the shared token; rate limit 3 sessions/10 min; every privileged call is appended to an audit log.
+- VERIFIED: `PAUSE` is a **kill switch you create to pause** (absence = running). `Test-Path .opencode/bridge/PAUSE` = **False** → the bridge is currently **not** paused. The earlier handoff claim "PAUSE not removed" was muddled — corrected here.
+- VERIFIED: `PAUSE` was never committed (`git ls-files .opencode/bridge` → only `server.mjs`), so there is no history of who touched it; `watcher.mjs` + `watcher.test.mjs` are also untracked.
+- UNVERIFIED: `watcher.mjs` behaviour (never run, no `node --check`, no test result) — that is T-BRIDGE-01, still parked.
+
+---
+
+### T-032 — Dispatch work over Git (issue → branch → draft PR → CI → review → merge)
+
+Status: READY for INTAKE — needs the Owner's decision on repo settings + the external side's settings (see Blockers)
+Owner: Project Lead — 2026-09-25
+Role: PL (dispatch + verify) + external assistant (author, on `codex/*` branches) + reviewer on a different model + Owner (approval)
+Risk: L3 (external party writes into our repository)
+Goal: the external assistant receives work through Git (not through the bridge), does it on its own branch, and lands it only through review — so work keeps moving when the Owner is not in a chat
+Done when: 1) safe settings confirmed on both sides; 2) `dev-workspace` protected against direct/force pushes (or an equivalent rule agreed); 3) the issue↔card convention is written; 4) **pilot A (read-only)** proves the assistant can find our queued work by itself; 5) **pilot B (write)** lands one real change as a PR with CI evidence, checked by a different-model reviewer; 6) no secret ever reaches git; 7) PL/Owner approval recorded before merge
+Budget: ½ day for pilot A, ½ day for pilot B
+Links: `TASKS.md` (cards = source of truth), GitHub Issues (queue), `.github/workflows/` (CI), `docs/warroom/decision-log.md` (2026-09-25 git-channel decision)
+
+**Hard rules (no exceptions)**: the external assistant works only on branches it creates (`codex/*`) · **never merge its own PR** · never push directly to `dev-workspace` or `phase2/postgres-logical-schema` · never force-push · **never put secrets in git** (history is permanent — work touching credentials runs on our machine only) · author ≠ checker: a different model reviews every non-trivial change · merge and any preview deploy still need the Owner (or the PL when the Owner is away, except deploy/architecture).
+
+**Blockers / open questions before start**
+1. Repo settings: enable branch protection on `dev-workspace`? (checked: `dev-workspace` protected = **false**; `phase2/postgres-logical-schema` = **true**) — Owner decision.
+2. External side settings: Draft PR = ON · auto-merge = **OFF** · branch prefix `codex/` (keep) · no force-push — Owner confirms each.
+3. Trigger: does the assistant start a queued task by itself, or does the Owner start each round? (not yet proven — pilot A tests exactly this)
+4. Who is the reviewer for its PRs (must be a different model from the author) and who approves merge.
+
+INTAKE T-032 — 2026-09-25 (session 2)
+Understanding: Owner decision — "ยึดแนวทาง git"; the bridge is not opened and no relay/watcher service is built. Git becomes the work channel because it is an asynchronous queue: the external assistant reads our queued work, does it on a branch, and CI + review provide the evidence, so work does not stall when nobody is answering a chat.
+Scope: set-up + two pilots on this repo. Nothing else.
+Needs: repo settings change (Owner), external-side settings (Owner), CI already exists.
+Missing: the four answers above.
+Plan: 1) Owner answers 1-4; 2) PL writes the issue↔card convention; 3) pilot A (read-only) — assistant finds queued work itself, evidence recorded; 4) pilot B (write) — one real PR with CI + different-model review; 5) verdict recorded in the decision log.
+Estimate: 1 day total.
+Risks: an external party writing into the repo (mitigated by branch rules + review + no secrets); auto-merge must stay off; `dev-workspace` is currently unprotected.
+Decision: ACCEPT (Owner chose the Git channel 2026-09-25).
 
 ---
 

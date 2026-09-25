@@ -19,7 +19,7 @@ Nippan PL reset to protocol (2026-09-25). DONE with evidence: PR #83 merged; RLS
 - `n8n_create_workflow_from_code` / `n8n_update_workflow` / `n8n_execute_workflow` = `true` ใน `opencode.json` แล้ว แต่ **ยังไม่ขึ้นเป็น tool ในเซสชันที่รันอยู่** → สร้าง/รัน workflow ทดสอบไม่ได้ · ต้อง **ปิด-เปิดแอป opencode ใหม่ทั้งตัว** (กด `/new` ไม่พอ) · subagent ในเซสชันเดียวกันได้ tool ชุดเดียวกัน → ไม่ช่วย
 
 **งานที่เหลือของ T-030 (หลัง restart):** สร้าง workflow ทดสอบใน Phase A → รัน 2 ชุด (scoped → คาด 1/1 · tenant อื่น → คาด 0) → insert+read แล้ว rollback → reviewer `space-bunny-free` ตรวจ → ปิด T-030 (ยังไม่ DONE จนมีผล)
-**T-031 ต้องการจากพี่:** (1) เป้าหมาย bridge AI (2) session ที่อนุญาต (3) อนุมัติถอด `PAUSE` + restart · ยังไม่มี → ห้ามเรียก builder
+**T-031 = DROPPED · ยึดแนวทาง Git เป็นช่องจ่ายงาน (Owner 2026-09-25)** — สะพานไม่เปิดเพื่อจ่ายงาน และ **ไม่สร้างระบบ relay/watcher** · เหตุผล: Git เป็นคิวถาวร + มีหลักฐานในตัว (commit/diff/CI/comment) งานจึงเดินได้แม้ไม่มีใครตอบแชท · ฝั่งโน้น (Codex/ChatGPT) มีเมนู Git จริง: prefix `codex/`, draft PR, review handoff, ติดตาม PR จน merge → ทำงานเป็น branch/PR client ได้ · **T-032 = การ์ดใหม่ "จ่ายงานผ่าน Git"** (issue → branch `codex/*` → draft PR → CI → reviewer คนละโมเดล → พี่/PL อนุมัติ → merge) · กฎเหล็ก: ห้าม merge PR ตัวเอง, ห้าม push ตรงเข้า `dev-workspace`/branch แม่, ห้าม force push, **ห้าม secret ลง git**, คนเขียน ≠ คนตรวจ, deploy/architecture รอพี่ · **เช็คแล้ว: `dev-workspace` protected = false** (branch แม่ = true) → ต้องพี่อนุมัติเปิด protection · `T-BRIDGE-01` (watcher) ไม่ต้องทำ ยัง PARKED + ไฟล์ untracked ห้าม commit · T-031 ยังอยู่บนบอร์ดเป็น record รอ move เข้า PARKED ตอน doc-cleanup (จ่ายพนักงานทำ ไม่ทำในแชท)
 **หมายเหตุ:** roster/agent files อัปเดตเป็น `opencode/muse-spark-1.3-contributor-free` แล้ว (Owner อนุมัติ 2026-09-25; ของเดิมไม่มีในระบบ) · Bridge watcher ยัง **PARKED/UNVERIFIED** (ไฟล์ untracked) ห้าม PL แก้เอง
 **บทเรียน:** อย่าใช้ `write` ทับไฟล์บอร์ด/เอกสารที่ใช้ร่วมกัน ให้ `edit`/append และ commit การ์ดในเทิร์นเดียวกัน
 
@@ -27,18 +27,9 @@ Nippan PL reset to protocol (2026-09-25). DONE with evidence: PR #83 merged; RLS
 
 อ่านไฟล์นี้ก่อนเริ่มงานในแชทใหม่ แล้วอ่านเพิ่มเฉพาะที่จำเป็น อย่าโหลดทั้ง repo
 
-> **RESET 2026-09-25 (Owner)**: ยกเลิกวิธีการทำงานแบบ ad-hoc ทั้งหมด → กลับไปใช้ AI_OPERATING_PROTOCOL + TASK_CONTROL + กฎเหนือสุด (6 ข้อ) เท่านั้น · PL ห้ามแก้โค้ดเอง · เครดิต ~$1.76 → ห้ามใช้ paid subagent/build
+> **RESET 2026-09-25 (Owner)**: ยกเลิกวิธีการทำงานแบบ ad-hoc ทั้งหมด → กลับไปใช้ AI_OPERATING_PROTOCOL + TASK_CONTROL เท่านั้น · PL ห้ามแก้โค้ดเอง · เครดิต ≈ **$1.60** → ห้ามใช้ paid subagent/build
 
-## ⚖️ กฎเหนือสุด (Owner 2026-09-25) — ยึดเหนือเอกสาร/นโยบายอื่นทั้งหมด · ห้ามตีความเอง
-> ถ้าพบว่ากฎอื่นขัดกับชุดนี้ → **หยุด และรายงานพี่** ห้ามเลือกเอง
-> บันทึกเต็มอยู่ใน `docs/warroom/decision-log.md` (entry 2026-09-25 "Supreme operating rules")
-
-1. **งานใหม่ทุกงาน**: การ์ดก่อน → INTAKE → ฝ่ายบุคคล (model-recruiter) เช็คความพร้อม → รายงานพี่ → **รออนุมัติ** → จึงเรียก builder
-2. **PL ทำได้แค่ คิด/วางแผน/สั่ง/รายงาน** — ห้าม `write`/`edit` โค้ด (source/tests/migrations/config) ด้วยมือตัวเอง → งานลงมือต้องผ่าน builder/subagent เท่านั้น (เอกสาร dev-process PL แก้ได้)
-3. **เรียก AI ตัวอื่นทุกครั้ง** ต้องใช้ template จาก `docs/warroom/START_PROMPT.md` (INTAKE ก่อน / DELIVERY พร้อมหลักฐานหลัง)
-4. **ก่อนเริ่มงานที่เสียเงินทุกครั้ง** ต้องเช็คเครดิตก่อน + แจ้งพี่ทุกครั้ง (ล่าสุด 2026-09-25: OpenRouter เหลือ ≈ **$1.76** → งานเสียเงินแทบทำไม่ได้)
-5. **1 repo = 1 แชทที่เขียนไฟล์ได้** — ห้ามเปิดแชทอื่นเขียนทับกัน (subagent/worker = เครื่องมือของแชทนี้, รันทีละงาน ห้ามทับไฟล์)
-6. **ห้ามอ้าง DONE ถ้าไม่มีหลักฐานที่รันซ้ำได้** — ถ้าพิสูจน์ไม่ได้ให้เขียน **UNVERIFIED**
+> ~~**กฎเหนือสุด (6 ข้อ)**~~ — **Owner สั่งถอนออกแล้ว 2026-09-25 (session 2)** → ไม่มีผล อย่าอ้างถึง · เนื้อหาเดิมเก็บเป็นประวัติใน `docs/warroom/decision-log.md` (entry "Supreme operating rules") · กติกาที่ใช้แทน = `AGENTS.md` + `docs/warroom/AI_OPERATING_PROTOCOL.md` + `docs/warroom/TASK_CONTROL.md` + กฎ Owner ในไฟล์นี้
 
 ## วิธีเริ่มหน้าใหม่ (Owner ใช้แอป desktop)
 - ระหว่างแชท: ใช้ `/compact` เพื่อย่อประวัติ (ลด token) — ทำงานต่อในแชทเดิมได้
@@ -69,16 +60,19 @@ Nippan PL reset to protocol (2026-09-25). DONE with evidence: PR #83 merged; RLS
 - War Room = track แยก ACTIVE (T-007/T-008/T-009)
 
 ## กฎที่ Owner ตั้งไว้ (บังคับ)
-> ⚠️ กฎชุดนี้อยู่ **ใต้** "กฎเหนือสุด" ด้านบน — ถ้าขัดกันให้ใช้กฎเหนือสุด
+> กฎชุดนี้คือกติกาที่ใช้อยู่จริง (กฎเหนือสุดถูก Owner ถอนออกแล้ว 2026-09-25)
 1. **ทุกอย่างที่เสียเงิน (เรียก agent/โมเดล) ต้องขอ Owner อนุมัติก่อน** — ห้ามทำทันที
 2. Owner เป็นผู้ตัดสินใจสุดท้าย (พี่เชษ)
 3. รายงานสั้น เน้นเนื้อ ๆ (Owner สั่งลดความยาว ~80%)
 4. Anti-redundancy: reviewer/security ต้องคนละโมเดลกับ builder และ reviewer ≠ security
 5. ห้ามแตะ production `Ai-bot-Nippan`
-6. งาน L2/L3 ต้องมี reviewer ตรวจ + Owner อนุมัติก่อน DONE
+6. งาน L2/L3 ต้องมี reviewer ตรวจ + อนุมัติก่อน DONE — **ช่วง dev-time นี้ พี่อนุมัติ หรือถ้าพี่ไม่อยู่ PL อนุมัติแทนได้** (ดูข้อ 12)
 7. commit/amend/push เฉพาะเมื่อ Owner สั่ง ("อนุมัติ"/"อนุญาต")
 8. งานเสียเงินที่ไม่รีบ → ส่ง Batch API (`:batch`) เสมอ (ถูกกว่า ~40–60%)
 9. **งานอ่านเยอะ/ยาว → ส่งเข้า headless queue แล้วห้ามรอในแชท**; 1 งาน = 1 prompt ล็อกสโคป + ระบุ `--agent`/`--model`; งานแก้โค้ดรันบน branch + reviewer คนละโมเดลก่อน merge; ห้ามรันงานที่แตะไฟล์เดียวกันพร้อมกัน; ห้ามใส่ secret เข้าโมเดลฟรี; `runs/` gitignored → สรุปผลลงการ์ดทุกครั้ง (รายละเอียด: `AGENTS.md` + `docs/warroom/DEV_WORKING_GUIDE.md`)
+10. **เกณฑ์ "ใครเขียนไฟล์ไหน" แยกตามชนิดไฟล์ (Owner อนุมัติ 2026-09-25)** — ไฟล์ dev-process (`TASKS.md`, `docs/**` ยกเว้น `PRICING_V1`/PDPA, `README*`, `WORKING_POLICY.md`, `AGENTS.md` แบบต้องได้อนุมัติพี่) = **PL เขียนเองได้** · ไฟล์ runtime (`services/**`, `migrations/**`, `tests/**`, `scripts/**`, `.github/**`, `.opencode/**`, `opencode.json`) = **PL ห้ามแตะเอง ต้องผ่าน builder/subagent + reviewer คนละโมเดลเสมอ** — เหตุผลคือคนเขียนต้องไม่ใช่คนตรวจ ไม่ใช่เรื่องงบ · งานหลายไฟล์ห้าม PL ทำในแชทหลัก (ดู `AGENTS.md` §Context Discipline ข้อ 6)
+11. **Audit ใหญ่ครั้งเดียวตอนงานเสร็จ (Owner ยืนยัน 2026-09-25)** — ด่าน audit 25/50/75/90/100 และบทบาท Independent Auditor คนกลาง **ยกเลิก/พักอยู่** ห้ามเรียกจนพี่เปิดใหม่ · **แต่ reviewer L4 (`anthropic/claude-opus-5.5:batch`) อนุมัติให้ใช้ได้** สำหรับงานวิกฤต (security boundary, tenant/bot isolation, data handling) — ไม่นับเป็น Independent Audit · **ต้องผ่าน Batch API เสมอ** · **อนุมัติเป็นรายครั้ง: พี่อนุมัติ หรือถ้าพี่ไม่อยู่ PL อนุมัติแทนได้** · ใช้ sparingly + เช็คเครดิตก่อน (ดู `AGENTS.md` §Independent Audit Status)
+12. **Protected docs — แยกตามช่วง (Owner 2026-09-25)** — ไฟล์ protected 9 ไฟล์ (`PRICING_V1`, `CUSTOMER_FACING_RULES`, `PDPA_COMPLIANCE`, `LITE_SCHEMA_V1`, `INTEGRATIONS`, `ROLES`, `AI_OPERATING_PROTOCOL`, `WORKING_POLICY`, `TASK_CONTROL`) แก้เมื่อไร = L3 เสมอ · **ช่วง dev-time (ตอนนี้ ยังไม่มีลูกค้า/ยังไม่เปิดระบบ): พี่อนุมัติ หรือ PL อนุมัติแทนได้ทั้ง 9 ไฟล์** · **ช่วง runtime (เปิดให้ลูกค้าจริง): 3 ไฟล์ `PRICING_V1` / `PDPA_COMPLIANCE` / `CUSTOMER_FACING_RULES` = Owner เท่านั้น PL อนุมัติแทนไม่ได้** อีก 6 ไฟล์ PL อนุมัติแทนได้ · **ไม่ผ่อนทั้งสองช่วง**: การ์ดก่อน + reviewer คนละโมเดล + L3 ต้องมี Decision Log entry พร้อมเหตุผล (PL แทนได้แค่ "อนุมัติ" ไม่ได้แทนการตรวจ) · จุดสลับช่วง = พี่ประกาศว่าเปิดระบบจริง
 
 ## คำสั่ง Owner ช่วงนี้ (TEMP — 2026-09-25 · ย้อนกลับเมื่อพี่สั่ง "กลับไปกติกาเดิม")
 - **ทุกงานที่ได้รับ → ส่งขึ้น headless รันจริงเพื่อทดสอบว่าใช้ได้ และเก็บข้อผิดพลาดที่พบ** (ลงการ์ด + `docs/warroom/DEV_ERROR_LOG.md`)
@@ -86,7 +80,7 @@ Nippan PL reset to protocol (2026-09-25). DONE with evidence: PR #83 merged; RLS
 - **PL อนุมัติแทนได้**: ใช้โมเดลตาม roster (ทำงานเฉพาะหน้าที่ + มีหลักฐาน) · ปิดงาน L1/L2/L3 · commit/push · protected docs ฝั่ง dev-process · ใช้ secret ตามงาน
   - ข้อ 1 = ใช้โมเดลที่ roster กำหนดหน้าที่ไว้แล้วได้ตามปกติ (ห้ามงานนอกเรื่อง + ต้องเก็บหลักฐาน)
   - ข้อ 2 = เกินเพดานราคา → ห้ามอนุมัติ ให้หาทางใช้โมเดลฟรีแทน
-  - ข้อ 3 = Independent paid Auditor → รอพี่
+  - ข้อ 3 = Independent paid Auditor คนกลาง (บทบาทผู้ตรวจภายนอก/ด่าน audit) → รอพี่ · **ไม่รวม reviewer L4** (ดูบรรทัดถัดไป)
   - ข้อ 4 = ราคา/นโยบายต้นทุน → ห้ามแก้เอง
   - ข้อ 5/6 = ปิดงาน L2/L3 → PL อนุมัติได้
   - ข้อ 7 = commit/push → PL อนุมัติได้

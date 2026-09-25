@@ -1,7 +1,7 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-25
-Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
+Last updated: 2026-09-25 (Owner reset to protocol)
+Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time) — WORK RESET TO AI_OPERATING_PROTOCOL + TASK_CONTROL ONLY
 
 ## Repository & Workspace
 

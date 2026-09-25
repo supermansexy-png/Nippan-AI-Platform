@@ -66,7 +66,6 @@ The Project Lead may:
 - investigate bugs and architecture
 - design implementation plans
 - divide work into tasks
-- create or modify code
 - create branches
 - create commits
 - create Issues
@@ -87,11 +86,34 @@ following a single AI model.
 
 AI recommendations are advisory evidence, not automatic decisions.
 
+#### Who writes which files — Owner decision 2026-09-25 (file-type rule)
+
+Authority to *direct* work is not the same as authority to *hand-edit* files.
+The split is by **file type**, not by who happens to be available:
+
+- **dev-process files — the Project Lead writes these directly.**
+  `TASKS.md`, `docs/**` (except `docs/product/PRICING_V1*` and PDPA /
+  customer-policy docs), `README*`, `WORKING_POLICY.md`, and `AGENTS.md`
+  (governance — requires Project Owner approval). This is planning and
+  record-keeping, which is the Project Lead's own job.
+- **runtime files — the Project Lead must NOT hand-edit these.**
+  `services/**`, `migrations/**`, `tests/**`, `scripts/**`, `.github/**`,
+  `.opencode/**`, `opencode.json`, and any customer-facing or production code
+  or config. These go to a builder/subagent, and the result is reviewed by a
+  **different model** before it is called done. There is no exception for
+  "it is only one line" or "the builder is not available".
+
+The reason is review integrity — the author must not be the only checker — not
+cost. Cost is governed by the Context Discipline rules below. Committing,
+branching, opening PRs and running CI stay with the Project Lead even when a
+builder wrote the change.
+
 ### Project Lead limits
 
 The Project Lead must not independently:
 
 - override an explicit Project Owner decision
+- hand-edit runtime files himself instead of delegating them (see the file-type rule above)
 - make destructive production changes outside an approved task
 - expose a private service publicly without the required security controls
 - change fundamental architecture solely because one AI recommends it
@@ -140,12 +162,26 @@ Do not hide disagreement by forcing artificial consensus.
 
 # Independent Audit Status
 
-Independent Audit is currently PAUSED by the Project Owner.
+**Two different things were sharing one name — they are now separated (Owner decision 2026-09-25).**
 
-Do not invoke Claude Opus, OpenRouter, or another paid Independent Auditor
-unless the Project Owner explicitly requests that Independent Audit be enabled again.
+**(a) Independent Audit (the gated process) — PAUSED / GATES CANCELLED.** The periodic audit
+gates (25/50/75/90/100) and the standalone third-party **Independent Auditor** role are not in
+force. The Owner runs **one single large audit when the work is complete**. Do not invoke a paid
+Independent Auditor (Claude Opus, OpenRouter, or any other) unless the Project Owner explicitly
+re-enables that process.
 
-Normal code review, tests, CI, security review, and evidence verification may continue.
+**(b) L4 review tier — ALLOWED, it is NOT an Independent Audit.** An L4 review is an ordinary
+review step inside the normal per-card flow for critical work (security boundary, tenant/bot
+isolation, data handling). It does **not** count as the paused Independent Audit and is not
+blocked by (a). Conditions:
+
+- model: `anthropic/claude-opus-5.5:batch` (the only appointed L4 reviewer — see `docs/product/MODEL_ROSTER.md`)
+- it is a **paid** call, so it must be approved per use: the Project Owner approves, or the
+  Project Lead approves on the Owner's behalf when the Owner is unavailable
+- it must go through the **Batch API** (`:batch` variant), per the Owner's cost rule
+- it is used **rarely** — reserve it for critical verification only; check the remaining credit first
+
+Normal code review, tests, CI, security review and evidence verification continue as before.
 
 Existing historical audit records must not be rewritten.
 
@@ -315,10 +351,16 @@ Rules:
    come back into the main chat.
 3. Never paste large raw output into the main chat (whole-file reads, a full GitHub issue
    body, session dumps, long logs). Read slices, or have a subagent read and summarise.
-4. Use `/compact`, or start a new chat per task, once a session grows long.
+4. **Close the chat when the card closes.** Start a new chat per task; use `/compact` only
+   when a task must continue in the same chat. Never carry a finished card's context into
+   the next task.
 5. Scope every subagent prompt tightly (name the exact files, cap the tool calls, state the
    output shape). A loose prompt makes free models burn steps/tokens and can end with no
    answer at all.
+6. **The Project Lead does not hand-execute multi-file work in the main chat** — not code,
+   not migrations, not multi-file doc repair. Delegate it (subagent or headless) and keep
+   only the plan, the card and the report in the chat. Work done in-chat is re-charged on
+   every later turn; work done in a subagent is not.
 
 This is a cost/quality rule, not a permission to under-report. Evidence that materially
 affects a decision still belongs in the report; keep it to the essential lines.

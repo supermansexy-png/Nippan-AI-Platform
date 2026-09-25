@@ -101,3 +101,31 @@ Checklist results:
 - [ ] Remote owner loads /war-room/ → PENDING (auth mechanism ready, currently loopback_only — T-010 handles this)
 - [~] Source head recorded → PARTIAL (git HEAD 73672d7; deployed e672a77)
 Next: D-01 conditionally accepted pending T-010. Issue #35 checkbox conditional.
+
+---
+
+### T-BRIDGE-01 — Bridge Watcher v1 (external-session watcher)
+
+Status: PARKED — UNVERIFIED (NOT DONE)
+Parked 2026-09-25: Owner order "reset to protocol; stop all in-progress ad-hoc work"; bridge work stopped mid-flight and must not resume without Owner approval.
+Owner: Project Lead — 2026-09-25
+Role: Developer (builder) + Reviewer
+Risk: L3 (bridge runtime guards, external session access)
+Goal: the bridge runs the watcher with an allowlisted session and verified guards
+Done when: 1) `node --check` + watcher tests pass; 2) bridge restarted on the new code; 3) allowlisted session verified end-to-end; 4) guards verified (PAUSE respected, non-allowlisted session rejected); 5) reviewer verdict
+Budget: ½ day
+Links: `.opencode/bridge/server.mjs`, `.opencode/bridge/watcher.mjs`, `.opencode/bridge/watcher.test.mjs`, `.opencode/bridge/PAUSE`, `docs/warroom/decision-log.md` (2026-09-25 bridge entries)
+
+INTAKE (retroactive) — T-BRIDGE-01 — 2026-09-25
+Understanding: code for Bridge Watcher v1 was written directly in a PL session during the ad-hoc period. The Owner then ordered a reset to protocol, so the work is recorded as a card and parked rather than continued.
+Decision: PARKED (Owner order). Retroactive card — records work already done, does not authorize more.
+
+DELIVERY — T-BRIDGE-01 — (unfinished, no DELIVERY claimed)
+Status claimed: NOT DONE — UNVERIFIED
+Evidence: `.opencode/bridge/watcher.mjs` + `watcher.test.mjs` exist UNTRACKED in the working tree (never committed); `.opencode/bridge/server.mjs` modified but uncommitted. No evidence of `node --check` or a test run. Bridge not restarted → it still runs the old code. `.opencode/bridge/PAUSE` not removed. Previous external session `ses_f27b323c8ffeO8M97njUFANf67` is stale (OAuth discovery failed; session terminated 32600).
+Not done: everything in the done-when list except that the files exist.
+Unverified: all runtime behaviour (watcher loop, guards, session allowlist).
+Problems: work was executed outside the card/INTAKE flow; the uncommitted files risk being lost or accidentally committed.
+Next: Owner decides — either (a) approve restart of T-BRIDGE-01 as a proper card (INTAKE → HR → approval → builder), or (b) drop the watcher and remove the uncommitted files. See also T-031, which holds the missing Owner input (bridge AI goal + allowed session + PAUSE/restart approval).
+
+PL NOTE — 2026-09-25 (session 2): card reconstructed into the parked file because the working-tree copy of `TASKS.md` was overwritten and the card was never committed (see the board-overwrite incident in `docs/warroom/decision-log.md`).

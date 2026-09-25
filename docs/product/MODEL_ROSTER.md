@@ -136,7 +136,7 @@ Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 
 |---|---|---|---|
 | L1/L2 (reversible, non-sensitive) | reviewer: `opencode/nemotron-3-ultra-free` · security: `opencode/big-pickle` | `opencode/space-bunny-free` | Free; caught both planted bugs in the T-020 test. Reviewer free model ≠ security free model (T-023). |
 | L3 (hard to undo / sensitive) | `opencode/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention. L3 inputs must be redacted. |
-| **L4 (critical / high-accuracy verification)** | **`anthropic/claude-opus-5.5:batch`** | — (Owner will appoint if needed) | **Paid, Owner-selected 2026-09-25. Intelligence 57.6 (highest shortlisted); batch $2/$10 per 1M (real-time $4/$20).** Exceeds the normal MODEL_POLICY cap — this is an explicit Owner-approved L4 exception; it is used rarely. E.g. security boundary, tenant/bot isolation, data-handling reviews. |
+| **L4 (critical / high-accuracy verification)** | **`anthropic/claude-opus-5.5:batch`** | — (Owner will appoint if needed) | **Paid, Owner-selected 2026-09-25. Intelligence 57.6 (highest shortlisted); batch $2/$10 per 1M (real-time $4/$20).** Exceeds the normal MODEL_POLICY cap — this is an explicit Owner-approved L4 exception; it is used rarely. E.g. security boundary, tenant/bot isolation, data-handling reviews. **Approval per use (Owner 2026-09-25): the Owner approves, or the PL approves on the Owner's behalf when the Owner is unavailable; Batch API (`:batch`) is required; this is a normal review step, not an Independent Audit — see `AGENTS.md` §Independent Audit Status.** |
 | Paid fallback (free endpoint down) | `anthropic/claude-opus-5.5:batch` | — | Batch $2/$10 per 1M. |
 
 Facts / caveats (verified 2026-09-25):

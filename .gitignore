@@ -6,4 +6,5 @@ __pycache__/
 .env.local
 runs/
 .opencode/bridge/privileged-audit.log
+.opencode/bridge/watch.jsonl
 .opencode/bridge/PAUSE

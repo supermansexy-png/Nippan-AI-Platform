@@ -489,4 +489,191 @@ which revision to record acceptance evidence against.
 
 **Task**: governance + documentation repair; no code change; no production impact; bridge untouched.
 
+---
+
+## DECISION — 2026-09-25 (session 2) — Owner order: stop PL self-execution; delegate the work, keep the main chat small
+
+**Owner order (verbatim, session 2)**: "พี่ไม่อยากให้เราพลาดเหมือนครั้งก่อนอีก พอเข้าไปแก้ แล้วต้องแก้ไปเรื่อย ๆ แล้วเราก็ไปเสียเวลาอยู่ตรงนั้น ทั้งที่เรามีพนักงานตั้งหลายคน เราจ่ายงาน ๆ แล้วเราก็มานั่งวางแผนทำอย่างอื่นอีก ครั้งล่าสุดเราก็พลาดรันโค้ดเต็มห้องเลย จนโทเคนเกือบหมด"
+
+**Meaning (PL interpretation, for Owner confirmation)**: the PL must not execute the work in the main chat. Work is to be handed to staff (subagent / headless worker / builder) with a scope-locked prompt; the PL plans, orders, verifies and reports. The main chat must stay small — a long PL session re-charges its whole history every turn (measured earlier: one PL session = 202 turns × ~139k context ≈ 28M cache-read tokens, ~77% of a day's usage), which is how the token budget was nearly exhausted last time.
+
+**Operating rules PL will follow from now on (pending Owner confirmation)**:
+1. Any hands-on work — code, tests, migrations, and multi-file documentation work — is delegated to a subagent or the headless queue; the PL writes the prompt, verifies the result, and reports.
+2. The PL only writes: the task card, short INTAKE/DELIVERY summaries, and this log. No raw output, no full-file reads, no multi-file repair runs in the main chat.
+3. Heavy reading stays inside the subagent; at most a ≤15-line summary returns to the main chat.
+4. When a card finishes, the chat is closed or `/compact`ed immediately — do not keep planning in a long session.
+5. Delegation is not a way to skip the protocol: card → INTAKE → HR readiness → Owner approval → builder still applies to every task.
+
+**Constraints that delegation cannot remove (verified)**: (a) T-030 is blocked by tool registration, not by workload — `n8n_create_workflow_from_code` / `n8n_update_workflow` / `n8n_execute_workflow` are enabled in `opencode.json` but absent from the running session, and a subagent in the same process gets the same tool set, so the app must be restarted regardless of who executes; (b) the n8n credential work touches secrets, so free models must not do it (roster rule) and the paid builder is limited by credit ≈ $1.60.
+
+**Evidence**: Owner message (session 2); `AGENTS.md` §Context Discipline; the board-overwrite incident recorded above; `DEV_ERROR_LOG.md` session-2 entries.
+
+**Task**: governance record only; no code changed; no model or subagent called.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Owner withdraws the "Supreme operating rules" (6 rules)
+
+**Owner order (verbatim)**: "อันดับแรกเอากฎเหนือสุดออกก่อน จะได้ง่าย เอาออกเสร็จแล้วลิสต์มาใหม่ว่ากฎไหนค้านอยู่บ้าง"
+
+**Decision (Owner)**: the six "กฎเหนือสุด" recorded in the entry "Supreme operating rules for every task (Owner order, verbatim)" above are **withdrawn and no longer in force**. They are removed as a governing layer — they must not be cited as authority, and no document may claim they outrank `AGENTS.md` or the other war-room docs.
+
+**Why**: they were added to stop ad-hoc work, but they became a second, conflicting rule layer (e.g. "wait for Owner approval on every new task" vs. the TEMP order "PL approves on the Owner's behalf"; "PL must never edit code" vs. `AGENTS.md` §Project Lead authority which grants code/branch/commit powers). The Owner chose to remove the extra layer instead of reconciling it.
+
+**What replaced them (nothing new was created)**:
+- Governance returns to the standing documents: `AGENTS.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`, `docs/warroom/TASK_CONTROL.md`, `docs/warroom/DEV_WORKING_GUIDE.md`, `WORKING_POLICY.md`.
+- The Owner's own rules listed in `SESSION_HANDOFF.md` §"กฎที่ Owner ตั้งไว้ (บังคับ)" and the TEMP delegation order stay as they are — those are separate from the withdrawn block and were not touched.
+
+**Edits made (documentation only)**:
+- `docs/project-memory/SESSION_HANDOFF.md`: the supreme-rules block was deleted and replaced with a one-line "withdrawn" notice; the "อยู่ใต้กฎเหนือสุด" warning above the Owner rules was removed; the stale credit figure in the RESET line was corrected to ≈ $1.60.
+- This entry: records the withdrawal. The original "Supreme operating rules" entry above is left **unedited** as history.
+- No source, test, migration or config file was touched; no model or subagent was called.
+
+**Evidence**: Owner message (session 2); `git grep -n "กฎเหนือสุด"` → only the withdrawn notice remains in `SESSION_HANDOFF.md`; the historic entry is preserved in this file.
+
+**Task**: governance record + documentation edit; no code change; no production impact.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Owner approves the file-type rule for "who writes which files"; `AGENTS.md` aligned
+
+**Owner order (verbatim)**: "อนุมัติตามนี้" — approving the PL proposal: (ก) keep the Project Lead's git/CI powers but state that runtime files must go through a builder/subagent, and (ข) put the real cost measures in writing (heavy reading → subagent/headless, no raw output in the main chat, close or `/compact` the chat when the card closes).
+
+**Decision (Owner)**: the file-type rule replaces the earlier blanket wording. Split by **file type**, not by who is available:
+- **dev-process files — the PL writes directly**: `TASKS.md`, `docs/**` (except `docs/product/PRICING_V1*` and PDPA / customer-policy docs), `README*`, `WORKING_POLICY.md`, and `AGENTS.md` (governance — Owner approval required).
+- **runtime files — the PL must NOT hand-edit**: `services/**`, `migrations/**`, `tests/**`, `scripts/**`, `.github/**`, `.opencode/**`, `opencode.json`, and any customer-facing or production code/config. These go to a builder/subagent and are reviewed by a **different model**; no exception for "only one line" or "the builder is unavailable".
+
+**Rationale recorded**: the purpose is **review integrity** — the author must not be the only checker — **not** cost saving. Measured cost is driven by what stays in the main chat (a long PL session re-charges its full history every turn), not by who types the file. The Owner's conditions for this decision: work must keep moving, nothing is urgent, and the budget must not be burned.
+
+**Edits made (documentation only)**:
+- `AGENTS.md` §Project Lead authority: added "#### Who writes which files — Owner decision 2026-09-25 (file-type rule)" with the two file classes and the no-exception clause; removed the blanket "create or modify code" bullet from the authority list.
+- `AGENTS.md` §Project Lead limits: added "hand-edit runtime files himself instead of delegating them".
+- `AGENTS.md` §Context Discipline: rule 4 rewritten to "close the chat when the card closes"; new rule 6 — the PL does not hand-execute multi-file work in the main chat.
+- `SESSION_HANDOFF.md` §"กฎที่ Owner ตั้งไว้": new item 10 recording the file-type rule.
+- No source, test, migration, script or config file was touched; no model or subagent was called.
+
+**Evidence**: Owner message (session 2); `git diff AGENTS.md` (two hunks); `git grep -n "file-type rule"` → `AGENTS.md` + `SESSION_HANDOFF.md`.
+
+**Task**: governance record + documentation edit; no code change; no production impact.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Owner confirms "one big audit at completion" and enables L4 review with PL fallback approval
+
+**Owner order (verbatim)**: "ออดิดใหญ่ยืนยันให้ตรวจทีเดียวตอนงานเสร็จเลย ส่วน l4 อนุมัติ แต่เคสนี้ถ้าพี่ไม่อยู่สามารถให้ pl อนุมัติแทนได้ โดยส่งขึ้น api ตามตกลง"
+
+**Decision (Owner)** — resolves the AGENTS.md vs MODEL_ROSTER conflict by separating the two things that shared the name:
+1. **Independent Audit (gated process + standalone third-party Auditor) stays OFF.** The Owner confirms the earlier order: **one single large audit when the work is complete**; no per-milestone gates, no paid Independent Auditor invoked until the Owner re-enables that process. (Reaffirms the entries of 2026-09-24 "Independent Audit System suspended" and 2026-09-25 "Audit gates cancelled outright".)
+2. **L4 review tier is APPROVED** and is **not** an Independent Audit. It is an ordinary review step inside the normal per-card flow for critical work (security boundary, tenant/bot isolation, data handling). Model: `anthropic/claude-opus-5.5:batch`.
+   - **must go through the Batch API** (`:batch`) — Owner's standing cost rule
+   - **approval is per use**: the Project Owner approves, **or the Project Lead approves on the Owner's behalf when the Owner is unavailable**
+   - use sparingly; check the remaining credit first (credit ≈ $1.60; an L4 review is ≈ $0.40 illustrative → only critical work)
+
+**Scope note**: the TEMP delegation list's "ข้อ 3 = Independent paid Auditor → รอพี่" continues to apply to the **standalone Independent Auditor role only**, and does **not** cover L4 — L4 has its own per-use approval rule above. This is recorded explicitly so the two are not merged again.
+
+**Edits made (documentation only)**:
+- `AGENTS.md` §Independent Audit Status: rewritten into (a) the paused/cancelled gated process and standalone Auditor, and (b) the allowed L4 tier with its conditions (batch, per-use approval incl. PL fallback, rarely).
+- `docs/product/MODEL_ROSTER.md` L4 row: added the per-use approval + Batch API + "not an Independent Audit" note.
+- `SESSION_HANDOFF.md`: new rule 11 (audit once at completion + L4 allowed with batch + PL fallback approval), and the TEMP "ข้อ 3" line clarified to exclude L4.
+- No source, test, migration, script or config file was touched; no model or subagent was called.
+
+**Evidence**: Owner message (session 2); `git diff AGENTS.md` (§Independent Audit Status hunk); `git grep -n "Independent Audit Status"` → `AGENTS.md` + `MODEL_ROSTER.md`.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Protected documents: phase-based approval rule (dev-time relaxed, runtime split)
+
+**Owner order (verbatim)**: "เลือกออฟชั่นนี้ แต่ว่าไฟล์พวกนี้ตอนนี้ไม่สำคัญอะไรเลย เพราะมันยังไม่ได้เปิดระบบ ตอนนี้อยู่ในช่วงทำระบบ ดังนั้นไฟล์พวกนี้ไม่มีความลับอะไรเลยเพราะยังไม่มีลูกค้า ... พวกนี้พี่หรือ pl อนุมัติได้เลย"
+
+**Decision (Owner)** — approves the two-tier split and adds a **phase rule** on top of it:
+1. **dev-time (now — no customers, nothing live)**: owner approval, **or the PL on the owner's behalf** when the owner is unavailable — for **all nine** protected documents, including `PRICING_V1.md`, `PDPA_COMPLIANCE.md` and `CUSTOMER_FACING_RULES.md`. Owner's reasoning: nothing is live, there are no customers, so these documents carry no customer exposure yet and must not block the build work.
+2. **runtime (system live for customers)**: the split applies —
+   - **Owner only (PL may not substitute)**: `PRICING_V1.md`, `PDPA_COMPLIANCE.md`, `CUSTOMER_FACING_RULES.md`
+   - **Owner, or PL on the owner's behalf**: `LITE_SCHEMA_V1.md`, `INTEGRATIONS.md`, `ROLES.md`, `AI_OPERATING_PROTOCOL.md`, `WORKING_POLICY.md`, `TASK_CONTROL.md`
+3. **Never relaxed in either phase**: a card first, a reviewer on a **different model**, and a Decision Log entry with reasons for L3. The PL substitutes only for the owner's *approval*, never for the review.
+4. The phase switches when the Owner declares the system live for customers.
+
+**Conflict resolved**: `TASK_CONTROL §3` ("Auditor check + owner approval") and the Owner rule 6 ("L2/L3 needs owner approval") vs the TEMP delegation ("PL approves L2/L3 and dev-process protected docs") — the phase rule now states explicitly who approves in which phase, instead of leaving the two statements to be interpreted against each other.
+
+**Edits made (documentation only; the protected-doc edit itself is approved by the Owner in this chat)**:
+- `docs/warroom/TASK_CONTROL.md §8`: added the "Who approves" phase rule (dev-time vs runtime) and the never-relaxed conditions; list of nine protected docs unchanged.
+- `docs/warroom/TASK_CONTROL.md §3`: L2/L3 approval column now reads "owner; dev-time: or PL on the owner's behalf", with §8 referenced for the runtime-only limits.
+- `SESSION_HANDOFF.md`: Owner rule 6 corrected; new rule 12 recording the phase rule.
+- No source, test, migration, script or config file was touched; no model or subagent was called.
+
+**Evidence**: Owner message (session 2); `git diff docs/warroom/TASK_CONTROL.md` (§3 + §8 hunks); `git grep -n "dev-time: or PL" -- docs/warroom/TASK_CONTROL.md`.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Bridge assistant: on-demand, tiered helper (not permanent staff)
+
+**Owner order (verbatim)**: "ให้เลือนการช่วยงานไปตามระดับ แต่ไม่ใช่พนักงานประจำ ดังนั้นจะเป็นบางงานที่เอามาเสียบช่วยได้" + "ยืนยัน" (approves the start as "bridge = reviewer/advisor, read-only").
+
+**Decision (Owner)**: the bridge assistant (external dev-time AI via `.opencode/bridge`) is used as an **on-demand specialist slotted into specific tasks**, with help escalating by tier. It is **not** permanent staff.
+- **Tier 1 — red-team / reviewer (default, read-only)**
+- **Tier 2 — design advisor** (plan/design review before build)
+- **Tier 3 — author** (write work instead of the paid builder) — requires a **different** model as checker, and must not hold any secret
+- **Tier 4 — privileged tooling** (dispatch work into opencode) — Owner enables it separately; not part of this card
+
+**Why (economics, Owner's reasoning)**: the bridge assistant's capability is higher than our free models, and its calls do not consume the ≈ $1.60 OpenRouter credit — while the appointed L4 reviewer (~$0.40/review) effectively cannot be paid. Evidence that it pays off is not theoretical: decision-log records that this assistant, via the bridge, **caught the `data_access.py` transaction/GUC bug that the existing tests could not catch** (leading to the T-026 correction).
+
+**Boundaries reaffirmed (verified in `server.mjs`)**: the caller is a dev-time ASSISTANT reporting to the PL — not the PL, not the Owner; it must not create tasks, command other agents, approve/close work, or change architecture. Allowlist is fail-closed (empty ⇒ reject all); privileged tools off by default; 3 sessions/10 min rate limit; privileged calls audited.
+
+**Correction recorded**: the earlier handoff/DEV_ERROR_LOG statement "`.opencode/bridge/PAUSE` not removed" was **muddled**. `PAUSE` is a kill switch you *create* to pause; its absence means "not paused". `Test-Path .opencode/bridge/PAUSE` = False today → the bridge is **not** paused. `PAUSE` was never committed, so no history exists of who touched it.
+
+**Edits made (documentation only)**:
+- `TASKS.md`: T-031 rewritten as the tiered on-demand card (status READY for INTAKE), with the PL's read-only verification of the bridge guards and the blockers.
+- No source, test, migration, script or config file was touched (the bridge code was only read); no model or subagent was called.
+
+**Open item**: the allowlist session id + the rule for keeping it set across restarts (it changes with every new chat). Until that exists, the bridge cannot round-trip a message.
+
+**Evidence**: Owner message (session 2); `TASKS.md` T-031 card; `.opencode/bridge/server.mjs` lines 25-38, 87-99, 369-379, 208 (read-only); `git ls-files .opencode/bridge`; `Test-Path .opencode/bridge/PAUSE`.
+
+**Task**: T-031 (INTAKE) + T-BRIDGE-01 (still PARKED); documentation only.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Bridge allowlist: one fixed "ผู้ช่วยสะพาน" chat (option ข)
+
+**Owner order (verbatim)**: "อนุมัติ ข"
+
+**Decision (Owner)**: the bridge assistant talks to **one fixed chat**, not to whichever PL chat is open. The Owner opens a dedicated chat titled **"ผู้ช่วยสะพาน" (bridge assistant)** and keeps it open; `NIPPAN_BRIDGE_ALLOWED_SESSIONS` holds that chat's session id. **A PL chat is never allowlisted** — so opening or closing PL chats never changes the setting.
+
+**Why this option**: the allowlist value changes with every chat, so pinning it to a PL chat would mean re-setting the env var (and restarting the bridge) every time a new chat is opened — a silent failure waiting to happen, because the guard is fail-closed and would simply reject all messages. A fixed chat removes that recurring operator step and keeps the role boundary clear.
+
+**Runbook (recorded in the T-031 card)**: 1) Owner opens the dedicated chat and captures its session id · 2) operator sets `NIPPAN_BRIDGE_ALLOWED_SESSIONS=<ses_...>` and restarts the bridge · 3) PL runs the round-trip test (`opencode_send_message` → `opencode_get_result`) and records the evidence · 4) first Tier-1 use = scope-locked red-team of the T-030 RLS test plan before building the workflow. `PAUSE` must stay absent; privileged tools stay OFF (Tier 4 out of scope).
+
+**Open / UNVERIFIED**: the PL could not read opencode's session store from the sandbox (command refused by permission), so the session id must come from the Owner when the chat is opened, or from the bridge watcher log once T-BRIDGE-01 is settled.
+
+**Edits made (documentation only)**: `TASKS.md` T-031 card (allowlist rule + runbook); no source, test, migration, script or config file touched; bridge code only read; no model or subagent called.
+
+**Evidence**: Owner message (session 2); `TASKS.md` T-031 §ALLOWLIST RULE + §RUNBOOK; `.opencode/bridge/server.mjs` (allowlist fail-closed, read-only).
+
+**Task**: T-031; documentation only.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Owner chooses Git as the work channel; bridge dropped for dispatch
+
+**Owner order (verbatim)**: "ถ้ามันเสร็จได้แบบนี้ เรายึดแนวทางนี้ดีกว่า เพราะไม่ต้องเปิดสะพาน ไม่ต้องทำระบบส่งรับงาน พี่ยึดแนวทาง git"
+
+**Context**: the Owner asked whether the external assistant could see our queued work by itself. The assistant's own answer (pasted by the Owner) stated it works **on demand only** — it cannot watch a chat continuously — and proposed adding a relay: OpenCode Session → MCP Bridge → Watcher Service (poll `opencode_get_result` every 10–30 s, heartbeat check, notify on new messages). Then the Owner showed the external tool's **Git settings menu**, which proves it can connect to GitHub and work as a branch/PR client: branch prefix `codex/`, draft PR, PR review handoff, **follow a PR until it is merged**, commit/PR instruction overrides.
+
+**Decision (Owner)**: use **Git as the work channel**. Do not open the bridge for work dispatch and **do not build a message-relay/watcher service**. Reason: Git is an asynchronous queue with built-in evidence (commit, diff, CI, comments), so work keeps moving when nobody is answering a chat — which was the original problem.
+
+**Consequences**
+1. **T-031 (bridge assistant, tiered)** → **DROPPED** as a dispatch channel. The card is kept as the record (its read-only verification of the bridge guards still stands); physical move to `docs/archive/TASKS_PARKED.md` is a mechanical doc-cleanup step, to be delegated.
+2. **T-BRIDGE-01 (`watcher.mjs`)** → not needed for this purpose; stays PARKED/UNVERIFIED. `server.mjs` modifications and the two untracked watcher files remain **uncommitted** (no untested bridge code in the repo).
+3. **T-032 opened** — "Dispatch work over Git" (issue → `codex/*` branch → draft PR → CI → review → merge), with hard rules: never merge its own PR, never push directly to the protected branches, never force-push, never secrets in git, author ≠ checker, merge/deploy still need the Owner (or the PL when the Owner is away, except deploy/architecture).
+4. **Repo setting checked (read-only)**: `dev-workspace` protected = **false**; `phase2/postgres-logical-schema` protected = **true**. Enabling protection on `dev-workspace` (or an equivalent rule) is an open Owner decision — it is a repo-settings change, so the PL will not do it unasked.
+5. The relay/watcher service that the external assistant proposed is **not** built.
+
+**Evidence**: Owner message (session 2); the assistant's pasted answer + the Git settings menu (Owner-supplied); `gh api .../branches/dev-workspace` → `protected:false`; `gh api .../branches/phase2/postgres-logical-schema` → `protected:true`.
+
+**Task**: T-031 (dropped) + T-032 (opened); documentation only; no code, config or repo setting changed.
+
+**Task**: governance record + documentation edit; no code change; no production impact.
+
+**Task**: governance record + documentation edit; no code change; no production impact.
+
 **Owner approval (2026-09-25, same session)**: (1) commit the `opencode.json` tool enablement → done, commit `625365d`; (2) update roster/agent files from `muse-spark-1.2-contributor-free` to `muse-spark-1.3-contributor-free`. Historical records (archive, past log entries, dated evidence sections) are NOT rewritten.
