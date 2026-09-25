@@ -190,7 +190,7 @@ Links: docs/data/LITE_SCHEMA_V1.md (PROTECTED - TASK_CONTROL section 8), TASKS.m
 Note: LITE_SCHEMA_V1.md deliberately left RLS out for Phase A. T-003 (2026-09-25) closed the runtime hole with a named-query registry and accepted the residual; this card closes it properly.
 
 ### T-029 — Frozen-contract hardening (from background recon 2026-09-25)
-Status: REVIEW (implemented by PL 2026-09-25; reviewer gate pending)
+Status: DONE (2026-09-25) — reviewer ACCEPT after rework (re-review run `runs/2026-09-25T08-40-23Z-t029-rereview1`); deployed live. (Board archival pending.)
 Owner: -
 Role: Developer (builder) + reviewer
 Risk: L2 (contract data + guard fixes; test-first)
