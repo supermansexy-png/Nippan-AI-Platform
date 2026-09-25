@@ -344,3 +344,65 @@ which revision to record acceptance evidence against.
 **T-009 decision (PL, per delegation)**: T-009 was blocked only by the absence of a live PostgreSQL. Decision: stand up a local embedded PostgreSQL (pgserver), apply the repo migrations, and run the 6 normally-skipped PostgreSQL integration tests to obtain live-DB evidence instead of accepting the card on static proof alone.
 
 **Task**: War Room completion (T-008 owner-decision persistence + frozen-schema conformance; T-009 live-DB proof).
+
+---
+
+## DECISION — 2026-09-25 — PL starts T-026 (RLS) under the standing delegation; bridge role wording fixed
+
+**Context**: The board holds one open card, T-026 (RLS, L3, touches protected `docs/data/LITE_SCHEMA_V1.md`). Its prerequisites T-008/T-009 are DONE; on the same day the PL archived T-008/T-009/T-029 into `docs/archive/TASKS_DONE_ARCHIVE.md` (verified: `TASKS.md` 287→42 lines, only T-026 remains). The Owner renewed autonomous authority this session ("คุณสามารถตัดสินใจแทนผมได้เลยตอนนี้") inside the standing limits (entry 2026-09-25, delegation): items 8 (merge/deploy to preview) and 9 (architecture), plus the paid Independent Auditor, remain Owner-only.
+
+**Decision**: PL accepts and starts T-026 on the Owner's behalf. Flow: read-only recon (free `opencode/muse-spark-1.2-contributor-free`) → builder `z-ai/glm-5.3-flash` implements (new migration `20260925120000_lite_rls_v1.sql`; `data_access.py` sets `app.tenant_id` + `app.bot_id` per transaction; additive RLS section in the protected doc; tests) → security `openrouter/nex-agi/nex-n2.5-mini:free` + reviewer `opencode/space-bunny-free`. Card updated to IN_PROGRESS with PLAN/INTAKE in `TASKS.md`.
+
+**Decision (dev tooling)**: `.opencode/bridge/server.mjs` tool descriptions + MCP `instructions` reworded so a connecting dev-time assistant understands it is an ASSISTANT under the Project Lead, not the lead/Owner; `opencode_start_task` marked Owner-only. Verified: diff is text-only, `node --check` OK, reviewer ACCEPT, and the restarted bridge returns the new `initialize.instructions`. KNOWN GAP: wording only — the caller can still technically call `opencode_start_task`/`opencode_abort_task`; code-level enforcement is a separate follow-up needing Owner approval (crosses into tooling/architecture).
+
+**Task**: T-026 (RLS); bridge role wording; external dev-time assistant connected via `.opencode/bridge` (reports into session `ses_f282ad5d5ffe5vY2jX2eczjHJc`).
+
+---
+
+## DECISION — 2026-09-25 — Bridge privileged-tool hardening approved (code-level enforcement, not just wording)
+
+**Context**: A read-only ops recon confirmed the earlier wording-only bridge fix is not enforcement: a connecting assistant can still call `opencode_send_message` into ANY in-project session, `opencode_start_task`, and `opencode_abort_task`. The Owner approved hardening this session ("โอเค งั้นเรามาปรับความปลอดภัยที่เสนอมา").
+
+**Decision (PL, Owner-approved)**: add fail-closed guards in `.opencode/bridge/server.mjs` — `send_message` restricted to a session allowlist (`NIPPAN_BRIDGE_ALLOWED_SESSIONS`) plus an 8000-char cap; `opencode_start_task` and `opencode_abort_task` are registered ONLY when `NIPPAN_BRIDGE_ENABLE_PRIVILEGED==='true'`, and then each call must present `NIPPAN_BRIDGE_PRIVILEGED_TOKEN`. Read-only tools (status/list_agents/get_result/get_diff) stay as-is. Goal: the dev-time assistant can still report into the Project Lead session, but cannot create or abort sessions.
+
+**Flow**: builder `z-ai/glm-5.3-flash` implements (`server.mjs` only, no other file) → reviewer (different model) checks → operator restarts the bridge with the new env → PL runs a live MCP-client test (tool list, allowlist enforcement, privileged tools absent) as runtime evidence.
+
+**Task**: bridge security hardening (dev tooling; changes how the external assistant connects; requires operator restart + env).
+
+---
+
+## DECISION — 2026-09-25 — T-026 correction + `data_access` transaction fix (verified live); bridge guard runtime proof
+
+**Context**: T-026 was closed DONE on live SQL invariants plus fake-cursor unit tests. An independent red-team by the external dev-time assistant (gpt-5.6-sol, connected through the bridge) flagged the connection/transaction risk. The Project Lead then PROVED it on an embedded PostgreSQL: because `data_access.execute()` set transaction-local GUCs (`set_config(..., true)`) without managing a transaction, an autocommit connection reset the GUCs before the caller query ran, so under RLS the query returned **0 rows silently** (probe `[('','')]`); with autocommit off the GUCs applied but writes were never committed.
+
+**Decision (PL, Owner-delegated)**: fix `services/dev/tools/data_access.py::execute()` to run the scope setters and the caller query in ONE transaction — force `autocommit = False` when the connection exposes it, `commit()` on success, `rollback()` on error — without adding a driver import or changing the public API. Re-verify live. Record this as a **correction** to T-026 (the card's done-when #2 was not actually proven before this fix); do not hide it.
+
+**Evidence**: pre-fix probe `autocommit=True -> [('','')]`; post-fix probe `[('TENANT-A','BOT-A')]` for BOTH autocommit True and False; `python -m pytest -q services/dev/tools/test_data_access.py` = 27 passed; core live suite on embedded PostgreSQL = 156 passed / 3 skipped; fallback reviewer (`opencode/nemotron-3-ultra-free`) verdict ACCEPT.
+
+**Bridge guard runtime proof**: after the operator restarted the bridge with `NIPPAN_BRIDGE_ALLOWED_SESSIONS` set, a live MCP-client test showed only 5 tools (`opencode_start_task`/`opencode_abort_task` absent), a non-allowlisted session message rejected, and a call to a removed tool returning "Tool not found".
+
+**Task**: T-026 correction + `data_access` transaction fix; bridge guard runtime evidence.
+
+---
+
+## DECISION — 2026-09-25 — Bridge end-to-end verified; HK-VERIFY-001 + HK-RLS-REDTEAM-001 closed
+
+**Context**: The external dev-time assistant (gpt-5.6-sol via `.opencode/bridge`) could not reach the PL session: `opencode_send_message` was refused by the provider guardrail and `opencode_get_result` returned `32600 Session terminated`. Diagnosis: (a) the connector's OAuth discovery (RFC 9728) failed because the bridge answered with Express's HTML 404 page (`invalid character '<'`), and (b) the MCP session was stale after a bridge restart. PL reproduced the bridge path with a fresh MCP client and confirmed the session was alive (`get_result` returned the PL's own latest message).
+
+**Decision (PL, Owner-delegated)**: harden `.opencode/bridge/server.mjs` so every `/.well-known/*` path returns a JSON 404 (the bridge deliberately has no OAuth). Close the two assistant tasks — HK-VERIFY-001 (archive move verified) and HK-RLS-REDTEAM-001 (its autocommit/GUC finding was proven, fixed and recorded).
+
+**Evidence**: well-known paths → `404 application/json` (both); `node --check` OK; `tunnel-client doctor` = RESULT ok (`oauth_metadata PASS`); the assistant then posted a DELIVERY into the PL session `ses_f27b323c8ffeO8M97njUFANf67`. HK-VERIFY-001: `TASKS.md` ACTIVE = "(no open cards)"; T-026 card present in `docs/archive/TASKS_DONE_ARCHIVE.md`; commits `50a8f2f`, `20fbe0c`. HK-RLS-REDTEAM-001: recorded in `DEV_ERROR_LOG.md` + this log; fix in `services/dev/tools/data_access.py`; pytest 29 passed; core live suite 156 passed / 3 skipped.
+
+**Task**: bridge OAuth-discovery fix; closure of HK-VERIFY-001 + HK-RLS-REDTEAM-001.
+
+---
+
+## DECISION — 2026-09-25 — Owner enabled bridge privileged tools (guarded)
+
+**Context**: To let the external dev-time assistant (gpt-5.6-sol) hand work into opencode again (as it did when it created the HK-VERIFY-001 session), the Owner enabled the bridge's privileged tools, which are disabled by default.
+
+**Decision (Owner)**: enable `NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true` + `NIPPAN_BRIDGE_PRIVILEGED_TOKEN`, keeping the session allowlist scoped to the active PL session. Before enabling, the PL added guardrails in `.opencode/bridge/server.mjs`: an audit log (`.opencode/bridge/privileged-audit.log`), a 10-minute session rate limit (default 3), abort restricted to sessions created by the same bridge instance, and a `PAUSE` kill switch that instantly rejects all mutating tools without a restart (the PL can create `.opencode/bridge/PAUSE` to suspend and report).
+
+**Evidence**: live MCP verification from the PL side — tool list = 7 (`opencode_start_task` + `opencode_abort_task` present); wrong `authToken` rejected; with `PAUSE` present `opencode_send_message` is rejected ("Bridge is PAUSED"); after removing `PAUSE`, `opencode_send_message` passes the allowlist and reaches the 8000-character cap. Commits `a226cd3`, `d2d67c2`.
+
+**Task**: bridge privileged enablement + guardrails (dev tooling; security-sensitive).

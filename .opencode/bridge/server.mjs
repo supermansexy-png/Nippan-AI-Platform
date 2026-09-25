@@ -1,5 +1,7 @@
 import express from "express";
 import path from "node:path";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { appendFileSync, existsSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -18,6 +20,82 @@ const PROJECT_ROOT = path.resolve(
 );
 
 const PORT = Number(process.env.NIPPAN_BRIDGE_PORT || 4100);
+
+// Session-id allowlist for opencode_send_message (fail-closed: empty = reject all).
+const ALLOWED_SESSIONS = String(
+  process.env.NIPPAN_BRIDGE_ALLOWED_SESSIONS || ""
+)
+  .split(",")
+  .map((entry) => entry.trim())
+  .filter(Boolean);
+
+// Privileged tools (start/abort task) are OFF by default.
+const ENABLE_PRIVILEGED =
+  process.env.NIPPAN_BRIDGE_ENABLE_PRIVILEGED === "true";
+
+const PRIVILEGED_TOKEN =
+  process.env.NIPPAN_BRIDGE_PRIVILEGED_TOKEN || "";
+
+function safeTokenEquals(provided, expected) {
+  if (!expected) return false;
+  const a = createHash("sha256")
+    .update(String(provided || ""))
+    .digest();
+  const b = createHash("sha256")
+    .update(expected)
+    .digest();
+  return timingSafeEqual(a, b);
+}
+
+// --- Guardrails for privileged tools (Owner-approved 2026-09-25) ---
+// 1) audit: every privileged call is appended as a JSON line
+// 2) rate limit: cap how many sessions can be created in a 10-minute window
+// 3) abort: only sessions created by THIS bridge instance can be aborted
+const AUDIT_LOG =
+  process.env.NIPPAN_BRIDGE_AUDIT_LOG ||
+  path.join(PROJECT_ROOT, ".opencode", "bridge", "privileged-audit.log");
+
+const MAX_SESSIONS_PER_WINDOW = Number(
+  process.env.NIPPAN_BRIDGE_MAX_SESSIONS_PER_10MIN || 3
+);
+const SESSION_WINDOW_MS = 10 * 60 * 1000;
+
+const createdSessions = new Set();
+let sessionTimestamps = [];
+
+function audit(event, detail = {}) {
+  try {
+    appendFileSync(
+      AUDIT_LOG,
+      JSON.stringify({ at: new Date().toISOString(), event, ...detail }) +
+        "\n"
+    );
+  } catch (error) {
+    console.error("audit write failed:", String(error));
+  }
+}
+
+function rateLimitOk() {
+  const now = Date.now();
+  sessionTimestamps = sessionTimestamps.filter(
+    (t) => now - t < SESSION_WINDOW_MS
+  );
+  return sessionTimestamps.length < MAX_SESSIONS_PER_WINDOW;
+}
+
+// Kill switch: if this file exists, every mutating tool call is rejected.
+// Operator/PL can create it instantly (no restart) to suspend the bridge.
+const PAUSE_FILE =
+  process.env.NIPPAN_BRIDGE_PAUSE_FILE ||
+  path.join(PROJECT_ROOT, ".opencode", "bridge", "PAUSE");
+
+function assertNotPaused() {
+  if (existsSync(PAUSE_FILE)) {
+    throw new Error(
+      "Bridge is PAUSED by the operator: remove .opencode/bridge/PAUSE to resume."
+    );
+  }
+}
 
 if (!OPENCODE_PASSWORD) {
   console.error("Missing OPENCODE_SERVER_PASSWORD");
@@ -102,16 +180,22 @@ function result(data) {
 }
 
 function createServer() {
-  const server = new McpServer({
-    name: "nippan-opencode-bridge",
-    version: "1.0.0",
-  });
+  const server = new McpServer(
+    {
+      name: "nippan-opencode-bridge",
+      version: "1.0.0",
+    },
+    {
+      instructions:
+        "Nippan dev-time bridge. The caller is a dev-time ASSISTANT reporting to the Nippan Project Lead. The caller is NOT the Project Lead and NOT the Owner. Use opencode_send_message to report to / ask the Project Lead and opencode_get_result to read the reply. ONLY session ids in the operator-configured allowlist (NIPPAN_BRIDGE_ALLOWED_SESSIONS) can be messaged; messages are capped at 8000 characters. opencode_start_task and opencode_abort_task are DISABLED BY DEFAULT; they only exist when the operator enables NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true, and then they require the shared privileged token (NIPPAN_BRIDGE_PRIVILEGED_TOKEN) as authToken. Do NOT create tasks, do NOT command other agents, do NOT approve or close work, do NOT change architecture.",
+    }
+  );
 
   server.registerTool(
     "opencode_status",
     {
       description:
-        "ตรวจสถานะ OpenCode และ Nippan project โดยไม่แก้ไขอะไร",
+        "ตรวจสถานะ OpenCode และ Nippan project แบบ read-only (สำหรับผู้ช่วย dev-time ดูสถานะ ไม่ใช่สั่งงาน)",
       inputSchema: z.object({}),
     },
     async () => {
@@ -137,7 +221,7 @@ function createServer() {
     "opencode_list_agents",
     {
       description:
-        "ดูรายชื่อ AI agents ที่หัวหน้าโปรเจกต์สามารถใช้งานได้",
+        "ดูรายชื่อ AI agents แบบ read-only",
       inputSchema: z.object({}),
     },
     async () => {
@@ -168,75 +252,120 @@ function createServer() {
     }
   );
 
-  server.registerTool(
-    "opencode_start_task",
-    {
-      description:
-        "สร้างงานใหม่และส่งให้ Project Lead ของ Nippan AI Platform",
-      inputSchema: z.object({
-        task: z.string().min(1),
-        title: z.string().optional(),
-      }),
-    },
-    async ({ task, title }) => {
-      const session = await oc("/session", {
-        method: "POST",
-        body: JSON.stringify({
-          title:
-            title ||
-            `Nippan task - ${task.slice(0, 60)}`,
+  if (ENABLE_PRIVILEGED) {
+    server.registerTool(
+      "opencode_start_task",
+      {
+        description:
+          "สร้างงานใหม่ให้ Project Lead — PRIVILEGED: ต้องเปิด NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true และส่ง authToken ให้ตรงกับ NIPPAN_BRIDGE_PRIVILEGED_TOKEN ผู้ช่วย dev-time ห้ามใช้ (ปิดใช้งานโดย default)",
+        inputSchema: z.object({
+          authToken: z.string().min(1),
+          task: z.string().min(1),
+          title: z.string().optional(),
         }),
-      });
+      },
+      async ({ authToken, task, title }) => {
+        assertNotPaused();
 
-      if (
-        !session?.directory ||
-        normalize(session.directory) !==
-          normalize(PROJECT_ROOT)
-      ) {
-        throw new Error(
-          `Refusing session outside ${PROJECT_ROOT}`
-        );
-      }
+        if (!safeTokenEquals(authToken, PRIVILEGED_TOKEN)) {
+          throw new Error(
+            "Invalid or missing authToken for privileged tool opencode_start_task"
+          );
+        }
 
-      await oc(
-        `/session/${encodeURIComponent(
-          session.id
-        )}/prompt_async`,
-        {
+        if (!rateLimitOk()) {
+          audit("start_task.rate_limited");
+          throw new Error(
+            `Rate limit: at most ${MAX_SESSIONS_PER_WINDOW} sessions per 10 minutes`
+          );
+        }
+
+        const session = await oc("/session", {
           method: "POST",
           body: JSON.stringify({
-            agent: "project-lead",
-            parts: [
-              {
-                type: "text",
-                text: task,
-              },
-            ],
+            title:
+              title ||
+              `Nippan task - ${task.slice(0, 60)}`,
           }),
-        }
-      );
+        });
 
-      return result({
-        accepted: true,
-        sessionId: session.id,
-        title: session.title,
-        directory: session.directory,
-        agent: "project-lead",
-      });
-    }
-  );
+        if (
+          !session?.directory ||
+          normalize(session.directory) !==
+            normalize(PROJECT_ROOT)
+        ) {
+          throw new Error(
+            `Refusing session outside ${PROJECT_ROOT}`
+          );
+        }
+
+        createdSessions.add(session.id);
+        sessionTimestamps.push(Date.now());
+        audit("start_task.created", {
+          sessionId: session.id,
+          title: session.title,
+        });
+
+        await oc(
+          `/session/${encodeURIComponent(
+            session.id
+          )}/prompt_async`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              agent: "project-lead",
+              parts: [
+                {
+                  type: "text",
+                  text: task,
+                },
+              ],
+            }),
+          }
+        );
+
+        return result({
+          accepted: true,
+          sessionId: session.id,
+          title: session.title,
+          directory: session.directory,
+          agent: "project-lead",
+        });
+      }
+    );
+  }
 
   server.registerTool(
     "opencode_send_message",
     {
       description:
-        "ส่งคำสั่งเพิ่มเติมให้ Project Lead ใน session ที่มีอยู่",
+        "ผู้ช่วย dev-time ใช้ช่องนี้ส่งข้อความ/รายงานผล/คำถาม ถึง Project Lead ใน session ที่ระบุ แล้วอ่านคำตอบด้วย opencode_get_result — ส่งได้เฉพาะ sessionId ที่อยู่ใน NIPPAN_BRIDGE_ALLOWED_SESSIONS (allowlist) เท่านั้น และข้อความห้ามเกิน 8000 ตัวอักษร",
       inputSchema: z.object({
         sessionId: z.string().min(1),
         message: z.string().min(1),
       }),
     },
     async ({ sessionId, message }) => {
+      assertNotPaused();
+
+      if (ALLOWED_SESSIONS.length === 0) {
+        throw new Error(
+          "opencode_send_message is disabled: NIPPAN_BRIDGE_ALLOWED_SESSIONS is not set. The operator must set it to a comma-separated allowlist of session ids, e.g. NIPPAN_BRIDGE_ALLOWED_SESSIONS=ses_xxx."
+        );
+      }
+
+      if (!ALLOWED_SESSIONS.includes(sessionId)) {
+        throw new Error(
+          `Session ${sessionId} is not in the NIPPAN_BRIDGE_ALLOWED_SESSIONS allowlist. Ask the operator to allowlist it.`
+        );
+      }
+
+      if (message.length > 8000) {
+        throw new Error(
+          `message is ${message.length} characters; the limit is 8000. Split or shorten the message.`
+        );
+      }
+
       await getSession(sessionId);
 
       await oc(
@@ -268,7 +397,7 @@ function createServer() {
     "opencode_get_result",
     {
       description:
-        "อ่านสถานะและคำตอบล่าสุดจาก Project Lead",
+        "อ่านสถานะและคำตอบล่าสุดจาก Project Lead แบบ read-only",
       inputSchema: z.object({
         sessionId: z.string().min(1),
       }),
@@ -311,7 +440,7 @@ function createServer() {
     "opencode_get_diff",
     {
       description:
-        "ดู diff ที่เกิดจาก session โดยไม่แก้ไขไฟล์",
+        "ดู diff ที่เกิดจาก session แบบ read-only",
       inputSchema: z.object({
         sessionId: z.string().min(1),
       }),
@@ -329,33 +458,53 @@ function createServer() {
     }
   );
 
-  server.registerTool(
-    "opencode_abort_task",
-    {
-      description:
-        "หยุดงานที่กำลังทำอยู่ใน OpenCode session",
-      inputSchema: z.object({
-        sessionId: z.string().min(1),
-      }),
-    },
-    async ({ sessionId }) => {
-      await getSession(sessionId);
+  if (ENABLE_PRIVILEGED) {
+    server.registerTool(
+      "opencode_abort_task",
+      {
+        description:
+          "หยุดงานใน session — PRIVILEGED: ต้องเปิด NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true และส่ง authToken ให้ตรงกับ NIPPAN_BRIDGE_PRIVILEGED_TOKEN ผู้ช่วย dev-time ห้ามใช้ (ปิดใช้งานโดย default)",
+        inputSchema: z.object({
+          authToken: z.string().min(1),
+          sessionId: z.string().min(1),
+        }),
+      },
+      async ({ authToken, sessionId }) => {
+        assertNotPaused();
 
-      const aborted = await oc(
-        `/session/${encodeURIComponent(
-          sessionId
-        )}/abort`,
-        {
-          method: "POST",
+        if (!safeTokenEquals(authToken, PRIVILEGED_TOKEN)) {
+          throw new Error(
+            "Invalid or missing authToken for privileged tool opencode_abort_task"
+          );
         }
-      );
 
-      return result({
-        sessionId,
-        aborted,
-      });
-    }
-  );
+        if (!createdSessions.has(sessionId)) {
+          audit("abort_task.denied", { sessionId });
+          throw new Error(
+            "opencode_abort_task is restricted to sessions created by this bridge instance"
+          );
+        }
+
+        await getSession(sessionId);
+
+        const aborted = await oc(
+          `/session/${encodeURIComponent(
+            sessionId
+          )}/abort`,
+          {
+            method: "POST",
+          }
+        );
+
+        audit("abort_task.aborted", { sessionId });
+
+        return result({
+          sessionId,
+          aborted,
+        });
+      }
+    );
+  }
 
   return server;
 }
@@ -379,6 +528,15 @@ app.get("/health", async (_req, res) => {
       error: String(error),
     });
   }
+});
+
+// OAuth discovery probes (RFC 9728 / OAuth metadata). This bridge is
+// loopback-only and deliberately has NO OAuth, so answer every /.well-known/*
+// path with a clean JSON 404. Without this, Express returns its default HTML
+// 404 page and strict MCP clients fail with: "decode protected resource
+// metadata: invalid character '<' looking for beginning of value".
+app.use("/.well-known", (_req, res) => {
+  res.status(404).json({ error: "not_found" });
 });
 
 app.post("/mcp", async (req, res) => {

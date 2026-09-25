@@ -111,8 +111,14 @@ class DataAccess:
            raised before any database contact.
         2. ``query_name`` not in registry -> :class:`UnknownQueryError` raised
            before any database contact.
-        3. Otherwise open a connection, execute the registered sql with ``params``,
-           fetch all rows, close the connection, return the rows.
+        3. Otherwise open a connection, force a single transaction, run the
+           transaction-local scope GUC setters
+           (``SELECT set_config('app.tenant_id', %s, true)`` and
+           ``SELECT set_config('app.bot_id', %s, true)`` — parameterised, since
+           ``SET LOCAL ... = %s`` cannot take parameters) on the same cursor,
+           then execute the registered sql with ``params`` inside the same
+           transaction, commit, fetch all rows, close the connection, return
+           the rows.
         """
         _require_scope("tenant_id", tenant_id)
         _require_scope("bot_id", bot_id)
@@ -124,14 +130,47 @@ class DataAccess:
 
         conn = self._connect()
         try:
-            cursor = conn.cursor()
+            # Force one transaction so the transaction-local GUCs below apply to
+            # the caller's query. On an autocommit connection each statement is
+            # its own transaction and "set_config(..., true)" would be reset
+            # before the query ran (proved: RLS then sees no scope and returns
+            # zero rows). With autocommit off, the same transaction also lets
+            # writes persist via the commit below.
+            if hasattr(conn, "autocommit"):
+                try:
+                    conn.autocommit = False
+                except Exception:
+                    pass  # connection does not allow toggling; proceed as-is
             try:
-                cursor.execute(sql, params)
-                rows = list(cursor.fetchall())
-            finally:
-                close_cursor = getattr(cursor, "close", None)
-                if callable(close_cursor):
-                    close_cursor()
+                cursor = conn.cursor()
+                try:
+                    # Transaction-local scope GUCs on the same cursor/connection
+                    # as the caller's query (one transaction), parameterised.
+                    cursor.execute(
+                        "SELECT set_config('app.tenant_id', %s, true)",
+                        (str(tenant_id),),
+                    )
+                    cursor.execute(
+                        "SELECT set_config('app.bot_id', %s, true)",
+                        (str(bot_id),),
+                    )
+                    cursor.execute(sql, params)
+                    rows = list(cursor.fetchall())
+                finally:
+                    close_cursor = getattr(cursor, "close", None)
+                    if callable(close_cursor):
+                        close_cursor()
+                commit = getattr(conn, "commit", None)
+                if callable(commit):
+                    commit()
+            except Exception:
+                rollback = getattr(conn, "rollback", None)
+                if callable(rollback):
+                    try:
+                        rollback()
+                    except Exception:
+                        pass
+                raise
         finally:
             conn.close()
         return rows

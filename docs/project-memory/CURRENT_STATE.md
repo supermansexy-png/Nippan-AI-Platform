@@ -294,6 +294,56 @@ Both War Room acceptance cards are DONE on branch `dev-workspace`:
   an Owner-only deploy/preview step (item 8). All work committed locally on
   `dev-workspace`.
 
+## T-026 Lite RLS + bridge guards + board state (2026-09-25, final)
+
+- T-026 (L3, tenant/bot isolation) DONE and archived. `migrations/20260925120000_lite_rls_v1.sql`
+  enables + forces RLS on all 7 `lite_*` tables; policies keyed `tenant_id` (+`bot_id`) for role
+  `nippan_runtime`. `services/dev/tools/data_access.py` sets `app.tenant_id`/`app.bot_id` per
+  transaction and now forces one transaction (autocommit off + commit/rollback) — fixes the
+  autocommit-reset bug that silently returned 0 rows; regression-tested.
+- Evidence: embedded PostgreSQL 16 — three SQL invariant suites PASS; `test_data_access.py`
+  = 29 passed; core live suite = 156 passed / 3 skipped. CI `A-001 DB privilege regression`
+  now runs the lite RLS invariant + dev-tools tests (run 36126088741, success).
+- Bridge `.opencode/bridge/server.mjs`: external dev-time assistant scoped under the PL —
+  session allowlist + 8000-char cap; `opencode_start_task`/`opencode_abort_task` registered only
+  when env-enabled + token match; live MCP test passed (session outside allowlist rejected).
+- Board: T-026 archived → `TASKS.md` ACTIVE is now empty (0 open cards). Commits on
+  `dev-workspace`: b86dfe9, 5dd62b8, 11e8802, 50a8f2f (pushed to origin).
+- Residual (documented, not fixed): the n8n credential path connects outside `data_access.py`;
+  superuser / SECURITY DEFINER can still bypass RLS.
+- Next: pick the next card; parked T-001 (n8n + PostgreSQL hosting) still blocked on Docker;
+  the T-026 residual could become a follow-up card.
+
+## Session 2026-09-25 (2) — bridge, n8n MCP, gateway recon
+
+- **Bridge** (`.opencode/bridge/server.mjs`) = the dev-time link to the external OpenAI
+  assistant (gpt-5.6-sol) via the Cloudflare tunnel-client → `127.0.0.1:4100`. Fixes this
+  session: `/.well-known/*` now returns **JSON 404** (was the Express HTML page, which broke
+  the OpenAI connector's OAuth discovery); guardrails added — audit log
+  (`.opencode/bridge/privileged-audit.log`), 10-minute session rate limit, `abort_task`
+  limited to sessions this bridge created, and a **PAUSE** kill switch
+  (`.opencode/bridge/PAUSE` suspends all mutating tools with no restart). The Owner
+  re-enabled the privileged tools (`opencode_start_task` / `opencode_abort_task`) with a
+  token; live-verified: 7 tools, wrong token rejected, PAUSE blocks `send_message`.
+- **opencode MCP config**: added `n8n` remote MCP (`https://n8n.nippan.org/mcp-server/http`,
+  bearer from env `N8N_MCP_TOKEN`) — verified working (39 tools). Every mutating n8n tool is
+  disabled except `create_folder` (Owner order: the existing n8n work is **legacy — read-only,
+  do not touch**). Added `nippan-gateway` (`https://mcp.nippan.org/mcp`, Cloudflare Access) but
+  left `enabled: false`: its OAuth needs the redirect URI
+  `http://127.0.0.1:19876/mcp/oauth/callback` registered in the Cloudflare OAuth client.
+- **n8n recon (read-only)**: 5 active workflows — Personal Assistant - LINE, Bot n8n MCP Tools,
+  Task Reminder - LINE, Personal Assistant - LINE Group, Skill Loader (all the Owner's legacy
+  personal automation); 2 data tables (`line_sessions`, `group_members`); 10 credentials
+  (LINE Messaging, Google, Gemini, SerpApi, WooCommerce, `nippan-ai-bot` basic auth) —
+  **no PostgreSQL credential yet**. Conclusion: Step 0 "n8n + HTTPS" is satisfied by the
+  existing host; the missing link is **n8n → PostgreSQL lite schema**.
+- **Board**: empty (T-026 archived). **PR #83 is OPEN** (waiting for the Owner to merge).
+  Suggested next card **T-030 — wire n8n → PostgreSQL lite schema** (needs the Owner: Supabase
+  connection string + permission to create new workflows inside a dedicated folder
+  `Nippan Phase A`).
+- **Owner actions pending**: restart opencode after the config changes; confirm/create the n8n
+  folder; merge PR #83.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.

@@ -1,31 +1,14 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-25
-**หัวข้อ:** War Room เสร็จแล้ว — T-008 + T-009 DONE (owner decision บันทึกได้จริง + live PostgreSQL 152 passed); commit แล้วบน dev-workspace
+**หัวข้อ:** War Room + T-029 done, deployed; continue via delegated workers
 
-## เสร็จแล้ว (หลักฐานสั้น)
-- **(ข) Headless runner ใช้ได้จริง end-to-end**: `.opencode/agents/worker.md` (primary, ไม่ hardcode model), `scripts/headless_run.mjs` (รัน `opencode run` detached, `--model` REQUIRED, คืน run dir ทันที ~80ms), `scripts/headless_status.mjs` (ดึง "worker answer" + สถานะ). พิสูจน์ E2E ด้วย `opencode/space-bunny-free` → cost $0, ไม่มี fallback warning, ไม่บล็อกแชท. `runs/` gitignored, `.env` gitignored (มี OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true แต่ flag นี้ไม่เปลี่ยน Task tool ของแอป — ใช้ CLI ผ่าน Node แทน)
-- **(ค) OpenRouter free ใช้ได้** (พี่ยกเลิก guardrail แล้ว) — ทดสอบ `nex-agi/nex-n2.5-mini:free` ตอบ FREE_OK ($0)
-- **ส่งรีวิว T-008 ผ่าน Batch** โมเดล `anthropic/claude-opus-5.5:batch` → batch id `batch-1790297068-g3TQCwDIpy1YJIJ1aO6p` **ยังไม่เช็คผล**
-- **(ง) T-027 + T-028 ปิดการ์ดแล้ว (DONE, L1, 2026-09-25)**: T-027 — พิสูจน์ `.cmd/.bat` shell fallback จริง (PATH → shim `.cmd`, args quote ถูก, exit 0), E2E `runs/2026-09-25T01-19-57Z-e2e` (worker, $0); finding: env flag `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS` **ไม่ได้** เปิด background Task tool ในแอป — กลไกจริงคือ Node wrapper. T-028 — ใช้เอกสาร T-024/T-021 ที่มีอยู่ยืนยัน (free call + caveats + จุดใช้งานผ่าน headless). ทั้งสองย้ายเข้า `docs/archive/TASKS_DONE_ARCHIVE.md` แล้ว
-
-## สถานะ/การตัดสินใจล่าสุด
-- **แบน `qwen3.7-flash` ทุกแผนกถาวร** (scorecard + decision-log); **builder = `z-ai/glm-5.3-flash`**; **L4 = `anthropic/claude-opus-5.5:batch`**; assistant/ops/researcher = Zen free; reviewer=space-bunny-free, security=nex-n2.5-mini:free
-- **Audit gates ยกเลิกทั้งหมด** (Owner: ออดิดใหญ่ครั้งเดียวตอนจบ) — decision-log 2026-09-25
-- **Permission deny-by-default** เปิดใช้แล้ว: bash ที่แตะ `.opencode/agents/**` ถูกบล็อก, force-push/rm -rf ฯลฯ บล็อก; reviewer/security ยัง `edit: deny`
-- **T-008 (D-02) DONE**: ลบคีย์ `owner_decision` ที่ผิด frozen schema; owner decision ใช้ฟิลด์เดิม (`content_text`/`content_reference` + `message_type=OWNER_DECISION` + top-level `participant_id`=acting owner); persistence เขียน `public.project_room_decisions` ใน transaction เดียว + fail-closed; owner principal ที่ไม่ใช่ UUID (`preview-owner`) ทำงานได้ (messages.participant_id=NULL เฉพาะ owner event); transport `_request_is_loopback` ตรวจ socket peer จริง → 403 `war_room_preview_loopback_only`; reviewer space-bunny ACCEPT + security muse-spark ACCEPT
-- **T-009 (D-03) DONE**: live proof — embedded PostgreSQL 16 (pgserver, apply 7 migrations) = **152 passed, 0 skipped** (6 integration tests ที่เคย skip รันผ่านหมด); residual: deployed Supabase preview ไม่ได้รัน (ไม่มี DSN)
-- **Team update ใช้เป็นชุดจริงแล้ว**: builder=`z-ai/glm-5.3-flash` (ล็อก ห้ามสลับ), reviewer L1–L3=space-bunny-free, security L1–L3=nex-n2.5-mini:free, ops/researcher=muse-spark, assistant=nemotron-3-ultra-free, L4=claude-opus-5.5:batch
-- **commit แล้ว** บน `dev-workspace` (ยังไม่ push)
-
-## ค้างอยู่
-- **board archival**: T-008/T-009 ตั้ง Status DONE แล้ว รอย้ายเข้า `docs/archive/TASKS_DONE_ARCHIVE.md`
-- **deployed preview** (item 8, Owner เท่านั้น): ยังไม่ได้รัน War Room บน Supabase preview จริง
-- T-026 (RLS, L3) DEFERRED; T-029 hardening READY
-
-## ขั้นถัดไปที่แนะนำ
-1. ย้าย T-008/T-009 เข้า archive (housekeeping)
-2. ถ้าพี่ต้องการเห็น War Room ทำงานจริงบน preview → ต้อง deploy (item 8, รอพี่)
-3. กลับ Phase A: T-001 hosting n8n+PostgreSQL (PARKED, ติด Docker)
+เสร็จแล้ว: War Room T-008/T-009 (owner decision บันทึก+แสดงได้จริง, frozen schema ผ่าน, live PostgreSQL 152 passed) และ T-029 (frozen-contract hardening: schema-conformance test ใช้ production builder, ปฏิเสธ trace_id all-zero) — reviewer ACCEPT; deploy live บน Render `chetgo`, /health=ok, /ready=ready
+หลักฐาน: fast suite 153 passed/6 skipped · live embedded PostgreSQL 16 = 159 passed/0 skipped · CI `postgres-regression` ผ่าน · SQL invariants 3 ตัว PASS
+การตัดสินใจล่าสุด: builder = `z-ai/glm-5.3-flash` เท่านั้น (ล็อก) · "Team update 2026-09-25" ใน MODEL_ROSTER เป็น roster จริง · Owner อนุมัติ deploy preview · **PL ห้ามเขียนโค้ดในแชทหลัก (เปลืองโทเค้น) — ให้สั่งผ่าน subagent/headless worker เท่านั้น**
+Git: commit บน `dev-workspace`; merge เข้า `phase2/postgres-logical-schema` แล้วผ่าน PR #80, #81, #82
+ค้างอยู่: board archival (การ์ด DONE: T-008, T-009, T-029) · T-026 RLS (DEFERRED, แตะ protected doc → ต้อง Owner) · T-001 n8n+PostgreSQL hosting (PARKED, ติด Docker)
+AI ตัวใหม่ (bridge จากแชทจีดีที) เข้ามาเป็นผู้ช่วยเขียนโค้ดชั่วคราวภายใต้ Project Lead — ต้องรอ session ID ใหม่จาก Owner เพื่อเชื่อมงาน
+ขั้นถัดไป: 1) ย้ายการ์ด DONE เข้า archive ผ่าน worker 2) เลือกการ์ดถัดไป (T-026 ต้องรอ Owner; ทางเลือกอื่น T-001) 3) ใช้ worker เขียนโค้ดทุกครั้ง + มีหลักฐานก่อน DONE
 <!-- AUTO-HANDOFF:END -->
 
 # Session Handoff — 2026-09-25 (อัปเดต)
