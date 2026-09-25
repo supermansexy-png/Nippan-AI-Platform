@@ -1,14 +1,14 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-25
-**หัวข้อ:** War Room + T-029 done, deployed; continue via delegated workers
+**หัวข้อ:** Nippan PL — PR #83 merged, RLS+role ขึ้น Supabase จริงแล้ว, Bridge Watcher v1 PARKED
 
-เสร็จแล้ว: War Room T-008/T-009 (owner decision บันทึก+แสดงได้จริง, frozen schema ผ่าน, live PostgreSQL 152 passed) และ T-029 (frozen-contract hardening: schema-conformance test ใช้ production builder, ปฏิเสธ trace_id all-zero) — reviewer ACCEPT; deploy live บน Render `chetgo`, /health=ok, /ready=ready
-หลักฐาน: fast suite 153 passed/6 skipped · live embedded PostgreSQL 16 = 159 passed/0 skipped · CI `postgres-regression` ผ่าน · SQL invariants 3 ตัว PASS
-การตัดสินใจล่าสุด: builder = `z-ai/glm-5.3-flash` เท่านั้น (ล็อก) · "Team update 2026-09-25" ใน MODEL_ROSTER เป็น roster จริง · Owner อนุมัติ deploy preview · **PL ห้ามเขียนโค้ดในแชทหลัก (เปลืองโทเค้น) — ให้สั่งผ่าน subagent/headless worker เท่านั้น**
-Git: commit บน `dev-workspace`; merge เข้า `phase2/postgres-logical-schema` แล้วผ่าน PR #80, #81, #82
-ค้างอยู่: board archival (การ์ด DONE: T-008, T-009, T-029) · T-026 RLS (DEFERRED, แตะ protected doc → ต้อง Owner) · T-001 n8n+PostgreSQL hosting (PARKED, ติด Docker)
-AI ตัวใหม่ (bridge จากแชทจีดีที) เข้ามาเป็นผู้ช่วยเขียนโค้ดชั่วคราวภายใต้ Project Lead — ต้องรอ session ID ใหม่จาก Owner เพื่อเชื่อมงาน
-ขั้นถัดไป: 1) ย้ายการ์ด DONE เข้า archive ผ่าน worker 2) เลือกการ์ดถัดไป (T-026 ต้องรอ Owner; ทางเลือกอื่น T-001) 3) ใช้ worker เขียนโค้ดทุกครั้ง + มีหลักฐานก่อน DONE
+1. **PR #83 = MERGED** (2026-09-25 14:06 UTC, เข้า branch `phase2/postgres-logical-schema`)
+2. **RLS + role ขึ้น Supabase จริงแล้ว** (project `xzxwakvsbdzkdybijbzs`): apply `20260925120000_lite_rls_v1.sql` → ทั้ง 7 ตาราง `lite_*` ได้ `rls_on=true`, `forced=true`, 1 policy ต่อตาราง · apply `20260925130000_n8n_runtime_login_role.sql` → role `nippan_n8n` (LOGIN, INHERIT, member ของ `nippan_runtime`, ไม่ bypass RLS)
+   หลักฐานสด (รันใน transaction แล้ว rollback): scope tenant A → `tenants_visible=1`, `tenantB_visible=0`, `bots_visible=1`, `botB_visible=0`
+3. **ค้างรอ Owner**: ตั้งรหัสผ่าน role `nippan_n8n` เองใน Supabase SQL editor (`alter role nippan_n8n password '...'`) — ห้ามแปะในแชท · ยังไม่ได้สร้าง Postgres credential ใน n8n · custom role ผ่าน pooler = UNVERIFIED (ให้ใช้ direct connection)
+4. **ไฟล์ค้าง uncommitted 5 ไฟล์**: `.opencode/bridge/watcher.mjs` (ใหม่), `.opencode/bridge/watcher.test.mjs` (ใหม่), `.opencode/bridge/server.mjs` (+42), `.gitignore`, `migrations/20260925130000_n8n_runtime_login_role.sql` (ใหม่) — commit เฉพาะไฟล์ migration (repo กับ DB ต้องตรงกัน)
+5. **Bridge Watcher v1 = IN_PROGRESS / PARKED** — โค้ดเขียนเสร็จบางส่วน ยังไม่รันเทสต์ ไม่มีหลักฐาน ยังไม่ผ่าน reviewer → **ห้ามนับเป็น DONE**; รอ Owner เลือก (ก) commit เป็น WIP บนสาขาแยก (ข) park ไม่ commit (ค) ลบ
+6. ข้อควรระวัง: bridge bind `127.0.0.1` เท่านั้น · watcher จดแค่ชื่อ tool ไม่จดเนื้อหาข้อความ · งาน n8n เดิม = legacy read-only · ระงับ bridge ได้ทันทีด้วยไฟล์ `.opencode/bridge/PAUSE` · **เครดิต OpenRouter เหลือ ~$1.81 — ห้ามเรียกโมเดล/worker/subagent ที่เสียเงิน**
 <!-- AUTO-HANDOFF:END -->
 
 # Session Handoff — 2026-09-25 (อัปเดต)

@@ -344,6 +344,42 @@ Both War Room acceptance cards are DONE on branch `dev-workspace`:
 - **Owner actions pending**: restart opencode after the config changes; confirm/create the n8n
   folder; merge PR #83.
 
+## Session 2026-09-25 (3) — PR #83 merged, RLS on the real Supabase, Bridge Watcher PARKED
+
+- **PR #83 = MERGED** (2026-09-25 14:06 UTC) into `phase2/postgres-logical-schema`.
+  It carried the T-026 lite RLS work, the bridge role/guards and the CI wiring.
+- **RLS is now live on the real Supabase project** `xzxwakvsbdzkdybijbzs`
+  (previously the T-026 proof existed only on an embedded PostgreSQL 16):
+  - `20260925120000_lite_rls_v1.sql` applied → all 7 `lite_*` tables report
+    `rls_on=true`, `forced=true`, exactly 1 policy each.
+  - `20260925130000_n8n_runtime_login_role.sql` applied → role `nippan_n8n`
+    (LOGIN, INHERIT, member of `nippan_runtime`, **not** BYPASSRLS, so the lite
+    policies bind to it). The `postgres` role is BYPASSRLS, so connecting as
+    `postgres` would silently defeat the whole isolation model.
+  - Live boundary proof (run inside a transaction and rolled back, no residue):
+    with scope set to tenant A, `tenants_visible=1`, `tenantB_visible=0`,
+    `bots_visible=1`, `botB_visible=0`.
+  - **Still pending (Owner)**: set the role password himself
+    (`alter role nippan_n8n password '...'` in the Supabase SQL editor — never in
+    chat) and create the n8n Postgres credential. A custom role through the
+    Supabase pooler is **UNVERIFIED**; the direct connection is the known-good path.
+- **n8n folder** `Nippan Phase A` created (personal project, id `zClFVASPRDPnaeuQ`).
+- **Bridge Watcher v1 = IN_PROGRESS / PARKED, NOT DONE.** The bridge is pull-based, so
+  the watcher records the real polling cadence from served traffic instead of probing:
+  `watcher.mjs` (middleware + snapshot) wired into `server.mjs` (`app.use`, loopback-only
+  `GET /watch` with optional `x-watch-token`, JSONL log `watch.jsonl`, gitignored).
+  It records method/path/JSON-RPC method/tool name/status/timing and **never** message
+  content or tool arguments. State: code partially written, **tests never run, no
+  evidence, no reviewer** → must not be reported as DONE.
+  Uncommitted files (5): `.opencode/bridge/watcher.mjs` (new),
+  `.opencode/bridge/watcher.test.mjs` (new), `.opencode/bridge/server.mjs` (+42),
+  `.gitignore`, `migrations/20260925130000_n8n_runtime_login_role.sql` (new; the only
+  file committed — the repo must match the applied DB state).
+  Owner options for the unverified watcher work: (ก) commit as WIP on a separate branch,
+  (ข) park uncommitted, (ค) delete.
+- **Cost stop**: the OpenRouter credit balance is down to ~$1.81. No paid model,
+  subagent or worker may be started until the Owner says otherwise.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.
