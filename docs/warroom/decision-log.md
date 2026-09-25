@@ -382,3 +382,15 @@ which revision to record acceptance evidence against.
 **Bridge guard runtime proof**: after the operator restarted the bridge with `NIPPAN_BRIDGE_ALLOWED_SESSIONS` set, a live MCP-client test showed only 5 tools (`opencode_start_task`/`opencode_abort_task` absent), a non-allowlisted session message rejected, and a call to a removed tool returning "Tool not found".
 
 **Task**: T-026 correction + `data_access` transaction fix; bridge guard runtime evidence.
+
+---
+
+## DECISION — 2026-09-25 — Bridge end-to-end verified; HK-VERIFY-001 + HK-RLS-REDTEAM-001 closed
+
+**Context**: The external dev-time assistant (gpt-5.6-sol via `.opencode/bridge`) could not reach the PL session: `opencode_send_message` was refused by the provider guardrail and `opencode_get_result` returned `32600 Session terminated`. Diagnosis: (a) the connector's OAuth discovery (RFC 9728) failed because the bridge answered with Express's HTML 404 page (`invalid character '<'`), and (b) the MCP session was stale after a bridge restart. PL reproduced the bridge path with a fresh MCP client and confirmed the session was alive (`get_result` returned the PL's own latest message).
+
+**Decision (PL, Owner-delegated)**: harden `.opencode/bridge/server.mjs` so every `/.well-known/*` path returns a JSON 404 (the bridge deliberately has no OAuth). Close the two assistant tasks — HK-VERIFY-001 (archive move verified) and HK-RLS-REDTEAM-001 (its autocommit/GUC finding was proven, fixed and recorded).
+
+**Evidence**: well-known paths → `404 application/json` (both); `node --check` OK; `tunnel-client doctor` = RESULT ok (`oauth_metadata PASS`); the assistant then posted a DELIVERY into the PL session `ses_f27b323c8ffeO8M97njUFANf67`. HK-VERIFY-001: `TASKS.md` ACTIVE = "(no open cards)"; T-026 card present in `docs/archive/TASKS_DONE_ARCHIVE.md`; commits `50a8f2f`, `20fbe0c`. HK-RLS-REDTEAM-001: recorded in `DEV_ERROR_LOG.md` + this log; fix in `services/dev/tools/data_access.py`; pytest 29 passed; core live suite 156 passed / 3 skipped.
+
+**Task**: bridge OAuth-discovery fix; closure of HK-VERIFY-001 + HK-RLS-REDTEAM-001.

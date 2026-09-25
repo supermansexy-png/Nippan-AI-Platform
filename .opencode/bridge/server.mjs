@@ -450,6 +450,15 @@ app.get("/health", async (_req, res) => {
   }
 });
 
+// OAuth discovery probes (RFC 9728 / OAuth metadata). This bridge is
+// loopback-only and deliberately has NO OAuth, so answer every /.well-known/*
+// path with a clean JSON 404. Without this, Express returns its default HTML
+// 404 page and strict MCP clients fail with: "decode protected resource
+// metadata: invalid character '<' looking for beginning of value".
+app.use("/.well-known", (_req, res) => {
+  res.status(404).json({ error: "not_found" });
+});
+
 app.post("/mcp", async (req, res) => {
   const server = createServer();
 
