@@ -5,13 +5,36 @@
 Nippan PL session 2 closed the rule conflicts and the work plan. Governed by (no longer by the withdrawn supreme-rules block): file-type rule for who writes which files (dev-process = PL; runtime = builder/subagent + reviewer on a different model, no exceptions); dev-time approval = Owner, or PL when the Owner is away (deploy preview + architecture always need the Owner); protected docs follow a phase rule (dev-time: Owner or PL for all 9; runtime: PRICING_V1 / PDPA_COMPLIANCE / CUSTOMER_FACING_RULES are Owner-only); Independent Audit gates cancelled — one big audit when the work is complete, while L4 `anthropic/claude-opus-5.5:batch` is allowed per use (batch API; Owner, or PL if the Owner is away). Work is dispatched over **Git** (Owner decision): the bridge is dropped (T-031), the watcher is deleted, and T-032 (issue → `codex/*` branch → draft PR → CI → reviewer on a different model → approval → merge) is the channel; the Owner starts each round. Verified state: PR #83 merged; RLS + role `nippan_n8n` live on Supabase (`xzxwakvsbdzkdybijbzs`, 7 `lite_*` tables FORCE RLS); n8n folder `Nippan Phase A` empty; credential `6anMUYRLDYPduKY7` exists; credit ≈ $1.60. Commits this session: `a5fb0db` (rules + board + archives), `8bf273c` (meeting close). NOT pushed. Board: T-030 (READY — blocked until an app restart registers the n8n tools) and T-032 (READY for INTAKE — needs protection + Codex-side settings answered). Owner must: restart opencode, then run `git restore .opencode/bridge/server.mjs` (the deleted watcher's wiring is still uncommitted), and decide the two open settings. Next per Owner order: finish War Room D-01 (Issues #35/#30 still OPEN) before the n8n work.
 <!-- AUTO-HANDOFF:END -->
 
-> ⚠️ แก้สถานะล่าสุด 2026-09-26 (PL, หลัง auto block ด้านบนล้าสมัย): **T-030 เสร็จเชิงเทคนิคแล้ว** — workflows
-> `CVhNSU5pjpGgzquB` (v1) + `eohtRWY8YEvEuS7n` (v2) ใน folder `Nippan Phase A` (โฟลเดอร์ไม่ว่างแล้ว); executions `5842`/`5844`
-> พิสูจน์ RLS read isolation, write isolation (cross-tenant INSERT ถูกปฏิเสธ 42501) และ role ที่เชื่อมจริง = `nippan_n8n`;
-> ตาราง `lite_tenants`/`lite_bots` = 0 แถวหลัง rollback · reviewer `opencode/space-bunny-free` pass 2 = ACCEPT-WITH-FINDINGS →
-> **รอพี่เชษอนุมัติปิดการ์ด** · 3 tools ของ n8n (create/update/execute) กลับมาใช้ได้หลัง restart จริง — แต่ `update` ต้อง publish
-> ก่อนจึงจะมีผลกับ manual run · **ยังค้าง**: subagent `ops`/`researcher` เรียกไม่ได้ (โมเดลค้าง `muse-spark-1.2`; `assistant` ใช้ได้),
-> `git restore .opencode/bridge/server.mjs`, War Room Issues #35/#30, และคำตอบ T-032 (protection `dev-workspace` + ค่าฝั่ง Codex)
+> ## ▶ เริ่มที่แชทใหม่ — สถานะล่าสุด 2026-09-26 (ยึดบล็อกนี้; ทุกอย่างด้านล่างเป็นประวัติก่อนวันนี้)
+>
+> **บอร์ด:** T-030 = **DONE** (พี่เชษอนุมัติ 2026-09-26) · T-032 = READY รอ INTAKE · T-031 = DROPPED (record รอ move เข้า `TASKS_PARKED.md`)
+> **commit ล่าสุด:** `5a93eff` (ปิด T-030 + หลักฐาน + re-pin ทีม + กฎโฟลเดอร์) — **ยังไม่ push** · working tree สะอาด
+>
+> **T-030 หลักฐาน (รันจริง ไม่ใช่การตั้งค่า):** workflows `CVhNSU5pjpGgzquB` (v1) + `eohtRWY8YEvEuS7n` (v2) ใน folder
+> `Nippan Phase A` (`zClFVASPRDPnaeuQ`, project `hmhfL4HtmuUod5jL`) · executions `5842`/`5844` → `current_user = nippan_n8n`,
+> tenant A เห็นของตัวเอง = 1, tenant B มองไม่เห็น = 0, tenant B เขียนของตัวเองได้ = 1 (positive control), เขียนข้าม tenant
+> ถูก RLS บล็อก (42501) · `lite_tenants`/`lite_bots` = 0 แถวหลัง rollback · reviewer `opencode/space-bunny-free` pass 1 →
+> pass 2 = ACCEPT-WITH-FINDINGS (เค้าดึง execution `5844` ดิบจาก n8n มาเทียบเอง) · เอกสาร + SQL จริง: `docs/n8n/T-030-execution-evidence.md`
+>
+> **กฎที่พี่ตั้ง 2026-09-26 (บันทึกใน `docs/warroom/decision-log.md` entry "2026-09-26"):**
+> 1. n8n write/read **เฉพาะในโฟลเดอร์ `Nippan Phase A`** — n8n ไม่รองรับการจำกัดสิทธิ์ MCP ต่อโฟลเดอร์/ต่อ client (ยืนยันจากเอกสาร n8n)
+>    จึงบังคับเป็น **process rule**: expose/รันได้เฉพาะ workflow ในโฟลเดอร์นี้, ปิด auto-expose, ตรวจรายการ exposed เป็นระยะ
+> 2. **`Ignore SSL Issues` ของ credential `6anMUYRLDYPduKY7` คงไว้ ON (พี่เห็นชอบ 2026-09-26)** — pooler ใช้ CA ของ Supabase เอง
+>    (issuer `Supabase Intermediate 2021 CA` → `Supabase Root 2021 CA`); ทดสอบ TLS เองแล้วได้ `SELF_SIGNED_CERT_IN_CHAIN`
+>    ⇒ ถ้าปิดจะเชื่อมต่อไม่ได้ · ทางถอดที่ถูก = ใส่ไฟล์ CA ของ Supabase ใน client ที่รองรับ CA (credential ของ n8n ไม่มีช่องนั้น)
+> 3. HR: ถ้าโมเดลเสียเงินเรียกใช้ไม่ไหว → PL สลับเป็นโมเดลฟรี + ตั้งเป็น HR ชั่วคราวได้ ไม่ต้องขออนุมัติ
+> 4. ช่วงพี่ไม่อยู่ **PL ทำแทนได้** (deploy / production / architecture ยังต้องรอพี่)
+>
+> **ทีมเปลี่ยน 2026-09-26 (PL ภายใต้อำนาจที่ได้รับ — อัปเดตใน `MODEL_ROSTER.md` แล้ว):** `ops` = `opencode/mimo-v2.6-flash-free` ·
+> `researcher` = `opencode/nemotron-3.5-lightning-free` · `model-recruiter` = `opencode/nemotron-3-ultra-free` **ชั่วคราว**
+> (ตัวเสียเงินส่ง tool call ผิดซ้ำ ๆ) — ทั้งสามตัว **ทดสอบรันจริงผ่านแล้ว**
+>
+> **บั๊กค้างสำคัญ:** แอปเก็บ model cache เก่าใน `opencode.global.dat` ซึ่งยังมี id ที่ถูกลบไปแล้ว `opencode/muse-spark-1.2-contributor-free`
+> (visibility "show") → **agent ใดก็ตามที่ pin `opencode/muse-spark-*` จะเปิดไม่ได้** (error "Model not found: …muse-spark-1.2-contributor-free"
+> ทั้งที่ไฟล์ pin 1.3) · ทางแก้ชั่วคราวที่ใช้อยู่ = pin โมเดลฟรีที่ไม่ใช่ muse-spark · ทางแก้ถาวรที่ควรทำ = เคลียร์/แก้ค่าในแอป
+>
+> **งานถัดไปตามคำสั่งพี่:** (1) **War Room D-01** — Issues #35/#30 ยัง OPEN, PR #73/#79 merge แล้วแต่ D-01 ยังไม่ถูกปิดอย่างเป็นทางการ → ตรวจแล้วปิด
+> (2) **T-032** — รอพี่ตอบ 4 ข้อฝั่ง Codex + ตัดสินใจเปิด protection ของ `dev-workspace` (3) housekeeping: move T-031 เข้า `TASKS_PARKED.md`, ตัดสินใจ push `5a93eff`
 
 ## ▶ เริ่มต่อทันที (อัปเดต session 2 — 2026-09-25, ตรวจกับ repo/DB จริงแล้ว)
 > ⚠️ handoff auto block ด้านล่าง **ล้าสมัยบางส่วน** — ใช้บล็อกนี้เป็นหลัก (session 2 ตรวจซ้ำทุกข้อ)
