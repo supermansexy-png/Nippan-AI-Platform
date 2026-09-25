@@ -1,25 +1,48 @@
-# Dev error log (dev-time)
+# Dev Error Log — 2026-09-25
 
-Purpose: a durable record of errors/failures found while running dev work, so
-every action can be traced back later (Owner order 2026-09-25: record errors
-when found and keep every action auditable).
+## Errors / Unverified recorded by PL (per AI_OPERATING_PROTOCOL)
 
-Format: `date | task | what failed | evidence | status`
+### Bridge Watcher v1 — PARKED (UNVERIFIED)
+- Code written (`watcher.mjs`, `watcher.test.mjs`, `server.mjs`) but never tested; no evidence of `node --check` pass or test run.
+- Bridge not restarted; runs old code; `.opencode/bridge/PAUSE` not removed.
+- Previous external session (`ses_f27b323c8ffeO8M97njUFANf67`) stale (OAuth discovery failed; session terminated 32600).
+- Verdict: NOT DONE. Do not claim DONE. Keep PARKED until Owner approves restart + review.
 
-## Entries
+### T-030 — INTAKE only (no test executed)
+- Card written; team proposed (free ops + reviewer) but HR check not completed; Owner has not created n8n Postgres credential.
+- Connection to `nippan_n8n` via direct connection UNVERIFIED (password set by Owner, never exposed; credential not created yet).
+- Verdict: READY (not DONE). Need Owner action (credential + approval) before proof.
 
-- **2026-09-25 | T-008 fix round 2 | frozen-contract violation** — builder added a new `owner_decision` key to the frozen event payload (`schemas/war-room-event-v1.schema.json`, `additionalProperties:false`). Evidence: reviewer REJECT + L4 batch audit CONFIRM (`anthropic/claude-opus-5.5:batch`, batch-1790297068-g3TQCwDIpy1YJIJ1aO6p). Status: **open** → fix round 3 queued.
-- **2026-09-25 | headless runner | foreground wait aborted kills the job** — the queued T-008 job (`runs/2026-09-25T01-39-32Z-t008-fix3`) stopped producing output at 08:44:22, exactly when the foreground `wait.mjs` command was aborted by the Owner. The abort killed the whole process tree, including the detached `opencode run`. Evidence: `owner_decision` still present in `service.py:150` / `persistence.py` (fix not applied); stdout.log frozen at 548,724 bytes. Status: **open** → rule: never run a blocking waiter in the main chat; queue and check later.
-- **2026-09-25 | T-009 | live render UNVERIFIED** — no DSN for the preview PostgreSQL, so the live usage_events render cannot be proven. Evidence: card T-009. Status: **closed 2026-09-25** — live proof obtained with an embedded PostgreSQL 16 (pgserver, all 7 migrations): 152 passed / 0 skipped; residual is only the deployed Supabase preview itself (no DSN).
-- **2026-09-25 | headless launcher | cosmetic "ChildProcess.kill" message** — the launch command prints `Unknown: ChildProcess.kill (...)` from the shell even though the run dir is created and the job starts. Evidence: observed on both launch attempts. Status: **open (cosmetic)**.
-- **2026-09-25 | T-008 fix round 3 | duplicate retry over an ambiguous base** — after the killed run (`01-39-32`), the fix was re-queued as `02-05-41` without first checking whether the killed run had left partial edits, and while the old run dir still existed. Two run dirs for the same task can tempt "two jobs touching the same files". Evidence: `runs/2026-09-25T01-39-32Z-t008-fix3` (killed, no DELIVERY) + `runs/2026-09-25T02-05-41Z-t008-fix3` (running); `git grep` shows `payload["owner_decision"]` still present. Status: **open** → rule: before re-queuing a killed job, delete/rename its run dir and confirm the working tree; judge the result by the **end state** (`git grep` + `pytest`), never by the run's own narration.
-- **2026-09-25 | T-008 fix rounds 4–5 | paid builder glm hits its token ceiling before finishing** — `z-ai/glm-5.3-flash` spent the whole budget exploring and ended with `finish_reason=length` twice (`runs/...t008-fix4`, `...t008-fix5`), leaving 4 failing tests. PL diagnosed the real cause (owner principal `preview-owner` is not a UUID while `project_room_messages.participant_id` is uuid) and completed the two remaining edits. Status: **closed (work finished)** → rule: when a model ends with `length`, inspect the end state, not the narrative; give the next job the verified facts up front.
-- **2026-09-25 | free review models | no answer / truncated answer** — builder fixed, then: `opencode/space-bunny-free` (reviewer) returned a truncated ACCEPT; `openrouter/nex-agi/nex-n2.5-mini:free` (security primary) produced **no answer at all** twice (`t008-security1`, `t008-security2`), both ending `finish_reason=length`; security backup `opencode/muse-spark-1.2-contributor-free` answered and ACCEPTed. Evidence: `runs/2026-09-25T03-15-45Z-t008-security1`, `...03-21-06Z-t008-security2`, `...03-25-40Z-t008-security3`. Status: **closed (verdict obtained)** → rule: for free models, expect `length`; give an ultra-short, multi-choice-style prompt; escalate to the roster backup; never report a verdict that no model produced.
-- **2026-09-25 | T-008/T-009 | stale doc claims vs code** — an earlier T-008 delivery claimed the loopback residual was "documented in transport docstring/code comment", but `git grep -i tunnel` found nothing. PL added the residual note to `_request_is_loopback`. Status: **closed** → rule: verify documentation claims with grep before closing a card.
+### T-008 / T-009 — audit gate removed
+- Per `decision-log.md` 2026-09-25: "Audit gates cancelled outright". No per-milestone audit required now; one large audit at completion.
+- Status in archive; not reopened until Owner decides.
 
-- **2026-09-25 | T-026 | builder glm returned EMPTY on two sub-tasks** — `z-ai/glm-5.3-flash` was asked (a) to author `tests/sql/lite_rls_isolation_invariants.sql` and (b) to fix `data_access.py` transaction handling; both times it completed with **no output and no file change** (verified by `git status`/file checks). PL authored the SQL invariant and the `data_access` fix directly. Status: **closed (work finished by PL)** → rule: judge a job by the **end state**, never by the run's narration; when the builder returns empty twice, PL completes the edit and records it.
-- **2026-09-25 | T-026 | CONFIRMED runtime bug: transaction-local GUC lost on autocommit connections** — found by the external dev-time assistant (gpt-5.6-sol) red-team item 3, then PROVED by PL on embedded PostgreSQL: `data_access.execute()` set `set_config(..., true)` without managing a transaction, so on an autocommit connection the GUCs reset before the caller query → under RLS the query returned 0 rows silently (probe: `[('','')]`); with autocommit off it worked but writes were never committed. Fix: force `autocommit=False` + `commit()`/`rollback()`. Post-fix probe: `[('TENANT-A','BOT-A')]` for BOTH modes; pytest 27 passed; core live suite 156 passed / 3 skipped. Status: **closed (fixed + verified)** → rule: the old tests used fake cursors + a single-transaction SQL script, so they could not catch this; always add at least one live-DB path test.
-- **2026-09-25 | free review models (T-026) | empty verdicts again** — `opencode/space-bunny-free` (reviewer) and `openrouter/nex-agi/nex-n2.5-mini:free` (security primary) each returned **no text** on T-026; the retry reviewer and the `opencode/nemotron-3-ultra-free` fallback both returned usable verdicts (ACCEPT). Evidence: sessions `ses_f27ec3d14...` (security, 34 msgs, no text), `ses_f27ec3628...` (reviewer), fallback ACCEPT. Status: **closed (verdict obtained)** → rule: cap free-model prompts hard (few tool calls) and escalate to the backup model rather than retrying indefinitely.
-- **2026-09-25 | process | two concurrent jobs on the same file** — the PL accidentally launched two builder jobs both scoped to `data_access.py`/`test_data_access.py`; one returned empty without writing, the other observed a partial tree. No corruption occurred (final file verified), but it violates "never run two jobs that touch the same files". Status: **closed** → rule: check the in-flight job list before launching a second job on the same file.
-- **2026-09-25 | board archival | builder thrashing without output** — the doc-only job to move DONE card T-026 into `docs/archive/TASKS_DONE_ARCHIVE.md` ran >115 steps over ~15 minutes with no file change and no DELIVERY (verified: T-026 still in `TASKS.md`). Status: **open (workaround applied)** → the board keeps T-026 marked DONE with a "FIX ROUND" correction; archival is deferred. Rule: for small deterministic doc moves, use line-slicing or do it directly; a weak model can loop indefinitely on "find the section" tasks.
-- **2026-09-25 | bridge | OAuth discovery returned HTML, breaking strict MCP clients** — the OpenAI tunnel-client/connector probes `/.well-known/oauth-protected-resource` (RFC 9728) and received Express's default HTML 404 page; the connector logged `WARN [oauth] OAuth discovery failed ... invalid character '<' looking for beginning of value`. Fix: `app.use("/.well-known", ...)` in `.opencode/bridge/server.mjs` returns a JSON 404 for every discovery path. Verified: both well-known paths now return `404 application/json`; `tunnel-client doctor` reports `oauth_metadata PASS (not advertised; all 404)`; the assistant then delivered into the PL session via the bridge. Status: **closed (fixed + verified)** → rule: a local MCP bridge must answer OAuth discovery paths with JSON, never the Express HTML 404 page.
+### Cost / Credit stop
+- OpenRouter credit ≈ $1.76 (2026-09-25). No paid subagent / builder / worker called in this session.
+- All proposed work uses free models (`opencode/muse-spark-1.2-contributor-free`, `opencode/space-bunny-free`) per MODEL_ROSTER.
+
+---
+
+## Session 2 — 2026-09-25 (protocol re-entry, read-only)
+
+### INCIDENT — `TASKS.md` board overwritten; four cards lost (UNVERIFIED → repaired)
+- `TASKS.md` in the working tree contained ONLY a 9-line "INTAKE T-030" block: the board header, the board-size rules and the cards `T-RLS-01`, `T-BRIDGE-01`, `T-031` were gone.
+- Root cause: the file was written with `write` (full replace) instead of `edit`/append, after the previous content had been added but **never committed**. `git show HEAD:TASKS.md` = "(no open cards)" — so the loss is real, not a display artefact. `SESSION_HANDOFF.md` and `decision-log.md` both claim the cards existed → those claims were **stale/over-claimed** at the time they were written.
+- Repair (session 2): board restored with header + rules + `T-030` (READY, with PL verify note) + `T-031` (BLOCKED/NEEDS_OWNER_INPUT); `T-RLS-01` archived to `docs/archive/TASKS_DONE_ARCHIVE.md`; `T-BRIDGE-01` archived to `docs/archive/TASKS_PARKED.md`. Reconstructed card text is labelled as reconstructed.
+- Lesson: never `write` a shared board file; append/edit it. Commit card writes in the same turn.
+
+### BLOCKED — n8n mutating tools not registered in the running session
+- `opencode.json` sets `n8n_create_workflow_from_code`, `n8n_update_workflow`, `n8n_execute_workflow` = `true` (uncommitted working-tree change), but none of the three is exposed as a tool in the current session → the T-030 test workflow cannot be created or run.
+- `n8n_create_folder` and all read-only n8n tools ARE exposed, so the MCP server itself is connected; this is a config-reload issue (the running process started before the edit). A new chat is not enough — the app must be restarted.
+- Impact: T-030 stays READY/UNVERIFIED. Do not report it as done.
+
+### Corrected stale claims (handoff)
+- "Pending: push 2 commits (approved)" → **not** pending: `git log origin/dev-workspace..HEAD` is empty (HEAD = `973bc05`, PR #83 merged). Nothing to push.
+- Credit check (session 2, `openrouter_get-credits`): total 40 / used 38.4023 → remaining ≈ **$1.60** (was reported as $1.76 in the previous session). Still effectively no paid work.
+
+### Verified in session 2 (read-only, for the record)
+- n8n folder `Nippan Phase A` (`zClFVASPRDPnaeuQ`) exists and is empty (0 workflows).
+- n8n credential `6anMUYRLDYPduKY7` ("Postgres account", type `postgres`) exists; secret values not read.
+- Live Supabase `xzxwakvsbdzkdybijbzs`: `nippan_n8n` rolcanlogin=true, `nippan_runtime` false; 7 `lite_*` tables `rls=true force=true`.
+- `gh pr view 83` = MERGED (2026-09-25T14:06:40Z).
+- No paid model and no subagent was called in session 2.
