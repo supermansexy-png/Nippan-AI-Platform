@@ -294,6 +294,26 @@ Both War Room acceptance cards are DONE on branch `dev-workspace`:
   an Owner-only deploy/preview step (item 8). All work committed locally on
   `dev-workspace`.
 
+## T-026 Lite RLS + bridge guards + board state (2026-09-25, final)
+
+- T-026 (L3, tenant/bot isolation) DONE and archived. `migrations/20260925120000_lite_rls_v1.sql`
+  enables + forces RLS on all 7 `lite_*` tables; policies keyed `tenant_id` (+`bot_id`) for role
+  `nippan_runtime`. `services/dev/tools/data_access.py` sets `app.tenant_id`/`app.bot_id` per
+  transaction and now forces one transaction (autocommit off + commit/rollback) — fixes the
+  autocommit-reset bug that silently returned 0 rows; regression-tested.
+- Evidence: embedded PostgreSQL 16 — three SQL invariant suites PASS; `test_data_access.py`
+  = 29 passed; core live suite = 156 passed / 3 skipped. CI `A-001 DB privilege regression`
+  now runs the lite RLS invariant + dev-tools tests (run 36126088741, success).
+- Bridge `.opencode/bridge/server.mjs`: external dev-time assistant scoped under the PL —
+  session allowlist + 8000-char cap; `opencode_start_task`/`opencode_abort_task` registered only
+  when env-enabled + token match; live MCP test passed (session outside allowlist rejected).
+- Board: T-026 archived → `TASKS.md` ACTIVE is now empty (0 open cards). Commits on
+  `dev-workspace`: b86dfe9, 5dd62b8, 11e8802, 50a8f2f (pushed to origin).
+- Residual (documented, not fixed): the n8n credential path connects outside `data_access.py`;
+  superuser / SECURITY DEFINER can still bypass RLS.
+- Next: pick the next card; parked T-001 (n8n + PostgreSQL hosting) still blocked on Docker;
+  the T-026 residual could become a follow-up card.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.
