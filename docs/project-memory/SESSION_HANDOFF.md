@@ -5,6 +5,14 @@
 Nippan PL session 2 closed the rule conflicts and the work plan. Governed by (no longer by the withdrawn supreme-rules block): file-type rule for who writes which files (dev-process = PL; runtime = builder/subagent + reviewer on a different model, no exceptions); dev-time approval = Owner, or PL when the Owner is away (deploy preview + architecture always need the Owner); protected docs follow a phase rule (dev-time: Owner or PL for all 9; runtime: PRICING_V1 / PDPA_COMPLIANCE / CUSTOMER_FACING_RULES are Owner-only); Independent Audit gates cancelled — one big audit when the work is complete, while L4 `anthropic/claude-opus-5.5:batch` is allowed per use (batch API; Owner, or PL if the Owner is away). Work is dispatched over **Git** (Owner decision): the bridge is dropped (T-031), the watcher is deleted, and T-032 (issue → `codex/*` branch → draft PR → CI → reviewer on a different model → approval → merge) is the channel; the Owner starts each round. Verified state: PR #83 merged; RLS + role `nippan_n8n` live on Supabase (`xzxwakvsbdzkdybijbzs`, 7 `lite_*` tables FORCE RLS); n8n folder `Nippan Phase A` empty; credential `6anMUYRLDYPduKY7` exists; credit ≈ $1.60. Commits this session: `a5fb0db` (rules + board + archives), `8bf273c` (meeting close). NOT pushed. Board: T-030 (READY — blocked until an app restart registers the n8n tools) and T-032 (READY for INTAKE — needs protection + Codex-side settings answered). Owner must: restart opencode, then run `git restore .opencode/bridge/server.mjs` (the deleted watcher's wiring is still uncommitted), and decide the two open settings. Next per Owner order: finish War Room D-01 (Issues #35/#30 still OPEN) before the n8n work.
 <!-- AUTO-HANDOFF:END -->
 
+> ⚠️ แก้สถานะล่าสุด 2026-09-26 (PL, หลัง auto block ด้านบนล้าสมัย): **T-030 เสร็จเชิงเทคนิคแล้ว** — workflows
+> `CVhNSU5pjpGgzquB` (v1) + `eohtRWY8YEvEuS7n` (v2) ใน folder `Nippan Phase A` (โฟลเดอร์ไม่ว่างแล้ว); executions `5842`/`5844`
+> พิสูจน์ RLS read isolation, write isolation (cross-tenant INSERT ถูกปฏิเสธ 42501) และ role ที่เชื่อมจริง = `nippan_n8n`;
+> ตาราง `lite_tenants`/`lite_bots` = 0 แถวหลัง rollback · reviewer `opencode/space-bunny-free` pass 2 = ACCEPT-WITH-FINDINGS →
+> **รอพี่เชษอนุมัติปิดการ์ด** · 3 tools ของ n8n (create/update/execute) กลับมาใช้ได้หลัง restart จริง — แต่ `update` ต้อง publish
+> ก่อนจึงจะมีผลกับ manual run · **ยังค้าง**: subagent `ops`/`researcher` เรียกไม่ได้ (โมเดลค้าง `muse-spark-1.2`; `assistant` ใช้ได้),
+> `git restore .opencode/bridge/server.mjs`, War Room Issues #35/#30, และคำตอบ T-032 (protection `dev-workspace` + ค่าฝั่ง Codex)
+
 ## ▶ เริ่มต่อทันที (อัปเดต session 2 — 2026-09-25, ตรวจกับ repo/DB จริงแล้ว)
 > ⚠️ handoff auto block ด้านล่าง **ล้าสมัยบางส่วน** — ใช้บล็อกนี้เป็นหลัก (session 2 ตรวจซ้ำทุกข้อ)
 

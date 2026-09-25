@@ -145,11 +145,17 @@ authorizes changes. Do not modify its service, data, credentials or workflows.
 
 Order the Owner set (2026-09-25): **finish the War Room first** (it is needed as the meeting room), then the n8n work.
 
-1. **Restart opencode** — one action unblocks three things: the 3 n8n workflow tools (`create/update/execute`) are enabled in `opencode.json` but not registered in the running session; the subagent/agent model pins are still the old values (`muse-spark-1.2` — removed upstream); the L4/roster changes take effect only after a restart.
+1. **Restart opencode — DONE 2026-09-26.** Result: the 3 n8n workflow tools ARE now registered (`n8n_validate_workflow`,
+   `n8n_create_workflow_from_code`, `n8n_execute_workflow` all used successfully). Still broken after the restart: the subagent model
+   pins for `ops` and `researcher` resolve to the removed `opencode/muse-spark-1.2-contributor-free` (they cannot launch; the
+   `.opencode/agents/*.md` files pin 1.3). `assistant` launches normally and was used as the stand-in.
 2. **War Room D-01** (T-007, parked, 5/6 acceptance items met) — the last item is "owner loads `/war-room/` remotely"; PR #73/#79 remote auth is merged but D-01 was never formally closed, and Issues #35/#30 are still OPEN. Verify, then close.
-3. **T-030** — n8n → PostgreSQL lite + RLS read/write proof (credential + pooler + SSL already verified; the test workflow has not been created; folder `Nippan Phase A` is empty).
+3. **T-030 — work and evidence complete 2026-09-26; awaiting Owner approval.** Workflows `CVhNSU5pjpGgzquB` (v1) and `eohtRWY8YEvEuS7n` (v2) in folder `Nippan Phase A`; executions `5842` / `5844` prove RLS read isolation, write isolation (cross-tenant INSERT rejected 42501) and the connected role `nippan_n8n`; tables left empty (rollback). Reviewer `opencode/space-bunny-free` pass 2 = ACCEPT-WITH-FINDINGS, both pass-1 findings answered. Evidence: `docs/n8n/T-030-execution-evidence.md`.
 4. **T-032** — dispatch work over Git: Owner answers the two open settings questions (branch protection on `dev-workspace`; the Codex-side values), then pilot A (read-only) → pilot B (one real PR).
 5. Housekeeping (PL, delegated after restart): move the T-031 record into `TASKS_PARKED.md`, record the origin of the Owner's 3 manual commits (`625365d`, `d4ec435`, `01a49ac` — made while credit was exhausted), and one operator command: `git restore .opencode/bridge/server.mjs` (remove the deleted watcher's wiring).
+6. **n8n environment note (2026-09-26):** `n8n_update_workflow` writes a new workflow version, but a manual execution still runs the OLD
+   query until the workflow is published — so an edited workflow needs `n8n_publish_workflow` (currently `false` in `opencode.json`).
+   `create_workflow_from_code` is immediately runnable.
 
 **Standing rules for this phase (do not re-derive them):** file-type rule for who writes which files; dev-time approval = Owner, or PL when the Owner is away (deploy preview and architecture always need the Owner); protected-doc phase rule; audit/L4 as above; Context Discipline (heavy reading → subagent; no raw output in the main chat; close the chat when the card closes).
 

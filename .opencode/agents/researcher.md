@@ -1,7 +1,7 @@
 ﻿---
 description: Researcher (dev-time) ค้นข้อมูล เอกสาร และเปรียบเทียบทางเลือกให้ Project Lead โดยไม่แก้ project
 mode: subagent
-model: opencode/muse-spark-1.3-contributor-free
+model: opencode/nemotron-3.5-lightning-free
 permission:
   edit: deny
   task: deny

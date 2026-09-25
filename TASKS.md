@@ -23,7 +23,7 @@ Completed work: docs/archive/TASKS_DONE_ARCHIVE.md
 
 ### T-030 — Postgres credential / RLS read-write test in n8n
 
-Status: READY — NOT DONE (no connection + RLS proof yet)
+Status: DONE — 2026-09-26, Owner approved ("พี่อนุมัติปิด T-030 แล้ว"). Evidence: `docs/n8n/T-030-execution-evidence.md` (executions `5842` + `5844`, reviewer pass 2 ACCEPT-WITH-FINDINGS). Mechanical move to the DONE section / archive on the next doc-cleanup pass.
 Owner: Project Lead — 2026-09-25
 Role: Developer (builder) + Reviewer
 Risk: L2
@@ -49,6 +49,37 @@ PL VERIFY — T-030 — 2026-09-25 (session 2, read-only, no code touched)
 - BLOCKED (in-session, not Owner): `n8n_create_workflow_from_code` / `n8n_update_workflow` / `n8n_execute_workflow` are set `true` in `opencode.json` but are NOT registered in the running opencode session → this session cannot create or run the test workflow. Requires a full app restart (a new chat is not enough).
 - Blocker from the original INTAKE (Owner sets `nippan_n8n` password) is CLEARED: the pooler connection already succeeded from the n8n UI (see `docs/n8n/T-030-credential-plan.md` §3c).
 - Status remains READY / execution UNVERIFIED. Nothing here is DONE.
+
+PL VERIFY — T-030 recheck AFTER full app restart — 2026-09-26 (read-only)
+- VERIFIED: Owner restarted the opencode app (full restart, not `/new`). In this post-restart session the n8n MCP tools are reachable (`n8n_search_projects` returned a valid response) — so the MCP connection itself is healthy.
+- VERIFIED: the session's n8n tool set still does NOT include `n8n_create_workflow_from_code`, `n8n_update_workflow`, or `n8n_execute_workflow`, although all three are `true` in `opencode.json` (lines 123–129). Some tools that are NOT listed in that config block (e.g. `n8n_create_folder`) ARE exposed → the gap is not explained by the opencode allowlist alone.
+- THEREFORE: the restart is NOT the fix. The remaining hypothesis is server-side (the n8n MCP server exposes only a read/validate tool subset, or its access mode/version gates write tools).
+- ACTION: ops investigation dispatched (Owner approved 2026-09-26, model `opencode/muse-spark-1.3-contributor-free`, free/read-only) — see PL OPS FINDING below.
+- Still READY / execution UNVERIFIED. Nothing here is DONE.
+
+PL OPS FINDING — T-030 blocker (n8n MCP write tools missing)
+- DISPATCH FAILED 2026-09-26: the `ops` subagent could not launch — "Model not found: `opencode/muse-spark-1.2-contributor-free`". `.opencode/agents/ops.md` line 4 was grep-verified to pin `opencode/muse-spark-1.3-contributor-free`, so the running app is loading a STALE agent set. Retried with `researcher` (same roster model, same 1.3 pin) → identical failure.
+- VERIFIED: the app did restart for real — newest desktop log dir `20260925T170949` = 2026-09-25 17:09:49 UTC (~00:09 local 2026-09-26), minutes before this session.
+- HYPOTHESIS (both symptoms at once): the app is loading config from the wrong / stale project root, not from `C:\opencode\nippan`. Desktop state holds separate workspace entries for `C:\opencode`, `C:\nippan`, `C:\Users\chetgo`; the `C:\opencode` entry was the one being written during this session. A stale `opencode.json` + `.opencode/agents/` under `C:\opencode` would explain both the missing write tools and the 1.2 model pins.
+- UNVERIFIED: contents of `C:\opencode\opencode.json` / `C:\opencode\.opencode\` — this session's filesystem access is limited to `C:\opencode\nippan`, so the duplicate could not be inspected.
+- CONSEQUENCE (agent side): `ops` and `researcher` subagents cannot launch while the runtime keeps resolving `muse-spark-1.2-contributor-free`. `assistant` DOES launch → workaround known; the stale pin itself is still unexplained (global config `C:\Users\chetgo\.config\opencode\opencode.json` is empty — only a `$schema` line; the project `.opencode/agents/*.md` files pin 1.3).
+- Also still pending: `git restore .opencode/bridge/server.mjs` (uncommitted watcher wiring).
+
+PL FINDING (ops-scope probe, run via `assistant`, 2026-09-26) — why the write tools are absent
+- INFERRED from n8n docs (assistant, webfetch): `create_workflow_from_code` / `update_workflow` / `execute_workflow` exist from **n8n 2.12.0** and the instance-level MCP server exposes them **only if the connected client was granted write/execute permissions at authorization time** (granular per-client permission set; no separate read-only flag). Target workflows must also be published + "Available in MCP".
+- INFERRED corroboration: `n8n_create_folder` IS exposed → the server is new enough for folder management, so the differentiator is most likely the **client permission grant**, not the version.
+- VERIFIED (repo record): `docs/project-memory/CURRENT_STATE.md:324-326` records the earlier Owner order — "Every mutating n8n tool is disabled except `create_folder` (Owner order: the existing n8n work is legacy — read-only)". The later flip to `true` in `opencode.json` therefore conflicts with that recorded order and must be re-confirmed by the Owner.
+- UNVERIFIED: the live client permission set — needs the n8n admin UI (Settings → Instance-level MCP → Connected clients) or a live probe; both are outside this session's access.
+- Next action: ops checks the n8n side (version + connected-client permissions) and the Owner re-confirms whether write tools should be enabled at all. Status: BLOCKED — NEEDS_OWNER_DECISION.
+
+PL EXECUTION RESULT — T-030 — 2026-09-26 (real run, evidence recorded)
+- RESOLVED (tools): after the Owner's app restart the n8n write tools WERE registered — `n8n_validate_workflow` + `n8n_create_workflow_from_code` both worked. So the earlier gap was the stale session, not the n8n server.
+- BUILT + EXECUTED (evidence recorded, not a DONE claim): v1 `T-030 RLS test (tenant A vs B)` (`CVhNSU5pjpGgzquB`) and v2 `T-030 RLS test v2 (role + positive control + cross-tenant)` (`eohtRWY8YEvEuS7n`), both in folder `Nippan Phase A` (personal project `hmhfL4HtmuUod5jL`); manual trigger → Postgres `executeQuery` node on credential `Postgres account` (`6anMUYRLDYPduKY7`); no query parameters.
+- EVIDENCE: execution `5842` → `visible_as_tenant_a = "1"`, `visible_as_tenant_b = "0"`; execution `5844` (v2) → `connected_role = nippan_n8n`, `visible_as_tenant_a = 1`, `visible_as_tenant_b_before_own_insert = 0`, `visible_as_tenant_b_after_own_insert = 1` (positive control), `cross_tenant_write = BLOCKED by RLS WITH CHECK (42501)`, `visible_as_tenant_a_after_all = 1`; independent check after both runs: `lite_tenants = 0`, `lite_bots = 0` (rollback, nothing persisted). Full record + the v2 SQL: `docs/n8n/T-030-execution-evidence.md`.
+- KEEPS: no secret read or written; no RLS policy / role / grant change; both runs are non-destructive and manual (never production).
+- REVIEWER: `opencode/space-bunny-free` (different model from the author) — pass 1 ACCEPT-WITH-FINDINGS (role not proven; no positive control / no write-isolation proof) → pass 2 ACCEPT-WITH-FINDINGS after the v2 run, with both findings answered; the reviewer re-pulled execution `5844` raw from n8n and it matched the record.
+- Status: REVIEW — awaiting the Owner's approval to close. Residual (not blocking): credential still uses `Ignore SSL Issues`; the card has not been run in production/published mode.
+- Open Owner question that remains: whether n8n should keep write/execute capability at all (earlier recorded Owner order was read-only for the legacy n8n work). This does not block this card's evidence.
 
 ---
 
@@ -147,3 +178,10 @@ Decision: ACCEPT (Owner chose the Git channel 2026-09-25).
 ## DONE
 
 (completed cards moved to docs/archive/TASKS_DONE_ARCHIVE.md — T-RLS-01 added 2026-09-25)
+
+- **T-030 — DONE 2026-09-26 (Owner approved).** n8n → Supabase as `nippan_n8n`: connection proven, RLS read isolation proven
+  (tenant A = 1 / tenant B = 0), write isolation proven (cross-tenant INSERT rejected, RLS WITH CHECK 42501), positive control for
+  tenant B, tables left empty (rollback). Workflows `CVhNSU5pjpGgzquB` + `eohtRWY8YEvEuS7n` in folder `Nippan Phase A`.
+  Evidence + the exact SQL: `docs/n8n/T-030-execution-evidence.md`. Reviewer `opencode/space-bunny-free` (different model) pass 2.
+  Owner scope condition (2026-09-26): n8n write/read is allowed **only inside the `Nippan Phase A` folder**. Carried residual:
+  the credential still has `Ignore SSL Issues`; the card has never been run published/production.
