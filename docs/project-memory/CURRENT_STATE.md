@@ -1,7 +1,7 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-25 (Owner reset to protocol)
-Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time) — WORK RESET TO AI_OPERATING_PROTOCOL + TASK_CONTROL ONLY
+Last updated: 2026-09-25 (session 2 — rules settled, Git work channel chosen, meeting closed)
+Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time) — work dispatched over Git; bridge dropped
 
 ## Repository & Workspace
 
@@ -66,7 +66,7 @@ name conflict with existing Phase 2 core tables):
 Schema properties:
 - Every customer-carrying table has BOTH `tenant_id` AND `bot_id` as FKs
 - `memory_summaries.expires_at` is NOT NULL (mandatory retention deadline)
-- No DB-level RLS (Phase A isolation at n8n sub-workflow level)
+- ~~No DB-level RLS (Phase A isolation at n8n sub-workflow level)~~ **SUPERSEDED 2026-09-25 — DB-level RLS is LIVE** on the real Supabase project `xzxwakvsbdzkdybijbzs`: all 7 `lite_*` tables FORCE RLS, policy role `nippan_runtime`, scope set per transaction from `app.tenant_id` / `app.bot_id`; the runtime login role `nippan_n8n` is a member of `nippan_runtime` and is **not** BYPASSRLS (T-026 + T-RLS-01; migrations `20260925120000_lite_rls_v1.sql`, `20260925130000_n8n_runtime_login_role.sql`; PR #83 merged). The n8n-side read/write proof is still open = T-030.
 - Full column spec verified against `docs/data/LITE_SCHEMA_V1.md` via information_schema.columns
 - INSERT/SELECT test passed confirming FK chain works
 - Migration committed at `ab8c0d6`
@@ -116,11 +116,10 @@ Access handled auth. This runtime is no longer the forward plan.
 
 ## Audit
 
-Independent Audit System is **SUSPENDED** by the Project Owner (2026-09-24).
-Progress gates do not block milestones. Do not invoke the paid Independent
-Auditor unless the Project Owner re-enables it. Normal code review, security
-review, tests, CI and evidence verification remain allowed. Historical audit
-records under `docs/audits/` are preserved.
+**Two things were sharing one name — separated by the Owner on 2026-09-25 (see `AGENTS.md` §Independent Audit Status):**
+- **Independent Audit (the gated process + the standalone third-party Auditor) — OFF.** The 25/50/75/90/100 progress gates are **cancelled outright** (2026-09-25), on top of the 2026-09-24 suspension. The Owner runs **one single large audit when the work is complete**. Do not invoke a paid Independent Auditor unless the Owner re-enables that process.
+- **L4 review tier — ALLOWED.** `anthropic/claude-opus-5.5:batch` for critical per-card verification only (security boundary, tenant/bot isolation, data handling). It is **not** an Independent Audit. Per-use approval: the Owner, **or the PL on the Owner's behalf when the Owner is away**; must go through the Batch API; use rarely and check credit first.
+- Normal code review, security review, tests, CI and evidence verification remain allowed. Historical audit records under `docs/audits/` are preserved and must not be rewritten.
 
 ## War Room (resumed 2026-09-24)
 
@@ -140,22 +139,19 @@ Dual-use positioning note written: `docs/proposals/WAR_ROOM_DUAL_USE_POSITIONING
 `Ai-bot-Nippan` production is OUT OF SCOPE unless the Project Owner explicitly
 authorizes changes. Do not modify its service, data, credentials or workflows.
 
-## Immediate Next Step
+## Immediate Next Step (2026-09-25, session 2 — authoritative)
 
-Owner accepted T-005 (audit suspension) and ordered War Room planning.
-T-006 IN_PROGRESS: draft cards T-007..T-011 ready for owner direction
-approval. Then execute Track D sequence T-007 → T-008 → T-009 (with T-010
-auth in parallel if scope allows) alongside Phase A Step 0 (T-001..T-004)
-within WIP limits (max 3 IN_PROGRESS).
+**Board: T-030 (READY) + T-032 (READY for INTAKE).** T-031 is DROPPED (Git is the work channel, not the bridge). Details and cards: `TASKS.md`, `TASKS_PARKED.md`.
 
-1. War Room feature work is NO LONGER deferred — owner explicitly resumed it
-   for dev-time use and runtime backstage ecosystem.
-2. Treat `docs/future/` as archived blueprint; a step needing it must be
-   flagged NEEDS_DECISION for Project Lead.
-3. Do not use the template folder anymore — it is merged into this workspace.
-4. Dev-time team = repo agents in `.opencode/agents/`; do not confuse them with
-   runtime roles.
-5. Independent Audit System remains suspended — do not invoke paid auditor.
+Order the Owner set (2026-09-25): **finish the War Room first** (it is needed as the meeting room), then the n8n work.
+
+1. **Restart opencode** — one action unblocks three things: the 3 n8n workflow tools (`create/update/execute`) are enabled in `opencode.json` but not registered in the running session; the subagent/agent model pins are still the old values (`muse-spark-1.2` — removed upstream); the L4/roster changes take effect only after a restart.
+2. **War Room D-01** (T-007, parked, 5/6 acceptance items met) — the last item is "owner loads `/war-room/` remotely"; PR #73/#79 remote auth is merged but D-01 was never formally closed, and Issues #35/#30 are still OPEN. Verify, then close.
+3. **T-030** — n8n → PostgreSQL lite + RLS read/write proof (credential + pooler + SSL already verified; the test workflow has not been created; folder `Nippan Phase A` is empty).
+4. **T-032** — dispatch work over Git: Owner answers the two open settings questions (branch protection on `dev-workspace`; the Codex-side values), then pilot A (read-only) → pilot B (one real PR).
+5. Housekeeping (PL, delegated after restart): move the T-031 record into `TASKS_PARKED.md`, record the origin of the Owner's 3 manual commits (`625365d`, `d4ec435`, `01a49ac` — made while credit was exhausted), and one operator command: `git restore .opencode/bridge/server.mjs` (remove the deleted watcher's wiring).
+
+**Standing rules for this phase (do not re-derive them):** file-type rule for who writes which files; dev-time approval = Owner, or PL when the Owner is away (deploy preview and architecture always need the Owner); protected-doc phase rule; audit/L4 as above; Context Discipline (heavy reading → subagent; no raw output in the main chat; close the chat when the card closes).
 
 ## Model Enforcement Fix (2026-09-25)
 
