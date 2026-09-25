@@ -142,3 +142,19 @@ Audit-accepted Increment C progress remains:
 `13 / 16 = 81.25%`
 
 D-01, D-02 and D-03 remain unaccepted until formal end-to-end acceptance evidence is recorded under the project governance process.
+
+## Correction (2026-09-25, builder z-ai/glm-5.3-flash, T-008 fix round)
+
+The claims above describe the deployed preview baseline `e672a77` and are kept
+as historical record. The current dev-workspace HEAD differs from that baseline:
+
+- commit `0cead22` ("bounded live model turns") added a server route that DOES
+  invoke `run_next_turn` when `war_room_preview_model_turns_enabled` is ON with
+  a configured OpenRouter key/model; the setting still defaults to OFF, so the
+  default preview remains non-billable. The docstring of
+  `create_war_room_preview_router` and `services/core/README.md` were updated
+  accordingly on 2026-09-25 (T-008 fix round).
+- the local-access fallback in `_authorize_preview_request` was hardened on
+  2026-09-25 (T-008): it now returns OK only when the request genuinely arrives
+  over a loopback socket; other addresses fail closed with
+  `war_room_preview_loopback_only`.

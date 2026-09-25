@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nippan.org/schemas/agent-config-v1.schema.json",
+  "title": "Nippan Agent Config Version v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "config_version_id",
+    "tenant_id",
+    "application_id",
+    "agent_id",
+    "version_number",
+    "lifecycle_status",
+    "environment",
+    "persona",
+    "instruction_set",
+    "model_policy_ref",
+    "memory_policy_ref",
+    "tool_policy_ref",
+    "data_policy_ref",
+    "risk_policy_ref",
+    "privacy_policy_ref",
+    "knowledge_policy_ref",
+    "quota_policy_ref",
+    "feature_flags",
+    "change_note",
+    "created_by",
+    "created_at",
+    "published_at",
+    "supersedes_version_id",
+    "published_config_hash",
+    "policy_merge_version"
+  ],
+  "properties": {
+    "config_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "application_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "TESTING",
+        "PUBLISHED",
+        "SUPERSEDED"
+      ]
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "development",
+        "staging",
+        "production"
+      ]
+    },
+    "persona": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "language"
+      ],
+      "properties": {
+        "display_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": "string"
+        },
+        "tone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "style_constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "response_length_preference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "instruction_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system_instructions"
+      ],
+      "properties": {
+        "system_instructions": {
+          "type": "string"
+        },
+        "business_rules_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_behaviors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "escalation_guidance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "model_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "memory_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "tool_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "data_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "risk_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "privacy_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "knowledge_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "quota_policy_ref": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID of an immutable policy version. Same Tenant/Application unless explicitly platform-shared and immutable."
+    },
+    "feature_flags": {
+      "type": "object",
+      "description": "Map of registered feature-flag keys to validated flag configuration. Unknown keys are rejected by the flag registry/publish validator and cannot widen authorization.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "rollout_percentage": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          },
+          "subject_allowlist": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "uniqueItems": true
+          },
+          "test_allowlist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "environment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "development",
+              "staging",
+              "production",
+              null
+            ]
+          }
+        }
+      }
+    },
+    "change_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supersedes_version_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "published_config_hash": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "SHA-256 of canonical published Agent Config plus referenced immutable policy IDs/content hashes and policy_merge_version. Non-null for PUBLISHED/SUPERSEDED."
+    },
+    "policy_merge_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Version identifier of the normative effective-policy merge semantics."
+    }
+  },
+  "description": "Serialized Agent Config Version. Markdown Agent Policy Contract is normative for policy semantics; every *_policy_ref identifies an immutable policy version.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "lifecycle_status": {
+            "enum": [
+              "PUBLISHED",
+              "SUPERSEDED"
+            ]
+          }
+        },
+        "required": [
+          "lifecycle_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "published_config_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "lifecycle_status": {
+            "enum": [
+              "DRAFT",
+              "TESTING"
+            ]
+          }
+        },
+        "required": [
+          "lifecycle_status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "published_at": {
+            "type": "null"
+          },
+          "published_config_hash": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

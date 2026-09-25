@@ -215,10 +215,12 @@ into context for every task.
 At the beginning of a new work session:
 
 1. Read this AGENTS.md.
-2. Read CURRENT_STATE.md.
-3. Inspect Git status and current branch.
-4. Verify any claimed PR/commit/CI state from the actual repository when relevant.
-5. Continue from the first unfinished item.
+2. Read `docs/project-memory/SESSION_HANDOFF.md` — latest work state, Owner rules and
+   current model roster. (Written/refreshed by `/handoff`.)
+3. Read CURRENT_STATE.md.
+4. Inspect Git status and current branch.
+5. Verify any claimed PR/commit/CI state from the actual repository when relevant.
+6. Continue from the first unfinished item.
 
 Do not restart completed work merely because it is absent from chat history.
 
@@ -237,3 +239,103 @@ Record durable architectural/project decisions in:
 `docs/project-memory/DECISIONS.md`
 
 Do not store passwords, API keys, tokens, private keys, or secrets in project-memory files.
+
+# Communication Style With Project Owner
+
+The Project Owner is not expected to read engineering-style reports.
+
+When reporting directly to the Project Owner:
+
+- Speak in clear, natural Thai.
+- Address the Project Owner as "พี่เชษ".
+- Keep explanations short and easy to understand.
+- Explain what happened first, then what should happen next.
+- Prefer 2–4 short paragraphs over long checklists.
+- Do not split simple decisions into many numbered sections.
+- Avoid excessive technical vocabulary unless it is necessary.
+- When technical terms are necessary, explain them in ordinary language immediately.
+- Do not dump raw engineering evidence unless the Project Owner asks for it.
+- Do not repeat SHA, CI ID, branch name, PR number, or internal implementation details unless they matter to the decision.
+- Do not present every minor finding as a separate decision.
+- Combine related technical findings into one understandable conclusion.
+- Clearly distinguish:
+  - what is done
+  - what is still risky
+  - what you recommend doing next
+
+For ordinary updates, use this structure:
+
+"ตอนนี้..."
+Briefly explain the current situation in natural language.
+
+"ผมแนะนำ..."
+State the recommended next action.
+
+Mention technical evidence only when it materially affects the decision.
+
+For decisions requiring owner approval, ask one clear question at the end.
+
+Example:
+
+Instead of:
+
+1. Merge PR #79
+2. Deploy PR #79
+3. Close PR #75
+4. Start ASK_ALL rotation
+5. Start clear-message feature
+6. Track JWKS hardening
+
+Prefer:
+
+"ตอนนี้ช่องโหว่ของ War Room แก้แล้วและ CI ผ่าน ผมแนะนำให้ merge PR #79 แล้ว deploy ไป Render ก่อน จากนั้นทดสอบอีกครั้งว่าการเข้าโดยตรงผ่าน Render bypass Cloudflare ไม่ได้
+
+PR #75 เป็นแนวทางเก่าที่ใช้ระบบ login คนละแบบกับ Cloudflare Access ปัจจุบัน จึงแนะนำให้ปิดไว้ก่อน
+
+หลังจากยืนยันว่า deploy ปลอดภัยแล้ว ค่อยเริ่มงานห้องประชุมรอบต่อไป เช่น ASK_ALL rotation และปุ่มเคลียร์ข้อความ
+
+พี่อนุมัติให้ merge และ deploy PR #79 ตามนี้ไหมครับ"
+
+The Project Owner should not need to translate an engineering report into a decision.
+The Project Lead must perform that translation.
+
+---
+
+# Context Discipline (token cost) — Owner approved 2026-09-25
+
+Token cost is driven by **what stays in the MAIN chat**, not by how much an agent reads.
+Every turn re-sends the whole conversation history, so anything pulled into the main chat
+is re-charged on every later turn (measured: one long Project-Lead session = 202 turns x
+~139k context = 28M cache-read tokens, ~77% of a day's total cache usage).
+
+Rules:
+
+1. Keep replies short — result first, no restating the task.
+2. Do heavy reading/exploration INSIDE a subagent. Only a short summary (<= 15 lines) may
+   come back into the main chat.
+3. Never paste large raw output into the main chat (whole-file reads, a full GitHub issue
+   body, session dumps, long logs). Read slices, or have a subagent read and summarise.
+4. Use `/compact`, or start a new chat per task, once a session grows long.
+5. Scope every subagent prompt tightly (name the exact files, cap the tool calls, state the
+   output shape). A loose prompt makes free models burn steps/tokens and can end with no
+   answer at all.
+
+This is a cost/quality rule, not a permission to under-report. Evidence that materially
+affects a decision still belongs in the report; keep it to the essential lines.
+
+# Background work (headless queue) — Owner approved 2026-09-25
+
+Reading-heavy work (independent review, code analysis, doc checks) runs in the background via
+the headless runner instead of blocking the main chat. Binding rules:
+
+1. Never wait for a background job in the main chat — queue it and keep working; collect with
+   `node scripts/headless_status.mjs runs/<dir>`.
+2. One job = one scope-locked prompt, with an explicit `--agent` and `--model` (no silent fallback).
+3. Code-changing jobs stay on the current branch and are checked by a reviewer on a different
+   model before any merge; the worker must not commit or push.
+4. Never run two jobs that touch the same files at once (single repo/worktree).
+5. Never put secrets or customer data into free models (OpenCode Zen / OpenRouter `:free` may log or train).
+6. `runs/` is gitignored: summarise every result back into the task card or a doc.
+
+Queue: `node scripts/headless_run.mjs --agent worker --model <provider/model> --label <tag> --prompt "<task>"`
+Details: `docs/warroom/DEV_WORKING_GUIDE.md`.

@@ -1,4 +1,10 @@
-# Project State
+﻿# Project State
+
+> **STATUS (2026-09-25): Current plan = PHASE A MARKET TEST** (self-hosted n8n + PostgreSQL lite schema + OpenRouter).
+> Authoritative build order: `docs/warroom/STARTUP_PLAYBOOK.md`.
+> The "Phase 1 / Phase 2 - Core Runtime Skeleton" content below is archived full-stack
+> design reference (see `docs/future/`) and is NOT part of the Phase A system build.
+> The War Room (T-007/T-008/T-009) is a SEPARATE ACTIVE dev-time track, not this playbook.
 
 Updated: 2026-09-23
 
@@ -50,6 +56,17 @@ Applied to Supabase `nippan-ai-platform`:
 - `20260922180029_phase2_request_trace_telemetry.sql`
 - `20260922180107_phase2_idempotency_usage_audit.sql`
 
+#### Phase A Lite Schema (n8n workflow data layer)
+Applied to same Supabase project (tables use `lite_` prefix to avoid name conflict with Phase 2):
+- `20260924120000_lite_schema_v1.sql` â€” 7 tables: lite_tenants, lite_bots, lite_channels, lite_end_customers, lite_conversations, lite_memory_summaries, lite_usage_log
+
+Lite schema properties:
+- Every customer table has BOTH tenant_id AND bot_id as FKs (isolation boundary)
+- memory_summaries.expires_at is NOT NULL (mandatory retention)
+- No DB-level RLS (Phase A: isolation enforced at n8n sub-workflow level)
+- All columns match LITE_SCHEMA_V1 spec exactly (verified via information_schema.columns)
+- INSERT/SELECT test passed on lite_bots confirming FK chain works
+
 Current data foundation includes:
 - identity/config baseline
 - request state and W3C-compatible trace/span identifiers
@@ -91,43 +108,14 @@ Initial FastAPI skeleton is checked in at `services/core`:
 - SaaS/rental readiness through isolation, quotas, usage attribution and versioned configuration
 
 ## Independent Audit System
-Status: ACTIVE
+Status: **SUSPENDED by Project Owner (2026-09-24)** â€” gates do not block; normal review/testing continue; historical audit records preserved; paid auditor not invoked unless re-enabled. See `docs/warroom/decision-log.md`.
 
-Authoritative protocol:
+> Note: All gate blocks (25/50/75/90/100%), immediate trigger blocks, and PHASE 2 catch-up audit hold have been lifted. No milestone advancement requires audit approval while Suspended.
+
+Authoritative protocol (reference only â€” not active; re-enable via owner order):
 - `docs/audits/AUDIT_SYSTEM_V1.md`
 
-Mandatory progress gates:
-- 25%
-- 50%
-- 75%
-- 90%
-- 100%
-
-Immediate triggers:
-- major architecture changes
-- major security/authorization changes
-- major PostgreSQL/schema/RLS changes
-
-Independence:
-- Builder cannot self-approve
-- BLOCKER findings halt milestone advancement
-- remediation of a BLOCKER requires independent re-audit
-- 100% must PASS before milestone DONE
-- Primary Independent Auditor: Claude Opus 5 through OpenRouter, replaceable by configuration
-- specialist auditors may supplement the primary auditor
-
-Phase 2 catch-up status:
-- current ROADMAP enumerates 19 Phase 2 deliverables
-- 11 are recorded complete and 8 pending
-- equal-weight baseline progress: 57.9%
-- highest crossed gate: 50%
-- catch-up 50% audit is now due
-- evidence packet: `docs/audits/PHASE2_50_AUDIT_EVIDENCE_PACKET.md`
-- tracking: Issue #18
-- independent audit outcome: PENDING
-- milestone implementation advancement: ON HOLD until independent audit outcome permits continuation
-
-## Parallel implementation track — Nippan AI War Room V1
+## Parallel implementation track â€” Nippan AI War Room V1
 Status: INCREMENT B MERGED / INCREMENT C STARTED
 
 Tracking:
@@ -176,8 +164,8 @@ Cloudflare AI Gateway, Hyperdrive, Durable Objects, Analytics Engine, Redis, D1,
 ## Immediate next gate
 1. Merge the Increment C orchestrator contract before implementation tracks.
 2. Implement backend, model/budget, verification and frontend tracks against it.
-3. Stop for the normal 75% Independent Audit when 12 of 16 Increment C
-   deliverables have acceptance evidence, or sooner for an immediate trigger.
+3. Normal review/verification continues; any future Independent Audit only if
+   the Owner re-enables the Independent Audit System.
 4. Keep memory/pgvector tables deferred until embedding benchmarks choose
    model/dimension.
 

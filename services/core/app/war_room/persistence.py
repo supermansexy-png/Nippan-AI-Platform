@@ -6,7 +6,12 @@ from uuid import UUID, uuid4
 from app.db import Database
 
 from .contracts import MessageType, RoomState
-from .interfaces import CorrelationContext, OrderedRoomEvent, RoomEventDraft
+from .interfaces import (
+    CorrelationContext,
+    OrderedRoomEvent,
+    RoomEventDraft,
+    RoomEventType,
+)
 
 
 class RoomPersistenceError(RuntimeError):
@@ -22,7 +27,10 @@ class PostgresRoomEventSink:
 
     The room row is locked for every append so sequence allocation and optional
     room-state mutation are serialized per room. State mutation and event append
-    share one database transaction.
+    share one database transaction. An OWNER_DECISION event (a
+    ROOM_STATE_CHANGED event carrying message_type OWNER_DECISION, emitted by
+    SUBMIT_OWNER_DECISION) is additionally projected into the existing
+    public.project_room_decisions table inside the same transaction.
     """
 
     def __init__(self, database: Database) -> None:
@@ -72,6 +80,8 @@ class PostgresRoomEventSink:
                         f"expected durable state {expected_state.value}, "
                         f"found {durable_state.value}"
                     )
+
+                owner_decision_fields = self._owner_decision_fields(event)
 
                 if new_state is not None:
                     await cur.execute(
@@ -127,7 +137,17 @@ class PostgresRoomEventSink:
 
                 message_id = uuid4()
                 message_type = self._message_type(event)
-                participant_id = self._participant_uuid(event.participant_id)
+                if owner_decision_fields is not None:
+                    # The acting owner is identified by a principal id (text),
+                    # which is not necessarily the room participant UUID. Keep
+                    # UUID validation strict for every other event type and
+                    # store NULL when the owner principal is not a UUID — the
+                    # principal is still recorded on project_room_decisions.
+                    participant_id = self._optional_participant_uuid(
+                        event.participant_id
+                    )
+                else:
+                    participant_id = self._participant_uuid(event.participant_id)
                 round_number = self._round_number(event)
                 content_reference = self._content_reference(event)
                 content_text = self._encode_event(event)
@@ -174,6 +194,37 @@ class PostgresRoomEventSink:
                     ),
                 )
 
+                if owner_decision_fields is not None:
+                    decision_text, owner_principal_id = owner_decision_fields
+                    await cur.execute(
+                        """
+                        insert into public.project_room_decisions (
+                          tenant_id,
+                          application_id,
+                          room_id,
+                          agenda_item_id,
+                          decision_type,
+                          owner_principal_id,
+                          decision,
+                          status,
+                          decided_at
+                        ) values (
+                          %s, %s, %s, %s,
+                          'OWNER_DECISION', %s, %s,
+                          'ACCEPTED', %s
+                        )
+                        """,
+                        (
+                            correlation.tenant_id,
+                            correlation.application_id,
+                            correlation.room_id,
+                            correlation.agenda_item_id,
+                            owner_principal_id,
+                            decision_text,
+                            event.occurred_at,
+                        ),
+                    )
+
         return OrderedRoomEvent(
             event_id=message_id,
             sequence=sequence,
@@ -209,6 +260,23 @@ class PostgresRoomEventSink:
             ) from exc
 
     @staticmethod
+    def _optional_participant_uuid(participant_id: str | None) -> UUID | None:
+        """Best-effort participant UUID for owner-principal events.
+
+        Owner decisions carry the acting owner's principal id (text), which is
+        not required to be a room participant UUID. Unlike
+        ``_participant_uuid`` this never raises: a non-UUID principal yields
+        NULL for the message's participant link while the principal id is still
+        persisted on ``project_room_decisions.owner_principal_id``.
+        """
+        if participant_id is None:
+            return None
+        try:
+            return UUID(participant_id)
+        except ValueError:
+            return None
+
+    @staticmethod
     def _round_number(event: RoomEventDraft) -> int | None:
         value = event.payload.get("round_number")
         if isinstance(value, int) and 1 <= value <= 2:
@@ -221,6 +289,52 @@ class PostgresRoomEventSink:
         if isinstance(value, str) and value.strip():
             return value
         return None
+
+    @staticmethod
+    def _owner_decision_fields(
+        event: RoomEventDraft,
+    ) -> tuple[str, str] | None:
+        """Extract a validated durable OWNER_DECISION record from the event.
+
+        An OWNER_DECISION event is detected deterministically: only a
+        ROOM_STATE_CHANGED event carrying message_type OWNER_DECISION (the
+        shape emitted by SUBMIT_OWNER_DECISION) is projected. The decision
+        text comes from the frozen payload key ``content_text`` (falling back
+        to ``content_reference``) and the acting owner's principal id comes
+        from the top-level ``participant_id`` field — never from payload keys
+        outside the frozen schema. Any OWNER_DECISION event with missing or
+        invalid decision evidence fails closed: the whole append (and the
+        room-state change in the same transaction) is rolled back instead of
+        losing the owner's decision text.
+        """
+        if event.event_type is not RoomEventType.ROOM_STATE_CHANGED:
+            return None
+        if event.message_type is not MessageType.OWNER_DECISION:
+            return None
+
+        decision = event.payload.get("content_text")
+        if not (isinstance(decision, str) and decision.strip()):
+            decision = event.payload.get("content_reference")
+
+        if (
+            not isinstance(decision, str)
+            or not decision.strip()
+            or len(decision.strip()) > 4000
+        ):
+            raise RoomPersistenceError(
+                "owner decision text must be 1..4000 characters"
+            )
+
+        owner_principal_id = event.participant_id
+        if (
+            not isinstance(owner_principal_id, str)
+            or not owner_principal_id.strip()
+        ):
+            raise RoomPersistenceError(
+                "owner decision requires the acting owner principal_id"
+            )
+
+        return decision.strip(), owner_principal_id
 
     @staticmethod
     def _encode_event(event: RoomEventDraft) -> str:

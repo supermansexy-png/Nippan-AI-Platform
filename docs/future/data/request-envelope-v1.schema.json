@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nippan.org/schemas/request-envelope-v1.schema.json",
+  "title": "Nippan Platform Request Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "trace_id",
+    "tenant_id",
+    "received_at",
+    "environment",
+    "request_kind",
+    "source",
+    "privacy_class",
+    "status_at_emit"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "trace_id": {
+      "type": "string",
+      "pattern": "^(?!0{32}$)[0-9a-f]{32}$",
+      "description": "W3C/OpenTelemetry-compatible 16-byte TraceId serialized as 32 lowercase hex characters; all-zero is invalid."
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "application_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "agent_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "channel_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "subject_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "conversation_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "parent_request_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "event_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 255
+    },
+    "external_correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 255
+    },
+    "idempotency_key": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 255
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "development",
+        "staging",
+        "production"
+      ]
+    },
+    "request_kind": {
+      "type": "string",
+      "enum": [
+        "conversation",
+        "tool_action",
+        "background_job",
+        "scheduled_job",
+        "admin_action",
+        "ingestion",
+        "extraction",
+        "evaluation",
+        "health_internal"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "privacy_class": {
+      "type": "string",
+      "enum": [
+        "PUBLIC_LOW_RISK",
+        "INTERNAL",
+        "PII",
+        "FINANCIAL_CUSTOMER",
+        "SECRET_CREDENTIAL"
+      ]
+    },
+    "risk_class": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "READ",
+            "WRITE_LOW",
+            "WRITE_IMPORTANT",
+            "DESTRUCTIVE",
+            "FINANCIAL"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "effective_config_version_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "effective_config_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "status_at_emit": {
+      "type": "string",
+      "enum": [
+        "RECEIVED",
+        "ACCEPTED",
+        "RUNNING",
+        "WAITING",
+        "SUCCEEDED",
+        "FAILED",
+        "PARTIAL",
+        "CANCELLED",
+        "BLOCKED",
+        "DEAD_LETTER"
+      ],
+      "description": "Immutable snapshot of request status when this envelope is emitted; mutable current status belongs to the operational request record."
+    }
+  },
+  "description": "Request envelope snapshot. Markdown Request/Trace/Usage Contract is normative for semantics; scope fields are conditional by request_kind.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "request_kind": {
+            "enum": [
+              "conversation",
+              "tool_action",
+              "background_job",
+              "scheduled_job",
+              "ingestion",
+              "extraction",
+              "evaluation"
+            ]
+          }
+        },
+        "required": [
+          "request_kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "application_id"
+        ],
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "request_kind": {
+            "const": "conversation"
+          }
+        },
+        "required": [
+          "request_kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "channel_id"
+        ],
+        "properties": {
+          "channel_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    }
+  ]
+}

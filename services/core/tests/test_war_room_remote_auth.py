@@ -9,7 +9,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from app.settings import Settings
 from app.war_room.remote_auth import (
     AccessAuthenticationError,
+    ApiKeyValidationError,
     CloudflareAccessVerifier,
+    DevApiKeyAuthenticator,
 )
 
 
@@ -218,3 +220,56 @@ async def test_access_verifier_fails_closed_when_jwks_refresh_fails() -> None:
             await verifier.authenticate(_token(private_key, kid="rotated-key"))
 
     assert requests == 2
+
+
+# ---- DevApiKeyAuthenticator unit tests ----
+
+class TestDevApiKeyAuthenticator:
+    """Tests for the dev-time API key authenticator."""
+
+    def test_enabled_with_non_empty_key(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key="my-secret-key")
+        assert auth.enabled is True
+
+    def test_disabled_when_none(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key=None)
+        assert auth.enabled is False
+
+    def test_disabled_when_blank(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key="   ")
+        assert auth.enabled is False
+
+    def test_valid_token_returns_true(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key="correct-key")
+        assert auth.authenticate("correct-key") is True
+
+    def test_wrong_token_raises_error(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key="correct-key")
+        with pytest.raises(ApiKeyValidationError, match="does not match"):
+            auth.authenticate("wrong-key")
+
+    def test_missing_token_raises_error(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key="some-key")
+        with pytest.raises(ApiKeyValidationError, match="missing"):
+            auth.authenticate(None)
+
+    def test_empty_token_raises_error(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key="some-key")
+        with pytest.raises(ApiKeyValidationError, match="missing"):
+            auth.authenticate("   ")
+
+    def test_disabled_always_false(self) -> None:
+        auth = DevApiKeyAuthenticator(api_key=None)
+        # Even with a valid-looking token, disabled returns False
+        assert auth.authenticate("anything") is False
+
+    def test_different_keys_produce_different_hashes(self) -> None:
+        auth1 = DevApiKeyAuthenticator(api_key="key-a")
+        auth2 = DevApiKeyAuthenticator(api_key="key-b")
+        assert auth1.authenticate("key-a") is True
+        assert auth2.authenticate("key-b") is True
+        # Wrong key for each authenticator raises ApiKeyValidationError
+        with pytest.raises(ApiKeyValidationError, match="does not match"):
+            auth2.authenticate("key-a")
+        with pytest.raises(ApiKeyValidationError, match="does not match"):
+            auth1.authenticate("key-b")

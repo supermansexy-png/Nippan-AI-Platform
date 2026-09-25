@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import time
 from typing import Protocol
 from urllib.parse import urlsplit
@@ -211,3 +213,40 @@ class CloudflareAccessVerifier:
                 "Cloudflare Access identity is not the configured preview owner"
             )
         return owner_email
+
+
+class ApiKeyValidationError(AccessAuthenticationError):
+    """Raised when a dev-time API key validation fails."""
+
+
+class DevApiKeyAuthenticator:
+    """Validates Bearer-token API keys for War Room preview access.
+
+    Uses SHA-256 hashing + hmac.compare_digest so the comparison is
+    constant-time and does not leak timing side-channels.
+    """
+
+    def __init__(self, *, api_key: str | None) -> None:
+        self._hashed_key: str | None
+        if api_key is not None and api_key.strip():
+            self._hashed_key = hashlib.sha256(api_key.encode()).hexdigest()
+        else:
+            self._hashed_key = None
+
+    @property
+    def enabled(self) -> bool:
+        return self._hashed_key is not None
+
+    def authenticate(self, bearer_token: str | None) -> bool:
+        if not self.enabled:
+            return False
+        if bearer_token is None or not bearer_token.strip():
+            raise ApiKeyValidationError(
+                "dev-time API key header is missing"
+            )
+        candidate = hashlib.sha256(bearer_token.encode()).hexdigest()
+        if not hmac.compare_digest(candidate, self._hashed_key):
+            raise ApiKeyValidationError(
+                "dev-time API key does not match"
+            )
+        return True

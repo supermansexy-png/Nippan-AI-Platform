@@ -1,9 +1,18 @@
 # Nippan AI Platform — Roadmap v1
 
-## Project-wide Independent Audit System
-Status: ACTIVE
+> **STATUS (2026-09-25): ARCHIVED BLUEPRINT — NOT THE CURRENT BUILD PLAN.**
+> This roadmap describes the earlier full-stack platform (Phases 0–10: FastAPI
+> core, Cloudflare edge, pgvector, RLS, Control Plane, War Room, Ai-Nippan
+> migration). The current, authoritative plan for the Phase A market test
+> (self-hosted n8n + PostgreSQL lite schema + OpenRouter, rent bots to small
+> Thai businesses) is `docs/warroom/STARTUP_PLAYBOOK.md`. Everything below is
+> preserved as archived design reference only; the preserved blueprint lives
+> under `docs/future/`.
 
-All phases and milestones use progress-based independent Audit Gates:
+## Project-wide Independent Audit System
+Status: **SUSPENDED by Project Owner (2026-09-24)** — see `docs/warroom/decision-log.md` and `docs/audits/AUDIT_SYSTEM_V1.md`
+
+Progress-based independent Audit Gates are **not blocking** while suspended:
 - 25%
 - 50%
 - 75%
