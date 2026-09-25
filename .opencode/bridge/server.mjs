@@ -1,6 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { appendFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -44,6 +45,42 @@ function safeTokenEquals(provided, expected) {
     .update(expected)
     .digest();
   return timingSafeEqual(a, b);
+}
+
+// --- Guardrails for privileged tools (Owner-approved 2026-09-25) ---
+// 1) audit: every privileged call is appended as a JSON line
+// 2) rate limit: cap how many sessions can be created in a 10-minute window
+// 3) abort: only sessions created by THIS bridge instance can be aborted
+const AUDIT_LOG =
+  process.env.NIPPAN_BRIDGE_AUDIT_LOG ||
+  path.join(PROJECT_ROOT, ".opencode", "bridge", "privileged-audit.log");
+
+const MAX_SESSIONS_PER_WINDOW = Number(
+  process.env.NIPPAN_BRIDGE_MAX_SESSIONS_PER_10MIN || 3
+);
+const SESSION_WINDOW_MS = 10 * 60 * 1000;
+
+const createdSessions = new Set();
+let sessionTimestamps = [];
+
+function audit(event, detail = {}) {
+  try {
+    appendFileSync(
+      AUDIT_LOG,
+      JSON.stringify({ at: new Date().toISOString(), event, ...detail }) +
+        "\n"
+    );
+  } catch (error) {
+    console.error("audit write failed:", String(error));
+  }
+}
+
+function rateLimitOk() {
+  const now = Date.now();
+  sessionTimestamps = sessionTimestamps.filter(
+    (t) => now - t < SESSION_WINDOW_MS
+  );
+  return sessionTimestamps.length < MAX_SESSIONS_PER_WINDOW;
 }
 
 if (!OPENCODE_PASSWORD) {
@@ -220,6 +257,13 @@ function createServer() {
           );
         }
 
+        if (!rateLimitOk()) {
+          audit("start_task.rate_limited");
+          throw new Error(
+            `Rate limit: at most ${MAX_SESSIONS_PER_WINDOW} sessions per 10 minutes`
+          );
+        }
+
         const session = await oc("/session", {
           method: "POST",
           body: JSON.stringify({
@@ -238,6 +282,13 @@ function createServer() {
             `Refusing session outside ${PROJECT_ROOT}`
           );
         }
+
+        createdSessions.add(session.id);
+        sessionTimestamps.push(Date.now());
+        audit("start_task.created", {
+          sessionId: session.id,
+          title: session.title,
+        });
 
         await oc(
           `/session/${encodeURIComponent(
@@ -407,6 +458,13 @@ function createServer() {
           );
         }
 
+        if (!createdSessions.has(sessionId)) {
+          audit("abort_task.denied", { sessionId });
+          throw new Error(
+            "opencode_abort_task is restricted to sessions created by this bridge instance"
+          );
+        }
+
         await getSession(sessionId);
 
         const aborted = await oc(
@@ -417,6 +475,8 @@ function createServer() {
             method: "POST",
           }
         );
+
+        audit("abort_task.aborted", { sessionId });
 
         return result({
           sessionId,

@@ -5,3 +5,4 @@ __pycache__/
 .env
 .env.local
 runs/
+.opencode/bridge/privileged-audit.log
