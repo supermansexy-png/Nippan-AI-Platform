@@ -1,7 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { createHash, timingSafeEqual } from "node:crypto";
-import { appendFileSync } from "node:fs";
+import { appendFileSync, existsSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -81,6 +81,20 @@ function rateLimitOk() {
     (t) => now - t < SESSION_WINDOW_MS
   );
   return sessionTimestamps.length < MAX_SESSIONS_PER_WINDOW;
+}
+
+// Kill switch: if this file exists, every mutating tool call is rejected.
+// Operator/PL can create it instantly (no restart) to suspend the bridge.
+const PAUSE_FILE =
+  process.env.NIPPAN_BRIDGE_PAUSE_FILE ||
+  path.join(PROJECT_ROOT, ".opencode", "bridge", "PAUSE");
+
+function assertNotPaused() {
+  if (existsSync(PAUSE_FILE)) {
+    throw new Error(
+      "Bridge is PAUSED by the operator: remove .opencode/bridge/PAUSE to resume."
+    );
+  }
 }
 
 if (!OPENCODE_PASSWORD) {
@@ -251,6 +265,8 @@ function createServer() {
         }),
       },
       async ({ authToken, task, title }) => {
+        assertNotPaused();
+
         if (!safeTokenEquals(authToken, PRIVILEGED_TOKEN)) {
           throw new Error(
             "Invalid or missing authToken for privileged tool opencode_start_task"
@@ -330,6 +346,8 @@ function createServer() {
       }),
     },
     async ({ sessionId, message }) => {
+      assertNotPaused();
+
       if (ALLOWED_SESSIONS.length === 0) {
         throw new Error(
           "opencode_send_message is disabled: NIPPAN_BRIDGE_ALLOWED_SESSIONS is not set. The operator must set it to a comma-separated allowlist of session ids, e.g. NIPPAN_BRIDGE_ALLOWED_SESSIONS=ses_xxx."
@@ -452,6 +470,8 @@ function createServer() {
         }),
       },
       async ({ authToken, sessionId }) => {
+        assertNotPaused();
+
         if (!safeTokenEquals(authToken, PRIVILEGED_TOKEN)) {
           throw new Error(
             "Invalid or missing authToken for privileged tool opencode_abort_task"

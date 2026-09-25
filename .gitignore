@@ -6,3 +6,4 @@ __pycache__/
 .env.local
 runs/
 .opencode/bridge/privileged-audit.log
+.opencode/bridge/PAUSE
