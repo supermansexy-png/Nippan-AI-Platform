@@ -215,6 +215,14 @@ Status: DONE (code + tests + live DB); pending reviewer gate.
 Evidence: fast suite = 152 passed, 6 skipped; live PostgreSQL (embedded PG16) = **158 passed, 0 skipped**; the three SQL invariant scripts PASS.
 Model used: Project Lead (`deepseek-v4.1-flash`) implementation + PL run; reviewer gate pending.
 
+REVIEW — T-029 — reviewer `opencode/space-bunny-free` — 2026-09-25 (run `runs/2026-09-25T03-46-13Z-t029-review1`)
+- VERDICT: REJECT/FAILED. The hardening code was verified correct (all-zero `trace_id` rejected at both boundaries; validation not weakened; frozen schema untouched; the commit touched only the 3 scoped files), BUT the conformance test was judged a tautology — it validated a hand-built dict, not production output. Item 3 (no metadata export) left UNVERIFIED.
+
+REWORK — T-029 — 2026-09-25 (PL, addressing the REJECT)
+- Extracted `build_usage_event_payload` in `transport.py`; `record_usage` now inserts exactly that builder's values (the storage-only `metadata` column is a constant in the INSERT and is never part of the payload).
+- `test_frozen_schema_conformance.py` now validates the BUILDER output (both the `ai_tokens` and `ai_cost` shapes) against `usage-event-v1.schema.json`, plus the metadata negative control — the test exercises production code, not a copied dict.
+- Evidence: fast suite = 153 passed, 6 skipped; live PostgreSQL (embedded PG16) = 159 passed, 0 skipped.
+
 ## REVIEW
 
 (none)

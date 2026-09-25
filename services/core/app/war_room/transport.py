@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 import json
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -255,10 +256,27 @@ class _PreviewBudgetAuthority:
                 ("output_tokens", usage.output_tokens, "output"),
             )
             for unit, quantity, suffix in token_rows:
-                # `metadata` is a STORAGE-ONLY column: it is NOT part of the
-                # frozen wire contract `schemas/usage-event-v1.schema.json`
-                # (additionalProperties:false) and is written empty here. It must
-                # never be exported as a usage-event field (T-029 item 3).
+                # `metadata` is a STORAGE-ONLY column and is never part of the
+                # wire contract; build_usage_event_payload deliberately excludes
+                # it, so the same builder output is what the T-029 conformance
+                # test validates against schemas/usage-event-v1.schema.json.
+                payload = build_usage_event_payload(
+                    usage_event_id=uuid4(),
+                    occurred_at=datetime.now(UTC),
+                    correlation=correlation,
+                    agent_id=agent_id,
+                    event_type="ai_tokens",
+                    quantity=quantity,
+                    unit=unit,
+                    dedupe_key=(
+                        f"war-room:{correlation.request_id}:"
+                        f"{participant_id}:{suffix}"
+                    ),
+                    source_type="request",
+                    source_id=str(correlation.request_id),
+                    provider="openrouter",
+                    model=self._model_id,
+                )
                 await conn.execute(
                     """
                     insert into public.usage_events (
@@ -266,28 +284,36 @@ class _PreviewBudgetAuthority:
                       request_id, agent_id, event_type, quantity, unit,
                       dedupe_key, source_type, source_id, provider, model, metadata
                     ) values (
-                      %s, now(), %s, %s, %s, %s,
-                      'ai_tokens', %s, %s, %s,
-                      'request', %s, 'openrouter', %s, '{}'::jsonb
+                      %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                      '{}'::jsonb
                     )
                     on conflict (tenant_id, dedupe_key) do nothing
                     """,
-                    (
-                        uuid4(),
-                        correlation.tenant_id,
-                        correlation.application_id,
-                        correlation.request_id,
-                        agent_id,
-                        quantity,
-                        unit,
-                        f"war-room:{correlation.request_id}:{participant_id}:{suffix}",
-                        str(correlation.request_id),
-                        self._model_id,
-                    ),
+                    tuple(payload[column] for column in _USAGE_WIRE_COLUMNS),
                 )
 
             if usage.normalized_cost is not None:
                 currency = usage.currency or "USD"
+                payload = build_usage_event_payload(
+                    usage_event_id=uuid4(),
+                    occurred_at=datetime.now(UTC),
+                    correlation=correlation,
+                    agent_id=agent_id,
+                    event_type="ai_cost",
+                    quantity=1,
+                    unit="request",
+                    dedupe_key=(
+                        f"war-room:{correlation.request_id}:{participant_id}:cost"
+                    ),
+                    source_type="request",
+                    source_id=str(correlation.request_id),
+                    provider="openrouter",
+                    model=self._model_id,
+                    provider_reported_cost=usage.normalized_cost,
+                    normalized_cost=usage.normalized_cost,
+                    currency=currency,
+                    pricing_rate_version="openrouter-reported",
+                )
                 await conn.execute(
                     """
                     insert into public.usage_events (
@@ -297,27 +323,94 @@ class _PreviewBudgetAuthority:
                       provider_reported_cost, normalized_cost, currency,
                       pricing_rate_version, metadata
                     ) values (
-                      %s, now(), %s, %s, %s, %s,
-                      'ai_cost', 1, 'request', %s,
-                      'request', %s, 'openrouter', %s,
-                      %s, %s, %s, 'openrouter-reported', '{}'::jsonb
+                      %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                      %s, %s, %s, %s, '{}'::jsonb
                     )
                     on conflict (tenant_id, dedupe_key) do nothing
                     """,
-                    (
-                        uuid4(),
-                        correlation.tenant_id,
-                        correlation.application_id,
-                        correlation.request_id,
-                        agent_id,
-                        f"war-room:{correlation.request_id}:{participant_id}:cost",
-                        str(correlation.request_id),
-                        self._model_id,
-                        usage.normalized_cost,
-                        usage.normalized_cost,
-                        currency,
+                    tuple(
+                        payload[column]
+                        for column in _USAGE_WIRE_COLUMNS
+                        + (
+                            "provider_reported_cost",
+                            "normalized_cost",
+                            "currency",
+                            "pricing_rate_version",
+                        )
                     ),
                 )
+
+
+_USAGE_WIRE_COLUMNS = (
+    "usage_event_id",
+    "occurred_at",
+    "tenant_id",
+    "application_id",
+    "request_id",
+    "agent_id",
+    "event_type",
+    "quantity",
+    "unit",
+    "dedupe_key",
+    "source_type",
+    "source_id",
+    "provider",
+    "model",
+)
+
+
+def build_usage_event_payload(
+    *,
+    usage_event_id: UUID,
+    occurred_at: datetime,
+    correlation: CorrelationContext,
+    agent_id: UUID | None,
+    event_type: str,
+    quantity: float,
+    unit: str,
+    dedupe_key: str,
+    source_type: str,
+    source_id: str,
+    provider: str,
+    model: str,
+    provider_reported_cost: float | None = None,
+    normalized_cost: float | None = None,
+    currency: str | None = None,
+    pricing_rate_version: str | None = None,
+) -> dict[str, object]:
+    """Build the usage-event field values written for War Room model turns.
+
+    Contract fields only: the storage-only ``metadata`` column is never part of
+    this payload. ``record_usage`` inserts exactly these values, and the T-029
+    conformance test validates this same output against
+    ``schemas/usage-event-v1.schema.json`` — so the test exercises production
+    code rather than a hand-built dict.
+    """
+    payload: dict[str, object] = {
+        "usage_event_id": usage_event_id,
+        "occurred_at": occurred_at,
+        "tenant_id": correlation.tenant_id,
+        "application_id": correlation.application_id,
+        "request_id": correlation.request_id,
+        "agent_id": agent_id,
+        "event_type": event_type,
+        "quantity": quantity,
+        "unit": unit,
+        "dedupe_key": dedupe_key,
+        "source_type": source_type,
+        "source_id": source_id,
+        "provider": provider,
+        "model": model,
+    }
+    if provider_reported_cost is not None:
+        payload["provider_reported_cost"] = provider_reported_cost
+    if normalized_cost is not None:
+        payload["normalized_cost"] = normalized_cost
+    if provider_reported_cost is not None or normalized_cost is not None:
+        payload["currency"] = currency or "USD"
+    if normalized_cost is not None:
+        payload["pricing_rate_version"] = pricing_rate_version
+    return payload
 
 
 def preview_mount_allowed(settings: Settings) -> bool:

@@ -11,6 +11,7 @@ found by the read-only contract sweep:
    ``^(?!0{32}$)[0-9a-f]{32}$`` forbids it).
 """
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -20,7 +21,10 @@ from pydantic import ValidationError
 
 from app.war_room import CorrelationContext
 from app.war_room.interfaces import InterfaceViolation
-from app.war_room.transport import CorrelationPayload
+from app.war_room.transport import (
+    CorrelationPayload,
+    build_usage_event_payload,
+)
 
 SCHEMAS = Path(__file__).resolve().parents[3] / "schemas"
 
@@ -37,38 +41,84 @@ def _schema(name: str) -> dict:
     return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
 
 
-def _usage_event_wire_payload() -> dict:
-    """The field set the War Room transport writes for an ai_tokens event.
+def _correlation() -> CorrelationContext:
+    return CorrelationContext(
+        tenant_id=TENANT,
+        application_id=APPLICATION,
+        room_id=ROOM,
+        agenda_item_id=AGENDA,
+        request_id=REQUEST,
+        trace_id=TRACE,
+    )
 
-    Mirrors the INSERT columns in ``transport.py`` minus the storage-only
-    ``metadata`` column, which is not part of the wire contract.
-    """
-    return {
-        "usage_event_id": str(UUID(int=7)),
-        "occurred_at": "2026-09-25T03:00:00Z",
-        "tenant_id": str(TENANT),
-        "application_id": str(APPLICATION),
-        "request_id": str(REQUEST),
-        "agent_id": str(AGENT),
-        "event_type": "ai_tokens",
-        "quantity": 120,
-        "unit": "input",
-        "dedupe_key": f"war-room:{REQUEST}:preview-builder:input",
-        "source_type": "request",
-        "source_id": str(REQUEST),
-        "provider": "openrouter",
-        "model": "z-ai/glm-5.3-flash",
-    }
+
+def _jsonable(payload: dict) -> dict:
+    """Convert a production payload (native UUID/datetime) to JSON scalars."""
+    converted: dict = {}
+    for key, value in payload.items():
+        if isinstance(value, UUID):
+            converted[key] = str(value)
+        elif isinstance(value, datetime):
+            converted[key] = value.isoformat().replace("+00:00", "Z")
+        else:
+            converted[key] = value
+    return converted
+
+
+def _tokens_payload() -> dict:
+    # Built by the SAME production function that record_usage inserts, so the
+    # conformance check exercises production code (not a hand-built dict).
+    return build_usage_event_payload(
+        usage_event_id=UUID(int=7),
+        occurred_at=datetime(2026, 9, 25, 3, 0, tzinfo=UTC),
+        correlation=_correlation(),
+        agent_id=AGENT,
+        event_type="ai_tokens",
+        quantity=120,
+        unit="input",
+        dedupe_key=f"war-room:{REQUEST}:preview-builder:input",
+        source_type="request",
+        source_id=str(REQUEST),
+        provider="openrouter",
+        model="z-ai/glm-5.3-flash",
+    )
 
 
 def test_usage_event_wire_payload_conforms_to_frozen_schema() -> None:
+    payload = _tokens_payload()
     validator = Draft202012Validator(_schema("usage-event-v1.schema.json"))
-    validator.validate(_usage_event_wire_payload())  # must not raise
+    validator.validate(_jsonable(payload))  # must not raise
+    assert "metadata" not in payload  # storage-only column is never a wire field
+
+
+def test_usage_event_cost_payload_conforms_to_frozen_schema() -> None:
+    payload = build_usage_event_payload(
+        usage_event_id=UUID(int=8),
+        occurred_at=datetime(2026, 9, 25, 3, 0, tzinfo=UTC),
+        correlation=_correlation(),
+        agent_id=AGENT,
+        event_type="ai_cost",
+        quantity=1,
+        unit="request",
+        dedupe_key=f"war-room:{REQUEST}:preview-builder:cost",
+        source_type="request",
+        source_id=str(REQUEST),
+        provider="openrouter",
+        model="z-ai/glm-5.3-flash",
+        provider_reported_cost=0.03,
+        normalized_cost=0.03,
+        currency="USD",
+        pricing_rate_version="openrouter-reported",
+    )
+    validator = Draft202012Validator(_schema("usage-event-v1.schema.json"))
+    validator.validate(_jsonable(payload))  # must not raise
+    assert payload["currency"] == "USD"
+    assert payload["pricing_rate_version"] == "openrouter-reported"
 
 
 def test_usage_event_schema_forbids_storage_only_metadata() -> None:
     validator = Draft202012Validator(_schema("usage-event-v1.schema.json"))
-    poisoned = _usage_event_wire_payload() | {"metadata": {}}
+    poisoned = _jsonable(_tokens_payload()) | {"metadata": {}}
     assert list(validator.iter_errors(poisoned)), (
         "metadata must not be part of the wire usage-event contract"
     )
