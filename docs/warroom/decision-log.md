@@ -394,3 +394,15 @@ which revision to record acceptance evidence against.
 **Evidence**: well-known paths → `404 application/json` (both); `node --check` OK; `tunnel-client doctor` = RESULT ok (`oauth_metadata PASS`); the assistant then posted a DELIVERY into the PL session `ses_f27b323c8ffeO8M97njUFANf67`. HK-VERIFY-001: `TASKS.md` ACTIVE = "(no open cards)"; T-026 card present in `docs/archive/TASKS_DONE_ARCHIVE.md`; commits `50a8f2f`, `20fbe0c`. HK-RLS-REDTEAM-001: recorded in `DEV_ERROR_LOG.md` + this log; fix in `services/dev/tools/data_access.py`; pytest 29 passed; core live suite 156 passed / 3 skipped.
 
 **Task**: bridge OAuth-discovery fix; closure of HK-VERIFY-001 + HK-RLS-REDTEAM-001.
+
+---
+
+## DECISION — 2026-09-25 — Owner enabled bridge privileged tools (guarded)
+
+**Context**: To let the external dev-time assistant (gpt-5.6-sol) hand work into opencode again (as it did when it created the HK-VERIFY-001 session), the Owner enabled the bridge's privileged tools, which are disabled by default.
+
+**Decision (Owner)**: enable `NIPPAN_BRIDGE_ENABLE_PRIVILEGED=true` + `NIPPAN_BRIDGE_PRIVILEGED_TOKEN`, keeping the session allowlist scoped to the active PL session. Before enabling, the PL added guardrails in `.opencode/bridge/server.mjs`: an audit log (`.opencode/bridge/privileged-audit.log`), a 10-minute session rate limit (default 3), abort restricted to sessions created by the same bridge instance, and a `PAUSE` kill switch that instantly rejects all mutating tools without a restart (the PL can create `.opencode/bridge/PAUSE` to suspend and report).
+
+**Evidence**: live MCP verification from the PL side — tool list = 7 (`opencode_start_task` + `opencode_abort_task` present); wrong `authToken` rejected; with `PAUSE` present `opencode_send_message` is rejected ("Bridge is PAUSED"); after removing `PAUSE`, `opencode_send_message` passes the allowlist and reaches the 8000-character cap. Commits `a226cd3`, `d2d67c2`.
+
+**Task**: bridge privileged enablement + guardrails (dev tooling; security-sensitive).
