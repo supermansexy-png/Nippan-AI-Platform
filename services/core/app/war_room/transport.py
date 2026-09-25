@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 from decimal import Decimal
 from pathlib import Path
@@ -333,6 +334,30 @@ def trusted_preview_actor(settings: Settings) -> TrustedActorContext:
     )
 
 
+def _request_is_loopback(request: Request) -> bool:
+    """True only when the client socket address is a genuine loopback address.
+
+    Fails closed: a missing client address or any non-IP host (proxies,
+    test clients) is treated as non-loopback.
+
+    SECURITY RESIDUAL (accepted 2026-09-25): this inspects the socket peer
+    only. A reverse proxy, tunnel or SSH forward that itself binds to
+    127.0.0.1 / ::1 still appears as loopback, so a remote client could be
+    relayed through it. Do NOT put such a proxy/tunnel in front of the preview
+    while remote access is disabled, and stop the preview when dev work ends.
+    """
+    client = request.client
+    if client is None or not client.host:
+        return False
+    try:
+        address = ipaddress.ip_address(client.host)
+    except ValueError:
+        return False
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+        address = address.ipv4_mapped
+    return address.is_loopback
+
+
 async def _authorize_preview_request(
     request: Request,
     settings: Settings,
@@ -356,10 +381,16 @@ async def _authorize_preview_request(
         except ApiKeyValidationError:
             pass
 
-    # 2. Fall back to loopback-only when remote access is disabled.
+    # 2. Fall back to loopback-only when remote access is disabled. Fail
+    #    closed unless the request really arrived over a loopback socket.
     if not settings.war_room_preview_remote_access_enabled:
         if settings.war_room_preview_local_access_enabled:
-            return
+            if _request_is_loopback(request):
+                return
+            raise HTTPException(
+                status_code=403,
+                detail="war_room_preview_loopback_only",
+            )
         raise HTTPException(
             status_code=403,
             detail="war_room_preview_access_disabled",
@@ -427,7 +458,13 @@ def create_war_room_preview_router(
     database: Database,
     remote_access_verifier: RemoteAccessVerifier | None = None,
 ) -> APIRouter:
-    """Development-only Track D transport. No route invokes run_next_turn."""
+    """Development-only Track D transport.
+
+    The POST commands route invokes ``run_next_turn`` only when model turns
+    are enabled (``war_room_preview_model_turns_enabled``) AND an OpenRouter
+    key/model is configured; the setting defaults to OFF, so the default
+    preview makes zero billable provider calls.
+    """
 
     router = APIRouter()
     if (

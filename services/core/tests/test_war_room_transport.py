@@ -548,3 +548,95 @@ async def test_all_surfaces_accept_api_key_auth() -> None:
             # Post to fake DB may raise connection-level or DB errors — acceptable for auth-test purposes
             print(f"Command endpoint raised (expected): {exc}")
 
+
+# ---- Local-access fallback loopback hardening (T-008 security fix) ----
+
+def test_loopback_helper_fails_closed_on_missing_or_non_ip_client() -> None:
+    from starlette.requests import Request
+
+    from app.war_room.transport import _request_is_loopback
+
+    def request_with_client(client: tuple[str, int] | None) -> Request:
+        scope: dict[str, object] = {
+            "type": "http",
+            "method": "GET",
+            "path": "/",
+            "query_string": b"",
+            "headers": [],
+        }
+        if client is not None:
+            scope["client"] = client
+        return Request(scope)
+
+    assert _request_is_loopback(request_with_client(None)) is False
+    assert _request_is_loopback(request_with_client(("testclient", 50000))) is False
+    assert _request_is_loopback(request_with_client(("127.0.0.1", 80))) is True
+    assert _request_is_loopback(request_with_client(("::1", 80))) is True
+    assert _request_is_loopback(
+        request_with_client(("::ffff:127.0.0.1", 80))
+    ) is True
+    assert _request_is_loopback(request_with_client(("203.0.113.10", 80))) is False
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("client_address", "expected_status", "expected_detail"),
+    [
+        ("127.0.0.1", 200, None),
+        ("::1", 200, None),
+        ("::ffff:127.0.0.1", 200, None),
+        ("203.0.113.10", 403, "war_room_preview_loopback_only"),
+        ("testclient", 403, "war_room_preview_loopback_only"),
+    ],
+)
+async def test_local_access_fallback_serves_only_genuine_loopback(
+    client_address: str,
+    expected_status: int,
+    expected_detail: str | None,
+) -> None:
+    settings = preview_settings(environment="development")
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    transport = ASGITransport(app=app, client=(client_address, 43127))
+    async with AsyncClient(
+        transport=transport,
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.get("/war-room/")
+
+    assert response.status_code == expected_status
+    if expected_detail is not None:
+        assert response.json()["detail"] == expected_detail
+
+
+@pytest.mark.anyio
+async def test_local_access_fallback_ignores_spoofed_forwarded_headers() -> None:
+    settings = preview_settings(environment="development")
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    transport = ASGITransport(app=app, client=("203.0.113.12", 43128))
+    async with AsyncClient(
+        transport=transport,
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.get(
+            "/war-room/",
+            headers={
+                "X-Forwarded-For": "127.0.0.1",
+                "X-Real-IP": "127.0.0.1",
+            },
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "war_room_preview_loopback_only"
+

@@ -65,7 +65,7 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 | # | Role | Primary Model | Primary Provider | Backup Model | Backup Provider | Price (Primary in/out) | Price (Backup in/out) | Reasoning |
 |---|---|---|---|---|---|---|---|---|
 | 1 | **project-lead** | `deepseek/deepseek-v4.1-flash` | DeepSeek | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.15 / $0.60 | $0.08 / $0.20 | **CHANGED 2026-09-24 (Owner order).** Previous: qwen3.7-flash — suspended for protocol violations. New: DeepSeek V4.1 Flash — Real-time, 1M context, Intelligence 39.5, supports tool_choice + structured_outputs + reasoning_effort. Only PL-capable real-time model within self-approval budget ($0.25/$1.00). Nemotron Lightning backup from different provider (NVIDIA ≠ DeepSeek). |
-| 2 | **builder** | `qwen/qwen3.7-flash` | Alibaba | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.03 / $0.13 | $0.08 / $0.20 | **REVERTED 2026-09-25 (T-023, Owner order): the builder stays on the paid model. The free models are for the helper/assistant position, not the main builder.** |
+| 2 | **builder** | `z-ai/glm-5.3-flash` | Z.ai | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.045 / $0.60 | $0.08 / $0.20 | **LOCKED 2026-09-25 (Owner order): the builder uses `z-ai/glm-5.3-flash` ONLY — not to be swapped to another model. `qwen/qwen3.7-flash` is permanently banned. See "Team update 2026-09-25" below (authoritative).** |
 | 3 | **reviewer** | L1–L3: `opencode/nemotron-3-ultra-free` · L4: `z-ai/glm-5.3-flash` | OpenCode Zen / Z.ai | `opencode/space-bunny-free` | OpenCode Zen | $0 · L4 $0.15/$0.50 | $0 / $0 | **CHANGED 2026-09-25 (T-020/T-023): free for L1–L3, paid GLM only for L4 critical verification.** |
 | 4 | **security** | L1–L3: `opencode/big-pickle` · L4: `z-ai/glm-5.3-flash` | OpenCode Zen / Z.ai | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 · L4 $0.15/$0.50 | $0 / $0 | **CHANGED 2026-09-25 (T-023, Owner order): security free model kept DIFFERENT from the reviewer's free model.** |
 | 5 | **ops** | `opencode/big-pickle` | OpenCode Zen | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
@@ -88,11 +88,11 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 The T-014 cross-check table above is historical. Current sets after T-020/T-022:
 
 ```
-Builder model set   = { qwen/qwen3.7-flash, nvidia/nemotron-3.5-lightning }   (paid)
-Reviewer model set  = { opencode/nemotron-3-ultra-free, opencode/space-bunny-free }
-Security model set  = { opencode/big-pickle, opencode/ling-3.0-flash-fin-free }
-Assistant model set = { opencode/mimo-v2.6-flash-free, opencode/big-pickle }
-L4 verify (paid)    = { z-ai/glm-5.3-flash }
+Builder model set   = { z-ai/glm-5.3-flash, nvidia/nemotron-3.5-lightning }   (paid)
+Reviewer model set  = { opencode/space-bunny-free, thinkingmachines/inkling-small:free }
+Security model set  = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.2-contributor-free }
+Assistant model set = { opencode/nemotron-3-ultra-free, opencode/muse-spark-1.2-contributor-free }
+L4 verify (paid)    = { anthropic/claude-opus-5.5 }   (supersedes the earlier GLM L4 entry — see Team update 2026-09-25)
 
 Intersection(builder, reviewer) = ∅
 Intersection(builder, security) = ∅
@@ -136,15 +136,15 @@ Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 
 |---|---|---|---|
 | L1/L2 (reversible, non-sensitive) | reviewer: `opencode/nemotron-3-ultra-free` · security: `opencode/big-pickle` | `opencode/space-bunny-free` | Free; caught both planted bugs in the T-020 test. Reviewer free model ≠ security free model (T-023). |
 | L3 (hard to undo / sensitive) | `opencode/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention. L3 inputs must be redacted. |
-| **L4 (critical / high-accuracy verification)** | **`z-ai/glm-5.3-flash`** | `opencode/nemotron-3-ultra-free` | **Paid ($0.15/$0.50) — Owner requires the selected paid model for L4 (2026-09-25).** E.g. security boundary, tenant/bot isolation, data-handling reviews. |
-| Paid fallback (free endpoint down) | `z-ai/glm-5.3-flash` | — | $0.15/$0.50. |
+| **L4 (critical / high-accuracy verification)** | **`anthropic/claude-opus-5.5:batch`** | — (Owner will appoint if needed) | **Paid, Owner-selected 2026-09-25. Intelligence 57.6 (highest shortlisted); batch $2/$10 per 1M (real-time $4/$20).** Exceeds the normal MODEL_POLICY cap — this is an explicit Owner-approved L4 exception; it is used rarely. E.g. security boundary, tenant/bot isolation, data-handling reviews. |
+| Paid fallback (free endpoint down) | `anthropic/claude-opus-5.5:batch` | — | Batch $2/$10 per 1M. |
 
 Facts / caveats (verified 2026-09-25):
 - Zen free tier works ONLY inside opencode (`POST /zen/v1/chat/completions` → 403 `FreeTierError`). Requires the Zen provider connected in opencode auth.
 - Most Zen free models log/train on data during the free period (`muse-spark-*` = Meta trains; `nemotron-*` = trial, no confidential data). `space-bunny-free` is the only stated zero-retention one → use it for L3/sensitive.
 - Free endpoints can be unstable: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed the T-020 test.
-- Anti-redundancy: none of these equals builder Primary `qwen/qwen3.7-flash` or Backup `nvidia/nemotron-3.5-lightning`. `nemotron-3.5-lightning-free` is EXCLUDED (duplicates builder Backup). Reviewer and security free models also differ from each other.
-- **Batch rule (Owner 2026-09-25): every non-urgent PAID task must go through the Batch API** (`:batch` variant, ~40–60% cheaper); free-tier work stays synchronous. Batch works at any risk level but needs a `:batch` endpoint — only `z-ai/glm-5.3-flash:batch` ($0.06/$0.20) and `deepseek/deepseek-v4.1-flash:batch` exist today (paid); the free Zen models have none.
+- Anti-redundancy: none of these equals builder Primary `z-ai/glm-5.3-flash` or Backup `nvidia/nemotron-3.5-lightning`. `nemotron-3.5-lightning-free` is EXCLUDED (duplicates builder Backup). Reviewer and security free models also differ from each other.
+- **Batch rule (Owner 2026-09-25): every non-urgent PAID task must go through the Batch API** (`:batch` variant, ~40–60% cheaper); free-tier work stays synchronous. Batch works at any risk level but needs a `:batch` endpoint — available today include `z-ai/glm-5.3-flash:batch` ($0.06/$0.20), `deepseek/deepseek-v4.1-flash:batch`, and `anthropic/claude-opus-5.5:batch` ($2/$10); the free Zen models have none.
 - **L4 is a review tier, not a TASK_CONTROL risk level.** `TASK_CONTROL.md §3` still defines only L1–L3 and is a protected document; formalising L4 as a task risk level would need its own L3 card.
 
 ## Enforcement (added 2026-09-24 per Owner incident order)
@@ -153,6 +153,47 @@ Triggered by Incident: reviewer used `qwen3.7-flash` instead of required `z-ai/g
 
 When Project Lead invokes specialist agents:
 1. Every task card INTAKE/DELIVERY must explicitly name the model slug being used (e.g., "builder (qwen3.7-flash)")
-2. Reviewer/security reviews use the tiered model per "Review tiers" above: L1/L2 → `opencode/nemotron-3-ultra-free`; L3/sensitive → `opencode/space-bunny-free`; paid fallback `z-ai/glm-5.3-flash`. The builder model is never allowed (anti-redundancy). State the model in the START_PROMPT.
+2. Reviewer/security reviews use the tiered model per "Review tiers" above: L1/L2 → free Zen (`space-bunny-free` etc.); L3/sensitive → `opencode/space-bunny-free`; L4/critical (paid) → `anthropic/claude-opus-5.5:batch`. The builder model is never allowed (anti-redundancy). State the model in the START_PROMPT.
 3. Database-related tasks require live query evidence (`supabase_execute_sql` output or `supabase_list_tables` output) in DELIVERY reports. File existence alone is insufficient proof.
 4. Any future violation: HR will blacklist the non-compliant model from specialist roles immediately. 如果再发生类似事件 [model name] 将被禁止从 HR 调用执行工作.
+
+## Team update 2026-09-25 (Owner-approved appointments)
+
+Supersedes the earlier builder and L4 assignments in this file. Builder Primary is now GLM (Owner plan); the L4 paid reviewer slot is now filled by `anthropic/claude-opus-5.5:batch` (Owner-selected 2026-09-25).
+
+| Role | Primary | Backup | Why / evidence status |
+|---|---|---|---|
+| builder | `z-ai/glm-5.3-flash` | `nvidia/nemotron-3.5-lightning` | Primary is Owner-approved, callable per Owner-provided evidence; live catalogue confirms tools + structured_outputs, 1.31M context, coding index 71.5. Nemotron backup kept as directed; live-call readiness **UNKNOWN** (catalogue metadata only). `qwen/qwen3.7-flash` is **PERMANENTLY BANNED** per `docs/warroom/ai-scorecard.md` until Owner reverses. |
+| assistant | `opencode/nemotron-3-ultra-free` | `opencode/muse-spark-1.2-contributor-free` | Owner chose option A; completed usage-tracker task that mimo failed silently (57.9s vs 138s no-output). |
+| reviewer (L1/L2/L3) | `opencode/space-bunny-free` | `thinkingmachines/inkling-small:free` | Reviewer moved off assistant's model; space-bunny is the only stated zero-retention model. |
+| security (L1/L2/L3) | `openrouter/nex-agi/nex-n2.5-mini:free` | `opencode/muse-spark-1.2-contributor-free` | Fallback guide first pick; see free-model evidence and caveats below. |
+| ops | `opencode/muse-spark-1.2-contributor-free` | `opencode/space-bunny-free` | big-pickle False DONE recorded in scorecard. |
+| researcher | `opencode/muse-spark-1.2-contributor-free` | `opencode/space-bunny-free` | ling-3.0 could not connect in its probe; see fallback guide. |
+| reviewer L4 (paid) | `anthropic/claude-opus-5.5:batch` | — | **APPOINTED by Owner 2026-09-25** (single model, Owner chose one only). Intelligence 57.6 (highest of the shortlist); batch $2/$10 per 1M (real-time $4/$20) → batch is ~50% cheaper. Used rarely; explicit Owner-approved exception to the normal MODEL_POLICY cap. |
+
+**Live catalogue correction (2026-09-25):** `z-ai/glm-5.3-flash` is currently **$0.045 input / $0.60 output per 1M tokens**, not the roster's stale $0.15/$0.50. `get-model` confirms tools, tool_choice and structured_outputs; context 1,310,720; Artificial Analysis coding 71.5, intelligence 41.8, agentic 50.9. Its `:batch` price is $0.06/$0.20 (not the real-time price).
+
+**L4 paid reviewer — APPOINTED (Owner decision 2026-09-25): `anthropic/claude-opus-5.5:batch`.** Live catalogue (verified 2026-09-25): intelligence 57.6; tools + tool_choice + structured_outputs; context 1,000,000; batch $2/$10 per 1M (real-time $4/$20 → batch ~50% cheaper); illustrative cost for 100k input + 20k output ≈ **$0.40 per review**. This exceeds the normal MODEL_POLICY cap ($0.25/$1.00) by design — an explicit, rare-use Owner exception for critical verification only. No paid inference probe was run; price/capability are catalogue-VERIFIED, live behaviour on a first real review is UNKNOWN.
+
+Superseded shortlist (kept only for the record; Owner chose ONE model — Opus 5.5):
+
+| Candidate | Batch price (input/output per 1M) | `:batch` | Capability / reason |
+|---|---:|---|---|
+| `openai/gpt-6-luna:batch` | $0.05 / $0.25 | Listed | Live endpoint metadata supports tools, tool_choice and structured_outputs; 1.05M context, intelligence index 37.3. Lowest-cost listed batch candidate; OpenAI family/provider differs from GLM/Z.ai. |
+| `deepseek/deepseek-v4.1-flash:batch` | $0.112 / $0.336 | Listed | Live metadata supports tools, tool_choice and structured_outputs; 1.05M context, intelligence index 39.5. Stronger listed intelligence index; DeepSeek family/provider differs from GLM/Z.ai. |
+
+Illustrative cost for 100k input + 20k output tokens: GPT-6 Luna batch ≈ **$0.010**; DeepSeek V4.1 Flash batch ≈ **$0.01792**. Both fit MODEL_POLICY's new-model limits. Candidate catalogue entries are live; no paid inference probe was run, so behavior/readiness beyond metadata is **UNKNOWN**. OpenRouter model detail records the `:batch` variants/prices; recent endpoint performance shown for the realtime listings is not a guarantee of batch completion time.
+
+**Catalogue breadth evidence / limitation (2026-09-25):** the existing T-014 scan above recorded five whole-catalogue slices, ~250+ unique models, on 2026-09-24. This refresh verified live `get-model` details for GLM, GPT-6 Luna, DeepSeek V4.1 Flash, Qwen3.7 Flash and Nemotron 3.5 Lightning, plus both proposed `:batch` variants. Attempts to refresh full-catalogue list slices were rejected by the catalogue tool when category and supported-parameter filters were combined; therefore a new full-catalogue breadth refresh is **UNVERIFIED** and no claim is made that these are the only eligible candidates. No new roster appointment is made until the required breadth scan and Owner review are complete.
+
+**Anti-redundancy proof (model IDs, ignoring `:batch` routing variant):**
+
+```
+Builder        = { z-ai/glm-5.3-flash, nvidia/nemotron-3.5-lightning }
+Free reviewer  = { opencode/space-bunny-free, thinkingmachines/inkling-small:free }
+Security       = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.2-contributor-free }
+L4 (paid)      = { anthropic/claude-opus-5.5 }
+All pairwise intersections = ∅  (PASS)
+```
+
+The free model sets / retention caveats and earlier option-A evidence remain as recorded above in this section's prior roster history and `docs/product/FREE_MODEL_FALLBACK_GUIDE.md`. Changes here are documentation/recruitment records only; no agent config or routing was changed.

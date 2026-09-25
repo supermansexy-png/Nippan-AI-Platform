@@ -1,12 +1,16 @@
+import json
 from contextlib import asynccontextmanager
+from pathlib import Path
 from uuid import UUID
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from app.war_room import (
     BudgetDecision,
     BudgetSnapshot,
     CorrelationContext,
+    MessageType,
     ModelTurnResult,
     OrderedRoomEvent,
     Participant,
@@ -21,7 +25,19 @@ from app.war_room import (
     TrustedActorContext,
     UsageDelta,
     WarRoomOrchestrator,
+    serialize_ordered_event,
 )
+
+_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "schemas"
+    / "war-room-event-v1.schema.json"
+)
+
+
+def _war_room_event_validator() -> Draft202012Validator:
+    schema = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
+    return Draft202012Validator(schema)
 
 
 class Gateway:
@@ -236,3 +252,196 @@ async def test_round_completion_is_not_reported_as_turn_failure() -> None:
 
     assert event.event_type is RoomEventType.SCHEDULER_HALTED
     assert room.round_number == 2
+
+
+@pytest.mark.anyio
+async def test_submit_owner_decision_records_owner_decision_content() -> None:
+    room = session()
+    room.state = RoomState.NEEDS_OWNER_DECISION
+    sink = Sink()
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    event = await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.SUBMIT_OWNER_DECISION,
+            correlation=correlation(),
+            expected_state=RoomState.NEEDS_OWNER_DECISION,
+            content_text="Continue with remaining healthy agents.",
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner-1",
+        ),
+    )
+
+    assert event.event_type is RoomEventType.ROOM_STATE_CHANGED
+    assert event.room_state is RoomState.RUNNING
+    assert room.state is RoomState.RUNNING
+    assert room.owner_decision_pending is False
+    assert event.payload == {
+        "previous_state": "NEEDS_OWNER_DECISION",
+        "content_text": "Continue with remaining healthy agents.",
+    }
+    assert event.message_type is MessageType.OWNER_DECISION
+    assert event.participant_id == "owner-1"
+
+
+@pytest.mark.anyio
+async def test_submit_owner_decision_with_reference_records_reference_as_decision() -> None:
+    room = session()
+    room.state = RoomState.NEEDS_OWNER_DECISION
+    sink = Sink()
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    event = await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.SUBMIT_OWNER_DECISION,
+            correlation=correlation(),
+            expected_state=RoomState.NEEDS_OWNER_DECISION,
+            content_reference="decisions/owner-ref-9",
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner-1",
+        ),
+    )
+
+    assert event.payload == {
+        "previous_state": "NEEDS_OWNER_DECISION",
+        "content_text": "decisions/owner-ref-9",
+    }
+    assert event.message_type is MessageType.OWNER_DECISION
+    assert event.participant_id == "owner-1"
+
+
+@pytest.mark.anyio
+async def test_other_lifecycle_commands_do_not_emit_owner_decision_payload() -> None:
+    room = session()
+    sink = Sink()
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    event = await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.STOP,
+            correlation=correlation(),
+            expected_state=RoomState.READY,
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner-1",
+        ),
+    )
+
+    assert event.payload == {"previous_state": "READY"}
+    assert event.message_type is None
+    assert event.participant_id is None
+    assert "owner_decision" not in event.payload
+
+
+@pytest.mark.anyio
+async def test_submit_owner_decision_event_validates_frozen_schema() -> None:
+    room = session()
+    room.state = RoomState.NEEDS_OWNER_DECISION
+    sink = Sink()
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    event = await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.SUBMIT_OWNER_DECISION,
+            correlation=correlation(),
+            expected_state=RoomState.NEEDS_OWNER_DECISION,
+            content_text="Continue with remaining healthy agents.",
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner-1",
+        ),
+    )
+
+    envelope = serialize_ordered_event(event)
+    validator = _war_room_event_validator()
+    validator.validate(envelope)  # must not raise
+
+    # Negative control: the frozen schema really enforces
+    # additionalProperties:false on the payload, so the pass above is
+    # meaningful evidence that SUBMIT_OWNER_DECISION rides frozen keys only.
+    poisoned = json.loads(json.dumps(envelope))
+    poisoned["payload"]["owner_decision"] = {"decision": "x"}
+    errors = list(validator.iter_errors(poisoned))
+    assert errors, "schema must reject unknown payload keys"
+    assert any(
+        "owner_decision" in str(error)
+        or "'owner_decision' was unexpected" in str(error)
+        for error in errors
+    )
+
+
+@pytest.mark.anyio
+async def test_non_submit_lifecycle_event_validates_frozen_schema() -> None:
+    room = session()
+    sink = Sink()
+    orchestrator = WarRoomOrchestrator(
+        model_gateway=Gateway(),
+        budget_authority=Budget(),
+        command_authorizer=Authorizer(),
+        turn_execution_guard=TurnGuard(),
+        failure_history_source=FailureHistory(),
+        event_sink=sink,
+    )
+
+    event = await orchestrator.apply_command(
+        room,
+        RoomCommand(
+            command=RoomCommandType.STOP,
+            correlation=correlation(),
+            expected_state=RoomState.READY,
+        ),
+        actor=TrustedActorContext(
+            tenant_id=UUID(int=1),
+            application_id=UUID(int=2),
+            principal_type=ParticipantType.HUMAN,
+            principal_id="owner-1",
+        ),
+    )
+
+    _war_room_event_validator().validate(serialize_ordered_event(event))

@@ -3,15 +3,7 @@ description: HR / Model Recruiter คัดเลือกโมเดลแล�
 mode: subagent
 model: openrouter/openai/gpt-6-luna
 permission:
-  edit: ask
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
   task: deny
-  webfetch: allow
-  websearch: allow
 ---
 
 คุณคือ HR / Model Recruiter ของ Nippan AI Platform — ช่วง dev-time

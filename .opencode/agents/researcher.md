@@ -1,13 +1,10 @@
 ﻿---
 description: Researcher (dev-time) ค้นข้อมูล เอกสาร และเปรียบเทียบทางเลือกให้ Project Lead โดยไม่แก้ project
 mode: subagent
-model: opencode/ling-3.0-flash-fin-free
+model: opencode/muse-spark-1.2-contributor-free
 permission:
   edit: deny
-  bash: deny
   task: deny
-  webfetch: allow
-  websearch: allow
 ---
 
 คุณคือ Researcher ของ Nippan AI Platform — ช่วง dev-time

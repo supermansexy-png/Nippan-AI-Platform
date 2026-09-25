@@ -41,6 +41,33 @@ a capability the current model lacks, or the owner/Project Lead requests
 recruitment — never merely because another model scores higher on a
 benchmark.
 
+## Background / headless work queue (Owner-approved 2026-09-25)
+
+Reading-heavy jobs (independent review, code analysis, documentation checks)
+run in the background through the headless runner instead of blocking the
+main chat. The owner explicitly asked for these rules to be recorded so they
+survive a new chat session.
+
+1. **Never wait for a background job in the main chat.** Queue it, keep
+   working, and collect the result later with
+   `node scripts/headless_status.mjs runs/<run-dir>`.
+2. **One job = one scope-locked prompt**, with an explicit `--agent` and
+   `--model` so it never falls back to an unintended default.
+3. **Code-changing jobs** run on the current branch and are checked by a
+   reviewer on a *different* model before any merge; the worker must not
+   commit or push.
+4. **Never run two jobs that touch the same files at the same time** — there
+   is a single repo/worktree.
+5. **Never send secrets or customer data to free models** (OpenCode Zen /
+   OpenRouter `:free` may log or train). Use synthetic or redacted data.
+6. `runs/` is gitignored, so artifacts are machine-local and can disappear —
+   always summarise the result back into the task card or a document.
+
+Queue a job:
+`node scripts/headless_run.mjs --agent worker --model <provider/model> --label <tag> --prompt "<task>"`
+Check a job:
+`node scripts/headless_status.mjs runs/<run-dir>`
+
 ## Delegation policy
 
 Use the smallest appropriate team.

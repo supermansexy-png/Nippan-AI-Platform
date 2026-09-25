@@ -22,7 +22,7 @@ Primary: `[PRIMARY_MODEL_SLUG]`   Backup: `[BACKUP_MODEL_SLUG]`
 Retry Primary at most once, then switch to Backup; if both fail, STOP and
 report. Name the model actually used in DELIVERY.
 Model policy (MODEL_ROSTER.md, T-020/T-022/T-023):
-- builder = paid `qwen/qwen3.7-flash` (the main execution role stays paid).
+- builder = paid `z-ai/glm-5.3-flash` ONLY (Owner-locked 2026-09-25; `qwen/qwen3.7-flash` permanently banned).
 - Free helper roles: assistant / ops / researcher = `opencode/...` free Zen models.
 - Reviewer/security by risk: L1/L2 reviewer `opencode/nemotron-3-ultra-free` · security `opencode/big-pickle`;
   L3/sensitive → `opencode/space-bunny-free`; L4/critical → `z-ai/glm-5.3-flash` (paid);

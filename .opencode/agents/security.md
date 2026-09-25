@@ -1,17 +1,10 @@
 ﻿---
 description: Security (dev-time) ตรวจ authentication authorization secrets tenant/bot isolation attack surface และ security boundary แบบ read-only
 mode: subagent
-model: opencode/big-pickle
+model: openrouter/nex-agi/nex-n2.5-mini:free
 permission:
   edit: deny
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
   task: deny
-  webfetch: allow
-  websearch: allow
 ---
 
 คุณคือ Security Specialist ของ Nippan AI Platform — ช่วง dev-time (ตรวจ
@@ -57,7 +50,7 @@ INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; f
 
 ## Model & cost policy (T-020–T-023)
 
-- L1/L2 → `opencode/big-pickle` (ต้องต่างจาก reviewer); L3/อ่อนไหว → `opencode/space-bunny-free` (zero-retention); **L4/ความแม่นสูง → `z-ai/glm-5.3-flash` (paid)**; fallback → `z-ai/glm-5.3-flash`
-- ห้ามใช้โมเดล builder (`qwen3.7-flash`) หรือซ้ำ reviewer (anti-redundancy)
+- security L1–L3 → `openrouter/nex-agi/nex-n2.5-mini:free` (ต้องต่างจาก reviewer); **L4/ความแม่นสูง → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
+- ห้ามใช้โมเดล builder (`z-ai/glm-5.3-flash`) หรือซ้ำ reviewer (anti-redundancy)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว

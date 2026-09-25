@@ -234,3 +234,113 @@ Per Owner directive:如果再发生此类事件，HR将不再被允许调用此�
 **Task**: T-019.
 
 ---
+
+## DECISION — 2026-09-25 — Audit gates cancelled outright; one big audit at completion (per Owner)
+
+**Owner order**: "เงื่อนไขออดิดตอนนี้ยกเลิกไปเลย พี่จะออดิดใหญ่ครั้งเดียวตอนงานเสร็จ"
+
+**Decision**: Remove the remaining Independent-Audit progress-gate constraint entirely.
+- The 25/50/75/90/100 progress gates no longer block or cap acceptance; no per-milestone
+  paid audit is required. This supersedes the earlier 2026-09-24 suspension, which had kept
+  the gates as a standing constraint.
+- The Owner will run a single large audit once the work is complete.
+- Normal code review, tests, CI, security review and evidence verification CONTINUE
+  unchanged (these are not the audit gate).
+
+**Effect**: T-008 and T-009 are no longer capped at one accepted deliverable — both D-02 and
+D-03 may be accepted without triggering an audit gate. The only open question for them is
+which revision to record acceptance evidence against.
+
+**Reason**: Owner wants the War Room track finished without per-milestone audit overhead.
+
+**Task**: T-008, T-009 (unblock). Historical audit records under `docs/audits/` preserved.
+
+---
+
+## DECISION — 2026-09-25 — qwen/qwen3.7-flash permanently banned; builder vacancy
+
+**Owner order**: qwen3.7-flash has performed poorly as Project Lead and must be banned from every department until the Owner reverses the order.
+**Record**: T-008/T-009 claimed DONE with unverified criteria; reviewer `opencode/space-bunny-free` + security were NOT acceptance-ready. No INTAKE was written, DELIVERY was appended outside the task cards, and it cited nonexistent `orchestrator.py` (actual file: `orchestration.py`). Prior false-DONE Project Lead record remains on the scorecard. See `ai-scorecard.md`.
+**Effect**: `qwen/qwen3.7-flash` is permanently ineligible for all roles/departments; the builder Primary slot is VACANT. No routing or roster change is made by this record.
+**Interim check (2026-09-25)**: roster Backup `nvidia/nemotron-3.5-lightning` has live catalog endpoints, $0.08/$0.20 per 1M tokens (model listing), 262K context, tools + structured outputs + tool_choice; CoreWeave reported 100% uptime/30m, p50 232ms. Live probe did not complete: two send attempts returned router HTTP 404 “No allowed providers are specified” before model execution. Verdict: metadata-ready, actual call readiness UNKNOWN; do not claim probe passed.
+**Provisional replacement proposal**: Primary candidate `z-ai/glm-5.3-flash` ($0.045/$0.60 per 1M; real-time endpoints, tools + structured outputs + tool_choice; coding index 71.5; outside reviewer/security model families). Backup: `nvidia/nemotron-3.5-lightning` (different provider/model family; see probe caveat). Both fit the $0.25/$1.00 threshold. No appointment/routing change; Project Lead approval required.
+**Catalogue breadth**: OpenRouter whole-catalogue multi-axis scan remains UNVERIFIED; list-models attempts failed with HTTP 400 (`category` conflicts with `supported_parameters`). Candidate proposal is provisional pending successful breadth scan. Evidence source/time: OpenRouter get-model + list-model-endpoints, 2026-09-25.
+
+## DECISION — 2026-09-25 — L4 paid reviewer appointed: anthropic/claude-opus-5.5:batch (per Owner)
+
+**Owner order**: "เลือก 5.5 ตัวเดียว" (after reviewing a 6-model shortlist scored from live OpenRouter data).
+
+**Decision**: L4 paid reviewer = `anthropic/claude-opus-5.5:batch` (single model, no backup appointed).
+- Live catalogue VERIFIED 2026-09-25: intelligence index 57.6 (highest of the shortlist), tools + tool_choice + structured_outputs, context 1,000,000. Batch $2/$10 per 1M (real-time $4/$20) → batch ≈ 50% cheaper; illustrative 100k in + 20k out ≈ $0.40 per review.
+- Shortlist considered and rejected: Claude Fable 5.1, GPT-6 Astra, Claude Opus 5, Claude Fable 5, GPT-6 Sol (all distinct models; the earlier confusion was that `:batch` variants share the model's display name and that adjacent versions are named similarly).
+- **Budget exception**: exceeds the normal MODEL_POLICY cap ($0.25/$1.00). Explicitly Owner-approved for rare critical verification only.
+- **Builder** Primary is now `z-ai/glm-5.3-flash` (Owner plan); `qwen/qwen3.7-flash` banned (see separate entry). Config changed in `.opencode/agents/builder.md` + `opencode.json` — requires an app restart to take effect.
+
+**Applied**: `docs/product/MODEL_ROSTER.md` (L4 tier row + Team update + anti-redundancy proof). No paid inference probe was run; live-review behaviour UNKNOWN until first use.
+
+**Open follow-up**: wiring L4 into an agent + Batch path is not yet built (L4 is invoked rarely; a small card may be needed).
+
+**Task**: T-008 / T-009 (team change) + roster maintenance.
+
+---
+
+## DECISION — 2026-09-25 — Background/headless work-queue rules recorded (per Owner)
+
+**Owner order**: asked that the working rules be written down so they are not lost when the chat changes.
+
+**Decision**: the headless/background work flow is now a binding dev-time rule.
+- (1) Never wait for a background job in the main chat — queue it and keep working.
+- (2) One job = one scope-locked prompt, with an explicit `--agent` and `--model` (no silent fallback).
+- (3) Code-changing jobs run on the current branch, checked by a reviewer on a *different* model before merge; the worker must not commit or push.
+- (4) Never run two jobs that touch the same files at the same time (single repo/worktree).
+- (5) Never send secrets/customer data to free models (Zen / OpenRouter `:free` may log or train).
+- (6) `runs/` is gitignored → summarise every result back into the card or a doc.
+
+**Applied**: `AGENTS.md` (new section "Background work (headless queue)"), `docs/warroom/DEV_WORKING_GUIDE.md` (new section "Background / headless work queue"), and `SESSION_HANDOFF.md` (Owner rule 9).
+
+**Task**: dev-time governance (no card; Owner-ordered documentation record).
+
+---
+
+## DECISION — 2026-09-25 — Temporary approval delegation for the current period (per Owner)
+
+**Scope / timebox**: applies ONLY during the current period. When the Owner says to revert ("กลับไปกติกาเดิม"), the rules revert to those standing on 2026-09-25.
+
+**Owner rulings**
+- (1) Models with an already-assigned roster role, working per protocol, may be used normally — no per-call re-approval. Conditions: the model does ONLY its assigned work, and every action keeps auditable evidence.
+- (2) Over the MODEL_POLICY price cap: NEVER approved → find a fix and use a free model instead.
+- (3) Independent paid Auditor: wait for the Owner's approval.
+- (4) Pricing / customer cost policy: do NOT change unilaterally.
+- (ค) Protected docs: the Project Lead may approve changes on the Owner's behalf this period.
+- (ง) Production/security items: apply only once the system is live — not relevant this period.
+- (จ) Working method: DO NOT change; follow the mandatory protocol rules as written.
+
+**Delegation**: for this period the Project Lead reviews and approves tasks on the Owner's behalf — approve a task, or if it fails, assign a fixer until it passes. Every action must remain traceable (task card + evidence + this log).
+
+**Final ruling (2026-09-25)**: items **8 (merge/deploy to preview)** and **9 (architecture)** stay with the Owner. **All other items** (1, 2, 4, 5, 6, 7 and ค) the Project Lead may approve/act on its own, and may fix task problems as appropriate — but must never violate or exceed the task scope. (ค) is treated as covering the dev-process docs; `PRICING_V1.md` / `PDPA_COMPLIANCE.md` stay with the Owner per rulings (4)/(ง). Every action stays traceable (card + evidence + this log + `docs/warroom/DEV_ERROR_LOG.md`).
+
+**Task**: dev-time governance (Owner-ordered, temporary).
+
+---
+
+## DECISION — 2026-09-25 — Builder locked to `z-ai/glm-5.3-flash`; "Team update 2026-09-25" is the authoritative roster
+
+**Owner order (2026-09-25)**: the builder role uses `z-ai/glm-5.3-flash` ONLY — it is not to be swapped to any other model. `qwen/qwen3.7-flash` remains permanently banned (all departments) until the Owner reverses it.
+
+**Owner order (2026-09-25)**: the "Team update 2026-09-25" section of `docs/product/MODEL_ROSTER.md` is the authoritative team roster: builder `z-ai/glm-5.3-flash`; assistant `opencode/nemotron-3-ultra-free`; reviewer L1–L3 `opencode/space-bunny-free`; security L1–L3 `openrouter/nex-agi/nex-n2.5-mini:free`; ops/researcher `opencode/muse-spark-1.2-contributor-free`; L4 paid reviewer `anthropic/claude-opus-5.5:batch`.
+
+**Consequence (anti-redundancy)**: now that `z-ai/glm-5.3-flash` is the builder model, reviewer/security must NOT use it at any tier. Stale references (agent prompts, `START_PROMPT.md`, `FREE_MODEL_FALLBACK_GUIDE.md`) that still list glm as a review/L4 fallback or qwen as the builder are corrected to match this entry.
+
+**Task**: roster governance + agent-config alignment.
+
+---
+
+## DECISION — 2026-09-25 — Owner delegates autonomous decision-making to the Project Lead until the War Room is usable
+
+**Owner order (2026-09-25)**: the Project Lead decides on its own for this period; the primary goal is to make the **War Room actually usable** (not merely to close the T-008/T-009 cards). Work continues without asking the Owner until the War Room works.
+
+**Scope**: PL may dispatch roster models (per their assigned roles, with evidence) and approve/adjust dev-process docs this period. Items 8 (merge/deploy to preview) and 9 (architecture) still require the Owner. Independent paid Auditor still requires the Owner.
+
+**T-009 decision (PL, per delegation)**: T-009 was blocked only by the absence of a live PostgreSQL. Decision: stand up a local embedded PostgreSQL (pgserver), apply the repo migrations, and run the 6 normally-skipped PostgreSQL integration tests to obtain live-DB evidence instead of accepting the card on static proof alone.
+
+**Task**: War Room completion (T-008 owner-decision persistence + frozen-schema conformance; T-009 live-DB proof).

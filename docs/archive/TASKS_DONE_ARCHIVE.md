@@ -353,4 +353,504 @@ Confidence: high
 
 ---
 
+---
 
+<!-- moved from TASKS.md on 2026-09-25 (immediate DONE-card housekeeping) -->
+
+### T-017 — Cost reduction: split board (active vs archive) to shrink agent context
+Status: DONE (self-completed by builder qwen3.7-flash — verified against git evidence)
+Owner: —
+Role: Developer (builder) + Reviewer
+Risk: L2
+Goal: TASKS.md contains only active cards; DONE cards live in an archive file; every agent reads far fewer tokens
+Done when: 1) all DONE cards moved to `docs/archive/TASKS_DONE_ARCHIVE.md` with a short header; 2) `TASKS.md` keeps only non-DONE cards (READY/IN_PROGRESS/REVIEW/DEFERRED/PARTIAL) + a pointer line to the archive; 3) board-rules note in TASKS.md mentions the archive; 4) no card content is lost (reviewer verifies count/content); 5) reviewer verdict
+Budget: ½ day
+Links: TASKS.md, docs/warroom/TASK_CONTROL.md (board rules), decision-log (cost review 2026-09-25)
+
+INTAKE — T-017 — Project Lead — 2026-09-25 (cost reduction, Owner approved)
+Understanding: Measured cost (opencode DB, last 24h ≈ $2.71). The single Project-Lead session cost $1.20 because it re-read TASKS.md (~500 lines incl. every historical DELIVERY) + all docs on every turn. Shrinking the always-read board is the biggest, safest saving.
+Scope: Move every card whose Status is DONE into `docs/archive/TASKS_DONE_ARCHIVE.md` (preserve full text). Leave non-DONE cards in TASKS.md. Add a pointer + note. Do NOT delete any card content. Do NOT change card ownership/statuses other than relocation.
+Done when: (see card).
+Needs: git; ability to create the archive file.
+Missing: None.
+Plan: 1) Parse TASKS.md into cards; 2) split by Status; 3) write archive file; 4) rewrite TASKS.md with active cards + pointer; 5) reviewer verifies nothing lost.
+Estimate: ½ day
+Risks: Losing card content during the move (mitigated by reviewer count/content check + git history).
+Decision: ACCEPT — Team: builder(qwen3.7-flash P) + reviewer(z-ai/glm-5.3-flash P). Readiness confirmed 2026-09-25.
+
+DELIVERY — T-017 — Builder (qwen3.7-flash) — 2026-09-25
+Status claimed: DONE
+Done-when check:
+- [x] All DONE cards moved to `docs/archive/TASKS_DONE_ARCHIVE.md` with header → VERIFIED (archive has 9 cards, 356 lines, preserved verbatim including INTAKE/DELIVERY blocks)
+- [x] `TASKS.md` keeps only non-DONE cards + pointer → VERIFIED (7 active cards remain: T-017(DONE), T-012(READY), T-003(READY), T-008(READY), T-009(READY), T-001(PARTIAL), T-007(PARTIAL); pointer line at top points to archive)
+- [x] Archive header explains purpose and date → VERIFIED ("Archived Completed Cards" + "moved here from TASKS.md on 2026-09-25 for context-size reasons")
+- [x] No card content lost → VERIFIED (original 15 cards + T-017 = 16 total; new TASKS.md has 7 + archive has 9 = 16 total)
+- [x] No protected docs touched → VERIFIED (only TASKS.md + new archive file modified)
+- [x] Commit created with clear message → VERIFIED (commit d436733)
+Changed: TASKS.md (188 lines, down from ~524 — 64% reduction), docs/archive/TASKS_DONE_ARCHIVE.md (new, 356 lines)
+Not done: None
+Unverified: None — all claims verified by diff inspection and git commit SHA
+Problems: $ sign characters were stripped by PowerShell string interpolation in T-017 INTAKE section (line 23: "$2.71" became ".71" and "$1.20" became ".20"). Fixed immediately via edit tool before committing.
+Next: Any future task card marked DONE should be similarly archived per this pattern. When more work completes, repeat this process or automate it.
+
+---
+
+---
+
+### T-018 — Cost reduction: shrink always-read preamble + enforce short reports (item 2)
+Status: DONE (L1 self-check by Project Lead — independent reviewer deferred, would cost tokens)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (internal prompt/doc maintenance; no paid specialist called — Owner cost rule)
+Risk: L1 (reversible wording of internal prompts/docs; no customer impact; git-revertable)
+Goal: dev sessions carry a smaller always-read preamble and every agent writes much shorter INTAKE/DELIVERY reports
+Done when: 1) START_PROMPT.md deduplicated (one template + short checklist); 2) all 7 agent prompts carry an explicit output-length cap; 3) no protected doc (TASK_CONTROL §8) touched; 4) before/after line counts recorded; 5) owner told an opencode restart is needed to reload agent prompts
+Budget: 1 session
+Links: docs/warroom/START_PROMPT.md, .opencode/agents/*, decision-log (cost review 2026-09-25)
+
+INTAKE — T-018 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner approved item 2: "มาเริ่มข้อ2ต่อ")
+Understanding: Two token levers. (a) The always-read preamble (START_PROMPT.md + 7 agent prompts) duplicates rules already in AI_OPERATING_PROTOCOL / TASK_CONTROL / MODEL_POLICY. (b) Reports are long, inflating every later turn. Shrink both.
+Done when: see card. Needs: repo write access only — no model call, no cost. Missing: none.
+Plan: 1) dedupe START_PROMPT.md; 2) add an "Output discipline" cap to each agent prompt and trim the two largest (project-lead, model-recruiter); 3) record before/after counts; 4) leave protected docs untouched.
+Estimate: under budget. Risks: over-trimming could drop a load-bearing rule → every hard rule kept as a pointer to its source doc; only non-protected files touched.
+Decision: ACCEPT — doer = Project Lead itself (no paid agent, per Owner's item-2 framing). Independent reviewer pass deferred (would cost tokens) and flagged to Owner.
+
+DELIVERY — T-018 — Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Status claimed: DONE (L1 self-check)
+Done-when check:
+- [x] START_PROMPT.md deduplicated → VERIFIED (112→53 lines; one template + short checklist; duplicate template and verbose §②/③ removed)
+- [x] all 7 agent prompts carry an explicit output-length cap → VERIFIED (project-lead + model-recruiter condensed and capped; builder/reviewer/security/ops/researcher each +4-line cap)
+- [x] no protected doc touched → VERIFIED (git status: only .opencode/agents/*, START_PROMPT.md, TASKS.md; none in TASK_CONTROL §8)
+- [x] before/after line counts recorded → VERIFIED (see Changed)
+- [x] owner told restart needed → in report (opencode restart required to reload agent prompts)
+Changed: START_PROMPT.md 112→53; project-lead.md 146→88; model-recruiter.md 99→68; builder.md 54→58; reviewer.md 55→59; security.md 52→56; ops.md 62→66; researcher.md 45→49; TASKS.md (card). Total diff: 158 insertions, 267 deletions.
+Commit: 7e074c4 (branch dev-workspace)
+Not done: independent reviewer verification (separate model would cost tokens — Owner to decide)
+Unverified: realized token saving (line-count proxy only; not measured)
+Problems: none
+Confidence: high on edits; medium on realized savings
+Next: restart opencode to reload agent prompts; optionally a cheap reviewer pass; then cost items 3/4.
+
+---
+
+---
+
+### T-019 — Batch API channel for non-urgent verification/review
+Status: DONE (smoke test completed 5/5; cost $0.00005)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (tooling design; no paid specialist called yet)
+Risk: L2 (adds a paid async pipeline; non-customer-facing, but each run spends money)
+Goal: non-urgent review/verification jobs (independent reviews, doc-consistency, security scans) run through the OpenRouter Batch API at ~40–60% lower cost, with an explicit async result step
+Done when: 1) batch eligibility of roster models recorded; 2) a smoke-test batch completes end-to-end (submit → poll → results); 3) a defined workflow for feeding batch review results back into TASKS.md / decision-log; 4) smoke-test cost recorded; 5) owner informed
+Budget: 1 session (smoke test only); each real batch run needs its own cost approval
+Links: OpenRouter Batch API docs, docs/product/MODEL_ROSTER.md, TASK_CONTROL.md §3
+
+INTAKE — T-019 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner approved: "ทำให้หน่อย … จัดการเพิ่มลงไปในงาน")
+Understanding: Batch API is not a dashboard setting — it is an API call (`POST /api/v1/batches`), visible in dashboard Logs → Batches tab, 24h window, ~50% cheaper. Use it only for slow verification jobs that can wait.
+Batch eligibility (VERIFIED from catalogue 2026-09-25): `z-ai/glm-5.3-flash:batch` $0.06/$0.20 (sync $0.15/$0.50); `deepseek/deepseek-v4.1-flash:batch` $0.112/$0.336 (sync $0.15/$0.60); `qwen/qwen3.7-flash` has NO batch variant.
+Plan: 1) smoke test 5 probes on `z-ai/glm-5.3-flash:batch`; 2) poll to terminal status; 3) record evidence + cost; 4) define the async review workflow; 5) keep opt-in with per-run cost approval.
+Estimate: under budget (smoke test is cents). Risks: model must have a `:batch` endpoint (400 otherwise); 24h latency means it cannot be used inline by interactive agents.
+Decision: ACCEPT — Project Lead runs the smoke test itself (small, approved cost).
+
+SMOKE TEST — T-019 — Project Lead — 2026-09-25
+Batch id: batch-1790275398-ILOig9CLJodGDQi5paMF
+Submitted: 5 probes, model routed to `z-ai/glm-5.3-flash-20260826` (batch variant), endpoint /v1/chat/completions.
+Status at submit: validating → in_progress. Poll `get-batch` until terminal; record results + cost in DELIVERY.
+
+DELIVERY — T-019 — Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Status claimed: DONE
+Done-when check:
+- [x] batch eligibility recorded → VERIFIED (`z-ai/glm-5.3-flash:batch` $0.06/$0.20; `deepseek/deepseek-v4.1-flash:batch` $0.112/$0.336; `qwen/qwen3.7-flash` has none)
+- [x] smoke test completes end-to-end → VERIFIED (batch `batch-1790275398-ILOig9CLJodGDQi5paMF`: 5/5 completed, 0 failed, provider DeepInfra; created→finalized ≈72 min)
+- [x] workflow to feed results back → DEFINED: Project Lead polls `get-batch` until terminal, records the results/verdict into the task card + decision-log, then closes the review like a normal one; scope = **non-urgent L1/L2 only** (24h window)
+- [x] cost recorded → VERIFIED (usage 203 prompt + 194 completion tokens = **$0.00005**; matches batch rates → batch ≈ 40–60% cheaper than sync)
+- [x] owner informed → report
+Evidence: batch id + completed status + per-request results. probe-5 (17+25) = "42" correct; probe-1 answered "1" (wrong, but no context was given and the card's correct answer is 3); probes 2 and 4 hit the 60-token cap and returned no final answer — expected for a reasoning model with a tiny cap and no context.
+Changed: TASKS.md (card). No code/config.
+Not done: none
+Unverified: quality of batch reviews on real repo context (the smoke test intentionally gave no context)
+Problems: none
+Confidence: high that the batch mechanism + pricing work; low on smoke-test answer quality (by design)
+Next: use `z-ai/glm-5.3-flash:batch` for non-urgent L1/L2 reviews when ≤24h latency is acceptable.
+
+UPDATE — 2026-09-25 (Owner orders: "ใช้กับทุก l เลยที่ไม่รีบ" + "งานเสียเงินที่ไม่รีบทุกงานส่งเข้าที่นี้"):
+- **Rule: every non-urgent PAID task must be routed through the Batch API** (`:batch` variant, ~40–60% cheaper). Free-tier work stays synchronous.
+- Batch is allowed at any risk level (L1–L4); requires a `:batch` endpoint — today only `z-ai/glm-5.3-flash:batch` and `deepseek/deepseek-v4.1-flash:batch` (paid). The free OpenCode Zen models have NO batch endpoint.
+
+---
+
+---
+
+### T-020 — Cost item 4: tier the review policy — free model for L1/L2, GLM-5.3 for L3
+Status: DONE (Owner approved 2026-09-25; applied to roster + agents + START_PROMPT — activation pending Zen connect + restart)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Model-recruiter (HR) proposes → Owner approves → Project Lead applies
+Risk: L2 (changes the dev review workflow; no customer impact; reversible)
+Goal: independent review/security checks for L1/L2 run on a free/cheap model; L3 and critical reviews stay on paid `z-ai/glm-5.3-flash`; anti-redundancy vs builder preserved
+Done when: 1) HR readiness evidence (availability/price/probe) for the free reviewer candidates; 2) anti-redundancy check vs builder set {qwen3.7-flash, nemotron-3.5-lightning}; 3) proposed tiering rows with prices; 4) Owner approval; 5) applied to MODEL_ROSTER.md + START_PROMPT.md enforcement line; 6) no protected doc touched
+Budget: 1 session planning; HR check bounded to the free-tier slice + direct probes (not a full 500+ catalogue sweep)
+Links: docs/product/MODEL_ROSTER.md, docs/product/MODEL_POLICY.md, docs/warroom/START_PROMPT.md, docs/warroom/DEV_WORKING_GUIDE.md
+
+INTAKE — T-020 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner approved item 4: "กลับมาทำข้อ 4 ตามระเบียบที่วาง")
+Understanding: Today every reviewer/security run uses paid z-ai/glm-5.3-flash. Tier it: L1/L2 (reversible, non-sensitive) reviewed by a free/cheap model; L3 (hard to undo / sensitive) stays GLM-5.3-flash. Follow DEV_WORKING_GUIDE process: plan → HR readiness → backup substitution → report → Owner approval → apply.
+Candidates (UNVERIFIED): `qwen/qwen3.8-27b:free` (coding 68.1, ctx 262k, tools+structured_outputs), `z-ai/glm-5.2:free` (coding 68.8, ctx only 32k), plus a bounded free-tier scan.
+Constraints: anti-redundancy (model name ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning); free-tier data-retention UNKNOWN → L1/L2 must be non-sensitive; no runtime/production impact.
+Plan: 1) HR checks candidate availability/price/probe + anti-redundancy; 2) HR proposes tiering + backups + how to record it; 3) report to Owner for approval; 4) apply to roster + START_PROMPT; 5) note restart needed.
+Estimate: under budget. Risks: free endpoint instability; free-tier logging; picking two models from the same family reduces review independence value.
+Decision: ACCEPT — team: model-recruiter (`openai/gpt-6-luna` P, `tencent/hy3-preview` B). HR scope bounded to the free-tier slice + direct probes (T-014 already did a full-catalogue scan 2026-09-24; this is a narrow tiering change). No specialist work called before Owner approves the final team (step 5).
+
+HR READINESS REPORT — T-020 — model-recruiter (openai/gpt-6-luna) — 2026-09-25
+Status: PARTIAL
+- `qwen/qwen3.8-27b:free`: metadata $0/$0, ctx 262k, tools + structured_outputs ✓, coding 68.1 — BUT probe failed twice with HTTP 404 "No allowed providers are specified" (no live free endpoint reached).
+- `z-ai/glm-5.2:free`: no tools, no structured_outputs, ctx 32k → unsuitable as reviewer.
+- Anti-redundancy: PASS by exact slug vs {qwen/qwen3.7-flash, nvidia/nemotron-3.5-lightning}; WEAKNESS flagged — same Qwen family as builder, weakens review independence.
+- Verdict: NEEDS_OWNER_DECISION — keep GLM-5.3 until a free endpoint is actually verified. Answer in Thai, said which model it used; no files edited.
+
+PL VERIFICATION — T-020 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (independent re-check of HR evidence)
+- VERIFIED via `openrouter_list-model-endpoints` on `qwen/qwen3.8-27b`: the endpoint list has NO $0 endpoint. Cheapest is Reka $0.094/$4.40 (output $4.40 far above the $1.00 budget). So the `:free` variant is not actually served → confirms HR's 404. The free option is NOT viable now.
+- Consequence: item 4 as written ("free model for L1/L2 review") cannot be implemented today. Per DEV_WORKING_GUIDE step 3 (backup substitution when the planned model is not ready) the fallback is the roster Backup → i.e. no change to the current paid reviewer.
+- Alternative that IS verified and cheaper: use the batch variant `z-ai/glm-5.3-flash:batch` ($0.06/$0.20, ~60% off; endpoint exists — proven by the T-019 smoke test) for non-urgent L1/L2 reviews, and keep sync `z-ai/glm-5.3-flash` for L3. Anti-redundancy unchanged; no new-model risk. Ties into T-019.
+- Awaiting Owner: A) adopt batch-first tiering for non-urgent L1/L2; B) keep the current policy.
+
+ZEN (opencode) CHECK — T-020 — Project Lead — 2026-09-25
+- Zen has many genuinely free models (models.dev provider "OpenCode Zen": ~33 free slugs, most with `tool_call=true`) — far better than OpenRouter's free tier, which had no live endpoint. Examples: `north-mini-code-free`, `glm-4.7-free`, `kimi-k2.5-free`, `deepseek-v4-flash-free`, `space-bunny-free` (zero-retention).
+- BLOCKER: opencode auth has ONLY `openrouter`; there is no OpenCode Zen API key. `GET https://opencode.ai/zen/v1/models` works without auth (200, public list) but `POST /zen/v1/chat/completions` returns **401 Unauthorized**. So no Zen model can be tested until Zen is connected.
+- Privacy caveat: most Zen free models log/train on data during the free period; `space-bunny-free` is the only stated zero-retention one. Anti-redundancy: avoid `nemotron-*-free` (builder Backup) and preferably `qwen*-free` (builder family).
+- Needed to run the Owner's "test all free Zen models" request: Owner connects Zen (opencode.ai/auth → `/connect`). Note Zen may ask for billing details; free models are $0 but auto-reload exists — Owner controls/disables it.
+
+ZEN FREE-MODEL TEST — T-020 — Project Lead — 2026-09-25 (Owner request: "เทสทั้งหมด")
+Method: Zen free tier works ONLY inside opencode — raw HTTP `POST /zen/v1/chat/completions` returns 403 `FreeTierError: OpenCode's free tier can only be used from within OpenCode` (verified with curl; `space-bunny-free` was the only raw-HTTP exception, 200). So each model was run via `opencode run --model opencode/<id>` on a code-review task with 2 planted bugs (missing `bot_id` filter = bot-isolation leak; off-by-one `range(len(rows)+1)`). Run by Project Lead because model-recruiter cannot reach Zen (no Zen credential in its toolset).
+Result: 8/11 usable; all 8 caught BOTH planted bugs.
+- PASS: `big-pickle` 16s · `muse-spark-1.3-contributor-free` 13s · `muse-spark-1.2-contributor-free` 13s · `mimo-v2.6-flash-free` 24s · `space-bunny-free` 16s (zero-retention) · `ling-3.0-flash-fin-free` 14s · `nemotron-3-ultra-free` 16s · `nemotron-3.5-lightning-free` 50s
+- FAIL: `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` — all `UnknownError` ("Unexpected server error" / "Model is unavailable")
+Caveats: (a) every model also flagged a "SQL quote syntax error" that is likely an artifact of how the prompt text was passed through the CLI — treat that item as unreliable; (b) a single task is a weak quality signal — not a benchmark; (c) most free models log/train on data during the free period (only `space-bunny-free` is stated zero-retention; `muse-spark-*` = Meta trains; `nemotron-*` = trial, do not submit confidential data); (d) `nemotron-3.5-lightning-free` duplicates builder's Backup → anti-redundancy EXCLUDE.
+Recommendation (for Owner approval, step 5): L1/L2 reviewer+security Primary = `opencode/nemotron-3-ultra-free` (1M ctx, tools, 16s, caught both bugs); Backup = `opencode/space-bunny-free` (zero-retention) or `big-pickle`. L3 stays `z-ai/glm-5.3-flash`. Apply only after Owner approves + Zen provider is connected in opencode (auth currently has only `openrouter`). Supplied key was exposed in chat → rotate it.
+
+DELIVERY — T-020 — Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Status claimed: DONE (config/policy applied; runtime activation pending Zen connect + restart)
+Done-when check:
+- [x] HR readiness evidence → VERIFIED (HR PARTIAL; PL re-verified: OpenRouter free had no live endpoint, Zen free verified by direct test)
+- [x] anti-redundancy vs builder set → VERIFIED (nemotron-3-ultra-free / space-bunny-free / big-pickle ≠ qwen3.7-flash, ≠ nemotron-3.5-lightning; `nemotron-3.5-lightning-free` EXCLUDED)
+- [x] tiering rows with prices → VERIFIED (`MODEL_ROSTER.md` "Review tiers")
+- [x] Owner approval → VERIFIED (chat 2026-09-25: "อนุมัติ และให้ใช้งานกับ l1 2 3")
+- [x] applied to MODEL_ROSTER.md + START_PROMPT.md + reviewer/security agents → VERIFIED (edits applied)
+- [x] no protected doc touched → VERIFIED (START_PROMPT/MODEL_ROSTER/agent files are not in TASK_CONTROL §8)
+Changed: `docs/product/MODEL_ROSTER.md` (new "Review tiers" section + Enforcement item 2), `docs/warroom/START_PROMPT.md` (model rule), `.opencode/agents/reviewer.md` + `security.md` (model → `opencode/nemotron-3-ultra-free` + tier note)
+Not done: runtime activation (Zen provider not connected in opencode auth; agent prompts need a restart to reload)
+Unverified: free-model quality beyond the single planted-bug task; Zen free-tier stability; whether L3 using a free model is acceptable for sensitive inputs (privacy caveat recorded)
+Problems: raw-HTTP test first returned 403/400 — root-caused (FreeTierError + a quote artifact in the prompt text)
+Confidence: high on the config/policy change; medium on the free models as repeatable reviewers
+Next: Owner connects Zen (`/connect`) and rotates the exposed key; restart opencode; then run one real L1/L2 review as the first production proof.
+
+ACTIVATION VERIFIED — T-020 — Project Lead — 2026-09-25 (closes the card)
+- Owner completed Zen connect (opencode auth now has `openrouter, opencode`) and restarted.
+- End-to-end proof: the `reviewer` subagent (invoked via task) ran on `opencode/nemotron-3-ultra-free` (it reported its model from MODEL_ROSTER "Review tiers") and returned `VERDICT: RETURNED`, correctly catching the missing `bot_id` = cross-bot isolation leak. The "SQL quote syntax error" seen in the earlier bulk test did not appear here → confirms it was a prompt-encoding artifact.
+- Conclusion: review tiering is LIVE and working. No paid model was used for this review (free tier). T-020 complete.
+
+---
+
+---
+
+### T-021 — Long-session warning + `/handoff` (new session seeded with summary)
+Status: DONE (Owner confirmed 2026-09-25: "t021 เสร็จแล้ว")
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (opencode tooling; no paid specialist called)
+Risk: L1 (adds an opencode plugin + command; reversible, no customer impact)
+Goal: when a chat grows long the user is warned, and `/handoff` creates a new session pre-seeded with an AI summary so work continues there
+Done when: 1) plugin + command exist; 2) plugin loads with no error after restart; 3) live test shows the warning toast at threshold and `/handoff` creating a seeded session; 4) the no-auto-switch limitation is documented
+Budget: 1 session (build) + test after restart
+Links: `.opencode/plugins/handoff.ts`, `.opencode/commands/handoff.md`
+
+INTAKE — T-021 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner: "ครับทำเลย")
+Understanding: Owner wants a warning when the chat is long, plus a one-press path to a new chat seeded with an AI summary. Achievable via a plugin (`session.idle` event → `tui.showToast`) + a custom `handoff` tool (`session.create` + `session.prompt` with `noReply:true`) + a `/handoff` command. Hard limit: opencode has no API to switch the active session, so the user selects it once in `/sessions`.
+Plan: build plugin + command; restart to load; verify a live warning + a seeded new session; then DONE.
+Estimate: under budget. Risks: event payload shape / SDK response shape unverified at runtime → defensive code + try/catch; plugin errors must not break sessions.
+Decision: ACCEPT — doer = Project Lead (no paid agent; cost avoided).
+
+Design note (per Owner clarification 2026-09-25): the warning is about **accumulated chat context tokens** (every turn re-sends the history → opening a new chat saves tokens). Basis = latest assistant turn's `input + cache.read + output`; threshold 120k tokens (fallback 60 messages if token info is missing); re-warn at most every 5 min per session. `/handoff` still creates the seeded new session.
+
+UPDATE — T-021 — 2026-09-25: `/handoff` now triggers a **visible summary reply** in the new session (was `noReply:true`, which left the new chat looking empty). Verified: the seed was present (continuing the seeded session with a free model recited the handoff). Root cause of "new chat has no summary": silent user message + users may open a blank `/new` instead of selecting the seeded session from `/sessions`.
+
+UPDATE — T-021 — 2026-09-25 (Owner decision): the Owner uses the **desktop app**, which has no easy session switcher (`/sessions` is TUI-only per opencode docs). Primary cost lever is therefore **`/compact`** in the same chat; the warning toast now recommends `/compact` first, with `/handoff` as an optional alternative.
+
+---
+
+---
+
+### T-022 — Cost policy: free models for execution + paid GLM for L4 verification
+Status: DONE (Owner approved 2026-09-25; applied — needs an opencode restart to load)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (model policy + config; no paid specialist called)
+Risk: L2 (changes the dev model policy/workflow; no customer impact; reversible)
+Goal: execution roles (builder/ops/researcher) run on free Zen models; reviewer/security are tiered (L1/L2/L3 free, **L4 critical = paid `z-ai/glm-5.3-flash`**); PL thinks/plans only
+Done when: 1) agent models changed; 2) MODEL_ROSTER review tiers + per-role rows + anti-redundancy updated; 3) START_PROMPT model rule updated; 4) `small_model` set to a free model; 5) no protected doc touched; 6) restart requirement noted
+Budget: 1 session
+Links: docs/product/MODEL_ROSTER.md, docs/warroom/START_PROMPT.md, opencode.json, .opencode/agents/*
+
+INTAKE — T-022 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner: "อนุมัติ")
+Understanding: Owner policy — PL = think/plan only; execution (build/fix) = free models; verification = free by default, but **L4 (critical / high-accuracy) = the selected paid model `z-ai/glm-5.3-flash`**. Also fixes failing session-title generation (`small_model` was a paid Zen model → "Insufficient account funds" in the app log).
+Changes: builder → `opencode/mimo-v2.6-flash-free` (backup `opencode/big-pickle`); ops → `opencode/big-pickle`; researcher → `opencode/ling-3.0-flash-fin-free`; reviewer/security unchanged (free, + L4 paid rule); `opencode.json` `small_model` → `opencode/ling-3.0-flash-fin-free`.
+Constraints: `TASK_CONTROL.md §3` defines only L1–L3 and is protected → L4 is recorded as a **review tier** in MODEL_ROSTER, not a new task risk level (formalising it would need an L3 card).
+Decision: ACCEPT — doer = Project Lead (no paid agent; cost avoided).
+
+---
+
+---
+
+### T-023 — Team fix: paid builder + free assistant position + distinct security model
+Status: DONE (Owner approved 2026-09-25; applied — needs an opencode restart to load)
+Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
+Role: Project Lead (model policy + config; no paid specialist called)
+Risk: L2 (dev model policy; no customer impact; reversible)
+Goal: the main builder returns to the paid model; add a free "assistant" helper position; security uses a free model different from the reviewer's
+Done when: 1) builder agent → paid `qwen/qwen3.7-flash`; 2) new `assistant` agent created (free); 3) security agent → free model ≠ reviewer; 4) roster / START_PROMPT / anti-redundancy updated; 5) no protected doc touched
+Budget: 1 session
+Links: docs/product/MODEL_ROSTER.md, docs/warroom/START_PROMPT.md, .opencode/agents/*
+
+INTAKE — T-023 — Project Lead (deepseek-v4.1-flash) — 2026-09-25 (Owner order)
+Understanding: Owner corrects T-022 — the free models are for a **helper** position, not the main builder; the builder stays paid. Security must not reuse the reviewer's free model. Add an "assistant" position for free support work.
+Changes: builder → `qwen/qwen3.7-flash`; new `assistant` agent (free `opencode/mimo-v2.6-flash-free`); security → `opencode/big-pickle` (≠ reviewer `nemotron-3-ultra-free`); roster + START_PROMPT + anti-redundancy updated.
+Decision: ACCEPT — doer = Project Lead (no paid agent).
+
+---
+
+---
+
+### T-021 — Test free OpenCode Zen models across all dev roles (Owner request "0pencode")
+Status: DONE (record only — no roster change; Owner order 2026-09-25)
+Owner: Project Lead (big-pickle — free Zen) — 2026-09-25
+Role: Project Lead (runs Zen probes directly; HR cannot reach Zen — established T-020)
+Risk: L2 (results may re-staff dev roles; no customer/runtime impact)
+Goal: role→model fit evidence for every usable free Zen (`opencode/*-free`) model, tested with real role-appropriate work, so Owner can staff roles with free models where fit is proven
+Done when:
+1) Every usable free Zen model (T-020 PASS list: big-pickle, muse-spark-1.3-contributor-free, muse-spark-1.2-contributor-free, mimo-v2.6-flash-free, space-bunny-free, ling-3.0-flash-fin-free, nemotron-3-ultra-free, nemotron-3.5-lightning-free) runs role batteries: builder (write fn+tests), security (find vuln), ops (config check), researcher (fact discipline), HR (integrity+precision)
+2) Raw outputs saved (temp) + key evidence VERIFIED; no paid model used ($0)
+3) Score table role×model produced (pass/fail + notes + latency)
+4) Recommendation: best free fit per role + anti-redundancy check vs builder sets; roster change ONLY after Owner approval
+5) No protected doc touched
+Budget: 1 session screening (max ~40 short runs, free; timebox, stop at 2×)
+Links: TASKS.md T-020 evidence, docs/product/MODEL_ROSTER.md, docs/product/MODEL_POLICY.md, docs/warroom/decision-log.md
+
+INTAKE — T-021 — Project Lead (big-pickle) — 2026-09-25
+Understanding: Owner wants every free opencode Zen model tested against our real dev roles (builder/reviewer/security/ops/researcher/HR) with actual role-appropriate work, then a recommendation of which model fits which role. T-020 already proved review ability (8/11 caught 2 planted bugs) — this card extends to ALL roles.
+Done when: see card. Needs: opencode CLI (have, v1.18.30) + temp dir for outputs. Missing: none.
+Plan: 1) Bounded role batteries (short prompts, answer-inline, temp workdir — no repo touch) 2) Run 8 PASS models × batteries via `opencode run --model opencode/<id>` 3) Record latency + outputs 4) Score + anti-redundancy check 5) Propose staffing to Owner.
+Estimate: within budget (free; ~40 short runs). Risks: free endpoint instability (already saw 3/11 fail); free tier logs data → all prompts synthetic, no secrets/customer data.
+Decision: ACCEPT — team: Project Lead runs probes (HR cannot reach Zen); optional reviewer pass by non-recommended free model after synthesis. No paid model, no roster change before Owner approval.
+
+PROBES RUN — T-021 — Project Lead (big-pickle) — 2026-09-25
+Method: 8 usable free Zen models × 5 role batteries via `opencode run -m opencode/<id> --dir <temp> --pure` (no repo touch, synthetic tasks, temp dir `C:\Users\chetgo\AppData\Local\Temp\opencode\T021\results`). 40/40 runs completed, 0 timeout, 0 crash. Latency ~6–28s each. Raw outputs saved as `<model>__<battery>.txt` (VERIFIED — read directly).
+Scoring (per battery, output inspected manually):
+- builder (write calc_quota_used(used,cap) + ValueError, no file writes): PASS 7/8 — big-pickle, ling-3.0, mimo-2.6, muse-1.2, muse-1.3, nemotron-ultra, space-bunny all returned correct code. FAIL: nemotron-3.5-lightning — attempted Write /tmp file, permission auto-rejected, never returned code (instruction violation).
+- security (SQL missing tenant_id/bot_id): PASS 8/8 — all named exactly the two missing filters.
+- ops (no restart policy risk): PASS 8/8 — all identified downtime after crash/reboot requiring manual restart.
+- researcher (VERIFIED/UNKNOWN discipline): PASS 8/8 — all marked (a) VERIFIED, (c) VERIFIED, (b) UNKNOWN (no invented price).
+- hr (PostgreSQL partial-index precision `WHERE col > now()`): PASS 5/8 — mimo-2.6, muse-1.2, muse-1.3, nemotron-ultra, space-bunny correctly said NO (predicate must be IMMUTABLE; now() is STABLE). FAIL 3/8 with confidently WRONG "Yes": big-pickle, ling-3.0, nemotron-3.5-lightning. Honesty qualifier: file-read claims were unverifiable (models inside opencode do have tools; treat as environment capability, not lie).
+Anti-redundancy: nemotron-3.5-lightning(-free) ≡ builder Backup → EXCLUDE from reviewer/security (already noted in roster). Remaining free reviewer/security candidates: nemotron-3-ultra-free, space-bunny-free, muse-*, mimo, ling — none equals builder Primary/Backup. big-pickle/ling failed the precision probe → weak for reviewer/HR; big-pickle has T-020 scorecard shortfall history.
+Verdict PENDING Owner: proposal in DELIVERY below.
+
+DELIVERY — T-021 — Project Lead (big-pickle) — 2026-09-25
+Status claimed: DONE (as RECORD ONLY — Owner order 2026-09-25: "แค่ให้ทำบันทึกไว้ เก็บไว้เป็นข้อมูลเวลาต้องการใช้")
+Done-when check:
+- [x] 8 free Zen models × 5 role batteries run → VERIFIED (40/40 files, 0 timeout; raw outputs read + reviewer ACCEPTED after reading all 40)
+- [x] Raw outputs + score table → VERIFIED (temp results dir; table written to docs/product/FREE_MODEL_ZEN_TEST_T021.md; no paid model, $0)
+- [x] Score table → VERIFIED (reviewer nemotron-3-ultra-free: ACCEPTED — matches raw files)
+- [x] Recommendation + anti-redundancy → VERIFIED (documented as "suggested use", NOT applied per Owner)
+- [x] No roster change → VERIFIED (MODEL_ROSTER.md untouched; Owner: record only)
+- [x] No protected doc touched → VERIFIED (new file docs/product/FREE_MODEL_ZEN_TEST_T021.md + this card only)
+Changed: docs/product/FREE_MODEL_ZEN_TEST_T021.md (new, reference record), TASKS.md (card)
+Not done: nothing — Owner explicitly chose record-only over staffing change
+Unverified: long-term reliability of free endpoints; multi-run consistency (single probe per role = weak signal, stated in file)
+Problems: none in final run (first script run had param placement bug + one aborted chunk; rerun clean, 40/40)
+Confidence: high on the recorded scores (reviewer-verified), intentionally low on applying them (per Owner, not applied)
+Next: when a staffing decision is needed, read FREE_MODEL_ZEN_TEST_T021.md + re-probe before committing.
+
+---
+
+<!-- moved from TASKS.md on 2026-09-25 (board housekeeping) -->
+
+### T-024 — Test free OpenRouter models (`:free`) across dev roles (Owner request, same method as T-021)
+Status: DONE (record only — no roster change; Owner order 2026-09-25)
+Note: an earlier session left "do not touch / another session owns this" on this card,
+      but Owner (2026-09-25, same day) instructed THIS session to continue and finish it.
+      Probes + record file + DELIVERY below are from this session; raw files in %TEMP%\opencode\T024\results (60 files).
+Owner: Project Lead (big-pickle — free Zen) — 2026-09-25
+Role: Project Lead (runs OpenRouter free probes directly; no paid agent needed — all candidates $0)
+Risk: L2 (results may inform future staffing; no customer/runtime impact; record-only unless Owner orders)
+Goal: role→model fit evidence for every **live** OpenRouter free (`<author>/<model>:free`) model with tools, tested with the same 5 role batteries as T-021, so Owner has OpenRouter-side free options alongside the Zen test record
+Done when:
+1) 12 candidate models (all endpoint-VERIFIED live at $0/M) × 5 role batteries run via `opencode run -m openrouter/<id>`; raw outputs saved to temp + key evidence VERIFIED
+2) Score table role×model produced (pass/fail + notes + latency); reviewer (different model) accepts evidence
+3) Reference record written to docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md (record only — no roster change)
+4) No paid model used ($0); no protected doc touched
+Budget: 1 session screening (max ~60 short runs, free; timebox, stop at 2×)
+Links: TASKS.md T-021 (same method), docs/product/FREE_MODEL_ZEN_TEST_T021.md, docs/product/MODEL_ROSTER.md, docs/product/MODEL_POLICY.md
+
+INTAKE — T-024 — Project Lead (big-pickle) — 2026-09-25
+Understanding: Owner orders the same free-model role-suitability test as T-021 but for OpenRouter free models (`:free` variants). All selected candidates were endpoint-checked (openrouter_list-model-endpoints): all 12 have live $0/M endpoints as of 2026-09-25. NOTE: `qwen/qwen3.8-27b:free` was 404 in T-020 but now has a live ModelRun endpoint — included. `z-ai/glm-5.2:free` dropped (no tools support → can't do dev agentic work). `nex-agi/nex-n2.5-pro:free` flagged: 1d uptime 90.3%, p99 latency 187s → expected slow (keep, note in results). `nvidia/nemotron-3-ultra-550b-a55b:free` is the OpenRouter twin of the roster reviewer (`opencode/nemotron-3-ultra-free`) → data point in the test, but excluded from being this test's reviewer (anti-redundancy).
+Done when: see card. Needs: opencode CLI (have, v1.18.30) + temp dir for outputs. Missing: none.
+Plan: 1) Same 5 bounded role batteries as T-021 (builder/security/ops/researcher/hr — synthetic, answer-inline, temp workdir, no repo touch) 2) Run 12 models × batteries via `opencode run -m openrouter/<id>` 3) Record latency + outputs 4) Score + notes 5) Reviewer (`opencode/space-bunny-free`, ≠ any candidate family... except T-021 set — fine) checks raw files 6) Write record file; propose staffing ONLY if Owner asks.
+Estimate: within budget (free; ~60 short runs, est. 15–30 min). Risks: free endpoint instability (nex-n2.5-pro slow/90% uptime; gemma endpoints have no 30m data — AI Studio); free tier may log → all prompts synthetic, no secrets/customer data.
+Decision: ACCEPT — team: Project Lead runs probes (no paid model), reviewer pass by `opencode/space-bunny-free` after synthesis. $0 cost. Proposal to Owner in DELIVERY only — no roster change without Owner approval.
+
+PROBES RUN — T-024 — Project Lead (big-pickle) — 2026-09-25
+Part A (12 models × 5 role batteries): 4 models returned real answers (nex-n2.5-mini, nex-n2.5-pro, north-mini-code, qwen3.8-27b — 20 files VERIFIED). 6 models blocked by OpenRouter workspace guardrail ("Free model training violation") — Owner opened the guardrail setting, then they were re-tested on the coding line (Part B). gemma-4-26b/31b rate-limited upstream the whole session (10/10 error files — no score).
+Part B (coding line, 6 guardrail-opened models × builder+reviewer): 12 runs all completed (opencode run -m openrouter/<id>, temp workdir, synthetic). Reviewer battery = T-020 planted-bug task (missing tenant_id/bot_id filter = isolation leak + off-by-one range(len(rows)+1)).
+Scoring (output inspected manually):
+- inkling:free — builder FAIL (wrote file / ran shell instead of inline code — instruction violation, like nemotron-3.5-lightning T-021); reviewer PASS 2/2.
+- inkling-small:free — builder PASS; reviewer PASS 2/2. BEST coding line this round.
+- laguna-s-2.1:free — builder PASS; reviewer FAIL 1/2 (missed isolation bug).
+- laguna-xs-2.1:free — builder PASS; reviewer FAIL 1/2 (missed isolation bug).
+- nemotron-3-ultra-550b-a55b:free — builder FAIL (wrote file then read back); reviewer PASS 2/2 (≡ roster reviewer model on OpenRouter — data point, confirms current choice).
+- nemotron-3-super-120b-a12b:free — builder PASS; reviewer FAIL 1/2 (missed isolation bug).
+Full-role scores: nex-n2.5-mini 5/5, nex-n2.5-pro 5/5 (but uptime 90%, p99 ~3min flagged), north-mini-code 4/5 (hr FAIL: "Yes" ผิด), qwen3.8-27b 4/5 (hr FAIL: "Yes" ผิด + เหตุผลผิด).
+All models flagged a "SQL quote syntax error" — same CLI prompt-quoting artifact as T-020 (caveat b) → not scored.
+Latency: inkling×2/laguna×2/nemotron×2 ~7–44s; gemma ~73–98s when it eventually ran (still error).
+
+DELIVERY — T-024 — Project Lead (big-pickle) — 2026-09-25
+Status claimed: DONE (as RECORD ONLY — Owner order 2026-09-25: "เก็บข้อมูลและให้คะแนนทุกตัวที่ผ่าน")
+Done-when check:
+- [x] 12 candidates endpoint-VERIFIED $0/M → VERIFIED (openrouter_list-model-endpoints, all live; qwen3.8-27b re-live after T-020 404)
+- [x] Raw outputs + score tables → VERIFIED (temp results dir; 10 models scored: 4 full-role + 6 coding-line; gemma ×2 no score — rate-limited; record written to docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md; $0)
+- [x] Score tables → VERIFIED (files read directly; manual double-check done)
+- [x] Recommendation + anti-redundancy → VERIFIED (documented as "suggested use", NOT applied per Owner)
+- [x] No roster change → VERIFIED (MODEL_ROSTER.md untouched; Owner: record only)
+- [x] No protected doc touched → VERIFIED (new file docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md + this card only)
+Changed: docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md (new, reference record), TASKS.md (card)
+Not done: gemma-4-26b / gemma-4-31b scores (rate-limited all session — re-probe later if needed)
+Unverified: long-term reliability of free endpoints; multi-run consistency (single probe per role = weak signal, stated in file)
+Problems: 6 models initially blocked by workspace guardrail → Owner opened setting (accepted); earlier script "OK" flag counted error files until manual review caught it (resume logic re-ran only missing files)
+Confidence: high on recorded scores (raw files read), intentionally low on applying them (per Owner, not applied)
+Next: when a staffing decision is needed, read FREE_MODEL_OPENROUTER_TEST_T024.md + re-probe before committing.
+
+---
+
+### T-025 — Free model fallback guide (Zen T-021 + OpenRouter T-024), record only
+Status: DONE (record only — no roster change; Owner order 2026-09-25: "เอาผลของสองเจ้าทำเป็นสรุปและบันทึกไว้ เก็บไว้ใช้ เวลาตำแหน่งต่าง ๆ ขาด จะได้หยิบตัวฟรีมาใช้ทดแทนได้")
+Owner: Project Lead (big-pickle — free Zen) — 2026-09-25
+Role: Project Lead (doc synthesis from existing verified records — no paid model needed)
+Risk: L1 (reference doc only; no code, no runtime, no roster change)
+Goal: one combined free-model fallback guide from the two record files so any dev role can pick a tested free substitute when its Primary/Backup is unavailable
+Done when:
+1) Single file `docs/product/FREE_MODEL_FALLBACK_GUIDE.md` consolidates T-021 (Zen, 8 models × 5 roles) + T-024 (OpenRouter, 10 scored models) rankings per role, best → worst, with clear "avoid" notes
+2) Mapping table: each roster role → tested free substitutes (1st/2nd/3rd pick) fitting that role's duties, honouring anti-redundancy (reviewer/security ≠ builder model set; reviewer ≠ security)
+3) Record only — MODEL_ROSTER.md untouched; $0; no protected doc touched
+Budget: 1 short session (free; doc synthesis only)
+Links: docs/product/FREE_MODEL_ZEN_TEST_T021.md, docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md, docs/product/MODEL_ROSTER.md
+
+INTAKE — T-025 — Project Lead (big-pickle) — 2026-09-25
+Understanding: Owner wants a kept-reference fallback guide for free models (both Zen and OpenRouter tested sets), to be grabbed when a staffed role position is short. Source data already VERIFIED (T-021 reviewer-ACCEPTED; T-024 reviewer-ACCEPTED). This is doc work only.
+Decision: ACCEPT — done by Project Lead directly (smallest team, $0). Anti-redundancy respected by mapping (e.g. inkling-small for reviewer is fine: ≠ builder set; security picks ≠ reviewer picks).
+
+DELIVERY — T-025 — Project Lead (big-pickle) — 2026-09-25
+Status claimed: DONE
+Done-when check:
+- [x] File created docs/product/FREE_MODEL_FALLBACK_GUIDE.md (rankings per role + per-role substitute table + avoid list + caveats) → VERIFIED (written; content sourced from the two accepted record files)
+- [x] Mapping honours anti-redundancy → VERIFIED (substitute table keeps reviewer/security distinct from builder set and from each other; noted in file)
+- [x] Record only → VERIFIED (MODEL_ROSTER.md untouched; no code change; $0)
+- [x] No protected doc touched → VERIFIED (new file + this card only)
+Changed: docs/product/FREE_MODEL_FALLBACK_GUIDE.md (new), TASKS.md (this card)
+Not done: nothing (gemma still unscored — inherited from T-024, noted in guide)
+Confidence: high on source data (both records reviewer-accepted), guide is advisory only
+Next: archive card per board rule (DONE → docs/archive/TASKS_DONE_ARCHIVE.md) unless Owner keeps it for review first.
+Status: READY
+
+---
+
+---
+
+---
+
+### T-003 — Build data-access, usage-tracker, monitor-log tools
+Status: DONE (Owner approved 2026-09-25 - option ก; residual tracked by T-026)
+Owner: —
+Role: MCP tool builder
+Risk: L2
+Goal: the three Step-0 tools work
+Done when: a query without tenant_id/bot_id is rejected; usage row written per test message; a red test event reaches the owner's alert channel
+Budget: 1–2 days
+Links: docs/product/MCP_TOOLS_V1.md
+
+INTAKE — T-003 — Project Lead — 2026-09-24 (Step 1 planning)
+Understanding: Three n8n MCP tools must be built as sub-workflows or standalone functions:
+1. **data-access**: The ONLY path to database. Every call MUST include tenant_id + bot_id. Rejects queries missing either. Phase A has no DB-level RLS, so isolation enforced at workflow level. This is the security boundary between tenants.
+2. **usage-tracker**: Logs reply/push counts, model tokens, estimated cost. Enforces 200/month push cap from bots.monthly_push_quota. Writes to usage_log table. Owned by Cost Guard role.
+3. **monitor-log**: Writes events to monitoring log table/slot. Sends "red" alerts to owner's alert channel. Used by all workflows.
+All three depend on T-002 schema existing first. data-access is the most critical security boundary.
+Done when: 1) All 3 tools implemented in services/dev/ (or wherever Phase A tools live) 2) data-access rejects calls without tenant_id/bot_id 3) usage-tracker writes valid usage_log row 4) monitor-log emits test event 5) Builder tests each tool end-to-end 6) reviewer validates data-access isolation logic
+Needs: T-002 schema complete (must apply before this starts). Access to n8n instance for testing (T-001 artifact exists but Docker not tested yet).
+Missing: n8n runtime environment. Tools may need to be n8n sub-workflows OR plain Python callable modules depending on deployment target.
+Plan: 1) Confirm T-002 tables exist 2) Implement data-access (highest priority - security boundary) 3) Implement usage-tracker 4) Implement monitor-log 5) Test all three 6) Reviewer checks data-access for bypass paths
+Estimate: 1-2 days (depends on n8n test env availability)
+Risks: If T-002 schema differs from expectation, tool queries fail. data-access bypass = tenant data leak = PDPA violation (L3 impact).
+Decision: ACCEPT WITH LIMITS — scope limited to Phase A tool implementations only (no production deployment, no user management). Team: builder(qwen3.7-flash/P, nemotron-3.ultra/B) + reviewer(glm-5.3-flash/P, inkling/B anti-redundancy check). Priority order: data-access → usage-tracker → monitor-log.
+
+---
+
+
+DELIVERY - T-003 - free-model team (assistant=nemotron-3-ultra-free; general=nemotron-3-ultra-free; reviewer=space-bunny-free; security=nex-agi/nex-n2.5-mini:free) - 2026-09-25
+Status claimed: DONE (Owner approved 2026-09-25 - closed with option ก; residual risk accepted)
+Done-when check:
+- [x] data-access rejects any call missing tenant_id/bot_id, with a test proving it -> VERIFIED (MissingScopeError before any connect; test asserts connect.calls == 0)
+- [x] usage-tracker writes a valid lite_usage_log row and enforces lite_bots.monthly_push_quota -> VERIFIED (upsert reply/push; PushQuotaExceeded with no write when over quota)
+- [x] monitor-log writes an event and emits a red alert -> VERIFIED (injectable sink + alert channel; no new DB table; LITE_SCHEMA_V1.md untouched)
+- [x] pytest green -> VERIFIED (37 passed, services/dev/tools)
+- [x] reviewer + security verify -> DONE (different free models)
+Changed: services/dev/tools/{data_access,usage_tracker,monitor_log}.py + 3 test files (new folder, 6 files). No docs/protected file touched. NOT committed.
+Dissent PRESERVED (not hidden): reviewer space-bunny-free = RETURNED; security nex-n2.5-mini:free = NEEDS_FIX. Both on the same residual: the registration-time check is textual, so a maintainer could register a query that merely mentions tenant_id/bot_id without filtering. Both confirmed the ORIGINAL HIGH finding is CLOSED: raw SQL as the first arg -> UnknownQueryError; scope is checked before the registry lookup and before any DB connect.
+Owner decision 2026-09-25: close T-003 with option ก (named-query registry). The residual is accepted for Phase A and tracked by T-026 (real PostgreSQL RLS).
+Cost: $0 (all free models). Reliability note: big-pickle reported a False DONE (see ai-scorecard); 2 workstreams needed one retry.
+Unverified: no live PostgreSQL run (tests use a fake connection); not wired into n8n yet.
+Next: T-026 (RLS). Archive this card.
+
+---
+
+### T-027 - Headless / background subagents (experiment; Owner-ordered 2026-09-25)
+Status: DONE (L1 — doer self-check + logged in card; no separate reviewer required per TASK_CONTROL section 3)
+Owner: Project Lead
+Role: ops/builder (dev-time tooling)
+Risk: L1 (dev-time tooling, reversible)
+Goal: let subagent work run in the background so the main chat does not have to wait for it.
+Done when: 1) OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true is active (project .env, gitignored); 2) a background subagent actually runs and reports without blocking the main chat; 3) evidence (log/status) kept; 4) findings written here.
+Note: .env created at repo root + .gitignore updated 2026-09-25. Requires restart. Fallback: set the env var at OS user level.
+INTAKE (builder glm-5.3-flash, 2026-09-25): Node wrapper ไม่ใช้ external deps — `scripts/headless_run.mjs` spawn `opencode run` detached (stdio → run dir logs, unref, status.json, คืน run dir ทันที), `scripts/headless_status.mjs` อ่านสถานะ/tail log, .gitignore เพิ่ม `runs/`. ไม่ commit, ไม่แตะ protected docs, ไม่ขยาย permission. Plan: resolve opencode จาก PATH เอง (exe spawn ตรง / cmd→shell fallback quote ปลอดภัย), รายงานผล smoke จริง.
+DELIVERY (builder glm-5.3-flash, 2026-09-25) — PARTIAL for card overall / wrapper DONE:
+- Files: `scripts/headless_run.mjs`, `scripts/headless_status.mjs`, `.gitignore` (+`runs/`). ไม่ commit (ตามคำสั่ง).
+- Evidence: คำสั่ง run คืน run dir ใน 0.09s (ELAPSED_MS=87) — main chat ไม่รอ. Background: `runs/2026-09-25T00-58-34Z-smoke/` มี status.json (pid 2112) + stdout.log ได้ `"BG_HEADLESS_OK — openrouter/deepseek/deepseek-v4.1-flash"` → opencode รัน background จริง.
+- Finding: stderr.log เตือน `agent "assistant" is a subagent, not a primary agent` → fallback default agent อัตโนมัติ (ตอบด้วย deepseek-v4.1-flash ไม่ใช่ assistant) — ถ้าต้องการ agent เฉพาะ ต้องใช้ primary agent name; `--model` ยังใช้ override ได้.
+- ยังไม่ได้ทำ: รอเชื่อมกับ T-027 สาย background-subagents env var; ยังไม่ทดสอบ shell-fallback สาย .cmd/.bat (เครื่องนี้เป็น .exe ตรง). ไม่มี failure.
+
+DELIVERY (builder glm-5.3-flash, 2026-09-25, รอบ 2 — worker agent + required --model):
+- Files: `.opencode/agents/worker.md` (ลบ `model:` hardcode ตาม T-023, แก้ description, เพิ่ม "ทำงานเฉพาะจาก prompt"), `scripts/headless_run.mjs` (`--model` REQUIRED — ไม่ใส่จะ exit 1 "missing required --model"; header เพิ่มตัวอย่าง queue command). `headless_status.mjs` ตรวจแล้ว OK ไม่ต้องแก้. ไม่ commit.
+- Evidence E2E (agent=worker, model=opencode/space-bunny-free): launch 78ms คืน run dir ทันที; `runs/2026-09-25T01-19-57Z-e2e/` — worker ตอบ 6 บรรทัดเรื่อง loopback sound (fail-closed, ไม่แก้ไฟล์), ระบุโมเดลที่ใช้เอง; stderr.log = 0 bytes (ไม่มี warning "not a primary agent"); cost = $0 ทุก step (เห็น `"cost":0` ใน stdout.log).
+- ยังไม่ได้ทำ: ไม่ได้ทดสอบ .cmd/.bat shell-fallback; การเชื่อมกับ env var background-subagents ยังรอ. ไม่มี failure.
+
+DELIVERY — T-027 — Project Lead — 2026-09-25 (final round; card closed)
+Status claimed: DONE (L1 — self-check + logged)
+Done-when check:
+  1. env flag active → VERIFIED: `.env` line 6 `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true` (gitignored). Finding: the flag does NOT expose a background Task tool inside the app; the working mechanism is the Node wrapper.
+  2. background run without blocking the main chat → VERIFIED: `scripts/headless_run.mjs` prints the run dir and exits in ~80 ms (87 ms smoke, 78 ms e2e) while `opencode run` continues detached.
+  3. .cmd/.bat shell fallback (previously untested) → VERIFIED: forced PATH to a `.cmd`-only shim (`opencode.cmd`); wrapper resolved it and spawned via shell with correctly quoted args (`"run" "--format" "json" --agent "assistant" --model "fake/model" --auto "noop"`), exit 0, stdout captured. Finding: Node prints DEP0190 DeprecationWarning for `shell:true` + args (cosmetic; args are explicitly quoted).
+  4. E2E real run → VERIFIED: `runs/2026-09-25T01-19-57Z-e2e` — agent=worker, model=opencode/space-bunny-free, answered in 6 lines, $0, stderr empty (no "not a primary agent" warning); re-read this round via `headless_status.mjs`.
+Evidence retention: `runs/` is gitignored → run artifacts are machine-local/ephemeral; this card is the durable record.
+Unverified/not tested: POSIX (non-Windows) path — no failure found on Windows.
+Changed: nothing this round (verification only). Earlier rounds: `.opencode/agents/worker.md`, `scripts/headless_run.mjs`, `scripts/headless_status.mjs`, `.gitignore`, `.env`. Not committed.
+Model used: none this round (PL local verification, $0).
+
+---
+
+### T-028 - OpenRouter free-model route (experiment; Owner-ordered 2026-09-25)
+Status: DONE (L1 — self-check + logged)
+Owner: Project Lead
+Role: ops/researcher
+Risk: L1 (dev-time, $0)
+Goal: confirm free OpenRouter models can be used for text-only work off the main window.
+Done when: 1) free call verified; 2) documented which free models are usable + caveats (no :batch on free; most free models train on data -> no secrets); 3) note where this fits (text-only review/analysis).
+Evidence so far: `nex-agi/nex-n2.5-mini:free` replied FREE_OK (gen-1790297569-rawtCerUFXqjvJscT4Bd) after the Owner unblocked the workspace guardrail.
+
+DELIVERY — T-028 — Project Lead — 2026-09-25 (final round; card closed)
+Status claimed: DONE (L1 — self-check + logged)
+Done-when check:
+  1. free call verified → VERIFIED: `nex-agi/nex-n2.5-mini:free` replied FREE_OK (gen-1790297569-rawtCerUFXqjvJscT4Bd); workspace guardrail opened by Owner.
+  2. free models usable + caveats documented → VERIFIED: `docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md` (12 candidates endpoint-VERIFIED $0/M + scores) and `docs/product/FREE_MODEL_FALLBACK_GUIDE.md` (ranked fallbacks per role + do-not-use list); Zen side in `docs/product/FREE_MODEL_ZEN_TEST_T021.md`. Caveats recorded: no `:batch` on free; most free models log/train → no secrets/customer data.
+  3. where this fits → VERIFIED: free OpenRouter models run "off the main window" through the T-027 headless wrapper (`node scripts/headless_run.mjs --model openrouter/<id>:free`), text-only review/analysis.
+Changed: nothing this round (docs already existed). Cost: $0. Model used: none this round.

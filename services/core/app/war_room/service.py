@@ -139,12 +139,35 @@ class WarRoomOrchestrator:
             action = _LIFECYCLE_ACTIONS[command.command]
             previous_state = command.expected_state
             new_state = transition_room_state(previous_state, action)
+            payload: dict[str, object] = {
+                "previous_state": previous_state.value,
+            }
+            if command.command is RoomCommandType.SUBMIT_OWNER_DECISION:
+                # interfaces.py requires content for SUBMIT_OWNER_DECISION, so
+                # the acting owner's decision text (or its reference) rides
+                # with the durable event using only frozen payload keys: the
+                # decision travels in content_text, the acting owner's
+                # principal_id travels on the top-level participant_id field,
+                # and message_type OWNER_DECISION marks the event.
+                # persistence.py projects it into public.project_room_decisions.
+                payload["content_text"] = (
+                    command.content_text
+                    if command.content_text is not None
+                    else command.content_reference
+                )
+                message_type: MessageType | None = MessageType.OWNER_DECISION
+                participant_id: str | None = actor.principal_id
+            else:
+                message_type = None
+                participant_id = None
             event = await self._emit(
                 session,
                 command.correlation,
                 RoomEventType.ROOM_STATE_CHANGED,
                 room_state=new_state,
-                payload={"previous_state": previous_state.value},
+                participant_id=participant_id,
+                message_type=message_type,
+                payload=payload,
                 expected_state=previous_state,
                 new_state=new_state,
             )

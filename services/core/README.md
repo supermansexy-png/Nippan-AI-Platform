@@ -60,8 +60,10 @@ Operational rule:
   bounded provider HTTP wait. The model gateway HTTP timeout remains the
   application-side wait bound.
 
-This capacity statement does not enable a turn driver. Billable
-`run_next_turn` remains gated by the independent R-1 audit.
+This capacity statement does not enable a turn driver. The preview transport
+only invokes billable `run_next_turn` when `war_room_preview_model_turns_enabled`
+is set together with a configured OpenRouter key/model (default OFF, zero
+billable calls by default).
 
 ## Phase 2 constraints
 

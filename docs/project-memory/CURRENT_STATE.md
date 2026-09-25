@@ -164,7 +164,10 @@ opencode fell back to other models — the approved MODEL_ROSTER.md was never
 enforced at runtime (verified in opencode.log: builder ran on deepseek, reviewer
 on qwen). Fixed by pinning `model:` in every agent frontmatter (commit 454e123).
 Verified after restart: `agent=builder` → `qwen/qwen3.7-flash`,
-`agent=reviewer` → `z-ai/glm-5.3-flash`.
+`agent=reviewer` → `z-ai/glm-5.3-flash`. **SUPERSEDED 2026-09-25 (Owner order):
+builder is now `z-ai/glm-5.3-flash` (locked, not to be swapped) and reviewer
+L1–L3 is `opencode/space-bunny-free`; L4 is `anthropic/claude-opus-5.5:batch`.
+See "Team update 2026-09-25" in MODEL_ROSTER.md.**
 
 Current leadership (2026-09-25):
 - project-lead: `deepseek/deepseek-v4.1-flash` (previous `qwen3.7-flash` suspended
@@ -205,13 +208,91 @@ review task; `jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free` failed.
 ## Model Policy — paid builder + free helper roles + paid L4 (T-022/T-023) — DONE (2026-09-25)
 
 Owner policy (corrected by T-023): the Project Lead thinks/plans only. The **main builder
-stays on the paid model** (`qwen/qwen3.7-flash`); free OpenCode Zen models are used for the
+stays on the paid model** (`z-ai/glm-5.3-flash`, Owner-locked 2026-09-25); free OpenCode Zen models are used for the
 **helper positions** (assistant, ops, researcher) and for review/security at L1/L2/L3.
-**L4 (critical / high-accuracy verification) uses paid `z-ai/glm-5.3-flash`.** Reviewer
+**L4 (critical / high-accuracy verification) uses paid `anthropic/claude-opus-5.5:batch` (Owner-selected).** Reviewer
 (`nemotron-3-ultra-free`) and security (`big-pickle`) use **different** free models.
 Recorded in `MODEL_ROSTER.md`, `START_PROMPT.md`, the agent files and `opencode.json`
 (`small_model` free). Needs an opencode restart to load. Free tier may log/train → no
 secrets in prompts.
+
+## Free OpenRouter model test (T-024) — DONE (2026-09-25)
+
+Owner ordered the same free-model role-suitability screening as T-021 but for
+OpenRouter `:free` models (12 candidates, all endpoint-VERIFIED live at $0/M).
+6 models were initially blocked by the OpenRouter workspace guardrail ("Free
+model training violation") — Owner opened the setting, then they were tested on
+the coding line (builder + reviewer, T-020 planted-bug task). Full record:
+`docs/product/FREE_MODEL_OPENROUTER_TEST_T024.md`.
+
+Scored (10 models): `nex-n2.5-mini:free` 5/5 and `nex-n2.5-pro:free` 5/5 (but
+uptime ~90%, p99 ~3min flagged) — best; `north-mini-code:free` 4/5 and
+`qwen3.8-27b:free` 4/5 (both failed hr precision: "Yes" ผิดบน partial index
+`now()`); coding line: `inkling-small:free` builder PASS + reviewer 2/2 (best),
+`inkling` + `nemotron-3-ultra-550b` builder FAIL (wrote files instead of inline
+code), `laguna-s/xs` + `nemotron-3-super` reviewer FAIL 1/2 (missed the
+tenant/bot isolation bug). `gemma-4-26b/31b:free` — no score (rate-limited all
+session). RECORD ONLY — no roster change (Owner order). Reviewer
+(`space-bunny-free`) verified score tables against raw files (13 files) — ACCEPTED.
+
+## Free model fallback guide (T-025) — DONE (2026-09-25)
+
+Owner ordered a consolidated reference for free-model substitutes across
+both tested camps (Zen T-021 + OpenRouter T-024): `docs/product/FREE_MODEL_FALLBACK_GUIDE.md`.
+Ranked best→worst per role + per-role substitute table (1st/2nd/3rd pick) +
+avoid list (models that missed the isolation bug or answered precision wrong).
+Record only — MODEL_ROSTER.md untouched; anti-redundancy respected; $0.
+
+## War Room T-008/T-009 fix round (2026-09-25, builder z-ai/glm-5.3-flash)
+
+REVIEW (2026-09-25) returned both cards. Fixes delivered (uncommitted, dev-workspace):
+- T-008 fix 1: `SUBMIT_OWNER_DECISION` now carries the owner's decision content
+  (text or reference + acting owner principal_id) on the ROOM_STATE_CHANGED event;
+  `PostgresRoomEventSink` projects it into `public.project_room_decisions`
+  (OWNER_DECISION/ACCEPTED + decided_at) in the same locked transaction; invalid
+  payload fails closed before any write. No schema change (table already existed).
+- T-008 fix 2: preview local-access fallback now verifies the request really
+  arrives over a loopback socket; otherwise 403 `war_room_preview_loopback_only`
+  (fail-closed; loopback dev use preserved).
+- Hygiene: transport docstring + `services/core/README.md` corrected ("no route
+  invokes run_next_turn" was stale — it runs when model turns are enabled, default
+  OFF); dated correction appended to `WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md`;
+  old qwen DELIVERY blocks in TASKS.md marked INVALID (kept as record).
+- Evidence: `python -m pytest -q` from services/core = 138 passed, 6 skipped
+  (was 120 passed; +18 new tests, none weakened). 6 skipped = PostgreSQL
+  integration tests (no DSN in this env).
+- T-009: no code defect; static wiring VERIFIED via live-passing fast tests;
+  live render with real usage_events still UNVERIFIED → PARTIAL.
+
+## War Room T-008/T-009 — COMPLETE (dev-time) (2026-09-25, final)
+
+Both War Room acceptance cards are DONE on branch `dev-workspace`:
+- T-008 (D-02): the `owner_decision` payload key that violated the frozen event
+  schema was removed; the owner decision now rides only frozen fields
+  (`content_text` / `content_reference`, `message_type=OWNER_DECISION`, top-level
+  `participant_id` = acting owner principal). `PostgresRoomEventSink` projects it
+  into `public.project_room_decisions` in the same transaction and fails closed on
+  invalid data. A non-UUID owner principal (`preview-owner`) no longer breaks the
+  append: `project_room_messages.participant_id` is stored NULL for owner-decision
+  events only, while every other event type keeps strict UUID validation.
+- T-008 (transport): the preview local-access fallback now verifies the real socket
+  peer (`_request_is_loopback`, IPv4-mapped IPv6 handled); non-loopback → 403
+  `war_room_preview_loopback_only`. Residual documented: a proxy/tunnel bound to
+  127.0.0.1 can still relay a remote client — do not tunnel the preview.
+- T-009 (D-03): live proof obtained — a real embedded PostgreSQL 16 (pgserver, all
+  7 migrations applied) ran the whole suite: **152 passed, 0 skipped**. All 6
+  previously-skipped integration tests executed (bootstrap, persistence under RLS,
+  preview seed ×2, read-model projection from real `usage_events`, HTTP transport
+  persisting owner commands with zero provider spend).
+- Gates: reviewer `opencode/space-bunny-free` = ACCEPT (7-file diff); security
+  `opencode/muse-spark-1.2-contributor-free` = ACCEPT (the primary
+  `nex-n2.5-mini:free` produced no answer — token limit); anti-redundancy satisfied.
+- Local harness (gitignored, `runs/`): `pg_it.py` + `winloop_plugin.py` +
+  `extract_text.mjs`; a pgcrypto shim was added under pgserver's site-packages
+  extension dir (local test only).
+- Residual / next: the deployed Supabase preview itself was not exercised (no DSN) —
+  an Owner-only deploy/preview step (item 8). All work committed locally on
+  `dev-workspace`.
 
 ## Source-of-Truth Rule
 

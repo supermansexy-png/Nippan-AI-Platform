@@ -298,3 +298,44 @@ PR #75 เป็นแนวทางเก่าที่ใช้ระบบ 
 
 The Project Owner should not need to translate an engineering report into a decision.
 The Project Lead must perform that translation.
+
+---
+
+# Context Discipline (token cost) — Owner approved 2026-09-25
+
+Token cost is driven by **what stays in the MAIN chat**, not by how much an agent reads.
+Every turn re-sends the whole conversation history, so anything pulled into the main chat
+is re-charged on every later turn (measured: one long Project-Lead session = 202 turns x
+~139k context = 28M cache-read tokens, ~77% of a day's total cache usage).
+
+Rules:
+
+1. Keep replies short — result first, no restating the task.
+2. Do heavy reading/exploration INSIDE a subagent. Only a short summary (<= 15 lines) may
+   come back into the main chat.
+3. Never paste large raw output into the main chat (whole-file reads, a full GitHub issue
+   body, session dumps, long logs). Read slices, or have a subagent read and summarise.
+4. Use `/compact`, or start a new chat per task, once a session grows long.
+5. Scope every subagent prompt tightly (name the exact files, cap the tool calls, state the
+   output shape). A loose prompt makes free models burn steps/tokens and can end with no
+   answer at all.
+
+This is a cost/quality rule, not a permission to under-report. Evidence that materially
+affects a decision still belongs in the report; keep it to the essential lines.
+
+# Background work (headless queue) — Owner approved 2026-09-25
+
+Reading-heavy work (independent review, code analysis, doc checks) runs in the background via
+the headless runner instead of blocking the main chat. Binding rules:
+
+1. Never wait for a background job in the main chat — queue it and keep working; collect with
+   `node scripts/headless_status.mjs runs/<dir>`.
+2. One job = one scope-locked prompt, with an explicit `--agent` and `--model` (no silent fallback).
+3. Code-changing jobs stay on the current branch and are checked by a reviewer on a different
+   model before any merge; the worker must not commit or push.
+4. Never run two jobs that touch the same files at once (single repo/worktree).
+5. Never put secrets or customer data into free models (OpenCode Zen / OpenRouter `:free` may log or train).
+6. `runs/` is gitignored: summarise every result back into the task card or a doc.
+
+Queue: `node scripts/headless_run.mjs --agent worker --model <provider/model> --label <tag> --prompt "<task>"`
+Details: `docs/warroom/DEV_WORKING_GUIDE.md`.
