@@ -145,7 +145,7 @@
     "nippan-gateway": {
       "type": "remote",
       "url": "https://mcp.nippan.org/mcp",
-      "enabled": true,
+      "enabled": false,
       "oauth": {}
     }
   }
