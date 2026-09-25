@@ -117,7 +117,7 @@ Access handled auth. This runtime is no longer the forward plan.
 ## Audit
 
 **Two things were sharing one name — separated by the Owner on 2026-09-25 (see `AGENTS.md` §Independent Audit Status):**
-- **Independent Audit (the gated process + the standalone third-party Auditor) — OFF.** The 25/50/75/90/100 progress gates are **cancelled outright** (2026-09-25), on top of the 2026-09-24 suspension. The Owner runs **one single large audit when the work is complete**. Do not invoke a paid Independent Auditor unless the Owner re-enables that process.
+- **Independent Audit (the gated process + the standalone third-party Auditor) — OFF.** The 25/50/75/90/100 progress gates are **cancelled outright** (2026-09-25), on top of the 2026-09-24 suspension. The Owner runs **one single large audit when the work is complete** — defined by the Owner on 2026-09-26 as **"ตอนปิดโปรเจ็คนี้ก่อนจะนำไปใช้งานจริง"** (at project close, before this project is put into real use), **not** when an internal track such as the War Room reaches 100%. Do not invoke a paid Independent Auditor unless the Owner re-enables that process.
 - **L4 review tier — ALLOWED.** `anthropic/claude-opus-5.5:batch` for critical per-card verification only (security boundary, tenant/bot isolation, data handling). It is **not** an Independent Audit. Per-use approval: the Owner, **or the PL on the Owner's behalf when the Owner is away**; must go through the Batch API; use rarely and check credit first.
 - Normal code review, security review, tests, CI and evidence verification remain allowed. Historical audit records under `docs/audits/` are preserved and must not be rewritten.
 

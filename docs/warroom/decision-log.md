@@ -738,3 +738,31 @@ to wait. Report is batched for the Owner's return. Deploy, production and archit
 `git restore <dotfile>` and `git checkout -- <dotfile>` by the permission rules; the plain-path form worked).
 
 **Task**: governance record + documentation edits + one revert; no code change in `services/**`; no production impact.
+
+---
+
+## DECISION — 2026-09-26 — "งานเสร็จ" of the one large audit = project close, before real use (Owner, verbatim)
+
+**Owner order (verbatim)**: "ลงไว้ให้ชัดเจนว่า ตอนปิดโปรเจ็คนี้ก่อนจะนำไปใช้งานจริง"
+
+**Decision (Owner)** — defines the previously open term in "the Owner runs one single large audit when the work is
+complete" (`AGENTS.md` §Independent Audit Status; decision-log 2026-09-25 "Audit gates cancelled outright"):
+
+- **The one large audit is held at project close, before this project is put into real use** — i.e. before the system
+  serves real customers.
+- It is **not** triggered by an internal track reaching 100%. Specifically, accepting the War Room Track D deliverables
+  (Increment C = 16/16 on 2026-09-26) does **not** trigger it, and no paid Independent Auditor is invoked now.
+- It is **not** deferred to a later phase after real use has already started.
+- The cancelled 25/50/75/90/100 gates and the standalone Independent Auditor role stay retired until the Owner re-enables
+  them. Ordinary per-card review, tests, CI, security review and evidence verification continue unchanged.
+
+**Correction recorded**: the Project Lead's earlier note in `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` said the
+Increment C acceptance "is the trigger for the Owner to schedule that audit" — that was the PL's own reading, not the
+Owner's wording, and it has been corrected in that file.
+
+**Edits made (documentation only)**: `AGENTS.md` §Independent Audit Status (definition paragraph added);
+`docs/project-memory/CURRENT_STATE.md` §Audit; `docs/project-memory/SESSION_HANDOFF.md` standing rule 11;
+`docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` acceptance consequence. No source, test, migration, script or config
+file touched; no model or subagent called.
+
+**Evidence**: Owner message 2026-09-26; `git diff` on the four documents above.

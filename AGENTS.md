@@ -170,6 +170,14 @@ force. The Owner runs **one single large audit when the work is complete**. Do n
 Independent Auditor (Claude Opus, OpenRouter, or any other) unless the Project Owner explicitly
 re-enables that process.
 
+**Definition of "the work is complete" (Owner clarification, 2026-09-26, verbatim intent):
+"ตอนปิดโปรเจ็คนี้ก่อนจะนำไปใช้งานจริง" — the one large audit is held at **project close, before
+this project is put into real use** (i.e. before the system serves real customers). It is **not**
+triggered by an internal track reaching 100% (for example the War Room reaching 16/16), and it is
+not deferred all the way to a later phase after real use has already started. Until that point no
+paid Independent Auditor is called; ordinary per-card review, tests, CI, security review and
+evidence verification continue unchanged.
+
 **(b) L4 review tier — ALLOWED, it is NOT an Independent Audit.** An L4 review is an ordinary
 review step inside the normal per-card flow for critical work (security boundary, tenant/bot
 isolation, data handling). It does **not** count as the paused Independent Audit and is not

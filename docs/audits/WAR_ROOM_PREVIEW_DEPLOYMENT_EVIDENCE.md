@@ -282,7 +282,8 @@ the isolated preview database), carrying the two findings openly instead of re-r
 | **D-02** owner controls + decision input | ACCEPT-WITH-FINDINGS | item 4 PASS (10 durable `SUCCEEDED` `war-room-preview` requests matching the state machine) and item 5 PASS (`ai_calls` = 0) | item 1 (full lifecycle live) is covered by the durable 2026-09-23 sequence — a **loopback** session — and cannot be re-exercised while the seeded room is terminal `STOPPED` |
 | **D-03** agenda / findings / decisions + usage | ACCEPT-WITH-FINDINGS | items 2, 3, 4 PASS (usage figure equals `sum(usage_events.normalized_cost)`; agenda/findings/decisions match the database) | item 1 (browser render over the authenticated remote path) needs Cloudflare Access; only the served HTML + the snapshot JSON the UI consumes were evidenced |
 
-- Consequence recorded for the Owner: Increment C is now **16 / 16 = 100%**. Per the Owner's 2026-09-25 decision the progress
-  gates are cancelled and a **single large audit is due when the work is complete** — this acceptance is the trigger for the
-  Owner to schedule that audit. It does not re-activate the retired per-gate audit process.
+- Consequence recorded for the Owner: Increment C is now **16 / 16 = 100%**. Per the Owner's decisions the progress gates are
+  cancelled, and the **one large audit is due at project close, before this project is put into real use** (Owner definition
+  2026-09-26: "ตอนปิดโปรเจ็คนี้ก่อนจะนำไปใช้งานจริง") — **not** at an internal track reaching 100%. So this acceptance does
+  **not** trigger an audit and no paid Independent Auditor is called now; the retired per-gate process stays retired.
 - No code, migration, schema, grant or RLS change was made to reach this acceptance; no production system was touched.
