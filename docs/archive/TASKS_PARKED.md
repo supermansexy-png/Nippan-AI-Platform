@@ -67,6 +67,11 @@ Changed: TASKS.md, services/dev/docker-compose.yml (new), services/dev/DEPLOYMEN
 Unverified: All runtime behaviors (login, DB connectivity, backup restore) require actual Docker engine to confirm.
 Next: Owner deploys docker compose on a machine with Docker; runs verification checklist items; reports back. Recommend DigitalOcean for fastest path (~$12/mo, straightforward).
 
+PL NOTE — 2026-09-25 (dev-time, no Docker; Owner-delegated): advanced the locally-verifiable part.
+- Embedded PostgreSQL 16 (pgserver) applied all 7 migrations, including the lite schema + lite RLS.
+- Real backup/restore cycle executed: `pg_dump -Fc` (253,492 bytes) → `pg_restore --no-owner` into a second database → verified **7 `lite_*` tables restored with RLS (ENABLE+FORCE) on all 7**. Verdict: PASS (this covers the "daily backup confirmed restorable once" done-when item, locally).
+- Still not done here: running n8n itself. `npm`/`npx` are blocked by the Windows PowerShell execution policy (`npm.ps1` cannot be loaded) and there is no Docker engine; the remaining done-when items (n8n login, n8n→Postgres, HTTPS) need an operator run (Docker host, or `npx` with the execution-policy workaround).
+
 ---
 
 ---
