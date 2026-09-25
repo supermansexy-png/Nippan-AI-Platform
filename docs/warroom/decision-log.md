@@ -672,6 +672,24 @@ which revision to record acceptance evidence against.
 
 **Task**: T-031 (dropped) + T-032 (opened); documentation only; no code, config or repo setting changed.
 
+---
+
+## DECISION — 2026-09-25 (session 2) — Meeting closed: T-001 closed, watcher deleted, T-032 trigger/review settled
+
+**Owner answers (verbatim, to the five agenda items)**: "1 ปิด · 2 ลบ · 3 พี่เอง คนตรวจตรวจยังไง · 4 ความสำคัญของงานนี้ · 5 คุยจบแล้วทำเลย"
+
+**Resolutions**
+1. **T-001 (hosting n8n + PostgreSQL) → CLOSED.** The hosting part is satisfied by the existing host `n8n.nippan.org`; the remaining link (n8n → PostgreSQL lite) is T-030 and is not duplicated. One done-when item has **no card**: backup/restore proven against the **real Supabase** (only the local embedded-PostgreSQL cycle was proven). Recorded as a known follow-up, to be carded when the runtime phase starts.
+2. **T-BRIDGE-01 (Bridge Watcher v1) → DROPPED, files deleted.** `.opencode/bridge/watcher.mjs` and `watcher.test.mjs` (both untracked, never committed) were removed from the working tree on the Owner's order. **Open cleanup item**: the watcher wiring inside `.opencode/bridge/server.mjs` is still an uncommitted modification — the PL could not revert it (the sandbox refused `git restore` / `git checkout` on a dot-path), so one command remains for the operator or a builder: `git restore .opencode/bridge/server.mjs`. Not committed either way, so no broken code reaches the repo.
+3. **T-032 trigger = the Owner** ("พี่เอง"): the Owner starts each round; the assistant does not auto-start from a queue. Pilot A now tests only whether it can *find* the queued work once started.
+4. **T-032 review mechanism (answer to "คนตรวจตรวจยังไง")** = three layers: (a) CI runs automatically on the PR = machine evidence; (b) a reviewer on a **different model** than the author reads the diff and writes a verdict comment; (c) the PL checks scope/evidence and records the verdict on the card. **Merge stays with the Owner.** A 7-point checklist is written into the card.
+5. **T-026 residual (n8n credential path / superuser bypass) — importance assessed, no card opened.** Real risk is **low in dev-time, medium at launch**: the RLS policies bind to the role `nippan_n8n` (not BYPASSRLS, verified), so connecting as that role still goes through RLS — the "bypass" concern is about `postgres`/superuser and SECURITY DEFINER functions, which only we can reach today. Recommendation: keep as a documented known residual, and **re-open it as a card before the system goes live for customers**.
+6. Repo protection and the external-side settings remain **open Owner decisions** (they were not answered this round).
+
+**Evidence**: Owner message (session 2); `TASKS.md` T-032 §Blockers + checklist; `docs/archive/TASKS_PARKED.md` T-001 + T-BRIDGE-01; deleted files verified absent from the working tree (`git status --short`).
+
+**Task**: meeting bookkeeping; no code, config or repo setting changed.
+
 **Task**: governance record + documentation edit; no code change; no production impact.
 
 **Task**: governance record + documentation edit; no code change; no production impact.

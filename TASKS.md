@@ -120,11 +120,13 @@ Links: `TASKS.md` (cards = source of truth), GitHub Issues (queue), `.github/wor
 
 **Hard rules (no exceptions)**: the external assistant works only on branches it creates (`codex/*`) · **never merge its own PR** · never push directly to `dev-workspace` or `phase2/postgres-logical-schema` · never force-push · **never put secrets in git** (history is permanent — work touching credentials runs on our machine only) · author ≠ checker: a different model reviews every non-trivial change · merge and any preview deploy still need the Owner (or the PL when the Owner is away, except deploy/architecture).
 
-**Blockers / open questions before start**
-1. Repo settings: enable branch protection on `dev-workspace`? (checked: `dev-workspace` protected = **false**; `phase2/postgres-logical-schema` = **true**) — Owner decision.
-2. External side settings: Draft PR = ON · auto-merge = **OFF** · branch prefix `codex/` (keep) · no force-push — Owner confirms each.
-3. Trigger: does the assistant start a queued task by itself, or does the Owner start each round? (not yet proven — pilot A tests exactly this)
-4. Who is the reviewer for its PRs (must be a different model from the author) and who approves merge.
+**Blockers / open questions**
+1. Repo settings: **OPEN** — protection on `dev-workspace` not decided yet (checked: `dev-workspace` protected = **false**; `phase2/postgres-logical-schema` = **true**). Owner decision pending.
+2. External side settings: **OPEN** — Owner has not yet confirmed the four values (Draft PR = ON · auto-merge = **OFF** · branch prefix `codex/` · no force-push).
+3. **Trigger = the Owner (RESOLVED 2026-09-25)** — "พี่เอง": the Owner starts each round; the assistant does not auto-start from a queue. Pilot A therefore tests only whether it can *find* queued work **once started**.
+4. **Review (RESOLVED 2026-09-25)** — three layers: (a) **CI runs automatically on the PR** = machine evidence, no human needed; (b) a reviewer on a **different model** than the author reads the diff and writes a verdict comment; (c) the **PL** checks scope/evidence and records the verdict on the card. **Merge stays with the Owner.**
+
+**Review checklist for the assistant's PRs (7 points)** — 1) in scope vs the card? 2) only the expected files touched? 3) tests added / CI green? 4) **no secrets, tokens, DSNs or customer data anywhere in the diff?** 5) evidence attached (CI run + what was run and what was expected)? 6) claims match the diff (no "done" without proof)? 7) author ≠ checker confirmed.
 
 INTAKE T-032 — 2026-09-25 (session 2)
 Understanding: Owner decision — "ยึดแนวทาง git"; the bridge is not opened and no relay/watcher service is built. Git becomes the work channel because it is an asynchronous queue: the external assistant reads our queued work, does it on a branch, and CI + review provide the evidence, so work does not stall when nobody is answering a chat.

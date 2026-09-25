@@ -38,7 +38,8 @@ Next: Owner reviews staffing table and confirms approval; if any swap desired, M
 ---
 
 ### T-001 — Choose and set up hosting for self-hosted n8n + PostgreSQL
-Status: PARTIAL
+Status: **CLOSED — 2026-09-25 (Owner: "1 ปิด")** (was PARTIAL/PARKED)
+Closure note: the "hosting" part is satisfied — a working n8n host already exists at `n8n.nippan.org` (read-only recon 2026-09-25: 5 active workflows, 10 credentials). The remaining link, **n8n → PostgreSQL lite schema**, is **T-030** and is not duplicated here. One item from the original done-when has **no card**: *backup/restore proven against the real Supabase project* (only the local embedded-PostgreSQL dump/restore was proven, 2026-09-25). Recorded as a known follow-up; re-open or card it when the runtime phase starts.
 Parked 2026-09-25: blocked - dev machine has no Docker engine; playbook Step 0 keeps the item.
 Owner: Project Lead (mimo-v2.6-flash-free) — 2026-09-24
 Role: ops / Developer
@@ -106,8 +107,10 @@ Next: D-01 conditionally accepted pending T-010. Issue #35 checkbox conditional.
 
 ### T-BRIDGE-01 — Bridge Watcher v1 (external-session watcher)
 
-Status: PARKED — UNVERIFIED (NOT DONE)
-Parked 2026-09-25: Owner order "reset to protocol; stop all in-progress ad-hoc work"; bridge work stopped mid-flight and must not resume without Owner approval.
+Status: **DROPPED — 2026-09-25 (Owner: "2 ลบ")** (was PARKED/UNVERIFIED)
+Order: the Owner decided work is dispatched over **Git** (T-032), the bridge is not opened, and no relay/watcher service is built → this work is removed.
+Files: `.opencode/bridge/watcher.mjs` + `.opencode/bridge/watcher.test.mjs` were **deleted** from the working tree (they were untracked, never committed). The watcher wiring inside `.opencode/bridge/server.mjs` remains as an **uncommitted** modification — reverting it was blocked by the sandbox for the PL, so it is an open cleanup item (one command for the operator/builder: `git restore .opencode/bridge/server.mjs`).
+Evidence of deletion: both files absent from the working tree; `git status --short` shows them gone, `server.mjs` still `M`.
 Owner: Project Lead — 2026-09-25
 Role: Developer (builder) + Reviewer
 Risk: L3 (bridge runtime guards, external session access)
