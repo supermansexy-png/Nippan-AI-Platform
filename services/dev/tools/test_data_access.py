@@ -11,6 +11,11 @@ from data_access import DataAccess, MissingScopeError, UnsafeQueryError, Unknown
 SCOPED_SQL = "SELECT id FROM conversations WHERE tenant_id = %s AND bot_id = %s"
 PARAMS = ("t-1", "b-1")
 
+# Transaction-local scope GUC setters execute() runs on the same cursor
+# BEFORE the caller's query (exact SQL, parameterised).
+SET_TENANT_SQL = "SELECT set_config('app.tenant_id', %s, true)"
+SET_BOT_SQL = "SELECT set_config('app.bot_id', %s, true)"
+
 
 class FakeCursor:
     def __init__(self, rows):
@@ -96,6 +101,18 @@ def test_blank_scope_raises_before_connect(tenant_id, bot_id):
     assert connect.calls == 0
 
 
+# c2) fail-closed on bot_id alone: None or blank -> MissingScopeError and
+# NO connection is ever opened / nothing ever executed
+def test_blank_or_none_bot_id_fails_closed_before_connect():
+    connect = FakeConnect()
+    da = DataAccess(connect, {"test": SCOPED_SQL})
+    for bad_bot_id in (None, "", "   "):
+        with pytest.raises(MissingScopeError):
+            da.execute("test", PARAMS, tenant_id="t-1", bot_id=bad_bot_id)
+    assert connect.calls == 0
+    assert connect.connections == []
+
+
 # missing/blank scope is a ValueError subclass
 def test_missing_scope_error_is_value_error():
     assert issubclass(MissingScopeError, ValueError)
@@ -113,9 +130,31 @@ def test_full_scope_executes_and_returns_rows():
     assert all(isinstance(row, tuple) for row in got)
 
     conn = connect.connections[0]
-    assert conn.fake_cursor.executed == [(SCOPED_SQL, PARAMS)]
+    assert conn.fake_cursor.executed == [
+        (SET_TENANT_SQL, ("t-1",)),
+        (SET_BOT_SQL, ("b-1",)),
+        (SCOPED_SQL, PARAMS),
+    ]
     assert conn.fake_cursor.closed is True  # cursor closed
     assert conn.closed is True  # connection closed
+
+
+# d2) both GUC setters run, in order, on the SAME cursor, with the PASSED
+# values (distinct from the usual t-1/b-1 to catch swaps/defaults), and the
+# caller's query runs last on that same cursor/transaction
+def test_execute_sets_tenant_and_bot_gucs_in_order_on_same_cursor():
+    connect = FakeConnect()
+    da = DataAccess(connect, {"test": SCOPED_SQL})
+    da.execute("test", PARAMS, tenant_id="t-9", bot_id="b-7")
+
+    cursor = connect.connections[0].fake_cursor
+    assert len(cursor.executed) == 3
+    assert cursor.executed[0] == (SET_TENANT_SQL, ("t-9",))
+    assert cursor.executed[1] == (SET_BOT_SQL, ("b-7",))
+    assert cursor.executed[2] == (SCOPED_SQL, PARAMS)
+    # one connection, one cursor: all three calls shared it (one transaction)
+    assert len(connect.connections) == 1
+    assert connect.connections[0].fake_cursor is cursor
 
 
 # e) sql + params pass through unchanged (parameterized, not interpolated)
@@ -127,7 +166,9 @@ def test_sql_and_params_pass_through_unchanged():
 
     da.execute("test", params, tenant_id="t-1", bot_id="b-1")
 
-    recorded_sql, recorded_params = connect.connections[0].fake_cursor.executed[0]
+    executed = connect.connections[0].fake_cursor.executed
+    assert len(executed) == 3  # 2 GUC setters + the caller's query
+    recorded_sql, recorded_params = executed[2]
     assert recorded_sql == sql  # byte-for-byte, no interpolation of values
     assert recorded_params is params or recorded_params == params
 
@@ -138,7 +179,11 @@ def test_default_params_passthrough():
     connect = FakeConnect(rows=((0,),))
     da = DataAccess(connect, {"test": sql})
     da.execute("test", tenant_id="t-1", bot_id="b-1")
-    assert connect.connections[0].fake_cursor.executed == [(sql, ())]
+    assert connect.connections[0].fake_cursor.executed == [
+        (SET_TENANT_SQL, ("t-1",)),
+        (SET_BOT_SQL, ("b-1",)),
+        (sql, ()),
+    ]
 
 
 # connection is closed even when execution fails
@@ -203,7 +248,11 @@ def test_scoped_sql_executes_and_returns_rows():
 
     assert connect.calls == 1
     assert got == rows
-    assert connect.connections[0].fake_cursor.executed == [(sql, PARAMS)]
+    assert connect.connections[0].fake_cursor.executed == [
+        (SET_TENANT_SQL, ("t-1",)),
+        (SET_BOT_SQL, ("b-1",)),
+        (sql, PARAMS),
+    ]
 
 
 # e) tenant_id_extra is a different identifier: does NOT satisfy the guard
@@ -280,9 +329,64 @@ def test_registered_scoped_query_executes_and_returns():
 
     assert connect.calls == 1
     assert got == rows
-    assert connect.connections[0].fake_cursor.executed == [(sql, ("t-1", "b-1"))]
+    assert connect.connections[0].fake_cursor.executed == [
+        (SET_TENANT_SQL, ("t-1",)),
+        (SET_BOT_SQL, ("b-1",)),
+        (sql, ("t-1", "b-1")),
+    ]
 
 
 # UnknownQueryError is a ValueError subclass
 def test_unknown_query_error_is_value_error():
     assert issubclass(UnknownQueryError, ValueError)
+
+
+# --- Transaction handling: transaction-local GUCs must survive to the query ---
+# Regression for the 2026-09-25 bug where an autocommit connection reset
+# `set_config(..., true)` before the caller query ran (RLS then saw no scope).
+
+class TxConnection(FakeConnection):
+    def __init__(self, rows, autocommit=True, explode_execute=False):
+        super().__init__(rows)
+        self.autocommit = autocommit
+        self.explode_execute = explode_execute
+        self.commits = 0
+        self.rollbacks = 0
+
+    def cursor(self):
+        if self.explode_execute:
+            class ExplodingCursor(FakeCursor):
+                def execute(self, sql, params):
+                    raise RuntimeError("boom")
+            self.fake_cursor = ExplodingCursor(())
+        return self.fake_cursor
+
+    def commit(self):
+        self.commits += 1
+
+    def rollback(self):
+        self.rollbacks += 1
+
+
+def test_execute_forces_single_transaction_and_commits():
+    conn = TxConnection([("x",)], autocommit=True)
+    da = DataAccess(lambda: conn, {"q": SCOPED_SQL})
+    rows = da.execute("q", PARAMS, tenant_id="t-1", bot_id="b-1")
+
+    assert rows == [("x",)]
+    assert conn.autocommit is False  # forced off so the GUCs survive to the query
+    assert conn.commits == 1
+    assert conn.rollbacks == 0
+    assert conn.closed is True
+
+
+def test_execute_rolls_back_and_reraises_on_query_error():
+    conn = TxConnection([], autocommit=False, explode_execute=True)
+    da = DataAccess(lambda: conn, {"q": SCOPED_SQL})
+    with pytest.raises(RuntimeError):
+        da.execute("q", PARAMS, tenant_id="t-1", bot_id="b-1")
+
+    assert conn.rollbacks == 1
+    assert conn.commits == 0
+    assert conn.closed is True
+

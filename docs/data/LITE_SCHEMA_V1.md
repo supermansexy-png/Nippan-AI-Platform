@@ -123,3 +123,27 @@ reason to graduate from this schema before scaling past Phase A.
 Database-enforced RLS, vector search, versioned bot config history,
 formal audit-event tables (Phase A uses the Decision Log and monitoring
 log in `docs/warroom/`).
+
+## Row Level Security (Lite RLS v1)
+
+Status: **ADDED AFTER PHASE A** — the "no database-enforced RLS" statements
+above reflect the original Phase A design; Lite RLS v1 (below) supersedes
+them additively for the `lite_*` tables.
+
+- All 7 `lite_*` tables (`lite_tenants`, `lite_bots`, `lite_channels`,
+  `lite_end_customers`, `lite_conversations`, `lite_memory_summaries`,
+  `lite_usage_log`) now have both `ENABLE ROW LEVEL SECURITY` and
+  `FORCE ROW LEVEL SECURITY`.
+- Policies are `FOR ALL TO nippan_runtime` with both `USING` and
+  `WITH CHECK`:
+  - `lite_tenants`: `tenant_id = app_private.current_tenant_id()`
+  - the other 6 tables: `tenant_id = app_private.current_tenant_id()
+    AND bot_id = app_private.current_bot_id()`
+- The runtime must set transaction-local scope before touching these
+  tables: `SET LOCAL app.tenant_id` and `SET LOCAL app.bot_id`
+  (`services/dev/tools/data_access.py` uses
+  `SELECT set_config('app.tenant_id', ..., true)` and
+  `SELECT set_config('app.bot_id', ..., true)`). Without them the
+  policy functions resolve to no scope and RLS returns zero rows /
+  rejects writes — fail-closed by design.
+- Migration: `migrations/20260925120000_lite_rls_v1.sql`.
