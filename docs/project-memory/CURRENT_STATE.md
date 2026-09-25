@@ -314,6 +314,36 @@ Both War Room acceptance cards are DONE on branch `dev-workspace`:
 - Next: pick the next card; parked T-001 (n8n + PostgreSQL hosting) still blocked on Docker;
   the T-026 residual could become a follow-up card.
 
+## Session 2026-09-25 (2) — bridge, n8n MCP, gateway recon
+
+- **Bridge** (`.opencode/bridge/server.mjs`) = the dev-time link to the external OpenAI
+  assistant (gpt-5.6-sol) via the Cloudflare tunnel-client → `127.0.0.1:4100`. Fixes this
+  session: `/.well-known/*` now returns **JSON 404** (was the Express HTML page, which broke
+  the OpenAI connector's OAuth discovery); guardrails added — audit log
+  (`.opencode/bridge/privileged-audit.log`), 10-minute session rate limit, `abort_task`
+  limited to sessions this bridge created, and a **PAUSE** kill switch
+  (`.opencode/bridge/PAUSE` suspends all mutating tools with no restart). The Owner
+  re-enabled the privileged tools (`opencode_start_task` / `opencode_abort_task`) with a
+  token; live-verified: 7 tools, wrong token rejected, PAUSE blocks `send_message`.
+- **opencode MCP config**: added `n8n` remote MCP (`https://n8n.nippan.org/mcp-server/http`,
+  bearer from env `N8N_MCP_TOKEN`) — verified working (39 tools). Every mutating n8n tool is
+  disabled except `create_folder` (Owner order: the existing n8n work is **legacy — read-only,
+  do not touch**). Added `nippan-gateway` (`https://mcp.nippan.org/mcp`, Cloudflare Access) but
+  left `enabled: false`: its OAuth needs the redirect URI
+  `http://127.0.0.1:19876/mcp/oauth/callback` registered in the Cloudflare OAuth client.
+- **n8n recon (read-only)**: 5 active workflows — Personal Assistant - LINE, Bot n8n MCP Tools,
+  Task Reminder - LINE, Personal Assistant - LINE Group, Skill Loader (all the Owner's legacy
+  personal automation); 2 data tables (`line_sessions`, `group_members`); 10 credentials
+  (LINE Messaging, Google, Gemini, SerpApi, WooCommerce, `nippan-ai-bot` basic auth) —
+  **no PostgreSQL credential yet**. Conclusion: Step 0 "n8n + HTTPS" is satisfied by the
+  existing host; the missing link is **n8n → PostgreSQL lite schema**.
+- **Board**: empty (T-026 archived). **PR #83 is OPEN** (waiting for the Owner to merge).
+  Suggested next card **T-030 — wire n8n → PostgreSQL lite schema** (needs the Owner: Supabase
+  connection string + permission to create new workflows inside a dedicated folder
+  `Nippan Phase A`).
+- **Owner actions pending**: restart opencode after the config changes; confirm/create the n8n
+  folder; merge PR #83.
+
 ## Source-of-Truth Rule
 
 Repository and runtime evidence override this document whenever they disagree.
