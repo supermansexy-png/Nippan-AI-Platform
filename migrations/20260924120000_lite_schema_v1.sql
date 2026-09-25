@@ -125,7 +125,20 @@ comment on table public.lite_usage_log is 'Usage metrics owned by Cost Guard. En
 create index if not exists idx_lite_usage_bot    on public.lite_usage_log(bot_id);
 create index if not exists idx_lite_usage_date   on public.lite_usage_log(date desc);
 
--- Grant nippan_runtime role select/insert/update on all lite tables (for n8n workflow access)
-grant select, insert, update, delete on all tables in schema public to nippan_runtime;
+-- Grant nippan_runtime select/insert/update/delete on the Phase A lite_* tables
+-- only (for n8n workflow access).
+-- Do NOT grant on ALL tables in schema public: that would breach the A-001
+-- least-privilege boundary enforced by
+-- tests/sql/phase2_privilege_boundaries.sql (nippan_runtime must not gain
+-- INSERT/UPDATE/DELETE on tables such as public.agent_activations).
+grant select, insert, update, delete on
+  public.lite_tenants,
+  public.lite_bots,
+  public.lite_channels,
+  public.lite_end_customers,
+  public.lite_conversations,
+  public.lite_memory_summaries,
+  public.lite_usage_log
+to nippan_runtime;
 
 commit;
