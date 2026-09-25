@@ -63,12 +63,6 @@ Confidence: high at unit level; medium overall (real-DB path INFERRED from match
 Next: Gate-4 verification by a different model/PL; postgres integration run when DSN available; PL decides card acceptance.
 Model used: z-ai/glm-5.3-flash (OpenRouter)
 
-LIVE-DB ADDENDUM — T-009 — 2026-09-25 (PL, after the T-008 fix round 5)
-The 6 PostgreSQL integration tests that were skipped for lack of a DSN were executed against a real PostgreSQL 16 (embedded pgserver; all 7 migrations applied): `python -m pytest -q tests` = **152 passed, 0 skipped**. This closes the two previously-UNVERIFIED items:
-- Item 4 (values cross-checked vs DB) → VERIFIED: `tests/test_war_room_read_postgres.py` builds the snapshot from real `usage_events`/`project_room_decisions` rows and passes.
-- Item 5 (live render with real usage_events) → VERIFIED at the projection level: the read-model → snapshot projection runs against real DB rows (frontend static render already VERIFIED). `test_war_room_transport_postgres` also persists owner commands over HTTP with zero provider spend.
-Residual: the deployed Supabase preview itself was not exercised (no DSN); the local real-Postgres run is the strongest available evidence.
-
 PLAN — T-008 (fix round 3) — Project Lead — 2026-09-25 (Owner approved "ให้เอางานนี้ขึ้นไปทำเลย")
 - Reason: reviewer REJECT — the fix added a new `owner_decision` key to the frozen event payload (`schemas/war-room-event-v1.schema.json`, payload `additionalProperties:false`).
 - Approach (mandated): remove the new key entirely; carry the owner decision on EXISTING frozen fields only (`content_text`/`content_reference`, existing `message_type=OWNER_DECISION`, existing `participant_id` = acting owner); persistence detects the case deterministically and writes `public.project_room_decisions` in the same transaction, fail-closed on missing/invalid data. NO schema change.
@@ -173,6 +167,12 @@ Problems: the fast test named by the previous delivery only proves the contract 
 Confidence: high on static wiring; low on live behavior — hence PARTIAL, not DONE.
 Next: run postgres integration suite with DSN (test_war_room_read_postgres.py covers usage_events → snapshot) and/or exercise the deployed preview with enabled model turns, then record evidence.
 Model used: z-ai/glm-5.3-flash (OpenRouter)
+
+LIVE-DB ADDENDUM — T-009 — 2026-09-25 (PL, after the T-008 fix round 5)
+The 6 PostgreSQL integration tests that were skipped for lack of a DSN were executed against a real PostgreSQL 16 (embedded pgserver; all 7 migrations applied): `python -m pytest -q tests` = **152 passed, 0 skipped**. This closes the two previously-UNVERIFIED items:
+- Item 4 (values cross-checked vs DB) → VERIFIED: `tests/test_war_room_read_postgres.py` builds the snapshot from real `usage_events`/`project_room_decisions` rows and passes.
+- Item 5 (live render with real usage_events) → VERIFIED at the projection level: the read-model → snapshot projection runs against real DB rows (frontend static render already VERIFIED). `test_war_room_transport_postgres` also persists owner commands over HTTP with zero provider spend.
+Residual: the deployed Supabase preview itself was not exercised (no DSN); the local real-Postgres run is the strongest available evidence.
 
 ---
 
