@@ -147,6 +147,15 @@
       "url": "https://mcp.nippan.org/mcp",
       "enabled": false,
       "oauth": {}
+    },
+    "n8n": {
+      "type": "remote",
+      "url": "https://n8n.nippan.org/mcp-server/http",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:N8N_MCP_TOKEN}"
+      }
     }
   }
 }
