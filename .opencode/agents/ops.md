@@ -1,7 +1,7 @@
 ﻿---
 description: Ops (dev-time) ดูแล GitHub CI Render Cloudflare Supabase hosting และ deployment evidence ตามการ์ดงาน โดยการเปลี่ยนสำคัญต้องได้รับอนุมัติ
 mode: subagent
-model: opencode/muse-spark-1.2-contributor-free
+model: opencode/muse-spark-1.3-contributor-free
 permission:
   task: deny
 ---

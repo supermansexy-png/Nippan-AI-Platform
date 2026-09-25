@@ -1,19 +1,44 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-25
-**หัวข้อ:** Nippan PL — PR #83 merged, RLS+role ขึ้น Supabase จริงแล้ว, Bridge Watcher v1 PARKED
+**หัวข้อ:** Nippan PL — Protocol Reset 2026-09-25 (Bridge PARKED, RLS DONE, T-030/T-031 held)
 
-1. **PR #83 = MERGED** (2026-09-25 14:06 UTC, เข้า branch `phase2/postgres-logical-schema`)
-2. **RLS + role ขึ้น Supabase จริงแล้ว** (project `xzxwakvsbdzkdybijbzs`): apply `20260925120000_lite_rls_v1.sql` → ทั้ง 7 ตาราง `lite_*` ได้ `rls_on=true`, `forced=true`, 1 policy ต่อตาราง · apply `20260925130000_n8n_runtime_login_role.sql` → role `nippan_n8n` (LOGIN, INHERIT, member ของ `nippan_runtime`, ไม่ bypass RLS)
-   หลักฐานสด (รันใน transaction แล้ว rollback): scope tenant A → `tenants_visible=1`, `tenantB_visible=0`, `bots_visible=1`, `botB_visible=0`
-3. **ค้างรอ Owner**: ตั้งรหัสผ่าน role `nippan_n8n` เองใน Supabase SQL editor (`alter role nippan_n8n password '...'`) — ห้ามแปะในแชท · ยังไม่ได้สร้าง Postgres credential ใน n8n · custom role ผ่าน pooler = UNVERIFIED (ให้ใช้ direct connection)
-4. **ไฟล์ค้าง uncommitted 5 ไฟล์**: `.opencode/bridge/watcher.mjs` (ใหม่), `.opencode/bridge/watcher.test.mjs` (ใหม่), `.opencode/bridge/server.mjs` (+42), `.gitignore`, `migrations/20260925130000_n8n_runtime_login_role.sql` (ใหม่) — commit เฉพาะไฟล์ migration (repo กับ DB ต้องตรงกัน)
-5. **Bridge Watcher v1 = IN_PROGRESS / PARKED** — โค้ดเขียนเสร็จบางส่วน ยังไม่รันเทสต์ ไม่มีหลักฐาน ยังไม่ผ่าน reviewer → **ห้ามนับเป็น DONE**; รอ Owner เลือก (ก) commit เป็น WIP บนสาขาแยก (ข) park ไม่ commit (ค) ลบ
-6. ข้อควรระวัง: bridge bind `127.0.0.1` เท่านั้น · watcher จดแค่ชื่อ tool ไม่จดเนื้อหาข้อความ · งาน n8n เดิม = legacy read-only · ระงับ bridge ได้ทันทีด้วยไฟล์ `.opencode/bridge/PAUSE` · **เครดิต OpenRouter เหลือ ~$1.81 — ห้ามเรียกโมเดล/worker/subagent ที่เสียเงิน**
+Nippan PL reset to protocol (2026-09-25). DONE with evidence: PR #83 merged; RLS+role nippan_n8n live on Supabase (project xzxw...); migration efe21c7 committed (watcher excluded); cards T-RLS-01 (DONE retro) + T-BRIDGE-01 (PARKED/UNVERIFIED) + T-030 (READY) + T-031 (INTAKE) written in TASKS.md. Supreme rules 6 items recorded in SESSION_HANDOFF + decision-log; DEV_ERROR_LOG created; credit ~$1.76 — no paid subagent/build used. Pending: push 2 commits (approved), T-030 credential/test (blocked by Owner), T-031 bridge-AI goal/session/PAUSE/restart (missing), Bridge v1 choice (c) confirmed but not executed. Next: Owner picks 1 pending card → INTAKE → free HR (muse-spark + space-bunny) → approval → build/test with evidence → DELIVERY. Stop until card + approval.
 <!-- AUTO-HANDOFF:END -->
 
-# Session Handoff — 2026-09-25 (อัปเดต)
+## ▶ เริ่มต่อทันที (อัปเดต session 2 — 2026-09-25, ตรวจกับ repo/DB จริงแล้ว)
+> ⚠️ handoff auto block ด้านล่าง **ล้าสมัยบางส่วน** — ใช้บล็อกนี้เป็นหลัก (session 2 ตรวจซ้ำทุกข้อ)
+
+**สถานะที่ VERIFIED (session 2, read-only):**
+- บอร์ด `TASKS.md` **ถูกเขียนทับ** จนการ์ด T-RLS-01/T-BRIDGE-01/T-031 หาย (ไม่เคย commit) → **ซ่อมแล้ว**: บอร์ดเหลือ 2 การ์ดเปิด (T-030 READY · T-031 BLOCKED/NEEDS_OWNER_INPUT) + ย้าย T-RLS-01 → `docs/archive/TASKS_DONE_ARCHIVE.md`, T-BRIDGE-01 → `docs/archive/TASKS_PARKED.md`
+- **ไม่ต้อง push อะไรแล้ว** — `git log origin/dev-workspace..HEAD` ว่าง (HEAD = `973bc05`, PR #83 MERGED 2026-09-25T14:06:40Z)
+- Supabase `xzxwakvsbdzkdybijbzs`: `nippan_n8n` rolcanlogin=true · `nippan_runtime` false · 7 ตาราง `lite_*` `rls=true force=true` (ยืนยันสด session 2)
+- n8n: folder `Nippan Phase A` (`zClFVASPRDPnaeuQ`) มีอยู่และ **ว่าง** (0 workflow) · credential `6anMUYRLDYPduKY7` ("Postgres account") มีอยู่ · host `aws-0-ap-northeast-2.pooler.supabase.com:5432` · user `nippan_n8n.xzxwakvsbdzkdybijbzs` · db `postgres` · SSL=require + Ignore SSL Issues
+- **credit ≈ $1.60** (session 2: 40 / 38.4023) → งานเสียเงินแทบทำไม่ได้
+
+**ตัวบล็อกจริงของ T-030 (ไม่ใช่พี่แล้ว):**
+- `n8n_create_workflow_from_code` / `n8n_update_workflow` / `n8n_execute_workflow` = `true` ใน `opencode.json` แล้ว แต่ **ยังไม่ขึ้นเป็น tool ในเซสชันที่รันอยู่** → สร้าง/รัน workflow ทดสอบไม่ได้ · ต้อง **ปิด-เปิดแอป opencode ใหม่ทั้งตัว** (กด `/new` ไม่พอ) · subagent ในเซสชันเดียวกันได้ tool ชุดเดียวกัน → ไม่ช่วย
+
+**งานที่เหลือของ T-030 (หลัง restart):** สร้าง workflow ทดสอบใน Phase A → รัน 2 ชุด (scoped → คาด 1/1 · tenant อื่น → คาด 0) → insert+read แล้ว rollback → reviewer `space-bunny-free` ตรวจ → ปิด T-030 (ยังไม่ DONE จนมีผล)
+**T-031 ต้องการจากพี่:** (1) เป้าหมาย bridge AI (2) session ที่อนุญาต (3) อนุมัติถอด `PAUSE` + restart · ยังไม่มี → ห้ามเรียก builder
+**หมายเหตุ:** roster/agent files อัปเดตเป็น `opencode/muse-spark-1.3-contributor-free` แล้ว (Owner อนุมัติ 2026-09-25; ของเดิมไม่มีในระบบ) · Bridge watcher ยัง **PARKED/UNVERIFIED** (ไฟล์ untracked) ห้าม PL แก้เอง
+**บทเรียน:** อย่าใช้ `write` ทับไฟล์บอร์ด/เอกสารที่ใช้ร่วมกัน ให้ `edit`/append และ commit การ์ดในเทิร์นเดียวกัน
+
+# Session Handoff — 2026-09-25 (อัปเดต) — RESET TO PROTOCOL
 
 อ่านไฟล์นี้ก่อนเริ่มงานในแชทใหม่ แล้วอ่านเพิ่มเฉพาะที่จำเป็น อย่าโหลดทั้ง repo
+
+> **RESET 2026-09-25 (Owner)**: ยกเลิกวิธีการทำงานแบบ ad-hoc ทั้งหมด → กลับไปใช้ AI_OPERATING_PROTOCOL + TASK_CONTROL + กฎเหนือสุด (6 ข้อ) เท่านั้น · PL ห้ามแก้โค้ดเอง · เครดิต ~$1.76 → ห้ามใช้ paid subagent/build
+
+## ⚖️ กฎเหนือสุด (Owner 2026-09-25) — ยึดเหนือเอกสาร/นโยบายอื่นทั้งหมด · ห้ามตีความเอง
+> ถ้าพบว่ากฎอื่นขัดกับชุดนี้ → **หยุด และรายงานพี่** ห้ามเลือกเอง
+> บันทึกเต็มอยู่ใน `docs/warroom/decision-log.md` (entry 2026-09-25 "Supreme operating rules")
+
+1. **งานใหม่ทุกงาน**: การ์ดก่อน → INTAKE → ฝ่ายบุคคล (model-recruiter) เช็คความพร้อม → รายงานพี่ → **รออนุมัติ** → จึงเรียก builder
+2. **PL ทำได้แค่ คิด/วางแผน/สั่ง/รายงาน** — ห้าม `write`/`edit` โค้ด (source/tests/migrations/config) ด้วยมือตัวเอง → งานลงมือต้องผ่าน builder/subagent เท่านั้น (เอกสาร dev-process PL แก้ได้)
+3. **เรียก AI ตัวอื่นทุกครั้ง** ต้องใช้ template จาก `docs/warroom/START_PROMPT.md` (INTAKE ก่อน / DELIVERY พร้อมหลักฐานหลัง)
+4. **ก่อนเริ่มงานที่เสียเงินทุกครั้ง** ต้องเช็คเครดิตก่อน + แจ้งพี่ทุกครั้ง (ล่าสุด 2026-09-25: OpenRouter เหลือ ≈ **$1.76** → งานเสียเงินแทบทำไม่ได้)
+5. **1 repo = 1 แชทที่เขียนไฟล์ได้** — ห้ามเปิดแชทอื่นเขียนทับกัน (subagent/worker = เครื่องมือของแชทนี้, รันทีละงาน ห้ามทับไฟล์)
+6. **ห้ามอ้าง DONE ถ้าไม่มีหลักฐานที่รันซ้ำได้** — ถ้าพิสูจน์ไม่ได้ให้เขียน **UNVERIFIED**
 
 ## วิธีเริ่มหน้าใหม่ (Owner ใช้แอป desktop)
 - ระหว่างแชท: ใช้ `/compact` เพื่อย่อประวัติ (ลด token) — ทำงานต่อในแชทเดิมได้
@@ -44,6 +69,7 @@
 - War Room = track แยก ACTIVE (T-007/T-008/T-009)
 
 ## กฎที่ Owner ตั้งไว้ (บังคับ)
+> ⚠️ กฎชุดนี้อยู่ **ใต้** "กฎเหนือสุด" ด้านบน — ถ้าขัดกันให้ใช้กฎเหนือสุด
 1. **ทุกอย่างที่เสียเงิน (เรียก agent/โมเดล) ต้องขอ Owner อนุมัติก่อน** — ห้ามทำทันที
 2. Owner เป็นผู้ตัดสินใจสุดท้าย (พี่เชษ)
 3. รายงานสั้น เน้นเนื้อ ๆ (Owner สั่งลดความยาว ~80%)
@@ -76,10 +102,10 @@
 | builder | `z-ai/glm-5.3-flash` (paid, Owner-locked — ห้ามสลับ) | nvidia/nemotron-3.5-lightning |
 | reviewer L1/L2/L3 | `opencode/space-bunny-free` (zero-retention) | thinkingmachines/inkling-small:free |
 | reviewer L4 (ความแม่นสูง) | `anthropic/claude-opus-5.5:batch` (paid, Owner-selected) | — |
-| security L1/L2/L3 | `openrouter/nex-agi/nex-n2.5-mini:free` (≠ reviewer) | opencode/muse-spark-1.2-contributor-free |
-| ops | `opencode/muse-spark-1.2-contributor-free` | — |
-| researcher | `opencode/muse-spark-1.2-contributor-free` | — |
-| assistant | `opencode/nemotron-3-ultra-free` | opencode/muse-spark-1.2-contributor-free |
+| security L1/L2/L3 | `openrouter/nex-agi/nex-n2.5-mini:free` (≠ reviewer) | opencode/muse-spark-1.3-contributor-free |
+| ops | `opencode/muse-spark-1.3-contributor-free` | — |
+| researcher | `opencode/muse-spark-1.3-contributor-free` | — |
+| assistant | `opencode/nemotron-3-ultra-free` | opencode/muse-spark-1.3-contributor-free |
 | model-recruiter (HR) | `openai/gpt-6-luna` | tencent/hy3-preview |
 
 - L4 เป็น **review tier** ไม่ใช่ risk level ใน TASK_CONTROL §3 (protected — มีแค่ L1–L3)
@@ -99,7 +125,7 @@
 - PARTIAL: T-001 (ติด Docker), T-007 (รอ remote access)
 - T-004 (legal) ถูก Owner ตัดออกจากแผน dev-time
 - **ค้างรอพี่**: revision ที่จะใช้ตรวจรับ D-02/D-03 (เพดาน audit 90% — รับได้ทีละ 1 ตัว)
-- **ทีมโมเดลเปลี่ยน 2026-09-25 (option A, restart แล้วมีผลจริง)**: assistant=`opencode/nemotron-3-ultra-free`; reviewer=`opencode/space-bunny-free`; security=`openrouter/nex-agi/nex-n2.5-mini:free`; ops/researcher=`opencode/muse-spark-1.2-contributor-free`; builder=`z-ai/glm-5.3-flash` (Owner-locked 2026-09-25) — เหตุผล/หลักฐานอยู่ใน `MODEL_ROSTER.md` ส่วน "Team update 2026-09-25"
+- **ทีมโมเดลเปลี่ยน 2026-09-25 (option A, restart แล้วมีผลจริง)**: assistant=`opencode/nemotron-3-ultra-free`; reviewer=`opencode/space-bunny-free`; security=`openrouter/nex-agi/nex-n2.5-mini:free`; ops/researcher=`opencode/muse-spark-1.3-contributor-free`; builder=`z-ai/glm-5.3-flash` (Owner-locked 2026-09-25) — เหตุผล/หลักฐานอยู่ใน `MODEL_ROSTER.md` ส่วน "Team update 2026-09-25"
 - **config**: `opencode.json` pin explore/general เป็นฟรี + ให้ assistant/ops/researcher `edit: allow`; `small_model` = muse-spark-1.2
 - **บทเรียนโมเดลฟรี**: `big-pickle` รายงาน False DONE (T-003 WS2 → ai-scorecard); `ling-3.0` เชื่อมต่อไม่ได้; โมเดลใหม่ (space-bunny, nex-n2.5-mini) กินสเต็ปจนไม่สรุป → ต้องล็อกสโคปใน prompt
 

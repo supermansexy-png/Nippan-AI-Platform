@@ -49,7 +49,7 @@ docs/warroom/decision-log.md — เอกสารเหล่านี้เ�
 - **PL = คิด/วางแผน/สั่ง/รายงานเท่านั้น** ไม่ลงมือเอง
 - **builder = paid `z-ai/glm-5.3-flash` เท่านั้น** (Owner order 2026-09-25 — ห้ามสลับเป็นตัวอื่น; `qwen/qwen3.7-flash` แบนถาวร) · ตำแหน่งผู้ช่วย = โมเดลฟรี Zen
 - ตรวจงาน (Team update 2026-09-25): reviewer L1–L3 → `opencode/space-bunny-free`; security L1–L3 → `openrouter/nex-agi/nex-n2.5-mini:free`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
-- assistant = `opencode/nemotron-3-ultra-free` · ops/researcher = `opencode/muse-spark-1.2-contributor-free`
+- assistant = `opencode/nemotron-3-ultra-free` · ops/researcher = `opencode/muse-spark-1.3-contributor-free`
 - **งานเสียเงินที่ไม่รีบทุกงาน → ส่ง Batch API (`:batch` variant) เสมอ** (ถูกกว่า ~40–60%); งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว
 - รายละเอียดเต็มอยู่ที่ docs/product/MODEL_ROSTER.md + START_PROMPT.md

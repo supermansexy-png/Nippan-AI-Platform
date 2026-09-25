@@ -90,8 +90,8 @@ The T-014 cross-check table above is historical. Current sets after T-020/T-022:
 ```
 Builder model set   = { z-ai/glm-5.3-flash, nvidia/nemotron-3.5-lightning }   (paid)
 Reviewer model set  = { opencode/space-bunny-free, thinkingmachines/inkling-small:free }
-Security model set  = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.2-contributor-free }
-Assistant model set = { opencode/nemotron-3-ultra-free, opencode/muse-spark-1.2-contributor-free }
+Security model set  = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.3-contributor-free }
+Assistant model set = { opencode/nemotron-3-ultra-free, opencode/muse-spark-1.3-contributor-free }
 L4 verify (paid)    = { anthropic/claude-opus-5.5 }   (supersedes the earlier GLM L4 entry — see Team update 2026-09-25)
 
 Intersection(builder, reviewer) = ∅
@@ -164,11 +164,11 @@ Supersedes the earlier builder and L4 assignments in this file. Builder Primary 
 | Role | Primary | Backup | Why / evidence status |
 |---|---|---|---|
 | builder | `z-ai/glm-5.3-flash` | `nvidia/nemotron-3.5-lightning` | Primary is Owner-approved, callable per Owner-provided evidence; live catalogue confirms tools + structured_outputs, 1.31M context, coding index 71.5. Nemotron backup kept as directed; live-call readiness **UNKNOWN** (catalogue metadata only). `qwen/qwen3.7-flash` is **PERMANENTLY BANNED** per `docs/warroom/ai-scorecard.md` until Owner reverses. |
-| assistant | `opencode/nemotron-3-ultra-free` | `opencode/muse-spark-1.2-contributor-free` | Owner chose option A; completed usage-tracker task that mimo failed silently (57.9s vs 138s no-output). |
+| assistant | `opencode/nemotron-3-ultra-free` | `opencode/muse-spark-1.3-contributor-free` | Owner chose option A; completed usage-tracker task that mimo failed silently (57.9s vs 138s no-output). |
 | reviewer (L1/L2/L3) | `opencode/space-bunny-free` | `thinkingmachines/inkling-small:free` | Reviewer moved off assistant's model; space-bunny is the only stated zero-retention model. |
-| security (L1/L2/L3) | `openrouter/nex-agi/nex-n2.5-mini:free` | `opencode/muse-spark-1.2-contributor-free` | Fallback guide first pick; see free-model evidence and caveats below. |
-| ops | `opencode/muse-spark-1.2-contributor-free` | `opencode/space-bunny-free` | big-pickle False DONE recorded in scorecard. |
-| researcher | `opencode/muse-spark-1.2-contributor-free` | `opencode/space-bunny-free` | ling-3.0 could not connect in its probe; see fallback guide. |
+| security (L1/L2/L3) | `openrouter/nex-agi/nex-n2.5-mini:free` | `opencode/muse-spark-1.3-contributor-free` | Fallback guide first pick; see free-model evidence and caveats below. |
+| ops | `opencode/muse-spark-1.3-contributor-free` | `opencode/space-bunny-free` | big-pickle False DONE recorded in scorecard. |
+| researcher | `opencode/muse-spark-1.3-contributor-free` | `opencode/space-bunny-free` | ling-3.0 could not connect in its probe; see fallback guide. |
 | reviewer L4 (paid) | `anthropic/claude-opus-5.5:batch` | — | **APPOINTED by Owner 2026-09-25** (single model, Owner chose one only). Intelligence 57.6 (highest of the shortlist); batch $2/$10 per 1M (real-time $4/$20) → batch is ~50% cheaper. Used rarely; explicit Owner-approved exception to the normal MODEL_POLICY cap. |
 
 **Live catalogue correction (2026-09-25):** `z-ai/glm-5.3-flash` is currently **$0.045 input / $0.60 output per 1M tokens**, not the roster's stale $0.15/$0.50. `get-model` confirms tools, tool_choice and structured_outputs; context 1,310,720; Artificial Analysis coding 71.5, intelligence 41.8, agentic 50.9. Its `:batch` price is $0.06/$0.20 (not the real-time price).
@@ -191,7 +191,7 @@ Illustrative cost for 100k input + 20k output tokens: GPT-6 Luna batch ≈ **$0.
 ```
 Builder        = { z-ai/glm-5.3-flash, nvidia/nemotron-3.5-lightning }
 Free reviewer  = { opencode/space-bunny-free, thinkingmachines/inkling-small:free }
-Security       = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.2-contributor-free }
+Security       = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.3-contributor-free }
 L4 (paid)      = { anthropic/claude-opus-5.5 }
 All pairwise intersections = ∅  (PASS)
 ```

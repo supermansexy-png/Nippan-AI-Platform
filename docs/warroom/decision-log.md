@@ -406,3 +406,87 @@ which revision to record acceptance evidence against.
 **Evidence**: live MCP verification from the PL side — tool list = 7 (`opencode_start_task` + `opencode_abort_task` present); wrong `authToken` rejected; with `PAUSE` present `opencode_send_message` is rejected ("Bridge is PAUSED"); after removing `PAUSE`, `opencode_send_message` passes the allowlist and reaches the 8000-character cap. Commits `a226cd3`, `d2d67c2`.
 
 **Task**: bridge privileged enablement + guardrails (dev tooling; security-sensitive).
+
+---
+
+## DECISION — 2026-09-25 — Owner order: reset to protocol; stop all in-progress ad-hoc work; use AI_OPERATING_PROTOCOL + TASK_CONTROL only; bridge WIP parked; record all; no paid work until credit restored
+
+**Owner order (verbatim)**: "กลับมาทำงานตามระบบ — ยกเลิกวิธีที่ทำอยู่ตอนนี้ทั้งหมด แล้วทำตาม AI_OPERATING_PROTOCOL + TASK_CONTROL เท่านั้น". Conditions: (a) credit ~$1.81 → no paid subagent/model; (b) PL must not edit code in this chat (read only). Sequence executed in this turn:
+
+1. STOP Bridge Watcher v1 (PARKED, NOT DONE, not pushed/merged, not counted DONE).
+2. Open retroactive cards in TASKS.md: T-BRIDGE-01 (PARKED, scope + measurable done-when + team z-ai/glm-5.3-flash / space-bunny-free) and T-RLS-01 (DONE 2026-09-25, evidence: migration `efe21c7`, role `nippan_n8n`, RLS scope test rolled back, live PG verified, folder `zClFVASPRDPnaeuQ`).
+3. Commit ONLY migration file `migrations/20260925130000_n8n_runtime_login_role.sql` (already in commit `efe21c7`; repo does not lag DB); watcher/uncommitted files excluded.
+4. Record actions in `decision-log.md`; record errors/unverified in `DEV_ERROR_LOG.md`; update `SESSION_HANDOFF.md` + `CURRENT_STATE.md`; report ≤10 lines.
+5. No paid AI/subagent called (credit stop enforced); all work documented with evidence labels (VERIFIED / UNVERIFIED / INFERRED).
+
+**Evidence**: `git log --oneline -- migrations/20260925130000_n8n_runtime_login_role.sql` = `efe21c7`; `TASKS.md` cards T-BRIDGE-01 + T-RLS-01 present; `DEV_ERROR_LOG.md` created; `SESSION_HANDOFF.md` supreme-rules block preserved; `openrouter_get-credits` ≈ $1.76 reported to Owner in same message.
+
+**Effect**: Work is now tracked per protocol. Any further work requires new card → INTAKE → HR readiness → Owner approval → then builder/subagent. The bridge stays PARKED until Owner explicitly approves restart/PAUSE removal/session allowlist.
+
+**Task**: governance / reset; no code changed; no production impact; bridge untouched; T-030 and T-031 remain on hold awaiting Owner instructions.
+
+---
+
+## DECISION — 2026-09-25 — Supreme operating rules for every task (Owner order, verbatim)
+
+**Owner order (verbatim — declared "กฎระเบียบที่เหนือสุด", 2026-09-25)**:
+
+> กติกาที่ต้องยึดจากนี้ทุกงาน (ห้ามตีความเอง):
+>
+> - งานใหม่ทุกงาน: การ์ดก่อน → INTAKE → ฝ่ายบุคคลเช็คความพร้อม → รายงานพี่ → รออนุมัติ → จึงเรียก builder
+> - PL ทำได้แค่ คิด/วางแผน/สั่ง/รายงาน — ห้าม write/edit โค้ดด้วยมือตัวเอง
+> - เรียก AI ตัวอื่นทุกครั้งต้องใช้ template จาก docs/warroom/START_PROMPT.md (INTAKE ก่อน / DELIVERY พร้อมหลักฐานหลัง)
+> - ก่อนเริ่มงานที่เสียเงินทุกครั้ง ต้องเช็คเครดิตก่อนและแจ้งพี่ทุกครั้ง
+> - 1 repo = 1 แชทที่เขียนไฟล์ได้ — ห้ามเปิดแชทอื่นเขียนทับกัน
+> - ห้ามอ้าง DONE ถ้าไม่มีหลักฐานที่รันซ้ำได้ ให้เขียน UNVERIFIED แทน
+
+**Decision (Owner)**: these six rules are the highest authority for all work in this repo. They outrank any conflicting statement in `AGENTS.md`, `docs/warroom/*`, `docs/product/*`, roster/agent files, or task-card text. If a conflict is found, the PL must STOP and report it to the Owner instead of interpreting the rules.
+
+**Effect / PL obligations**:
+- Card-first flow is mandatory; no builder is called before the Owner approves the plan.
+- The PL never hand-edits code (`write`/`edit` on source, tests, migrations, config). All code changes go to a builder/subagent. Documents (project memory, decision log, cards) remain PL-maintainable.
+- Every AI call uses the `START_PROMPT.md` template (INTAKE before, DELIVERY with evidence after).
+- Before any paid work, the PL checks credit and reports the number to the Owner in the same message that requests approval.
+- One writable chat per repo; subagents/workers are tools of this chat and must not run overlapping file scopes.
+- DONE requires reproducible evidence; otherwise the label is UNVERIFIED.
+
+**Evidence**: Owner message 2026-09-25 (PL session). Credit check at the same time: `get-credits` → `total_credits` 40, `total_usage` 38.2388 → remaining ≈ **$1.76** (reported to the Owner; effectively no paid work possible).
+
+**Task**: governance record (no code change). Rules are mirrored in `docs/project-memory/SESSION_HANDOFF.md`.
+
+---
+
+## 2026-09-25 — Owner grants n8n working rights inside folder "Nippan Phase A"
+
+**Decision (Owner, verbal in session)**: PL may work freely inside the n8n folder **`Nippan Phase A`** (id `zClFVASPRDPnaeuQ`) — create/run test workflows needed to finish T-030.
+**Consequence**: 3 mutating n8n MCP tools to be re-enabled in `opencode.json`: `n8n_create_workflow_from_code`, `n8n_update_workflow`, `n8n_execute_workflow` (previously disabled by commit 70990a8).
+**Boundaries kept**: no delete/archive, no touching legacy workflows outside Phase A, no credential secrets read out or written to docs/chat.
+**Finding (same session)**: roster model for `ops` — `opencode/muse-spark-1.2-contributor-free` — is **not available** in this environment (error: Model not found; available: muse-spark-1.3-contributor-free / muse-spark-1.2 / muse-spark-1.3). Roster/agent-file drift → reported to Owner, not silently changed.
+
+---
+
+## DECISION — 2026-09-25 (session 2) — Board integrity repair + verified re-entry state; T-030 blocked in-session; no new work authorized
+
+**Context**: new chat opened with "read SESSION_HANDOFF.md and continue". Before acting, the PL verified the repository instead of trusting the handoff (per AGENTS.md).
+
+**Findings (verified)**:
+1. `TASKS.md` had been overwritten with only a 9-line T-030 INTAKE — the board header, the board-size rules and cards `T-RLS-01`, `T-BRIDGE-01`, `T-031` were missing. `git show HEAD:TASKS.md` = "(no open cards)", so the cards were never committed and are genuinely lost, while `SESSION_HANDOFF.md` + this log claimed they were present. Recorded as an incident in `DEV_ERROR_LOG.md`.
+2. `opencode.json` enables `n8n_create_workflow_from_code` / `n8n_update_workflow` / `n8n_execute_workflow`, but they are **not registered** in the running session → the T-030 test workflow cannot be created or run. Read-only n8n tools work, so the MCP server is fine; a full app restart is required (a new chat does not reload the tool set).
+3. The handoff's "pending: push 2 commits (approved)" is stale — `git log origin/dev-workspace..HEAD` is empty.
+4. Credit (`openrouter_get-credits`) = 40 / 38.4023 → ≈ **$1.60** remaining.
+5. Live re-verification of previously claimed DONE work: `nippan_n8n` rolcanlogin=true, `nippan_runtime` false, all 7 `lite_*` tables `rls=true force=true`; `gh pr view 83` = MERGED; n8n folder `Nippan Phase A` exists and is empty; credential `6anMUYRLDYPduKY7` exists.
+
+**Decision (PL, within delegated authority — documentation only)**:
+- Repair the board: restore `TASKS.md` header/rules + `T-030` (READY, with the verified preconditions and the in-session blocker) + `T-031` (BLOCKED / NEEDS_OWNER_INPUT).
+- Archive `T-RLS-01` to `docs/archive/TASKS_DONE_ARCHIVE.md` (DONE retroactive; every claim re-verified live before being recorded).
+- Archive `T-BRIDGE-01` to `docs/archive/TASKS_PARKED.md` (PARKED / UNVERIFIED, files untracked).
+- Reconstructed card text is explicitly labelled as reconstructed; nothing was invented as evidence.
+- No source/test/migration/config file was touched; no builder, subagent or paid model was called.
+
+**Effect**: the board is truthful again and holds 2 open cards (within the 5-card cap). T-030 cannot proceed in this session (tool registration). T-031 cannot proceed at all until the Owner supplies the bridge goal, the allowed session and the PAUSE/restart approval. No new work is authorized by this entry.
+
+**Evidence**: `git show HEAD:TASKS.md`; `git diff TASKS.md`; `git log origin/dev-workspace..HEAD` (empty); `gh pr view 83`; live SQL on `xzxwakvsbdzkdybijbzs`; `n8n_search_folders` / `n8n_list_credentials` / `n8n_search_workflows`; `openrouter_get-credits`.
+
+**Task**: governance + documentation repair; no code change; no production impact; bridge untouched.
+
+**Owner approval (2026-09-25, same session)**: (1) commit the `opencode.json` tool enablement → done, commit `625365d`; (2) update roster/agent files from `muse-spark-1.2-contributor-free` to `muse-spark-1.3-contributor-free`. Historical records (archive, past log entries, dated evidence sections) are NOT rewritten.
