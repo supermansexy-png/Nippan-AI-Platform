@@ -78,8 +78,8 @@ PL NOTE — 2026-09-25 (dev-time, no Docker; Owner-delegated): advanced the loca
 ---
 
 ### T-007 — War Room D-01: roster + ordered message surface (acceptance)
-Status: PARTIAL
-Parked 2026-09-25: blocked - remote owner access not enabled; tracked by Issue #35 D-01.
+Status: **DONE — 2026-09-26** (D-01 accepted by the Owner, option ก; Issues #35 and #30 CLOSED).
+Parked 2026-09-25 (blocked: remote owner access not enabled) → unblocked, re-verified and accepted 2026-09-26.
 Owner: Project Lead (mimo-v2.6-flash-free) — 2026-09-24
 Role: Developer
 Risk: L2
@@ -99,9 +99,9 @@ Checklist results:
 - [x] Ordered SSE replay → VERIFIED (transport.py L544-623, sequence-based)
 - [x] Reconnect preserves order w/o browser state → VERIFIED (server authoritative sequence, DB cursor)
 - [x] Unauthenticated fails closed → VERIFIED (_authorize_preview_request raises 403; loopback_only default)
-- [ ] Remote owner loads /war-room/ → PENDING (auth mechanism ready, currently loopback_only — T-010 handles this)
-- [~] Source head recorded → PARTIAL (git HEAD 73672d7; deployed e672a77)
-Next: D-01 conditionally accepted pending T-010. Issue #35 checkbox conditional.
+- [x] Remote owner loads /war-room/ → VERIFIED 2026-09-26 (remote-authenticated `GET /war-room/` = 200 over the dev-API-key path on the deployed preview; 403 fail-closed without the header)
+- [~] Source head recorded → PARTIAL (git HEAD 73672d7; deployed e672a77) — superseded 2026-09-26: deployed revision recorded from the Render API as deploy `dep-dar37iflk1mc73d2ss50` / commit `0b94f67776f3cafcd0fb8ed13c66c2f49b40e3b7`
+Next: none — D-01 accepted with findings (evidence + carried findings: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` §"D-01 acceptance run" and §"ACCEPTANCE DECISION").
 
 ---
 
