@@ -176,14 +176,96 @@ function cardList(selector, items, renderer, emptyText) {
   for (const item of items) root.append(renderer(item));
 }
 
+function agendaRoomPath(roomId) {
+  return `/war-room/rooms/${encodeURIComponent(roomId)}/agenda`;
+}
+
+function agendaItemPath(roomId, agendaItemId) {
+  return `${agendaRoomPath(roomId)}/${encodeURIComponent(agendaItemId)}`;
+}
+
+function agendaStatusNotice(status) {
+  if (status === 403) return "เฉพาะเจ้าของห้องเท่านั้นที่แก้ไขวาระได้";
+  if (status === 404) return "ไม่พบห้องหรือวาระที่ระบุ";
+  if (status === 422) return "ข้อมูลวาระไม่ถูกต้อง: หัวข้อว่างเปล่าหรือยาวเกินไป";
+  if (status === 503) return "การจัดการวาระยังไม่พร้อมใช้งานบนตัวอย่างนี้";
+  return `เกิดข้อผิดพลาด (${status})`;
+}
+
+async function postAgenda(path, body) {
+  return fetch(path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function runAgendaAction(buttons, action) {
+  for (const button of buttons) button.disabled = true;
+  try {
+    setNotice("");
+    const response = await action();
+    if (response.ok) {
+      await loadRoom(app.roomId);
+    } else {
+      setNotice(agendaStatusNotice(response.status));
+    }
+  } catch (error) {
+    setNotice("เกิดข้อผิดพลาดในการแก้ไขวาระ: " + error.message);
+  } finally {
+    for (const button of buttons) button.disabled = false;
+  }
+}
+
+function renderAgendaCard(item) {
+  const card = el("article", "card");
+  card.append(el("strong", "", `${item.sequence}. ${item.title}`));
+  card.append(el("div", "meta", `${item.status} · สูงสุด ${item.round_limit} รอบ`));
+  card.append(el("div", "meta", item.objective));
+
+  const roomId = app.snapshot?.room_id;
+  if (!roomId || !item.agenda_item_id) return card;
+
+  const isClosed = item.status === "COMPLETE" || item.status === "CANCELLED";
+  const toggleBtn = el("button", "ghost", isClosed ? "เปิดวาระ" : "ปิดวาระ");
+  toggleBtn.type = "button";
+  const titleField = el("input", "agenda-edit-title");
+  titleField.type = "text";
+  titleField.autocomplete = "off";
+  titleField.value = item.title || "";
+  const saveBtn = el("button", "", "บันทึก");
+  saveBtn.type = "button";
+  const busy = [toggleBtn, saveBtn, titleField];
+
+  toggleBtn.addEventListener("click", () => {
+    const status = isClosed ? "OPEN" : "COMPLETE";
+    runAgendaAction(busy, () =>
+      postAgenda(agendaItemPath(roomId, item.agenda_item_id), { status }),
+    );
+  });
+
+  saveBtn.addEventListener("click", () => {
+    const title = titleField.value.trim();
+    if (!title) {
+      setNotice("กรุณาใส่หัวข้อวาระก่อนบันทึก");
+      return;
+    }
+    runAgendaAction(busy, () =>
+      postAgenda(agendaItemPath(roomId, item.agenda_item_id), { title }),
+    );
+  });
+
+  const controls = el("div", "agenda-controls");
+  const editRow = el("div", "agenda-edit");
+  editRow.append(titleField, saveBtn);
+  controls.append(toggleBtn, editRow);
+  card.append(controls);
+  return card;
+}
+
 function renderContext() {
-  cardList("#agenda-list", app.snapshot?.agenda, (item) => {
-    const card = el("article", "card");
-    card.append(el("strong", "", `${item.sequence}. ${item.title}`));
-    card.append(el("div", "meta", `${item.status} · สูงสุด ${item.round_limit} รอบ`));
-    card.append(el("div", "meta", item.objective));
-    return card;
-  }, "ยังไม่มีวาระ");
+  cardList("#agenda-list", app.snapshot?.agenda, renderAgendaCard, "ยังไม่มีวาระ");
 
   cardList("#finding-list", app.snapshot?.findings, (item) => {
     const card = el("article", "card");
@@ -555,6 +637,60 @@ $("#new-room-title").addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
     $("#create-room").click();
+  }
+});
+
+async function createAgendaItem() {
+  const titleInput = $("#agenda-title");
+  const objectiveInput = $("#agenda-objective");
+  const btn = $("#agenda-create");
+  const title = titleInput.value.trim();
+  const objective = objectiveInput.value.trim();
+
+  if (!title) {
+    setNotice("กรุณาใส่หัวข้อวาระก่อนเพิ่ม");
+    return;
+  }
+  if (!app.snapshot?.room_id) {
+    setNotice("กรุณาโหลดห้องก่อนเพิ่มวาระ");
+    return;
+  }
+
+  btn.disabled = true;
+  try {
+    setNotice("");
+    const response = await postAgenda(agendaRoomPath(app.snapshot.room_id), {
+      title,
+      objective,
+    });
+    if (response.status === 201) {
+      titleInput.value = "";
+      objectiveInput.value = "";
+      await loadRoom(app.roomId);
+      setNotice("เพิ่มวาระแล้ว");
+    } else {
+      setNotice(agendaStatusNotice(response.status));
+    }
+  } catch (error) {
+    setNotice("เกิดข้อผิดพลาดในการเพิ่มวาระ: " + error.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$("#agenda-create").addEventListener("click", () => {
+  createAgendaItem();
+});
+
+$("#agenda-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  createAgendaItem();
+});
+
+$("#agenda-title").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    $("#agenda-create").click();
   }
 });
 

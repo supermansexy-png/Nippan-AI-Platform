@@ -118,5 +118,20 @@
 - Blast radius: every earlier headless job with a brief longer than ~600-700 characters lost the tail of its instructions
   (including HR run v1). This is a real defect in how the PL queues work, not a model failure — fix belongs to a builder card.
 
+### DEFECT — `opencode-go/glm-5.3-flash` hits the reasoning-length cap and produces zero output on slice-2b jobs
+- Two T-034b slice-2b headless jobs (agent `worker`, model `opencode-go/glm-5.3-flash`) both ended with
+  `step_finish reason "length"`, `reasoning 4096`, `output 0` **without writing a single file**:
+  - `runs/2026-09-26T13-01-30Z-t034b-slice2b-server` — 54 tool calls, all grep/read, no `edit` call; last
+    step `reason:"length"` after ~19 min.
+  - `runs/2026-09-26T13-05-45Z-t034b-slice2b-ui` — 4 reads (brief + the three UI files), then
+    `reason:"length"`, output 0.
+- Cause: the model's reasoning budget (4096) is consumed while designing the change; it never reaches the
+  output/edit step. Not a permission problem and not prompt truncation (`status.json.prompt` was complete).
+- Recovery used here: builder substituted to `opencode-go/kimi-k3` (same OpenCode Go flat-rate pool, no new
+  spend; probe `runs/2026-09-26T13-19-54Z-t034b-probe-kimi` = PROBE-OK) and the work split into a small
+  spec file plus a one-line pointer prompt. The substitution is recorded on card T-034b.
+- Guideline for future cards: a `*-flash` builder should get short, prescriptive briefs and a small file
+  set; if it returns `reason:"length"` with zero output twice, switch to a stronger Go model and record it.
+
 
 
