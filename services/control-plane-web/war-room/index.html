@@ -54,10 +54,16 @@
             <p id="sequence-label" class="muted">ลำดับ 0</p>
           </div>
           <button id="reconnect" type="button" class="ghost" disabled>เชื่อมต่อใหม่</button>
+          <button id="jump-latest" type="button" class="ghost">ล่าสุด</button>
         </div>
 
         <div id="message-list" class="messages empty">
           เหตุการณ์ของห้องจะแสดงที่นี่ตามลำดับ
+        </div>
+
+        <div class="system-log-wrap" aria-label="บันทึกระบบ">
+          <button id="system-log-toggle" type="button" class="ghost" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? 'ซ่อนบันทึกระบบ' : 'แสดงบันทึกระบบ'">แสดงบันทึกระบบ</button>
+          <div id="system-log" class="system-log"></div>
         </div>
 
         <form id="owner-message-form" class="composer">
