@@ -17,6 +17,8 @@ from app.model_gateway import ModelPolicy, ModelRoute, OpenRouterGateway
 from app.preview_bootstrap import PreviewBootstrapError
 from app.settings import Settings
 
+import time
+
 import psycopg
 
 from .auth import DatabaseRoomCommandAuthorizer, DatabaseRoomReadAuthorizer
@@ -70,6 +72,11 @@ from .state_machine import InvalidRoomTransition
 
 
 _ASSET_ROOT = Path(__file__).resolve().parents[3] / "control-plane-web" / "war-room"
+
+# In-process rate limit for the single-instance preview; resets on restart.
+_ROOM_CREATE_WINDOW_SECONDS = 3600
+_ROOM_CREATE_MAX_PER_WINDOW = 10
+_room_create_attempts: list[float] = []
 
 
 class CorrelationPayload(BaseModel):
@@ -1046,6 +1053,21 @@ def create_war_room_preview_router(
             )
         title = payload.title.strip()
         new_room_id = uuid4()
+
+        # Sliding-window rate limit. This is an in-process guard for the
+        # single-instance preview; it resets when the service restarts, and
+        # it is not shared across instances.
+        now = time.monotonic()
+        _room_create_attempts[:] = [
+            ts for ts in _room_create_attempts
+            if now - ts < _ROOM_CREATE_WINDOW_SECONDS
+        ]
+        if len(_room_create_attempts) >= _ROOM_CREATE_MAX_PER_WINDOW:
+            raise HTTPException(
+                status_code=429,
+                detail="war_room_preview_room_create_rate_limited",
+            )
+        _room_create_attempts.append(now)
 
         from scripts.seed_war_room_preview import seed
 

@@ -17,6 +17,9 @@ from app.war_room.transport import (
     create_war_room_preview_router,
     preview_mount_allowed,
     trusted_preview_actor,
+    _room_create_attempts,
+    _ROOM_CREATE_WINDOW_SECONDS,
+    _ROOM_CREATE_MAX_PER_WINDOW,
 )
 
 
@@ -870,4 +873,97 @@ async def test_room_create_seed_value_error_returns_409_and_operational_error_50
         )
     assert response.status_code == 503
     assert response.json()["detail"] == "war_room_preview_room_create_failed"
+
+
+@pytest.mark.anyio
+async def test_room_create_rate_limit_allows_first_ten_then_blocks_11th(monkeypatch) -> None:
+    from app.war_room import transport
+
+    # Reset limiter before case.
+    transport._room_create_attempts.clear()
+
+    settings = _room_create_settings()
+
+    seed_called: list[bool] = []
+
+    def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+        seed_called.append(True)
+        return (TENANT_ID, APPLICATION_ID, UUID(int=1))
+
+    import scripts.seed_war_room_preview as seed_module
+    monkeypatch.setattr(seed_module, "seed", _fake_seed)
+
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43137)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        # First 10 creations allowed.
+        for i in range(10):
+            seed_called.clear()
+            response = await client.post(
+                "/war-room/rooms",
+                json={"title": f"ห้องทดสอบ{i}"},
+            )
+            assert response.status_code == 201, f"Attempt {i + 1} unexpectedly blocked"
+            assert len(seed_called) == 1, f"Seed stub must be called for attempt {i + 1}"
+
+        # 11th should be rate-limited (429) and NOT invoke seed.
+        seed_called.clear()
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องทดสอบ11"},
+        )
+        assert response.status_code == 429
+        assert response.json()["detail"] == "war_room_preview_room_create_rate_limited"
+        assert len(seed_called) == 0, "Rate-rejected call must not invoke seed stub"
+
+
+@pytest.mark.anyio
+async def test_room_create_rate_limit_resets_after_window(monkeypatch) -> None:
+    from app.war_room import transport
+
+    transport._room_create_attempts.clear()
+    # Simulate 10 attempts in the past (older than window).
+    old_time = 0.0
+    transport._room_create_attempts.extend([old_time] * 10)
+
+    settings = _room_create_settings()
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43138)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        # Old attempts should be dropped, allowing a new creation.
+        seed_called: list[bool] = []
+
+        def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+            seed_called.append(True)
+            return (TENANT_ID, APPLICATION_ID, UUID(int=1))
+
+        import scripts.seed_war_room_preview as seed_module
+        monkeypatch.setattr(seed_module, "seed", _fake_seed)
+
+        seed_called.clear()
+        # Directly patch the attempts back to simulate cleared state after time passes
+        transport._room_create_attempts.clear()
+
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องใหม่"},
+        )
+        assert response.status_code == 201
+        assert len(seed_called) == 1
 
