@@ -21,19 +21,14 @@
 
 ## Table 2: Dev → Runtime Mapping Table
 
-**NEEDS_OWNER_DECISION: ตารางจับคู่ยังไม่ได้รับจากเจ้าของ**
-
-> Owner ระบุว่า "เอาตารางที่ผมส่งให้ไปใส่ได้เลย" แต่ค้นหาใน repo ทั้งหมด (รวม PROJECT_BRIEF.th.md) **ไม่พบตารางจับคู่ dev-time ↔ runtime roles** จึงสร้าง placeholder นี้ไว้ รอ Owner ส่งมาหรือสั่งให้สร้างใหม่
-
-| Dev-Time Role | Runtime Role (ROLES.md) | Notes |
-|---------------|-------------------------|-------|
-| Project Lead | Project Lead (Phase A: Owner) | dev-time PL = AI; runtime PL = Owner |
-| advisor | — | dev-time only; not in runtime ecosystem |
-| builder | Developer / MCP tool builder | |
-| reviewer | Auditor | reviewer ≠ builder (anti-redundancy) |
-| security | (part of Auditor / separate gate) | |
-| ops | Onboarding / Support / Cost Guard | |
-| researcher | — | dev-time only |
-| model-recruiter | Model Scout | |
-
-*หมายเหตุ: ตารางนี้เป็น placeholder จะต้องได้รับจาก Owner หรือสร้างใหม่เมื่อถึงขั้นตอนการจับคู่อย่างเป็นทางการ*
+| ห้องสร้างระบบ | ห้องระบบรันจริง (ROLES.md) | ความสัมพันธ์ |
+|---|---|---|
+| Project Lead | Project Lead | ตำแหน่งเดียวกัน อยู่ทั้งสองห้องตลอด |
+| builder | Developer + MCP tool builder | ย้ายห้องตรงๆ |
+| security | Auditor (ส่วนความปลอดภัย) | ย้ายห้องบางส่วน รวมกับ reviewer |
+| reviewer | Auditor (ส่วนตรวจซ้ำ) | ย้ายห้องบางส่วน รวมกับ security |
+| model-recruiter (HR) | Model Scout | ย้ายห้องตรงๆ |
+| ops | Cost Guard (ส่วนคุมทุน) | ย้ายห้องบางส่วน งาน hosting/CI ไม่มีตำแหน่งถาวรฝั่งรันจริง |
+| researcher | ไม่มีคู่ | เลิกใช้เมื่อสร้างเสร็จ |
+| advisor | advisor (เพิ่มใหม่ใน ROLES.md แล้ว) | อยู่ทั้งสองห้อง ไม่หายไปตอนเปลี่ยนห้อง |
+| — | Onboarding, Support, Marketing | เกิดใหม่ตอนรันจริงเท่านั้น |

@@ -296,9 +296,10 @@ into context for every task.
 At the beginning of a new work session:
 
 1. Read this AGENTS.md.
-2. Read `docs/project-memory/SESSION_HANDOFF.md` — latest work state, Owner rules and
+2. Read `docs/project-memory/PROJECT_BRIEF.th.md` — โครงการ ภาระกิจ และขอบเขต (required reading บรรทัดแรก)
+3. Read `docs/project-memory/SESSION_HANDOFF.md` — latest work state, Owner rules and
    current model roster. (Written/refreshed by `/handoff`.)
-3. Read CURRENT_STATE.md.
+4. Read CURRENT_STATE.md.
 4. Inspect Git status and current branch.
 5. Verify any claimed PR/commit/CI state from the actual repository when relevant.
 6. Continue from the first unfinished item.
