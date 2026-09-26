@@ -467,15 +467,44 @@ Confidence: high.
 
 ### T-060 — `WORKING_POLICY.md` Rule 1 still keeps its own required-reading list
 
-Status: READY for INTAKE — **not urgent** (Owner order 2026-09-27: do this after T-059)
-Owner: (unclaimed)
-Role: PL (dev-doc writes) · reviewer on a different model · Owner approval (protected document)
-Risk: L3 — `WORKING_POLICY.md` is a protected document (`TASK_CONTROL.md` §8): card + Owner approval + different-model reviewer + decision-log entry
-Goal: `WORKING_POLICY.md` stops carrying a competing session-start reading list and points at `AGENTS.md` § "Session Start"
-Done when: 1) Rule 1's own list (`PROJECT_STATE.md`, `ROADMAP.md`, `TASKS.md`, `decision-log.md`, the task doc) is replaced by a pointer to the `AGENTS.md` list, while keeping the part that is a genuine behaviour rule ("read state before acting, every time"); 2) no other rule in the file changes meaning; 3) a reviewer on a different model confirms nothing else changed; 4) a decision-log entry is written (L3); 5) the Owner has answered, or explicitly left open, what happens to the now-superseded `PROJECT_STATE.md` / `ROADMAP.md` that only Rule 1 still points at
+Status: DONE (2026-09-27) — reviewer on a different model = ACCEPT-WITH-FINDINGS at round 2 (round 1 = CHANGES REQUIRED, both findings fixed). Committed locally, **not pushed**
+History: IN_PROGRESS — scope amended (2026-09-27, Owner order) to carry **two** governance-doc edits, both protected documents, both L3, one reviewer round and one decision-log entry. Amended instead of opening a new card because the Owner ordered no new cards this round; the rule addition had to live on a card (`TASK_CONTROL.md` §8 requires a card for a protected-doc change) and this was the open one.
+Owner: Project Lead — 2026-09-27 (Owner order)
+Role: PL (dev-doc writes) · reviewer on a different model · Owner approval (protected documents)
+Risk: L3 — both files are protected (`TASK_CONTROL.md` §8): card + Owner approval + different-model reviewer + decision-log entry
+Goal: (A) `WORKING_POLICY.md` stops carrying a competing session-start reading list and points at `AGENTS.md` § "Session Start"; (B) `TASK_CONTROL.md` gains §6b — sweep-type work must declare a stop boundary up front, and findings past it are recorded as known-not-fixing instead of opening a card
+Done when: 1) **A** Rule 1's own list (`PROJECT_STATE.md`, `ROADMAP.md`, `TASKS.md`, `decision-log.md`, the task doc) is replaced by a pointer to the `AGENTS.md` list, keeping the part that is a genuine behaviour rule ("read state before acting, every time"); 2) **B** the new §6b expresses exactly the Owner's rule (boundary up front: max files / max passes / explicit item list; findings beyond it → one known-not-fixing record, card closes, no chase card); 3) no other rule in either file changes meaning, and section numbering 0–10 of `TASK_CONTROL.md` stays intact so external pointers keep resolving; 4) a reviewer on a different model confirms both; 5) one decision-log entry is written (L3); 6) the Owner's answer on the now-superseded `PROJECT_STATE.md` / `ROADMAP.md` is recorded, or explicitly left open
+**Stop boundary for this card itself (the new §6b applied to itself):** exactly **2 files** — `WORKING_POLICY.md` (Rule 1 only) and `TASK_CONTROL.md` (§6b only). Anything else found is recorded as known-not-fixing in `decision-log.md`, not chased.
 Budget: 30 minutes
-Links: T-058 (carried item), `docs/project-memory/INDEX.md` § "ไฟล์ที่ยังใช้ แต่มีปัญหาค้าง", `AGENTS.md` § "Session Start"
+Links: T-058 (carried item A), `docs/project-memory/INDEX.md` § "ไฟล์ที่ยังใช้ แต่มีปัญหาค้าง", `AGENTS.md` § "Session Start", `runs/2026-09-26T22-22-25Z-t062-taskcontrol-6b-review` (reviewer round 1)
 
+INTAKE T-060 — Project Lead — 2026-09-27
+Understanding: two Owner-ordered governance-document edits, both on protected documents. (A) `WORKING_POLICY.md` Rule 1 kept its own session-start reading list, competing with `AGENTS.md` — the exact drift T-058 was about. (B) The Owner ordered a new rule so that "inspect then fix" work must declare a stop boundary up front and record leftovers as known-not-fixing instead of opening chase cards.
+Done when: the six conditions above — proven by the diff and a different-model verdict, not by claim.
+Needs: `edit` on dev docs (PL's own job) · one reviewer on a different model · Owner approval (given) · a decision-log entry.
+Missing: none. Item 6 (what happens to `PROJECT_STATE.md` / `ROADMAP.md`) was left explicitly open rather than guessed.
+Plan: 1) write §6b; 2) rewrite Rule 1 as a pointer; 3) reviewer round on both; 4) decision-log entry incl. the known-not-fixing list; 5) report; no push.
+Estimate: 30 minutes (actual: ~25 minutes, two review rounds).
+Risks: a protected-doc edit made without its card/reviewer → round 1 caught exactly that and it was fixed before commit; scope creep into Rule 4 / "What done means" → deliberately left and recorded as known-not-fixing.
+Decision: ACCEPT.
+
+DELIVERY T-060 — Project Lead (doc edits; no code) — 2026-09-27
+Status claimed: DONE
+Done-when check:
+[x] 1 **A** Rule 1 now points at `AGENTS.md` § "Session Start" and keeps the behaviour rule (read state before acting; do not confuse a design doc with a shipped feature) plus a pointer to `decision-log.md` for recent decisions — the five-file list is gone
+[x] 2 **B** `TASK_CONTROL.md` gained **§6b** stating the three boundary options (max files / max passes-commits / explicit item list), "do not open a new card to chase it", one known-not-fixing record, then the card closes
+[x] 3 no other rule changed meaning; section numbering 0–10 intact (reviewer checked the heading lines); `WORKING_POLICY.md` Rules 00/0/2/3/4/5/6 and "What done means" untouched
+[x] 4 reviewer on a different model: round 1 `runs/2026-09-26T22-22-25Z-t062-taskcontrol-6b-review` = **CHANGES REQUIRED** (correct: the §6b worked example claimed a list that did not exist yet, and §8 requires a card); round 2 `runs/2026-09-26T22-26-02Z-t060-round2-review` = **ACCEPT-WITH-FINDINGS**, both blocking findings resolved, no rule contradiction, `AGENTS.md` still the single authoritative list
+[x] 5 one decision-log entry written, including the known-not-fixing list (4 items) and a follow-up entry adding item 5
+[x] 6 item 6 left explicitly open on the card for the Owner rather than decided here
+Evidence: both run directories · `git diff` on the two protected files (one hunk each) · the decision-log entries dated 2026-09-27.
+Changed: `WORKING_POLICY.md` (Rule 1) · `docs/warroom/TASK_CONTROL.md` (§6b) · `docs/warroom/decision-log.md` (two entries) · `TASKS.md`.
+Not done: the known-not-fixing list: (1) ban slug missing its `openrouter/` prefix at `project-lead.md:74` + `builder.md:46`; (2) `MODEL_ROSTER.md` § "Review tiers" disagreeing with the per-role table; (3) `WORKING_POLICY.md` Rule 4 + "What done means" still pointing at `PROJECT_STATE.md`; (4) per-line authorship unprovable (`git blame`/`git log -S` blocked); (5) `START_PROMPT.md:8-9` competing reading list naming `PROJECT_STATE.md`.
+Unverified: whether `PROJECT_STATE.md` / `ROADMAP.md` should be deleted — the Owner has not decided (item 6, left open).
+Problems: the PL's first card-scope edit left duplicated Done-when/Budget/Links lines on the card; detected on read-back and cleaned with a line-range fix, then verified.
+Confidence: high.
+
+---
 ---
 
 ### T-061 — Five more stale model pins inside agent prompts (the T-059 reviewer findings)
