@@ -305,6 +305,21 @@ This supersedes the earlier "NOT VERIFIED … whether a Cloudflare Access applic
   `403 war_room_preview_remote_auth_failed` → the Render env values do not match this Access application.
   A Render/host error page → `warroom.nippan.org` is not fronting this service.
 
+## T-034a deployed to the preview (2026-09-26)
+
+- **PR #84** squash-merged into `phase2/postgres-logical-schema`: commit **`a4e7c5335f52ba96baf8dea58d6a2ac9a3dee9ea`** — the three UI
+  files only (`war-room.js`, `war-room.css`, `index.html`), cherry-picked onto the deployed branch so the deployed preview is not
+  dragged forward by the 95 unrelated commits on `dev-workspace`.
+- CI on the PR: `remote-auth` **PASS** (16s), `A-001 DB privilege regression` **PASS** (54s).
+- Reviewer on a different model (`opencode/space-bunny-free`): rounds 1 and 2 **REJECT** (invented field names, owner decisions
+  hidden in the system log, scroll reset bug), round 3 **ACCEPT** after the `message_type` field placement was corrected to the
+  top level of the event.
+- Render deploy **`dep-darnf17pn0mc73d9euvg`** (service `chetgo`) triggered through the API — auto-deploy did **not** fire for the
+  branch push, so the PL triggered it explicitly — status **live** at 2026-09-26T07:43:58Z, serving commit `a4e7c53`.
+- Post-deploy check: `GET https://chetgo.onrender.com/health` → **200** `{"status":"ok","service":"nippan-core","environment":"development"}`.
+- Verification limit, stated honestly: the served assets sit behind Cloudflare Access, so this session can confirm the deployed
+  revision and the health of the service, not the rendered pixels. The Owner confirms the rendering when he opens the room.
+
 ## Preview room reset for the live pilot — recorded mutation (2026-09-26, Owner-approved)
 
 To let the Owner drive the lifecycle in the browser, the seeded preview room was reset **once**, by the Project Lead, on the
