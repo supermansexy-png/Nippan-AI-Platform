@@ -133,5 +133,20 @@
 - Guideline for future cards: a `*-flash` builder should get short, prescriptive briefs and a small file
   set; if it returns `reason:"length"` with zero output twice, switch to a stronger Go model and record it.
 
+### FINDING — a second session is editing the same worktree concurrently (board + agents + roster)
+- During the T-034b slice-2b session (2026-09-26, ~13:00–14:40), files this order never touched appeared
+  modified in `git status` while the slice-2b jobs ran: `docs/project-memory/CURRENT_STATE.md`,
+  `.opencode/agents/security.md`, `.opencode/agents/assistant.md`, `docs/product/MODEL_ROSTER.md`, and an
+  added card **T-045** inside `TASKS.md`.
+- None of the slice-2b headless workers referenced those files (checked: `Select-String CURRENT_STATE` in
+  both run logs = 0 matches), so the edits came from another actor on the same single worktree — the same
+  class of hazard the handoff logged before ("two Project-Lead chats on one worktree can clobber the board").
+- Mitigation used: the slice-2b commit `aa36a81` staged **only** its own 8 files; `TASKS.md`,
+  `CURRENT_STATE.md`, `MODEL_ROSTER.md` and the two agent files were deliberately left unstaged, so the
+  other session's work was not committed or overwritten. The T-034b work-log entry therefore sits
+  uncommitted on disk until that session (or the Owner) commits the board.
+- Guideline: with one worktree, only one writing session at a time; a second session must wait or use a
+  separate branch/worktree. The PL cannot detect this from inside a single chat — `git status` is the only signal.
+
 
 
