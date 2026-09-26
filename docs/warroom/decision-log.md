@@ -949,3 +949,62 @@ corrected to say "blocks the obvious paths and makes it detectable" rather than 
 **Evidence**: card T-043 in `TASKS.md` (LIVE VERIFICATION block); `git diff .opencode/agents/project-lead.md`; the rulesets the
 permission engine returned on the blocked calls; reviewer verdict `opencode-go/space-bunny-free` = ACCEPT-WITH-FINDINGS.
 
+---
+
+## DECISION — 2026-09-26 — Board capacity raised to 10 open cards (Owner order)
+
+**Owner order (verbatim)**: "เปิดความจุการ์ดงานเป็น 10 งาน"
+
+**Decision**: the board cap in `TASKS.md` goes **5 → 10 open cards**. Nothing else changes.
+
+**Scope note (recorded, not hidden)**: this rule lives in `TASKS.md`, a dev-process document — **not** one of the protected
+documents in `TASK_CONTROL.md` §8 — so it does not need an L3 card. The **separate** WIP limit in `TASK_CONTROL.md` §5
+("at most **3** tasks IN_PROGRESS and **5** in REVIEW at once") is **untouched and unchanged**: §5 sits in a protected
+document and would need its own L3 card (a card + a reviewer on a different model + an approval + a Decision Log entry)
+to move. If the Owner meant the IN_PROGRESS limit rather than the board cap, that is a separate change and has not been made.
+
+**Why (context)**: the board was already holding **11** open cards against a cap of 5, including **7** IN_PROGRESS cards
+against the §5 limit of 3 — so the old cap was descriptive only, not enforced. The Owner's order sets the real number.
+
+**Honest limit**: raising the card cap does **not** relieve the bottleneck the §5 limit exists to manage — the reviewer /
+approver is still the constraint, and cards can now pile up wider without that changing.
+
+**Evidence**: `git diff TASKS.md` (the "Board size" block).
+
+**Correction added 2026-09-26 (card T-046)** — the paragraph above says `TASK_CONTROL.md` §5 is "untouched and unchanged".
+That was true when it was written and is **no longer true**: the Owner ordered the IN_PROGRESS cap raised the same day.
+The sentence is left in place rather than rewritten, and the change is recorded as its own entry below.
+
+---
+
+## DECISION — 2026-09-26 — L3: the work-in-progress limit goes to 10 IN_PROGRESS (protected doc change, card T-046)
+
+**Owner order (verbatim)**: "เพดานงานพร้อมกัน แก้เป็น 10 ด้่วย" (given immediately after the board-cap order above; the
+Owner was answering a direct question about the second of the two caps).
+
+**Decision**: `docs/warroom/TASK_CONTROL.md` §5 changes from "at most **3** tasks IN_PROGRESS and **5** in REVIEW" to
+"at most **10** tasks IN_PROGRESS and **5** in REVIEW". Only the IN_PROGRESS number moves. The REVIEW cap stays 5.
+
+**Why this needed the L3 path**: `TASK_CONTROL.md` is a **protected document** (§8 lists "this file"). §8 states the
+conditions that are never relaxed in either phase: a card first, a reviewer on a **different model**, an approval, and a
+Decision Log entry with reasons. Flow used: card **T-046** written before the edit → the §5 edit made by the PL →
+reviewer `opencode-go/space-bunny-free` (model ≠ the author's `openrouter/deepseek/deepseek-v4.1-flash`) → this entry.
+The Owner's order is the approval.
+
+**Reviewer verdict (round 1)**: **REJECT** — content of the §5 edit was accepted, but the closeout was incomplete: no
+Decision Log entry existed yet (and §5 the document claimed one did), and `TASKS.md` still repeated the old "max 3".
+Both were corrected; a round-2 confirmation pass followed.
+
+**Trade-off, recorded honestly (not smoothed over)**: the two numbers no longer sit in the order they were designed for.
+The rule's own rationale is that "the owner is the approval bottleneck" and that "starting more work than can be
+reviewed creates a pile of half-checked changes". Raising IN_PROGRESS to 10 while review capacity stays at 5 means more
+cards can run at once than can be approved at once. This buys concurrency; it does **not** remove the bottleneck the rule
+exists to manage, and the "lots of activity, little finished" pattern the rule was written against becomes easier to
+reproduce, not harder. The §5 text says this in the document itself.
+
+**Context**: the board had been running at 7 IN_PROGRESS against the old limit of 3, so the limit was descriptive only.
+The Owner is setting the real number, and accepting the above trade-off deliberately.
+
+**Evidence**: card T-046 in `TASKS.md`; `git diff docs/warroom/TASK_CONTROL.md` (§5 only — §3, §8 and §9 untouched);
+reviewer verdict `opencode-go/space-bunny-free`; `git diff TASKS.md` (the "Board size" block).
+

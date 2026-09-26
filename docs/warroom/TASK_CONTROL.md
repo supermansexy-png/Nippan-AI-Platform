@@ -71,11 +71,20 @@ definition.
 
 ## 5. Work-in-progress limit
 
-At most **3** tasks IN_PROGRESS and **5** in REVIEW at once.
+At most **10** tasks IN_PROGRESS and **5** in REVIEW at once.
+
+The two numbers are separate. The IN_PROGRESS cap was raised from 3 to **10** by the Owner on 2026-09-26 (card T-046);
+the REVIEW cap is **unchanged at 5**. Read this as "10 running, 5 awaiting review" — not as a blanket 10.
 
 Why: the owner is the approval bottleneck. Starting more work than can be
 reviewed creates a pile of half-checked changes — the exact
 "lots of activity, little finished" pattern this project had before.
+
+Owner order, 2026-09-26: the IN_PROGRESS number moves to 10 while the review cap stays 5, so the two numbers no longer
+sit in the order they were designed for (previously fewer running than queued for review). The trade-off is recorded
+honestly, not smoothed over: this buys concurrency, and it does **not** remove the bottleneck the rule exists to manage.
+More cards can now run at once than can be approved at once, so half-checked changes can pile up unless review keeps
+pace. Order, reasons and the reviewer verdict are in `docs/warroom/decision-log.md`.
 
 ## 6. Budgets and the stop rule
 

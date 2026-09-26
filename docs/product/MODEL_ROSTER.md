@@ -62,7 +62,8 @@ These are the models actively used in this roster, verified against the full cat
 
 - slug ของ Go ต้องเขียน `opencode-go/<model-id>` เสมอ — เขียนเป็น `opencode/<id>` สำหรับโมเดล Go = ผิด
   และจะล้มด้วย `Unexpected server error` ที่อ่านหลอกว่าเป็นเรื่องสิทธิ์ (จริง ๆ คือชื่อผิดรูปแบบ)
-- VERIFIED 2026-09-26: `GET https://opencode.ai/zen/go/v1/models` → HTTP 200, 35 ids
+- VERIFIED 2026-09-26: `GET https://opencode.ai/zen/go/v1/models` → HTTP 200, **43 ids**
+  (first recorded as 35; re-verified at 43 by HR on card T-045)
 - งบของ Go คิดเป็น bucket **ต่อโมเดล**: 5 ชั่วโมง = 20%, สัปดาห์ = 50%, เดือน = 100% ของวงเงินโมเดลนั้น
   → โมเดลแพงเก็บไว้ใช้สั้น ๆ กับงานสำคัญ
 - retention/training: `muse-spark-1.2-contributor` และ `muse-spark-1.3-contributor` เทรนบน prompt/output
@@ -70,14 +71,19 @@ These are the models actively used in this roster, verified against the full cat
   30 วัน (abuse monitoring) → ห้ามใช้กับความลับ · ที่เหลือใน Go = no-training / 0-day retention
   · `opencode-go/space-bunny-free` ฟรี + zero-retention
 
-### 35 model ids ใน Go (2026-09-26)
+### 43 model ids ใน Go (2026-09-26 — re-verified by HR, card T-045)
 
-`deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `deepseek-flash`, `deepseek-v4.1-flash`,
-`deepseek-v4-pro`, `glm-5.1`, `glm-5.2`, `glm-5.3`, `glm-5.3-flash`, `grok-4.6`, `grok-4.7`,
-`muse-spark-1.2-contributor`, `muse-spark-1.3-contributor`, `omen-alpha`, `gpt-5.6-luna`, `gpt-6-luna`,
-`hy3`, `hy4-preview`, `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k3`, `mimo-v2.5`, `mimo-v2.5-pro`,
-`mimo-v2.6-flash`, `mimo-v2.6-pro`, `minimax-m2.5`, `minimax-m2.7`, `minimax-m3`, `space-bunny-free`,
-`longcat-2.0`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.7-max`, `qwen3.8-flash`, `qwen3.8-max`
+`minimax-m3`, `minimax-m2.7`, `minimax-m2.5`, `kimi-k3`, `kimi-k2.7-code`, `kimi-k2.6`,
+`longcat-2.0`, `kimi-k2.5`, `glm-5.2`, `glm-5.3-flash`, `glm-5.3`, `glm-5.1`, `glm-5`,
+`deepseek-v4-pro`, `deepseek-v4-flash`, `deepseek-flash`, `deepseek-v4.1-flash`,
+`deepseek-v4-flash-vision-exp`, `qwen3.7-max`, `qwen3.8-max`, `qwen3.8-flash`, `qwen3.7-plus`,
+`qwen3.6-plus`, `qwen3.5-plus`, `mimo-v2-pro`, `mimo-v2-omni`, `mimo-v2.6-pro`, `mimo-v2.6-flash`,
+`space-bunny-free`, `longcat-2.5-preview-free`, `mimo-v2.5-pro`, `mimo-v2.5`, `hy4-preview`, `hy3`,
+`hy3-preview`, `gpt-5.6-luna`, `grok-4.5`, `grok-4.7`, `grok-4.6`, `muse-spark-1.3-contributor`,
+`muse-spark-1.2-contributor`, `omen-alpha`, `gpt-6-luna`
+
+Added after the first 35-id recording (8): `kimi-k2.5`, `glm-5`, `qwen3.5-plus`, `mimo-v2-pro`,
+`mimo-v2-omni`, `longcat-2.5-preview-free` (free), `hy3-preview`, `grok-4.5`.
 
 ### คู่มือเลือกตามงาน (INFERRED จาก benchmark/index + ราคา + retention — ยังไม่ใช่การแต่งตั้งรายตำแหน่ง)
 
@@ -103,7 +109,7 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 | 2 | **builder** | `opencode-go/glm-5.3-flash` | OpenCode Go | `openrouter/z-ai/glm-5.3-flash` | OpenRouter | **Builder lock LIFTED 2026-09-26 (Owner directive, T-035): the whole team is re-selected; GLM-5.3-Flash stays as the OpenCode Go primary for now.** `qwen/qwen3.7-flash` remains permanently banned. |
 | 3 | **reviewer L1–L3** | `opencode-go/space-bunny-free` | OpenCode Go | `opencode/space-bunny-free` | OpenCode Zen | **CHANGED 2026-09-26 (T-035): routed to OpenCode Go.** Free + stated zero-retention; model identity unchanged. |
 | 3b | **reviewer L4** | `anthropic/claude-opus-5.5:batch` | OpenRouter | — | — | Paid, Batch API only, Owner-approved per use. Not offered in Go. |
-| 4 | **security L1–L3** | `openrouter/nex-agi/nex-n2.5-mini:free` | OpenRouter | `opencode/space-bunny-free` | OpenCode Zen | OpenCode Go has **no equivalent** for this model → it stays on the OpenRouter free endpoint. Owner may re-pick from Go later. |
+| 4 | **security L1–L3** | `opencode-go/kimi-k3` | OpenCode Go | `openrouter/qwen/qwen3.8-flash` | OpenRouter | **CHANGED 2026-09-26 (T-045, Owner-approved).** The previous primary `openrouter/nex-agi/nex-n2.5-mini:free` is **DEAD** — the OpenRouter author `nex-agi` has **0 models left** (verified via `openrouter_list-models`; a live Task dispatch failed with "Model not found"). `kimi-k3` is a **production model (not preview)**, 0-day retention, intelligence 43.6 / coding 76.2, and runs inside the **already-paid Go pool** → no new spend while inside its own monthly bucket (≈$15). Quota is small (`~490 requests/month`) → reserve it for real reviews. The old backup `opencode/space-bunny-free` **duplicated the reviewer** and is replaced. Backup `qwen3.8-flash` is OpenRouter **paid** ($0.15/$0.47) → ask before falling back. |
 | 5 | **ops** | `opencode-go/mimo-v2.6-flash` | OpenCode Go | `opencode/nemotron-3-ultra-free` | OpenCode Zen | **CHANGED 2026-09-26 (T-035): routed to OpenCode Go.** |
 | 6 | **researcher** | `opencode/nemotron-3.5-lightning-free` | OpenCode Zen | `openrouter/nvidia/nemotron-3.5-lightning:free` | OpenRouter | Free; **unchanged by T-035** (candidate to move onto Go when the team is finalised). |
 | 7 | **model-recruiter (HR)** | `opencode-go/gpt-6-luna` | OpenCode Go | `openrouter/openai/gpt-6-luna` | OpenRouter | **CHANGED 2026-09-26 (T-035): routed to OpenCode Go**, and its instructions were rewritten so it recruits from the Go pool first (OpenRouter/Zen = backup). Note: gpt-6-luna keeps 30-day abuse logs → never for secrets. |
@@ -180,7 +186,7 @@ Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 
 
 | Tier | reviewer / security Primary | Backup | Notes |
 |---|---|---|---|
-| L1/L2 (reversible, non-sensitive) | reviewer: `opencode-go/space-bunny-free` · security: `openrouter/nex-agi/nex-n2.5-mini:free` | `opencode/nemotron-3-ultra-free` | Free; caught both planted bugs in the T-020 test. Reviewer free model ≠ security free model (T-023). **Updated 2026-09-26 (T-035):** the old L1/L2 entries (`opencode/nemotron-3-ultra-free`, `opencode/big-pickle`) no longer exist / are no longer assigned, so the L1/L2 tier now uses the same free zero-retention reviewer across tiers. |
+| L1/L2 (reversible, non-sensitive) | reviewer: `opencode-go/space-bunny-free` · security: `opencode-go/kimi-k3` | `opencode/nemotron-3-ultra-free` | Caught both planted bugs in the T-020 test. Reviewer model ≠ security model (T-023). **Updated 2026-09-26 (T-045):** the security primary `openrouter/nex-agi/nex-n2.5-mini:free` died (author `nex-agi` has 0 models left) and is replaced by `opencode-go/kimi-k3` (production, 0-day retention, inside the paid Go pool); its Backup is `openrouter/qwen/qwen3.8-flash` (paid). The old L1/L2 stand-ins (`opencode/nemotron-3-ultra-free`, `opencode/big-pickle`) no longer exist / are no longer assigned. |
 | L3 (hard to undo / sensitive) | `opencode-go/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention (runs on OpenCode Go since 2026-09-26). L3 inputs must be redacted. |
 | **L4 (critical / high-accuracy verification)** | **`anthropic/claude-opus-5.5:batch`** | — (Owner will appoint if needed) | **Paid, Owner-selected 2026-09-25. Intelligence 57.6 (highest shortlisted); batch $2/$10 per 1M (real-time $4/$20).** Exceeds the normal MODEL_POLICY cap — this is an explicit Owner-approved L4 exception; it is used rarely. E.g. security boundary, tenant/bot isolation, data-handling reviews. **Approval per use (Owner 2026-09-25): the Owner approves, or the PL approves on the Owner's behalf when the Owner is unavailable; Batch API (`:batch`) is required; this is a normal review step, not an Independent Audit — see `AGENTS.md` §Independent Audit Status.** |
 | Paid fallback (free endpoint down) | `anthropic/claude-opus-5.5:batch` | — | Batch $2/$10 per 1M. |

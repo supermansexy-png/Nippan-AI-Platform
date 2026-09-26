@@ -11,6 +11,16 @@ permission:
     "docs/**": allow
     "runs/**": allow
     ".opencode/agents/assistant.md": deny
+    "docs/product/PRICING_V1.md": deny
+    "docs/product/CUSTOMER_FACING_RULES.md": deny
+    "docs/product/INTEGRATIONS.md": deny
+    "docs/security/PDPA_COMPLIANCE.md": deny
+    "docs/data/LITE_SCHEMA_V1.md": deny
+    "docs/warroom/ROLES.md": deny
+    "docs/warroom/AI_OPERATING_PROTOCOL.md": deny
+    "docs/warroom/ADVISOR_MANDATE.md": deny
+    "docs/warroom/TASK_CONTROL.md": deny
+    "WORKING_POLICY.md": deny
   bash:
     "git commit*": deny
     "git push*": deny

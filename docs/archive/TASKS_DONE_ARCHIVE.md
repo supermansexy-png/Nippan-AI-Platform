@@ -1255,3 +1255,389 @@ PL EXECUTION RESULT — T-030 — 2026-09-26 (real run, evidence recorded)
 - Open Owner question that remains: whether n8n should keep write/execute capability at all (earlier recorded Owner order was read-only for the legacy n8n work). This does not block this card's evidence.
 
 ---
+
+
+<!-- archived by the Project Lead, 2026-09-26: verified-DONE cards moved off the board (Owner order "ให้ PL ตรวจและเก็บเฉพาะงานที่ยืนยันแล้วว่าเสร็จออกจากบอร์ดก่อน"). Card text preserved verbatim. -->
+
+### T-034a — War Room UI: rewrite the surface as a readable chat screen (UI only, FREE model)
+
+Status: READY for INTAKE — the T-033 pilot has run; model split approved by the Owner 2026-09-26.
+Owner: Project Lead — 2026-09-26 (Owner order: "พอผ่านช่วงทดลองเสร็จแล้วต้องพัฒนาให้เรียบร้อย เหมือนหน้าจอแชทจริง")
+Role: Developer — **free model `nvidia/nemotron-3.5-lightning:free`** (builder backup slot, $0/M, 1M ctx, tools ✓; HR check 2026-09-26: endpoint live, uptime ~90%, latency p50 2.9s / p90 78s → slow, so scope stays tight) + reviewer `opencode/space-bunny-free` (different model; anti-redundancy holds)
+Risk: L2 (front-end only; no authentication, authorization, schema, RLS or grant change)
+Goal: the `/war-room` surface behaves like a normal chat screen for daily team use — newest message always in view, long history handled without an endless page, and a meeting can be started/archived without hand-made SQL.
+Done when: 1) the message list behaves like a chat thread — auto-scroll to the newest message, "กลับไปล่าสุด" control, and the page does not run away as history grows; 2) long history is handled deliberately (windowed/paged view with "โหลดก่อนหน้า" instead of dumping up to 100 events at once); 3) a fresh room per meeting is possible **without** touching the database by hand (reviewed create-room path — endpoint or a seed script that takes a room id/title); 4) the previous meeting stays archived and reachable by its room id; 5) Thai labels stay consistent and the UI states (idle/loading/error) are explicit; 6) tests + CI green, and the change is reviewed by a different model; 7) no production system, no customer data, no provider spend involved in the UI work itself.
+Budget: 1–2 days
+Links: T-033 (pilot findings drive this card), `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (how the stopgap room was made), `services/control-plane-web/war-room/` (index.html / war-room.js / war-room.css), `docs/warroom/TASK_CONTROL.md` §8
+
+INTAKE T-034 — 2026-09-26 (Project Lead, from the Owner order)
+Understanding: during the pilot the Owner found the room page unusable as a chat screen — history is long, there is no way to clear or start fresh, and a new meeting room had to be created by hand in the database. The Owner wants the surface developed properly after the trial.
+Scope: the `/war-room` front-end (and, if a create-room path is needed, the smallest reviewed server addition for it). No auth model change, no schema change.
+Needs: the pilot results (what actually annoyed the Owner while using it); the T-033 decisions.
+Missing: the pilot has not run yet.
+Plan: 1) run the T-033 pilot; 2) collect the concrete usability complaints; 3) scope this card against them; 4) builder implements on a branch, reviewer on a different model checks the diff, CI green; 5) PL verifies against the deployed preview; 6) record the verdict.
+Estimate: 1–2 days.
+Risks: UI work on the deployed preview without breaking the auth boundary; the create-room path touches the server, so it must be reviewed as carefully as any transport change.
+Decision: ACCEPT (queued behind the T-033 pilot).
+
+**PILOT FINDINGS TO FIX — from the Owner using the room for real (2026-09-26)**
+
+The first pilot meeting produced three AI answers (Chair, Builder, Security) but the Owner could not tell **who** answered —
+the transcript reads as if only one participant replied. Concrete requirements, in priority order:
+
+1. **Speaker identity on every message** — show the participant's display name **and** role (e.g. "Preview Chair · ประธาน")
+   as a header on each bubble; the Owner's own messages must look different from AI messages.
+2. **Separate system events from the conversation** — `TURN_SCHEDULED` / `ROOM_STATE_CHANGED` currently sit in the same list as
+   the messages and drown the discussion; they belong in a collapsible one-line system log.
+3. **Chat affordances** — newest message auto-scrolled into view + a "กลับไปล่าสุด" control; group consecutive messages from the
+   same speaker; show time; show model and token count per AI message (small, secondary).
+4. **Role-based visual distinction** — colour/avatar per role (OWNER / CHAIR / BUILDER / SECURITY / COST_OPS / AUDITOR / SECRETARY)
+   so a long meeting is scannable.
+5. **Start a new meeting without hand-editing the database** — a "เริ่มประชุมใหม่" action that creates a room (reviewed
+   create-room path), and the previous room stays reachable as an archive.
+6. Keep Thai labels consistent; make loading/error states explicit.
+7. **Show the roster, not just a number** — the sidebar currently shows a count ("8"); the Owner wants to see **who** is in the
+   meeting: each participant's display name + role, with active/inactive made obvious. The count alone tells the Owner nothing.
+8. **The agenda panel must actually work** — the right-hand "วาระ" panel is decoration today; either make it usable (create/edit
+   the agenda item, mark it done, show the round/round-limit and which agenda item a message belongs to) or remove it. Keeping a
+   panel that cannot be used is worse than not having it.
+9. **Chat window and typography must be readable** — comfortable line length and font size, clear separation between messages,
+   no wall of same-looking text; the room must be readable for a long meeting, not only for a three-message demo.
+
+Verification for this card: the Owner must be able to read a meeting transcript and name every speaker at a glance, see who is in
+the room, and understand what the meeting is about from the agenda panel — all without asking the PL what the database says.
+
+**Scope lock for T-034a (files the worker may touch — nothing else):** `services/control-plane-web/war-room/index.html`,
+`war-room.css`, `war-room.js`. No server/transport/contract change, no new endpoint, no database access, no new dependency or
+build step (the surface stays framework-free and dependency-free), the wire contract (snapshot / SSE / commands) is unchanged,
+no secrets in the prompt, and the worker must **not** commit or push.
+**Fallback rule (Owner-approved):** if the free model fails quality review twice, the paid builder `z-ai/glm-5.3-flash` closes
+T-034a instead — no further attempts on the free model.
+
+**WORK LOG — T-034a (PL, 2026-09-26; Owner away, PL acting under the delegation of 2026-09-26)**
+
+| # | Attempt | Model | Outcome |
+|---|---|---|---|
+| 1 | headless worker, full rewrite | `opencode/nemotron-3.5-lightning-free` | 10 min of planning + todos, **no file written**, died on a length limit |
+| 2 | headless worker, full rewrite, "small steps" | `openrouter/thinkingmachines/inkling:free` | **wrote the change** (~150 lines across the 3 files) → reviewer #1 = **REJECT** (5 findings: timestamps read `timestamp`/`created_at` instead of `occurred_at`; token count read `token_usage`/`usage` instead of scalar `usage_tokens`; `provider_model` invented; `provider_request_id` display dropped; system-log open-state reset every render) |
+| 3 | headless worker, fix round 1 | `openrouter/thinkingmachines/inkling:free` | fixed 4 of 5 → reviewer #2 = **REJECT** (blocker: owner decisions pushed into the system log and truncated to 120 chars; blocker: `replaceChildren()` resets `scrollTop` so auto-scroll never fires in a long room; minor: English role enums, `usage_tokens === 0` hidden) |
+| — | fallback rule triggered (2 free-model failures) | `openrouter/z-ai/glm-5.3-flash` | headless attempt **stalled twice without writing a file** — the headless harness elides large tool output, so the model kept re-reading the file and burned the step limit; the `builder` subagent path returns no edits (its agent file grants no `edit` permission) → use `--agent worker --model <builder model>` |
+| 4 | headless worker, tight scope (4 edits max) | `openrouter/thinkingmachines/inkling:free` | in progress at the time of writing — fixes B1 (owner decision in the conversation) and B2 (auto-scroll); reviewer re-check to follow |
+
+- Environment finding worth keeping: the headless runner truncates large tool output, so a job must be told to read only small
+  regions; and `builder.md` has no `edit` permission, while `worker.md` has `edit: allow` — code jobs go through `worker`.
+- The change is **not deployed yet**: the preview serves `phase2/postgres-logical-schema`, this work is on `dev-workspace`.
+  Deploy path planned: commit → isolated 3-file change on a branch off the deployed branch → PR → merge → Render auto-deploy.
+
+---
+
+---
+
+### T-039 — L3: write the advisor into the protected governance docs
+
+Status: IN_PROGRESS (Owner instruction 2026-09-26: "เปิดการ์ดทำเลย")
+Owner: Project Lead (docs) + reviewer on a different model
+Role: Project Lead + reviewer
+Risk: **L3** — edits two protected documents (`docs/warroom/AI_OPERATING_PROTOCOL.md`,
+`docs/warroom/TASK_CONTROL.md`). Per TASK_CONTROL §8 this needs: a card · a reviewer on a **different
+model** · a Decision Log entry with reasons. Owner approval given in chat 2026-09-26 (dev-time, so the
+PL may also substitute for the owner's approval).
+
+Goal: the protected rule books recognise the new order chain and the advisor oversight, so no rule in
+force contradicts the new role.
+
+Done when:
+- [x] `AI_OPERATING_PROTOCOL.md` — new section "Who orders the work" (`Owner → advisor → PL →
+      specialist`), the record-written-by-the-receiver rule, and the Gate-4 requirement that the
+      Auditor answer the five mandate questions on a model ≠ the advisor's
+- [x] `TASK_CONTROL.md` §3 — advisor-ordered work gets the extra per-card advisor audit
+- [x] `TASK_CONTROL.md` §4 — an advisor order with no record in `ADVISOR_LOG.md` must not start
+- [x] `TASK_CONTROL.md` §8 — `docs/warroom/ADVISOR_MANDATE.md` added to the protected list;
+      `ADVISOR_LOG.md` declared **append-only**, written by the receiver
+- [x] independent reviewer (model ≠ `opencode-go/mimo-v2.6-pro`) verifies the two protected edits —
+      `opencode-go/kimi-k3`, run `runs/2026-09-26T10-19-22Z-t039-protected-review` → **ACCEPT-WITH-FINDINGS**,
+      checks 1–6 PASS
+- [x] finding resolved: protected-document approval is now explicitly **outside** the advisor's
+      substitute authority (`ADVISOR_MANDATE.md` §6 + `TASK_CONTROL.md` §8)
+- [x] `docs/warroom/decision-log.md` entry with reasons (entry `## ADVISOR — 2026-09-26`)
+- [x] `docs/project-memory/CURRENT_STATE.md` refreshed (2026-09-26 block at the top)
+
+Note: `docs/warroom/ROLES.md` was deliberately **not** touched — it describes the runtime (live-system)
+role ecosystem, and the advisor is a dev-time role. Rule: protected docs are edited one card at a time
+so each change keeps a single reviewable diff.
+
+Budget: dev-time document work only; no new paid spend.
+
+Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, card T-038
+
+---
+
+### T-043 — Enforce "the Project Lead does not write code": restrict the PL's `edit` and `bash` permissions
+
+Status: IN_PROGRESS — Owner approved 2026-09-26 ("อนุมัติล็อกสิทธิ์ PL ไม่ให้หลุดไปเขียนโค๊ด")
+Owner: Project Lead (plan/record) + builder (runtime file) + reviewer on a **different model**
+Risk: L2 — dev tooling, one file: `.opencode/agents/project-lead.md`. No runtime/production/customer/data impact.
+
+Goal: the long-standing **prose** rule ("the Project Lead must not hand-edit runtime files" — `AGENTS.md` file-type rule)
+becomes an **enforced permission** instead of a request inside a prompt. The Owner's reason: the PL's model is a reasoning
+model, not a coding model, so if the PL slips into writing code the result is bad code.
+
+Owner order (verbatim): "อนุมัติล็อกสิทธิ์ PL ไม่ให้หลุดไปเขียนโค๊ดไหม (ชั้น 1 จำกัด edit ให้แก้ได้เฉพาะเอกสาร dev +
+ชั้น 2 ตัดคำสั่ง bash ที่เขียนไฟล์ออกจาก allowlist ของ PL)"
+
+Changes — one file, two permission blocks:
+1. **Layer 1 — `edit` allowlist (fail-closed).** `permission.edit` becomes an object with `"*": deny` FIRST, then allows for
+   `TASKS.md`, `docs/**`, `runs/**`, `README*`, `AGENTS.md`, `WORKING_POLICY.md`, `PROJECT_STATE.md`, `ROADMAP.md`.
+   Everything else — `services/**`, `tests/**`, `migrations/**`, `scripts/**`, `.github/**`, `.opencode/**`, `opencode.json` —
+   is denied. That is exactly the `AGENTS.md` file-type rule, now enforced. `runs/**` is allowed because the headless
+   workflow requires writing briefs to `runs/briefs/<card>.md`.
+2. **Layer 2 — remove the file-writing bash commands from the PL's reach.** Add denies for `Set-Content`, `Add-Content`,
+   `New-Item`, `Copy-Item`, `Move-Item`, `Rename-Item`, `Remove-Item`, `Clear-Content`, `Out-File`, `Expand-Archive`,
+   `Compress-Archive`. Per the permissions docs (§Agents) **agent permissions are merged with the global config and agent rules
+   take precedence**, so these denies override the global allows while `git` / `gh` / `node` / `python` / `pytest` stay usable.
+   No catch-all `"*"` is added for bash, deliberately: only the file-writing commands are removed, so nothing else the PL
+   legitimately runs can break.
+
+**Documented residual (cannot be fully closed without breaking the role)**: `node -e` and `python -c` can still write files,
+and the PL must keep `node`/`python` to run `scripts/headless_run.mjs` and the test suite. So layer 2 makes code-writing
+awkward and detectable, **not impossible**. Detection stays: a reviewer sees every diff, and a PL diff touching a runtime
+path is a `docs/warroom/ai-scorecard.md` violation.
+
+Done when:
+- [x] the two permission blocks are in `.opencode/agents/project-lead.md` and the YAML still parses → reproducible `node` + `.opencode/node_modules/yaml` command (recorded below)
+- [x] reviewer on a different model confirms the syntax and the merge semantics (global allows vs agent denies) → `opencode-go/space-bunny-free`: ACCEPT-WITH-FINDINGS, no blockers
+- [x] the reviewer states explicitly whether layer 2 is **guaranteed** by merged-rule precedence, or only best-effort → **guaranteed for the 11 listed commands**; the overall goal ("the PL cannot write files") is **best-effort**, not absolute
+- [x] Owner restarts and checks: the PL can still write `TASKS.md` / `docs/**`, and is refused when editing e.g. `opencode.json` → **VERIFIED live 2026-09-26** (see the live-verification block below)
+
+Evidence to capture: the file diff · the reviewer verdict · the Owner's restart check.
+Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
+Links: `.opencode/agents/project-lead.md`, `AGENTS.md` (file-type rule), `docs/warroom/TASK_CONTROL.md` §8, cards T-041/T-042
+**Sequencing:** same file as T-041/T-042 → sequential, never concurrent.
+**Builder DELIVERY (retry run 2 / 2026-09-26, builder `opencode-go/glm-5.3-flash`):** DONE (builder-scoped only)
+- edited ONLY `.opencode/agents/project-lead.md` frontmatter `permission:` (added edit+bash blocks); diff shows untouched
+  lines only pre-existing local edits vs HEAD (mode/model + one roster bullet); no other file touched; no commit/push.
+- YAML verify (node + yaml pkg): `{"task":"allow","edit":{"*":"deny","TASKS.md":"allow","docs/**":"allow","runs/**":"allow","README*":"allow","AGENTS.md":"allow","WORKING_POLICY.md":"allow","PROJECT_STATE.md":"allow","ROADMAP.md":"allow"},"bash":{...11 denies...}}`
+- git diff --stat: `.opencode/agents/project-lead.md | 28 +++++++++++++++++++++++++--- (25 insertions, 3 deletions)` — the 3 deleted lines are PRE-EXISTING working-tree changes, not mine.
+- card lookups blocked by the new bash allowlist (rg) — used Grep/Read tools instead (expected behavior).
+
+PL RECORD — T-043 — 2026-09-26
+Builder: the first attempt (`opencode-go/glm-5.3-flash`) reported an INTAKE and then produced **no edit at all** — a known failure
+mode where a long read-heavy prompt exhausts the model. The change was verified on the file (not trusted from the report) and was
+NOT there. A retry with a short, instruction-only prompt on the same primary model succeeded.
+Reproducible evidence: `node -e "const Y=require('./.opencode/node_modules/yaml');const fs=require('fs');const p=Y.parse(fs.readFileSync('.opencode/agents/project-lead.md','utf8').split('---')[1]).permission;console.log(JSON.stringify(p))"`
+→ prints `task: allow` plus the full `edit` and `bash` objects. `git diff --stat` = **25 insertions / 3 deletions on that one file**
+(the 3 deletions are T-041/T-042's `mode`/`model`/body-line edits — no body damage).
+
+REVIEWER — T-043 — `opencode-go/space-bunny-free` (model ≠ the author's) — 2026-09-26
+VERDICT: **ACCEPT-WITH-FINDINGS** — no blockers, no regression to the open cards.
+- Layer 1 VERIFIED: `"*": "deny"` first + "last matching rule wins" ⇒ genuinely fail-closed; every path the PL legitimately writes
+  is allowlisted (`docs/archive/**`, `docs/audits/**`, `runs/briefs/**`, `README*`, `PROJECT_STATE.md`, `ROADMAP.md`).
+- Layer 2 VERIFIED as far as the docs go: *"Agent permissions are merged with the global config, and agent rules take
+  precedence"* ⇒ the agent denies DO override the global allows for those 11 commands.
+- **Correction to the residual note above (should-fix — recorded):** the honest list of remaining write-vectors is wider than
+  node/python. Any *allowed* command can be redirected (`git log > file`, `Write-Output x > file`, `Get-Content a > b`), and
+  `git checkout <branch> -- <path>`, `git switch`, `npm install`, `pg_dump -f`, `docker*`, `supabase*` can also write.
+  So the accurate claim is: **layer 2 blocks the obvious paths and makes code-writing detectable, but it cannot make it
+  impossible.** The card's original wording was right; only the list was too short.
+- minor, recorded honestly: the builder attributed the blocked `rg` to the *new* allowlist — `rg` was never allowlisted; it always
+  fell through the global `"*": "deny"`. No functional impact.
+- minor, deliberate looseness: `docs/**` also lets the PL edit `PDPA_COMPLIANCE.md` / `PRICING_V1*`, which `AGENTS.md` says the PL
+  must not write itself. Left as-is on purpose — this card is about code, and the prose rule still governs those documents in dev-time.
+- Cannot be proven from the repo: whether the merged rules behave as documented on a live run → that is exactly the Owner's restart check.
+
+LIVE VERIFICATION — T-043 — 2026-09-26 (Project Lead, after the Owner restarted opencode)
+Run from the PL agent itself, so the ruleset the permission engine returns is first-hand evidence.
+1. **Layer 1 — edit, denied path.** Writing `.opencode/perm-test-2.txt` was **BLOCKED**, and the engine returned the live
+   ruleset: global `edit: allow *`, then `edit: { "*": "deny", "TASKS.md": "allow", "docs/**": "allow", "runs/**": "allow",
+   "README*": "allow", "AGENTS.md": "allow", "WORKING_POLICY.md": "allow", "PROJECT_STATE.md": "allow", "ROADMAP.md": "allow" }`
+   → `*: deny` wins for unlisted paths. **The fail-closed allowlist is loaded and working.**
+2. **Layer 1 — edit, allowed path.** Writing `runs/perm-test-2-allowed.txt` **SUCCEEDED** → the PL can still write files where it
+   should, so its card/document duty is intact (exactly what the Owner required: writing files is the job; writing code is not).
+3. **Layer 2 — bash.** `Set-Content -LiteralPath "runs\perm-test-3.txt" ...` was **DENIED**. The live ruleset shows the global
+   `"Set-Content*": "allow"` first and the agent `"Set-Content*": "deny"` LAST → this **empirically confirms** the documented
+   "agent permissions are merged with the global config, and agent rules take precedence / last matching rule wins". No file was created.
+4. `node *` is still allowed, so the PL can still run `scripts/headless_run.mjs` and JSON checks — and it was used to delete the test file.
+Known consequence (accepted): PowerShell `Remove-Item*` is now denied for the PL, so it cannot delete files with PowerShell any
+more; `node -e "fs.rmSync(...)"` remains available for scratch cleanup. All test artifacts were removed — `git status` shows only
+the intended 7 modified files. Box 4 of "Done when" is therefore satisfied by live evidence, not by inference.
+
+HR REPORT — T-044 — `model-recruiter` (`opencode-go/gpt-6-luna`) — 2026-09-26 · status: **PARTIAL**, no files changed
+- Scanned the live provider catalogues: Go/Zen `GET /zen/go/v1/models` → HTTP 200, 40 ids; OpenRouter free slice = 20 models, 17 with tools.
+- **PROBED LIVE:** `openrouter/dots-studio/dots-3-note-preview:free` — $0/$0, 512K ctx, tools + tool_choice + structured outputs, and it
+  answered a probe exactly as instructed · `openrouter/cohere/north-mini-code:free` — $0/$0, 256K ctx, tools + tool_choice, same result.
+- **Rejected:** `opencode/nemotron-3-ultra-free` (would duplicate the `assistant`'s model) · `opencode-go/space-bunny-free` (duplicates the
+  reviewer) · `openrouter/thinkingmachines/inkling-small:free` (403 — agentic-harness only) · `openrouter/nvidia/nemotron-3-nano-omni-…:free`
+  (probe returned the wrong shape).
+- **Could not** probe Zen live from its session permissions → no other Zen free model is claimed LIVE. **Could not** prove real file-editing
+  ability — only that the models preserve the instructed format.
+- Blocked on the roster rule "Primary and Backup must be different providers": both probed candidates are OpenRouter, so HR could not form a
+  valid pair → `NEEDS_OWNER_DECISION` if the Owner wants that rule waived, otherwise a second HR pass must find a live Zen counterpart.
+
+PL RECOMMENDATION — evidence-based, and it resolves the blocker
+- **Option B — reuse the free `assistant`: nothing needs to be built at all.** It is already `mode: subagent`, **free**
+  (`opencode/nemotron-3-ultra-free`), **`task: deny`**, and it already inherits `edit: allow` from the global map. Its own prompt already
+  covers "งานย่อยที่ Project Lead ไม่จำเป็นต้องลงมือเอง". So the free writer the Owner asked for **already exists** — no new hire, no new
+  model, no file change, no paid spend, and no Primary/Backup diversity problem. What is new is only the *habit*: the PL orders `assistant`
+  to perform the config writes, and a reviewer on a different model checks the diff. Prove it with one live round-trip.
+- **Option A — a new dedicated `scribe` agent** — gives cleaner duty separation but inherits the unresolved model question above (no valid
+  Primary/Backup pair yet; the Zen side is unverified), and the PL cannot create the file itself (the T-043 lock), so an existing writer must.
+- Honest caveat either way: **no free model here has yet been proven to drive the edit tool reliably** — that requires a real round-trip.
+
+REVIEWER — T-044 — `opencode-go/space-bunny-free` (model ≠ the author's `opencode/nemotron-3-ultra-free`) — 2026-09-26
+VERDICT: **ACCEPT-WITH-FINDINGS** (no blockers; 3 should-fix + 3 minor).
+VERIFIED: the diff was exactly the two intended edits on one file, nothing else; `mode: subagent` / `model` / `permission: task: deny`
+intact (so the writer still cannot command other agents); no commit and no push had happened; no secrets exist in the tracked
+`.opencode/**` tree (grep for `sk-`/`Bearer`/`api_key` found nothing, no `.env` in git, `opencode.json` uses `{env:...}` only).
+Also: the reviewer judged this **not** a bypass of T-043 — the AGENTS.md reason is "the author must not be the only checker", and the
+chain still separates author and checker (PL DeepSeek → writer nemotron-free → reviewer space-bunny-free).
+Findings, and what was done:
+- **should-fix 1 — "no commit/push" was text-only.** The global map still allowed `git commit`/`push`/`checkout`/`switch`/`merge`/
+  `rebase` for the assistant, which would have destroyed the review-before-merge guarantee. → **FIXED in round 2**: those commands are
+  now denied in the assistant's own `bash` map, leaving only read-only git (`status`/`diff`/`log`/`show`) for evidence.
+- **should-fix 2 — the evidence line hardcoded this file's own path**, so a future order to edit `opencode.json` would have attached a
+  wrong or empty diff as "evidence". → **FIXED**: it now reads `git diff <ไฟล์ที่ถูกสั่งแก้>` (without `--`, which the permission engine rejects).
+- **should-fix 3 — the `edit` permission was inherited from the global map as "allow everything"** (the whole repo, including
+  `services/**`, `migrations/**`, `.github/**`), far wider than the duty. → **FIXED**: explicit fail-closed allowlist in the assistant's own
+  file (`"*": deny`, then `.opencode/**`, `opencode.json`, `docs/**`, `runs/**`) — and, added by the PL beyond the reviewer's list,
+  **`.opencode/agents/assistant.md: deny`** so the writer cannot widen its own permissions. Consequence: this round was the last time the
+  assistant could edit its own definition; future changes to it must go to the paid builder.
+- **minor — no rule against READING secret files.** The `read` tool denies `.env` by default, but a shell command (`Get-Content .env`)
+  could still pull a secret into a context that may log or train. → **FIXED**: an explicit "ห้ามอ่านไฟล์ secret ผ่านคำสั่ง shell" rule was added.
+- **minor — the description line said broadly "เขียนไฟล์แทน PL"** while the body limits the duty to runtime/config; a small model could
+  over-generalise. → noted, left as-is (the body's scope list is explicit).
+- **minor — the writer's round-1 report had no INTAKE block** (protocol Gate 1). → recorded in `docs/warroom/ai-scorecard.md`; round 2
+  included one.
+
+ROUND-2 EVIDENCE (PL-verified on the file, not taken from the report)
+- frontmatter now: `task: deny` + `edit: {"*":"deny", ".opencode/**":"allow", "opencode.json":"allow", "docs/**":"allow",
+  "runs/**":"allow", ".opencode/agents/assistant.md":"deny"}` + a `bash` map denying 13 state-changing git commands.
+- Line 70 = the corrected evidence line; line 72 = the secret-read prohibition. `git diff --stat` = 38 insertions / 2 deletions on
+  `.opencode/agents/assistant.md` across both rounds; `git status --short` shows only that file plus this card.
+- **The live round-trip the card asked for is proven:** a free model (no paid spend) performed a real, precise write on a runtime
+  config file that the Project Lead itself is locked out of — twice, both times verified by the PL and checked by a different-model reviewer.
+
+---
+
+### T-045 — Security re-pin + close the free writer's protected-document permission hole
+
+Status: **DONE 2026-09-26** — Owner-approved picks; NOT pushed (changes left in the working tree)
+Owner: Owner approved both picks 2026-09-26 · Risk: L2 · Writers: `assistant` (`opencode/nemotron-3-ultra-free`, free) for `security.md`; `builder` (`opencode-go/glm-5.3-flash`, paid, Owner-ordered) for `assistant.md` · Reviewer: `opencode-go/space-bunny-free` on both diffs
+Why: the `security` pin `openrouter/nex-agi/nex-n2.5-mini:free` was dead (author `nex-agi` has 0 models left; a live dispatch failed "Model not found"), and `.opencode/agents/assistant.md` allowed `edit` on `docs/**`, which held **9 of the 10** protected documents in `TASK_CONTROL.md` §8 (the 10th, `WORKING_POLICY.md`, sits at the repo root and was already denied by `"*": deny`).
+Done when:
+- [x] `.opencode/agents/security.md` names `opencode-go/kimi-k3` (line 4) and records the Backup `openrouter/qwen/qwen3.8-flash` (line 53) — PL-verified on the file itself
+- [x] `.opencode/agents/assistant.md` `edit` map denies all 10 protected documents → **+10 lines, 0 deletions**, trailing the `docs/**` allow
+- [x] a reviewer on a different model checked both diffs → ACCEPT / ACCEPT-WITH-FINDINGS (no blocking)
+- [x] `MODEL_ROSTER.md` security row + review tier + Go count (35 → 43) corrected by the PL
+- [x] no unapproved spend (free writer for `security.md`; the paid builder was ordered by the Owner for the second half)
+
+PL-VERIFIED EVIDENCE (inspected on the files, not taken from the writers' reports)
+- `git diff .opencode/agents/security.md` = exactly 2 hunks (1 insert / 1 delete each). `git diff .opencode/agents/assistant.md` = **+10 / -0**, inside `permission.edit` only; nothing else in either file.
+- Reviewer on `security.md` (`space-bunny-free`): ACCEPT — anti-redundancy holds for both new slugs; `edit: deny` / `task: deny` untouched; no commit/push.
+- Reviewer on `assistant.md` (`space-bunny-free`): ACCEPT-WITH-FINDINGS — all 10 §8 documents covered and every path confirmed to exist (`Test-Path`); YAML parses (`edit` 16 entries, `bash` 13 denies intact, `task: deny` intact, self-deny intact); the trailing deny is effective per the semantics verified live in T-043 and by the `assistant.md: deny` self-rule that BLOCKED this very card's first attempt.
+- Neither writer committed or pushed; `git status --short` leaves both files unstaged among the pre-existing war-room / docs modifications.
+- Incidental improvement: the old security Backup `opencode/space-bunny-free` duplicated the reviewer (`opencode-go/space-bunny-free`) — replaced, closing that anti-redundancy gap.
+
+Carried residual (recorded, not hidden)
+- **The bash write path is still open**: the global map allows `Set-Content*`, `New-Item*`, `node *`, `python*` for the `assistant`, so a protected document could still be written around the `edit` rule. Same accepted limitation T-043 recorded for the PL ("not airtight, but detectable"); closing it needs the same 11-command deny set the `project-lead` carries.
+- **No live write-attempt** against a protected document was run, so the new deny lines rest on mechanism + path existence, not on an attempted write (**UNKNOWN**).
+- `kimi-k3` quota is small (~490 requests/month) → reserve it for real reviews. Its Backup `qwen3.8-flash` is OpenRouter **paid** ($0.15/$0.47) → ask before falling back.
+
+Links: `.opencode/agents/security.md`, `.opencode/agents/assistant.md`, `docs/product/MODEL_ROSTER.md`, `docs/warroom/TASK_CONTROL.md` §8, card T-044
+
+---
+
+### T-046 — L3: raise the work-in-progress limit to 10 (protected doc `TASK_CONTROL.md` §5)
+
+Status: **DONE 2026-09-26** — L3 closeout complete; NOT committed (working tree)
+Owner: Owner approved by this order · Writer: PL (`docs/warroom/TASK_CONTROL.md` is a dev-process file the PL writes) · Reviewer: `opencode-go/space-bunny-free` (different model from the PL's `openrouter/deepseek/deepseek-v4.1-flash`)
+Risk: **L3** — §5 lives in `TASK_CONTROL.md`, a **protected document** (`TASK_CONTROL.md` §8: "this file"). L3 always requires a card + a reviewer on a different model + an approval + a Decision Log entry with reasons.
+Goal: the WIP rule in `TASK_CONTROL.md` §5 allows **10** tasks IN_PROGRESS at once (was 3).
+Why: the Owner ordered the concurrency cap raised to 10; the board has been running at 7 IN_PROGRESS against a limit of 3.
+Done when:
+- [x] `TASK_CONTROL.md` §5 states **10** IN_PROGRESS
+- [x] the **unchanged** REVIEW number (5) is stated explicitly, so the section cannot be read as a blanket "10"
+- [x] the section's "Why" records the Owner order and the accepted trade-off honestly
+- [x] a reviewer on a different model checks the diff and returns a verdict → round 1 **REJECT** (closeout incomplete) → round 2 **ACCEPT**
+- [x] a Decision Log entry with reasons exists (plus a correction note appended to the earlier board-cap entry, without rewriting it)
+
+PL-VERIFIED EVIDENCE
+- `git diff docs/warroom/TASK_CONTROL.md` = a single hunk, lines ~71–92, entirely inside §5 — **§3, §8 and §9 are untouched**, so no other protected rule was altered.
+- The §5 text now reads "at most **10** tasks IN_PROGRESS and **5** in REVIEW", and states in the section itself that the two numbers are separate ("10 running, 5 awaiting review — not as a blanket 10").
+- The "Why" carries the Owner order and the trade-off explicitly, including that it does **not** remove the review bottleneck the rule exists to manage.
+- `TASKS.md` (`Board size`) updated to match, so the two documents no longer contradict each other.
+- Decision Log: a new T-046 entry with reasons, the L3 path, and the round-1 REJECT → round-2 ACCEPT record. The earlier board-cap entry is **not** rewritten; a correction note was appended pointing forward.
+- Reviewer round 2 (`opencode-go/space-bunny-free`): **ACCEPT**, no blockers left; confirmed no history was overwritten and nothing was committed.
+
+Carried residual (recorded, not hidden)
+- `.opencode/agents/project-lead.md` line ~84 still says "WIP max 3 IN_PROGRESS, 5 REVIEW". It is a **runtime file**, so the PL may not edit it — it needs a builder plus a reviewer on a different model. **Not yet fixed; the runtime config and the document therefore disagree.**
+- Two documents other than this card's deliverables are modified in the working tree (`docs/project-memory/CURRENT_STATE.md`, `docs/warroom/ADVISOR_LOG.md`) — attribution UNKNOWN (another session). They must not be committed together with this card.
+- The Owner's order was recorded verbatim in two places with different wording on the earlier board-cap change; this card's own order string is quoted exactly.
+
+Out of scope: the board cap in `TASKS.md` (already raised 5 → 10), and the REVIEW limit (unchanged at 5).
+Links: `docs/warroom/TASK_CONTROL.md` §5 + §8, `TASKS.md` (`Board size`), `docs/warroom/decision-log.md`
+
+---
+
+### T-047 — Runtime config: `project-lead.md` still states the old WIP limit (3)
+
+Status: **DONE 2026-09-26** — Owner-approved; NOT committed (working tree)
+Owner: Owner approved by that message · Writer: `builder` (`opencode-go/glm-5.3-flash`, paid — Owner approved) · Reviewer: `opencode-go/space-bunny-free` (different model from the builder)
+Risk: L1 — one prompt line in an agent definition, reversible. It is nevertheless a **runtime file**, so the file-type rule still requires a builder plus a reviewer on a different model (the PL may not hand-edit it).
+Goal: `.opencode/agents/project-lead.md` states the current WIP limit (**10** IN_PROGRESS, 5 REVIEW) instead of the stale 3.
+Why: card **T-046** raised the limit in the protected doc `TASK_CONTROL.md` §5, but the PL agent's own prompt still repeats the old number — the runtime config and the document disagree.
+Done when:
+- [x] line 84 reads "WIP max 10 IN_PROGRESS, 5 REVIEW"
+- [x] nothing else in the file changes
+- [x] a reviewer on a different model checks the diff and returns a verdict → ACCEPT-WITH-FINDINGS (no blocking on the work)
+
+PL-VERIFIED EVIDENCE
+- `git diff .opencode/agents/project-lead.md` = a single hunk, one line: `3` → `10`. The frontmatter (model, `task: allow`, the `edit` allowlist and the `bash` deny-list) is byte-identical to HEAD — the PL's code lock is untouched.
+- Reviewer (`opencode-go/space-bunny-free`, ≠ the builder's `glm-5.3-flash`): ACCEPT-WITH-FINDINGS, no blocking. All three places now agree — `TASK_CONTROL.md` §5, `TASKS.md` (`Board size`) and this agent file all read **10 IN_PROGRESS / 5 REVIEW**; no stale "3" remains.
+- No commit, no push; the file is left unstaged.
+
+Carried residual
+- The review cap stays 5 while IN_PROGRESS is 10 → per `TASK_CONTROL.md` §5, new work must stop once more than 5 cards sit in REVIEW. The review queue is now the binding constraint, exactly as the §5 trade-off note records.
+
+Out of scope: no other agent file; `TASK_CONTROL.md` is already done (T-046); no change to `TASKS.md` board rules.
+Links: `.opencode/agents/project-lead.md`, card T-046, `docs/warroom/TASK_CONTROL.md` §5
+
+---
+
+### T-049 — Phase A Step 0 foundation inventory (read-only; which pieces already exist)
+
+Status: DONE — 2026-09-26; reviewer `opencode-go/space-bunny-free` ACCEPT-WITH-FINDINGS (findings actioned on this card). Archival to `TASKS_DONE_ARCHIVE.md` is housekeeping **outside this work order's edit scope** and is left pending.
+Owner: Project Lead — 2026-09-26 (Owner intent: "ให้คำแนะนำพี่ที่ละงาน").
+Role: Project Lead (compile + verify) + read-only service/infra probes + reviewer `opencode-go/space-bunny-free` (different model).
+Risk: L1 — read-only documentation/inventory; no code/runtime/production/database/credential change, no deploy, no spend, no restore test.
+Goal: establish, from read-only evidence, which `STARTUP_PLAYBOOK.md` Step 0 foundation pieces already exist and which still need work before the LINE bot — so the Owner can pick the next step without duplicating infrastructure. Distinguish configured/artifact from actually running/proven.
+Done when:
+- [x] the card exists before any inspection (this card)
+- [x] the receiver's advisor instruction record is appended to `ADVISOR_LOG.md`
+- [x] every Step 0 item has evidence + status (VERIFIED / INFERRED / UNKNOWN) + gap
+- [x] reviewer `opencode-go/space-bunny-free` checks the report; a different-model verdict is recorded
+- [x] the report is returned to the Owner in simple Thai
+Budget: read-only; reviewer free — **no new paid spend**.
+Links: `docs/warroom/STARTUP_PLAYBOOK.md` §Step 0, `docs/warroom/ADVISOR_LOG.md`, `docs/project-memory/SESSION_HANDOFF.md`, card T-030 evidence, `docs/archive/TASKS_PARKED.md` (T-001), `docs/archive/TASKS_DONE_ARCHIVE.md` (T-003).
+
+INTAKE T-049 — 2026-09-26 (Project Lead) — ACCEPT (Owner approved). Read-only Step 0 inventory; creates only this card plus the `ADVISOR_LOG.md` record; writes no runtime file and starts no listed work.
+
+**FINDINGS T-049 — 2026-09-26 (Project Lead, read-only)** — nothing implemented, no restore run, no DB write, no deploy, no paid call. Status key: VERIFIED = read in the repo/live, INFERRED = reasoned from evidence, UNKNOWN = cannot confirm.
+
+1. **n8n + PostgreSQL host — VERIFIED (with a caveat).** n8n host is live at `n8n.nippan.org`: read-only recon 2026-09-25 found 5 active workflows + 10 credentials, and it is reachable as a remote MCP `https://n8n.nippan.org/mcp-server/http` ("verified working", 39 tools) — `CURRENT_STATE.md:374–379`, `:368`. The n8n → PostgreSQL lite link is proven (card T-030; credential `6anMUYRLDYPduKY7`) — T-030 DONE (`TASKS.md` T-030 / `docs/n8n/T-030-execution-evidence.md:24`); note `CURRENT_STATE.md:107` still carries the older pre-T-030 line ("the n8n-side read/write proof is still open"). **Caveat:** the playbook bullet says "self-hosted n8n **+ PostgreSQL on a small VPS**". n8n exists, but the database actually in use is **managed Supabase** (`xzxwakvsbdzkdybijbzs`), not self-hosted PostgreSQL on one VPS. Whether n8n itself is self-hosted (vs a hosted plan) is **INFERRED** — no repo line states where it runs; the Docker/VPS options in `services/dev/DEPLOYMENT_GUIDE.md` are an artifact (status "READY — configuration artifact", `localhost:5678`/HTTP only).
+
+2. **HTTPS — VERIFIED.** `https://n8n.nippan.org` (n8n reachable over HTTPS; MCP endpoint) — `CURRENT_STATE.md:368`; and `https://warroom.nippan.org` behind Cloudflare Access (any path 302s to the Access login; **Owner browser PASS 2026-09-26**) — `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md:278–302`. The dev guide is HTTP/localhost only.
+
+3. **Daily backups + restore — artifact EXISTS, real-database restore UNKNOWN → GAP.** A daily `pg_dump` + 14-day-retention script exists in `services/dev/DEPLOYMENT_GUIDE.md` §"Daily Backup Script"; a **local** embedded-PostgreSQL dump→restore round-trip **PASSED** (`pg_dump -Fc` 253,492 bytes; 7 `lite_*` tables restored with RLS) — `docs/archive/TASKS_PARKED.md:73`. Against the **real Supabase** it is explicitly unproven and has **no card** — `docs/warroom/decision-log.md:682`, `TASKS_PARKED.md:42`. No restore was run here (forbidden by scope).
+
+4. **Lite schema tables — VERIFIED DONE.** 7 `lite_*` tables live with FORCE RLS on the real Supabase (T-002 + T-026/T-RLS-01) — `CURRENT_STATE.md:91–110`.
+
+5. **data-access / usage-tracker / monitor-log tools — VERIFIED DONE (code + tests).** `services/dev/tools/{data_access,usage_tracker,monitor_log}.py` with tests (card T-003, 37 tests) — `TASKS_DONE_ARCHIVE.md` T-003.
+
+6. **Owner's single alert channel — UNKNOWN → GAP (the real blocker).** `docs/warroom/MONITORING.md:34,46` states the requirement ("Red — must know now … sent immediately to the single alert channel; one alert channel e.g. one LINE chat to the owner"). `monitor_log.alert_red` exists but its `alert_channel` is **injectable and skipped silently when unset** — `services/dev/tools/monitor_log.py:16–18` (docstring) and `:117–119` (the skip itself); tests use a fake list, no real channel. **No evidence anywhere** that a red test event actually reaches the Owner (the playbook Step 0 exit criterion). Playbook Step 0 exit is therefore **not met**.
+
+**BLOCKER for the next LINE-bot step:** `STARTUP_PLAYBOOK.md` Step 1 includes `handoff-to-owner` + an outage-fallback message, which need a working Owner alert channel — item 6, currently absent. That is the specific gap that blocks Step 1. (Real-DB backup/restore unproven, item 3, is a **launch risk**, not a build blocker; n8n host, HTTPS, lite schema and the three tools are otherwise in place.) Secondary: a **dedicated test LINE OA** is not confirmed — the n8n legacy "LINE Messaging" credential belongs to the Owner's personal automation, not a test channel (`CURRENT_STATE.md:374–377`), and `line-channel` is itself a Step 1 item.
+
+REVIEW T-049 — `opencode-go/space-bunny-free` (different model from the author) — 2026-09-26 — **ACCEPT-WITH-FINDINGS**.
+- Items 1–6: 2/4/6 PASS · 1 PASS-with-findings · 3 PASS · 5 PASS; the blocker claim (item 6 blocks Step 1's handoff-to-owner/outage fallback) checked against `STARTUP_PLAYBOOK.md:25,31` = honest; process PASS (card+INTAKE preceded FINDINGS; `ADVISOR_LOG.md:102–112` present; `git status` shows no `services/**`/`migrations/**`/`tests/**` change, no DB write, no restore, no deploy).
+- Findings actioned on this card: (a) the item-1 "n8n→PG proven" citation was wrong (`CURRENT_STATE.md:107` actually says the proof is still open) → re-pointed to T-030 + `docs/n8n/T-030-execution-evidence.md:24`, with the stale line noted; (b) the silent-skip line range corrected from `73–80` to `117–119` (docstring `16–18` stands).
+- Reviewer could not verify: that no process is actually running (files/git only); and whether the real Supabase has platform-managed backups (not observable from the repo — reported as UNKNOWN).
