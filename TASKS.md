@@ -480,8 +480,8 @@ Links: T-058 (carried item), `docs/project-memory/INDEX.md` § "ไฟล์ท�
 
 ### T-061 — Five more stale model pins inside agent prompts (the T-059 reviewer findings)
 
-Status: READY for INTAKE — L2 (Owner order 2026-09-27: same conditions as T-059). Fixer unclaimed.
-Owner: (unclaimed) — see the attribution note below before assigning a model
+Status: DONE (2026-09-27) — reviewer on a third model = ACCEPT-WITH-FINDINGS, 5/5 lines PASS. Committed locally as `76f3462`, **not pushed**. The sweep round is closed here by Owner order: findings beyond this card's boundary are recorded in `decision-log.md` as **known-not-fixing**, not as new cards. History: IN_PROGRESS — fixer claimed 2026-09-27: `opencode-go/glm-5.3-flash` (≠ assistant, which wrote the offending lines in the T-035 migration bundle). Exact location confirmed by reading the files: `ops.md:47`, `researcher.md:43` (backup only), `project-lead.md:75` (the advisor part; the project-lead part is correct), `project-lead.md:77` (ops + HR), `assistant.md:56` (backup only) — 5 lines in 4 files. `project-lead.md:76` (reviewer/security/L4) was re-checked against the roster and is **correct**; left untouched.
+Owner: `opencode-go/glm-5.3-flash` (2026-09-27, Owner order) · reviewer `opencode-go/space-bunny-free` (third model)
 Role: writer on a model that did **not** write the offending lines · reviewer on a **third** model
 Risk: L2 — runtime files (`.opencode/agents/*.md`); the same class as T-059: a wrong pin in a prompt misleads the verification done from that prompt
 Goal: every model pin named inside an agent prompt matches `docs/product/MODEL_ROSTER.md` § "Per-role staffing" — or no model is named at all
@@ -500,6 +500,21 @@ Links: T-059 (this card continues it) · `runs/2026-09-26T22-13-13Z-t059-review`
 **Owner conditions (recorded as given, 2026-09-27):** the fixer must not be the model that wrote the original wrong line — attribution must be checked **per line**, because the five lines may not share one author; the reviewer must be a **third** model; the diff must be confirmed to touch only model names; and the fix must point at the roster instead of re-typing a slug (the approach that worked on T-059).
 
 **Attribution — what is PROVEN and what is not (PL, 2026-09-27):** per-line attribution (`git blame`, `git log -S`) is **blocked by the session permission config**, so only commit-level attribution could be established. The commits that last touched these files are `e6330a1` (T-035, migrate 6 seats), `a0a5e1b`, `0a028bf`, `2324fe8`, `335630b`, `b4d3d67`, `a4ce52d`, `5a93eff`, `d4ec435`. The migration record (`ADVISOR_LOG.md`, T-035 bundle) states those edits were applied **by the free `assistant` writer** — the same exclusion T-059 used. **So `opencode/nemotron-3-ultra-free` (assistant) is excluded as fixer; the T-059 fixer `opencode-go/glm-5.3-flash` remains acceptable.** Per-line attribution stays **UNVERIFIED** — if a fixer is ever chosen for a line whose author is unknown, that gap must be stated rather than glossed over.
+
+DELIVERY T-061 — writer `opencode-go/glm-5.3-flash` (run `runs/2026-09-26T22-18-38Z-t061-fix`) — 2026-09-27
+Status claimed: DONE
+Done-when check:
+[x] 1 the five lines now point at the roster, no contradicting slug left → `ops.md:47`, `researcher.md:43`, `assistant.md:56`, `project-lead.md:75`, `project-lead.md:77`
+[x] 2 no other sentence changed → `git diff .opencode/agents` read by the PL: 4 files, 5 insertions / 5 deletions, one hunk per line; `project-lead.md:76` byte-identical; seat names, the advisor new-position note and the `:batch`/Zen rules all preserved
+[x] 3 reviewer on a third model → `opencode-go/space-bunny-free` (run `runs/2026-09-26T22-20-41Z-t061-review`) = **ACCEPT-WITH-FINDINGS**; it marked all 5 lines PASS and confirmed line 76 untouched and roster-accurate
+[x] 4 remainder listed → the reviewer's cross-check found no other pin under `.opencode/agents` that contradicts the roster; its out-of-scope findings are carried to the **known-not-fixing** list in `decision-log.md` (round closed by Owner order, no new cards)
+[x] 5 commit separate from T-059 → `76f3462`; **not pushed**
+Evidence: both run directories · `git diff --stat .opencode/agents` = 4 files, 5 insertions, 5 deletions · the PL's own read of the diff.
+Changed: `.opencode/agents/{ops,researcher,assistant,project-lead}.md` — 5 lines total.
+Not done: the reviewer's findings (the `qwen/qwen3.7-flash` ban slug lacking its `openrouter/` prefix at `project-lead.md:74` and `builder.md:46`; the `MODEL_ROSTER.md` § "Review tiers" vs the per-role table naming different L1–L3 reviewer models) are **outside this boundary** → recorded as known-not-fixing.
+Unverified: per-line authorship of the offending lines (see the attribution note); the reviewer could not run `git diff` (bash is denied for the fallback agent) so it verified by reading the files.
+Problems: none in this round — first attempt succeeded, one writer run + one review run.
+Confidence: high.
 
 ---
 
