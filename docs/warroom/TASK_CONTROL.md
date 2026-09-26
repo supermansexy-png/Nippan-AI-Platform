@@ -7,6 +7,14 @@ and the owner all contribute. Each rule is followed by why it exists. The
 aim is "tight enough that nothing slips, light enough that one person can
 run it" — every rule here costs minutes, not hours.
 
+## 0. Required reading — the list lives in `AGENTS.md` only
+
+The session-start reading list is defined **once**, in `AGENTS.md` § "Session Start", and that
+list is authoritative. No other document keeps its own competing copy: this file,
+`AI_OPERATING_PROTOCOL.md` and `WORKING_POLICY.md` point at `AGENTS.md` instead (Owner decision
+2026-09-27, card T-058). This is the same "one home per fact" rule the board itself follows.
+Model pins are never part of the reading list — they live in `docs/product/MODEL_ROSTER.md`.
+
 ## 1. One board, one place
 
 All work lives in `TASKS.md` at the repo root. No task exists only in a

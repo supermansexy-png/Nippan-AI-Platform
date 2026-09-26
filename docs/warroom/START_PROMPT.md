@@ -47,8 +47,8 @@ Backup: [BACKUP_MODEL_SLUG]
 - `[RISK_LEVEL]` = L1 / L2 / L3 (TASK_CONTROL.md §3)
 
 ## Verification checklist — attach to every DELIVERY
-- [ ] Read AGENTS.md + AI_OPERATING_PROTOCOL.md + PROJECT_STATE.md + TASKS.md
-      (+ `docs/warroom/ADVISOR_MANDATE.md` when the work was ordered by the advisor)
+- [ ] Read the `AGENTS.md` § "Session Start" list (the one authoritative list), plus the card in
+      `TASKS.md` (+ `docs/warroom/ADVISOR_MANDATE.md` when the work was ordered by the advisor)
 - [ ] INTAKE written, ends with a decision
 - [ ] Role/model matches MODEL_ROSTER.md (primary pool = OpenCode Go, `opencode-go/<id>`)
 - [ ] If the advisor ordered this work: instruction record exists in `ADVISOR_LOG.md` (written by the receiver)

@@ -295,14 +295,19 @@ into context for every task.
 
 At the beginning of a new work session:
 
-1. Read this AGENTS.md.
+**This is the authoritative required-reading list for the project** (Owner decision 2026-09-27,
+card T-058). Other documents — `docs/warroom/AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md`,
+`WORKING_POLICY.md` — point here instead of keeping their own copy. Model pins are not part of
+this list; they live in `docs/product/MODEL_ROSTER.md` (§ "Per-role staffing").
+
+1. Read this `AGENTS.md`.
 2. Read `docs/project-memory/PROJECT_BRIEF.th.md` — โครงการ ภาระกิจ และขอบเขต (required reading บรรทัดแรก)
-3. Read `docs/project-memory/SESSION_HANDOFF.md` — latest work state, Owner rules and
-   current model roster. (Written/refreshed by `/handoff`.)
-4. Read CURRENT_STATE.md.
-4. Inspect Git status and current branch.
-5. Verify any claimed PR/commit/CI state from the actual repository when relevant.
-6. Continue from the first unfinished item.
+3. Read `docs/project-memory/SESSION_HANDOFF.md` — latest work state and the **single** open-items
+   list. (Written/refreshed by `/handoff`.)
+4. Read `docs/project-memory/CURRENT_STATE.md` — what is actually built / shared today.
+5. Inspect Git status and current branch.
+6. Verify any claimed PR/commit/CI state from the actual repository when relevant.
+7. Continue from the first unfinished item.
 
 Do not restart completed work merely because it is absent from chat history.
 

@@ -83,7 +83,7 @@ confirms before work starts on L2/L3 tasks.
 4. **Small verifiable steps.** Test after each meaningful change, not only
    at the end.
 5. **Stop rules.** Stop and report — do not push on — when:
-   - effort reaches 2× the budget
+   - effort reaches 2× the budget — the single definition is `TASK_CONTROL.md` §6
    - a step fails twice in the same way
    - the task turns out to be different from the Intake understanding
    - something outside the task's scope would have to be changed
@@ -131,10 +131,10 @@ the owner — checks the Delivery Report against reality:
 Verdict: **ACCEPTED** (task → DONE) or **RETURNED** with specific reasons
 (task → IN_PROGRESS or READY).
 
-When the work was ordered by the `advisor`, the Auditor must also answer the five mandate questions in
-`ADVISOR_MANDATE.md` §5 (A1 mandate · A2 scope · A3 prohibitions · A4 method · A5 honesty) and record
-the verdict in the card and in `ADVISOR_LOG.md`. The Auditor must never be the advisor's own model
-(`opencode-go/mimo-v2.6-pro`).
+When the work was ordered by the `advisor`, the Auditor must also run the per-card advisor audit.
+The check is defined in **one place only**: `TASK_CONTROL.md` §3 (which points on to
+`ADVISOR_MANDATE.md` §5) — do not restate the questions here. Record the verdict in the card and in
+`ADVISOR_LOG.md`.
 
 ## Scorecard — consequences are real
 
@@ -172,8 +172,9 @@ models trustworthy.
 
 ## Session rules
 
-**Start of every session:** read `AGENTS.md`, `PROJECT_BRIEF.th.md`, this file, `PROJECT_STATE.md`,
-`TASKS.md`; confirm which task and role; write the Intake before working.
+**Start of every session:** the required-reading list is defined once, in `AGENTS.md`
+§ "Session Start" — read that list, not a copy of it. Then confirm which task and role, and write
+the Intake before working.
 
 **End of every session**, even if unfinished: update the task card
 (status + a short note), so the next AI — possibly a different model with
