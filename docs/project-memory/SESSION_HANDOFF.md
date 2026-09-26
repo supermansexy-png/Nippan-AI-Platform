@@ -23,7 +23,7 @@ Archive 2026-09-27 (PL, ยังไม่ commit): T-041/T-048/T-052/T-057-CORR
 
 > ย้ายมาไว้ที่นี่เพื่อให้ "งานค้าง" มีที่เดียว ไม่กระจายสองไฟล์ · อัปเดตทุกครั้งที่ปิดงาน
 
-- **T-058 (การ์ดนี้)** — doc cleanup: ส่วน A/B ทำแล้ว · เหลือ reviewer verdict + INDEX.md + security re-pin (runtime)
+- **T-058 — DONE (2026-09-27):** doc cleanup ครบทุกส่วน (A / B / governance / security re-pin / INDEX) · reviewer `opencode-go/space-bunny-free` = **ACCEPT-WITH-FINDINGS** (findings 1/3/4 แก้แล้ว, 5/6 ยกเป็นการ์ดใหม่) · **ยังไม่ push — รอพี่เชษยืนยัน**
 - **T-053** — ขัดคำสั่ง: order ห้ามแก้ `ROLES.md` แต่ commit `af5d9a7` แก้จริง (+20/−0) → **รอ Owner ตัดสิน**
 - **T-054 / T-055 / T-056** — งาน commit แล้ว แต่การ์ดยัง READY และไม่มี reviewer verdict บนการ์ด
 - **T-035** — ย้าย 6 seats บน Go/free แล้ว (`e6330a1`) เหลือ per-role evidence
@@ -34,5 +34,6 @@ Archive 2026-09-27 (PL, ยังไม่ commit): T-041/T-048/T-052/T-057-CORR
 - **T-034b** — War Room server: งาน commit แล้ว ยังไม่ deploy
 - **restart opencode** — pin ใหม่ (reviewer / project-lead / advisor) จะมีผลหลังพี่เชษ restart
 - **n8n publish** — `n8n_publish_workflow` ปิดอยู่ (`false`); workflow ที่แก้แล้วจะยังรัน query เก่าจนกว่าจะ publish
-- **`PROJECT_BRIEF.th.md`** — ยัง **untracked** ใน git ทั้งที่ `AGENTS.md` บังคับให้อ่าน (T-058 commit ให้)
+- **`PROJECT_BRIEF.th.md`** — เคย untracked ใน git ทั้งที่ `AGENTS.md` บังคับให้อ่าน → **commit แล้ว (`74dc21c`)**
+- **agent prompt ยังชี้โมเดลผิดตัว (finding จาก reviewer T-058):** `.opencode/agents/project-lead.md:73,76` และ `reviewer.md:57` ยังเขียนว่า builder = `opencode-go/glm-5.3-flash` (ของจริง = `openrouter/poolside/laguna-s-2.1:free`) → ต้องมีการ์ดใหม่ + writer (PL แก้ไฟล์ runtime เองไม่ได้)
 - **งบ OpenRouter** — เครดิตต่ำ (~$0.64); งานเสียเงินทุกงานต้องขอพี่เชษก่อน

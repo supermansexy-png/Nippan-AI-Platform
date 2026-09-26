@@ -25,7 +25,7 @@
 
 | ไฟล์ | เปิดตอนไหน | เจ้าของไฟล์ (dev) | ปลายทาง (runtime) |
 |---|---|---|---|
-| `.opencode/agents/<บทบาท>.md` | ไฟล์ของตัวเอง (โหลดอัตโนมัติอยู่แล้ว) | Project Lead | — |
+| `.opencode/agents/<บทบาท>.md` | ไฟล์ของตัวเอง (โหลดอัตโนมัติอยู่แล้ว) — การจับคู่ตำแหน่งดู `BUILD_ROLES.md` Table 2 | Project Lead | reviewer/security → Auditor · researcher → ไม่มีคู่ |
 | `docs/warroom/BUILD_ROLES.md` | งานเกี่ยวกับบทบาท/การส่งมอบตำแหน่ง | Project Lead | — (สะพานไป `ROLES.md`) |
 | `docs/warroom/ROLES.md` | งานที่ต้องอ้างตำแหน่งฝั่งรันจริง | Project Lead (protected — L3) | ทุกตำแหน่งในห้องรันจริง |
 | `docs/warroom/ADVISOR_MANDATE.md` | งานที่ **advisor** สั่ง (advisor ถูกตรวจด้วยไฟล์นี้) | Project Lead (protected — L3) | advisor |
@@ -46,7 +46,7 @@
 | `docs/warroom/STARTUP_PLAYBOOK.md` | ตอนวางลำดับการสร้างเฟส A | Project Lead | — |
 | `docs/product/PRICING_V1.md` | งานที่แตะราคา/ต้นทุนต่อบอท | **Project Owner** | — |
 | `docs/warroom/ADVISOR_LOG.md` | ทุกครั้งที่ advisor สั่งงาน (append-only) | **ผู้รับคำสั่งเป็นคนเขียน — advisor ห้ามเขียน** | advisor |
-| `docs/n8n/T-030-execution-evidence.md` | งาน n8n ↔ PostgreSQL (หลักฐาน RLS) | ops | Cost Guard |
+| `docs/n8n/T-030-execution-evidence.md` | งาน n8n ↔ PostgreSQL (หลักฐาน RLS) | ops | — (งาน hosting/CI ไม่มีตำแหน่งถาวรฝั่งรันจริง) |
 
 ## ชั้น 4 — เปิดเฉพาะกิจ (มีเงื่อนไขกำกับ ไม่ต้องอ่านประจำ)
 
