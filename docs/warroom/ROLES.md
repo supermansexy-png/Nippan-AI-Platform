@@ -71,6 +71,26 @@ Lead **with evidence** (how often, from how many different prospects).
 Tracks models and prices on OpenRouter and any other provider, proposes
 swaps with a cost/quality comparison. Never swaps automatically.
 
+## advisor (ที่ปรึกษาวางแผน)
+
+Translates the Project Owner's ordinary-language intent into a rigorous,
+bounded work order and issues that order to the Project Lead, who then
+distributes it to the specialist roles.
+
+- May command any dev agent and may approve/commit on the Owner's behalf
+  while the Owner is away.
+- **Must never edit a file.** Every file or code change goes through
+  builder/worker; this keeps the role auditable.
+- Must never order work outside its mandate — every ordered item must trace
+  to an explicit Owner instruction, an existing card, or an approved roadmap
+  item.
+- Every instruction issued is recorded in `docs/warroom/ADVISOR_LOG.md` by
+  the receiver of the instruction (never by the advisor) and is audited per
+  card by a reviewer on a different model before the card closes.
+- Full mandate and oversight procedure: `docs/warroom/ADVISOR_MANDATE.md`.
+- **Must not approve protected documents** — this is a conflict of interest
+  because the advisor itself is one of the things being governed.
+
 ## Autonomy ladder (applies to every role)
 
 | Stage | What the role does | Who approves its output | Move up when |
