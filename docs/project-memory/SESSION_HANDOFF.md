@@ -1,8 +1,35 @@
 <!-- AUTO-HANDOFF:START -->
-## Handoff ล่าสุด (auto) — 2026-09-25 (session 2, ปิดประชุม)
-**หัวข้อ:** Nippan PL — กฎลงตัว · ยึด Git เป็นช่องจ่ายงาน · สะพานถูก DROP · RLS live · บอร์ด 2 ใบ (T-030, T-032)
+## Handoff ล่าสุด (auto) — 2026-09-26
+**หัวข้อ:** War Room: meeting room live (T-034a + T-034b 1/2a/2c/2d); agenda CRUD left; credit + second-writer alerts
 
-Nippan PL session 2 closed the rule conflicts and the work plan. Governed by (no longer by the withdrawn supreme-rules block): file-type rule for who writes which files (dev-process = PL; runtime = builder/subagent + reviewer on a different model, no exceptions); dev-time approval = Owner, or PL when the Owner is away (deploy preview + architecture always need the Owner); protected docs follow a phase rule (dev-time: Owner or PL for all 9; runtime: PRICING_V1 / PDPA_COMPLIANCE / CUSTOMER_FACING_RULES are Owner-only); Independent Audit gates cancelled — one big audit when the work is complete, while L4 `anthropic/claude-opus-5.5:batch` is allowed per use (batch API; Owner, or PL if the Owner is away). Work is dispatched over **Git** (Owner decision): the bridge is dropped (T-031), the watcher is deleted, and T-032 (issue → `codex/*` branch → draft PR → CI → reviewer on a different model → approval → merge) is the channel; the Owner starts each round. Verified state: PR #83 merged; RLS + role `nippan_n8n` live on Supabase (`xzxwakvsbdzkdybijbzs`, 7 `lite_*` tables FORCE RLS); n8n folder `Nippan Phase A` empty; credential `6anMUYRLDYPduKY7` exists; credit ≈ $1.60. Commits this session: `a5fb0db` (rules + board + archives), `8bf273c` (meeting close). NOT pushed. Board: T-030 (READY — blocked until an app restart registers the n8n tools) and T-032 (READY for INTAKE — needs protection + Codex-side settings answered). Owner must: restart opencode, then run `git restore .opencode/bridge/server.mjs` (the deleted watcher's wiring is still uncommitted), and decide the two open settings. Next per Owner order: finish War Room D-01 (Issues #35/#30 still OPEN) before the n8n work.
+## งาน War Room ถึงไหนแล้ว (2026-09-26, session: PL ทำแทนพี่ช่วงพี่ไม่อยู่)
+
+**เสร็จและขึ้นพรีวิวแล้ว (live):** `https://warroom.nippan.org/war-room/` — commit `243c322`, Render deploy `dep-darp059pc0ec73dclg30` (live 09:29Z), `GET /health` = 200
+- **T-034a** (หน้าจอแชทอ่านง่าย): ชื่อ+บทบาทผู้พูดทุกข้อความ, คำตัดสินเจ้าของแสดงเต็มในบทสนทนา, log ระบบแยกไปกล่องพับได้, auto-scroll เฉพาะเมื่ออยู่ล่างสุด + ปุ่ม "ล่าสุด", จัดกลุ่มข้อความ, เวลา/โมเดล/โทเคน, รายชื่อผู้เข้าร่วม, แผงวาระ, ฟอนต์อ่านง่าย
+- **T-034b slice 1**: สคริปต์ seed สร้างห้องใหม่จากบรรทัดคำสั่ง (`--room-id`/`--title`/`--force`) — ลบข้อมูลทุกคำสั่งผูก tenant+application, ห้องเดิมต้อง `--force`, ชื่อว่างถูกปฏิเสธก่อนลบ, ลบ+เพิ่มใน transaction เดียว
+- **T-034b slice 2a**: `POST /war-room/rooms` สร้างห้องจากหน้าเว็บได้ (ตรวจสิทธิ์ก่อน, room id ออกฝั่ง server, seed รันใน worker thread, 429 เมื่อเกิน 10 ครั้ง/ชม.)
+- **T-034b slice 2c/2d**: ฟอร์มชื่อห้อง + ปุ่ม `เริ่มประชุมใหม่` และ การแสดง 30 ข้อความล่าสุด + ปุ่ม `ดูข้อความก่อนหน้า` + log ระบบ 50 บรรทัด
+
+**หลักฐาน (รันจริง):** ชุดทดสอบเต็มกับ embedded PostgreSQL 16 = **171 passed / 0 failed**; สคริปต์ทดลอง `runs/t034b_acceptance.py` = ALL PASS (สร้างห้องใหม่ได้จริง, ห้องเดิมไม่ถูกแตะ, รีเซ็ตห้องอื่นโดยไม่ใส่ `--force` ถูกปฏิเสธและไม่ทำลายอะไร, ชื่อว่างถูกปฏิเสธก่อนลบ); CI ผ่านทั้ง remote-auth + postgres-regression; PR #84 และ #85 merged
+เอกสารหลักฐาน: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (§T-034b) · work log ในการ์ด T-033/T-034a/T-034b ใน `TASKS.md`
+
+**ยังเหลือ 1 ข้อ = T-034b slice 2b: แก้วาระจากในหน้าเว็บ** (สร้าง/แก้/ปิดวาระ) — ตอนนี้แผงวาระยัง read-only ต้องเพิ่ม endpoint ฝั่งเขียน + UI + reviewer + security reviewer
+
+**🚨 ข่าวร้าย 2 เรื่องที่ต้องรู้ก่อนทำอะไรต่อ**
+1. **เครดิต OpenRouter เหลือ ≈ $0.65** (usage 44.35/45) — ตัวกินเงินมากสุดคือ paid run ที่ "ค้าง" ไม่ยอมเขียนไฟล์ = $1.22 (`runs/2026-09-25T20-34-38Z-t034a-glm-final`) เพราะ headless runner ตัดทอน output แล้วโมเดลอ่านซ้ำวน ๆ. **หยุดงานเสียเงินแล้ว** บทเรียน+กติกากันซ้ำอยู่ใน `decision-log.md` (entry COST ALERT 2026-09-26) ⇒ งานที่เหลือให้ใช้โมเดลฟรี หรือรอพี่เติมเครดิต/เปิด Open Go
+2. **มีนักเขียนคนที่สองใน repo** — การ์ด "T-030 OpenCode Go" + `docs/product/MODEL_POLICY.md` + `docs/warroom/DEV_ERROR_LOG.md` ถูกแก้แบบยังไม่ commit โดยเซสชันอื่น (น่าจะอีกแชท/Codex) ผม **preserve ไว้ แต่ไม่ commit และไม่แตะ** — ก่อนเริ่มงานใหม่ให้เช็ค `git status` และหลีกเลี่ยงการทับไฟล์ที่เขาแก้
+
+**บทเรียนเครื่องมือ (สำคัญมาก กันงานเสียเวลา/เงินซ้ำ)**
+- headless runner ตัดทอน output ขนาดใหญ่ ⇒ ส่งงานเป็น **ไฟล์ spec** แล้วสั่ง "อ่านเฉพาะช่วงสั้น ๆ" (ทำแล้ว GLM ที่เคยล้ม 2 ครั้งทำงานสำเร็จ)
+- `z-ai/glm-5.3-flash` ค้างบ่อยถ้าให้อ่านไฟล์ทั้งไฟล์; โมเดลฟรี `openrouter/thinkingmachines/inkling:free` แก้ไฟล์ได้เสถียรและ $0 (แต่ต้องระบุสเปกให้ชัด)
+- `builder` agent **ไม่มีสิทธิ์ edit** ⇒ งานโค้ดต้องยิงผ่าน `--agent worker --model <builder model>`
+- ชื่อโมเดล OpenRouter ต้องมี prefix `openrouter/<author>/<slug>` (ไม่มี prefix จะขึ้น `Unexpected server error` หลอก ๆ)
+- security agent pin `openrouter/nex-agi/nex-n2.5-mini:free` **หายไปจากระบบแล้ว** ("Model not found") → ต้องแก้ pin + **restart opencode** จึงมีผล (รอบนี้ใช้ตัวฟรีอื่นแทนและบันทึกไว้)
+
+**บอร์ด:** T-032 READY (รอพี่ตอบ 2 เรื่อง: protection `dev-workspace` + ค่า 4 ข้อฝั่ง Codex) · T-033 (pilot เสร็จ, ห้องใช้ได้) · T-034a DONE · T-034b เหลือ slice 2b · T-030 (OpenCode Go) = การ์ดของเซสชันอื่น
+**พี่ต้องทำเมื่อกลับ:** (1) เปิด `https://warroom.nippan.org/war-room/?room_id=d3333333-3333-4333-8333-333333333333` ดูว่าห้องพอใจไหม และลองกด `เริ่มประชุมใหม่` (2) ตัดสินใจเรื่องเครดิต/Open Go (3) ตรวจงานของนักเขียนคนที่สองก่อนให้ commit
+
+**เริ่มแชทใหม่:** "อ่าน docs/project-memory/SESSION_HANDOFF.md แล้วทำงานต่อ"
 <!-- AUTO-HANDOFF:END -->
 
 > ## ▶ เริ่มที่แชทใหม่ — สถานะล่าสุด 2026-09-26 (ยึดบล็อกนี้; ทุกอย่างด้านล่างเป็นประวัติก่อนวันนี้)
