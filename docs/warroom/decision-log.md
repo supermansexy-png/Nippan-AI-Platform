@@ -1079,3 +1079,32 @@ Task: T-056
 
 **Card status**: T-057 remains OPEN and is being executed correctly by this correction order (MODEL_POLICY.md edit + model-recruiter.md reference + this correction + ADVISOR_LOG entry + ai-scorecard entry).
 
+## 2026-09-27 — Project Lead — T-058: Governance document cleanup (L3, Owner-ordered)
+
+**Context**: The Owner audited the always-read document set ("files AI must read every session"). It had grown to ~10 files with duplicated rules and stale model pins. He approved a three-part cleanup — **A** delete the stale, **B** merge the duplicates, **C** tier the reading list — and added four decisions of his own: (1) the **security seat returns to the Go path**, because the seat must run on the route with proven results; (2) `AGENTS.md` is the **authoritative required-reading list**; (3) the advisor per-card mandate check and the 2×-budget stop keep **one definition only, in `TASK_CONTROL.md`**, with the protocol pointing at it; (4) the `INDEX.md` maintainer column must follow the dev→runtime mapping in `BUILD_ROLES.md` Table 2, not "Project Lead" on nearly every row.
+
+The edits touch **two protected documents** (`TASK_CONTROL.md`, `AI_OPERATING_PROTOCOL.md`), so per `TASK_CONTROL.md` §8 this entry, the Owner's approval and a different-model reviewer were mandatory.
+
+**Decision — six commits:**
+1. `d5943f7` (**A**) removed superseded content: the duplicate status blocks in `SESSION_HANDOFF.md`; `CURRENT_STATE.md`'s pre-Go team/pin sections and its 2026-09-25 session-log tail (the two standing rules — Protected Production System, Source-of-Truth — were deliberately **kept**, not deleted); the two self-marked-superseded anti-redundancy tables in `MODEL_ROSTER.md`; `START_PROMPT.md`'s hardcoded model list (it named dead slugs, e.g. `nex-agi/*`).
+2. `aaf4321` (**B**) one home per fact: the open-items list now lives only in `SESSION_HANDOFF.md`; `MODEL_POLICY.md`'s duplicated per-job pick list removed (its copy carried unprefixed slugs) and now points at `MODEL_ROSTER.md`; the Thai protocol declared a read-only mirror, updated only when a **rule** changes. B-6 needed no change: `ROLES.md` and `BUILD_ROLES.md` document different layers and Table 2 is correct.
+3. `d9da8aa` (**governance — protected docs**) `AGENTS.md` § "Session Start" is now explicitly the authoritative list (also fixed a duplicated "4." in the numbering); `TASK_CONTROL.md` gained **§0** stating the list lives in `AGENTS.md` only; `AI_OPERATING_PROTOCOL.md`'s own reading list became a pointer, its advisor-audit paragraph now points at `TASK_CONTROL.md` §3, and its 2×-budget stop rule points at §6. **No rule changed meaning — duplicated text became pointers.**
+4. `21621f6` + `61843ae` **security back on the Go path**: roster row 4 = `opencode-go/kimi-k3` + `openrouter/qwen/qwen3.8-flash` (the T-045 appointment restored); runtime pin in `.opencode/agents/security.md` frontmatter + `opencode.json` `agent.security.model`, **written by the free writer (`opencode/nemotron-3-ultra-free`), not by the PL** (T-043 lock). Finding recorded: the security agent's **body already read `opencode-go/kimi-k3`** — the 2026-09-27 free migration had updated only the frontmatter and the JSON, so that migration was internally inconsistent.
+5. `c094240` `BUILD_ROLES.md` Table 1 keeps the duties and loses the model names (they were stale, and `MODEL_POLICY.md` forbids hardcoding a model into a role); the table points at `MODEL_ROSTER.md`.
+6. `3d5bfaa` + `74dc21c` `INDEX.md` rebuilt: four reading tiers, maintainer column per Table 2, the three phantom rows removed, and **all 34 referenced paths verified to exist (`Test-Path`, 0 missing)**; `PROJECT_BRIEF.th.md` committed (it was untracked although `AGENTS.md` requires it).
+
+**Reviewer (different model)**: `opencode-go/space-bunny-free` (free, zero-retention) — run `runs/2026-09-26T21-51-52Z-t058-review4`. **Verdict: ACCEPT-WITH-FINDINGS.** The pinned reviewer model `opencode/muse-spark-1.3-contributor-free` was deliberately **not** used: this repo's own Go data-handling rule forbids sending project content to a model that trains on prompts. Findings and disposition:
+- (1) the open-items list was written before the later commits and had already gone stale → **fixed** (updated to the committed state).
+- (2) no decision-log entry and REVIEW empty at review time → **this entry**; the card closes after it.
+- (3) `INDEX.md` mapped the T-030 evidence file to "Cost Guard", wider than Table 2 allows → **fixed** (that work has no permanent runtime seat).
+- (4) Table 2 was only half-applied on the agent-file row → **fixed** (reviewer/security → Auditor, researcher → no counterpart).
+- (5) `.opencode/agents/project-lead.md:73,76` and `reviewer.md:57` still name the builder as `opencode-go/glm-5.3-flash` (actual: `openrouter/poolside/laguna-s-2.1:free`) → **carried to a new card**; these are runtime files the PL must not edit.
+- (6) removing the roster's cross-check tables leaves anti-redundancy recorded only inside the security row, and the reviewer Backup shares the `nemotron-3.5-lightning` family with the ops/researcher primaries → noted for the Owner; the rule itself (the exact model name must differ) is unchanged and lives in `MODEL_POLICY.md`.
+- Verified clean by the reviewer: `CURRENT_STATE.md` still carries Protected Production System + Source-of-Truth; `MODEL_POLICY.md` still carries the long-chat cost rule and the Go retention list.
+
+**Not done / carried**: `WORKING_POLICY.md` Rule 1 still keeps its own reading list — protected doc, outside this order → needs its own L3 card; `PROJECT_STATE.md` / `ROADMAP.md` remain superseded yet referenced by that same Rule 1; finding (5) above.
+
+**Pushed to origin? NO.** The Owner ordered no push until final confirmation.
+
+**Task**: T-058
+

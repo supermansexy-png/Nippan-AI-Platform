@@ -426,7 +426,7 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 
 ### T-058 — Doc cleanup: stale content out, duplicate rules de-duplicated, INDEX rebuilt
 
-Status: IN_PROGRESS
+Status: DONE (2026-09-27) — reviewer ACCEPT-WITH-FINDINGS, findings answered; **not pushed** — awaiting the Owner's confirmation (`TASKS.md` §REVIEW note below)
 Owner: Project Lead — 2026-09-27
 Role: PL (dev-doc writes only) · writer `opencode/nemotron-3-ultra-free` (runtime pin files) · reviewer `openrouter/nvidia/nemotron-3.5-lightning:free` (different model)
 Risk: L3 — edits the protected documents `AI_OPERATING_PROTOCOL.md` + `TASK_CONTROL.md` (`TASK_CONTROL.md` §8), so card + Owner approval + different-model reviewer + decision-log entry are all required
@@ -445,6 +445,23 @@ Plan: 1) A-items, one commit; 2) B-items, one commit; 3) protected-doc consolida
 Estimate: within one working session.
 Risks: (a) hand-editing two protected documents is exactly the failure this protocol exists to prevent → the different-model reviewer is mandatory before DONE, and the verdict is recorded on this card; (b) the currently pinned reviewer model (`opencode/muse-spark-1.3-contributor-free`) trains on prompts while this repo's own rule forbids sending repo content to it → the review runs on the pinned **Backup** (`openrouter/nvidia/nemotron-3.5-lightning:free`), disclosed on the card; (c) `services/core/**` carries another session's uncommitted edits — they must never be staged; (d) removing superseded text must not remove standing rules — `Protected Production System` and `Source-of-Truth Rule` are preserved deliberately.
 Decision: ACCEPT (Owner order 2026-09-27).
+
+DELIVERY T-058 — Project Lead (with the free writer `opencode/nemotron-3-ultra-free`) — 2026-09-27
+Status claimed: DONE
+Done-when check:
+[x] 1 Part A removed → `d5943f7` (4 files, 70 insertions / 466 deletions); standing rules kept on purpose
+[x] 2 Part B merged → `aaf4321`; B-6 checked and correctly needed no change (different layers)
+[x] 3 AGENTS.md authoritative + one definition per rule → `d9da8aa` (TASK_CONTROL §0 added; the protocol's reading list became a pointer; mandate check → §3; 2× budget → §6)
+[x] 4 security back on the Go path, docs + runtime → `21621f6` (roster row 4) + `61843ae` (`.opencode/agents/security.md` frontmatter + `opencode.json`), written by the writer; JSON parses (`JSON OK`); PL re-checked the diff itself = exactly 2 lines, `services/core/**` untouched
+[x] 5 INDEX.md rebuilt, no dead link → `3d5bfaa`; all 34 referenced paths verified to exist (Test-Path: 34 checked, 0 missing)
+[x] 6 reviewer on a different model → ACCEPT-WITH-FINDINGS (`opencode-go/space-bunny-free`, run `runs/2026-09-26T21-51-52Z-t058-review4`); findings 1/3/4 fixed, 5 carried to a new card, 6 noted for the Owner; decision-log entry written; **not pushed**
+Evidence: `git log --oneline a0a5e1b..HEAD` (the commits above); per-commit `git diff --stat`; the JSON parse output; the Test-Path result; the reviewer run directory.
+Changed: `AGENTS.md`, `TASKS.md`, `docs/project-memory/{SESSION_HANDOFF,CURRENT_STATE,INDEX}.md` + `PROJECT_BRIEF.th.md` (added), `docs/warroom/{TASK_CONTROL,AI_OPERATING_PROTOCOL,AI_OPERATING_PROTOCOL.th,START_PROMPT,BUILD_ROLES,decision-log}.md`, `docs/product/{MODEL_ROSTER,MODEL_POLICY}.md`, `.opencode/agents/security.md`, `opencode.json`
+Not done: `WORKING_POLICY.md` Rule 1 still has its own reading list (protected doc, outside this order) → needs its own L3 card; the agent-prompt model mirrors still name the builder wrongly (reviewer finding 5) → new card; `services/core/**` deliberately untouched (another session's work).
+Unverified: whether `PROJECT_STATE.md` / `ROADMAP.md` should be deleted is INFERRED, not Owner-decided — they are listed as superseded in `INDEX.md` only.
+Problems: reviewer run 1 was killed by a tool timeout; run 2 read a 41 KB tool-output file and hit the output-length limit; per the Owner's order the reviewer was switched to `opencode-go/space-bunny-free`.
+Confidence: high.
+Next: Owner confirmation → push; then open the two follow-up cards.
 
 ---
 
