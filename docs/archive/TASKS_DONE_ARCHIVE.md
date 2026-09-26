@@ -1727,3 +1727,40 @@ Status: DONE 2026-09-26 (archived from the board 2026-09-27; full Q&A body prese
 Owner: Project Lead — Owner-ordered verbatim six-question order. Read-only (L1): no code/runtime/production/database/deploy/credential change, no spend.
 Result: all six roles answered in format (one letter + evidence note); 34/36 answers VERIFIED against repo evidence. 2 false claims recorded per protocol: ops Q4=A (correct B — GA gate was a team proposal, never Owner-approved) · researcher Q5=1.09 "live dashboard" (figure lifted from ADVISOR_LOG note; latest live read $0.6641). Follow-up penalties applied under T-056 (committed `1ba02be`).
 Reviewer: `opencode-go/space-bunny-free` ACCEPT-WITH-FINDINGS (2 runs).
+
+---
+
+### T-053 — Create BUILD_ROLES.md, INDEX.md row, ROLES.md advisor addition
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved closure 2026-09-27 with the reviewer-evidence gap disclosed below.
+Owner: Project Lead — Owner order 2026-09-27 (four governance works).
+Delivered (all VERIFIED via git): `docs/warroom/BUILD_ROLES.md` created (8 dev-time roles + Table 1 duties; Table 2 first placeholder, then replaced with the Owner-provided 9-row dev→runtime mapping) — commits `d634f9c`, `7be8945` · `docs/project-memory/INDEX.md` created with BUILD_ROLES row · `docs/warroom/ROLES.md` +20/−0 pure addition of `## advisor (ที่ปรึกษาวางแผน)` — commit `af5d9a7`; content matches the approved `ADVISOR_MANDATE.md`, no existing line touched · `AGENTS.md` session-start order fixed (PROJECT_BRIEF.th.md first) — commit `7be8945`.
+Authorization note: the board card said "do NOT edit ROLES.md (contradiction held for Owner)"; the Owner's subsequent six-decision order item 3 explicitly authorized this one-point addition (decision-log T-055 entry). Investigated 2026-09-27: no fabrication — edit is real, paper trail exists.
+Gap (disclosed, not hidden): the "reviewer verified" claim in the commit message has no `runs/` artifact on this machine — UNKNOWN (may have run in another session), not FALSE. L3 decision-log entry exists (T-055 item 3).
+
+---
+
+### T-054 — Register PROJECT_BRIEF.th.md in INDEX.md + required reading
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved closure 2026-09-27.
+Owner: Project Lead — Owner order 2026-09-27. L3 (protected `AI_OPERATING_PROTOCOL.md`).
+Delivered (all VERIFIED via git): PROJECT_BRIEF.th.md row in INDEX.md · first-required-reading in `AI_OPERATING_PROTOCOL.md` session-start list — commit `0c6a340` · L3 decision-log entry — commit `7e32f9b` · AGENTS.md conflict flagged (later resolved in `7be8945`, PROJECT_BRIEF.th.md first).
+Gap (disclosed): reviewer-verdict artifact not found on this machine — UNKNOWN, not FALSE.
+
+---
+
+### T-055 — Record six Owner decisions; annotate GA gate in roadmap draft
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved closure 2026-09-27.
+Owner: Project Lead — Owner order 2026-09-27.
+Delivered (all VERIFIED via git): six Owner decisions in decision-log (services/core internal-only · Supabase dev/test · ROLES.md advisor addition authorized · GA gate NOT approved · PL free-model move · draft stays draft, playbook authoritative) — commit `28d4dc4` · GA gate removed from `ROADMAP_STUDY_DRAFT_2026-09-26.md` — commit `d8e8493` · residual P2.6 prerequisite + GA-before-pilot ref removed — commit `78a4830`.
+Gap (disclosed): reviewer-verdict artifact not found on this machine — UNKNOWN, not FALSE.
+
+---
+
+### T-056 — False-claims ladder penalties (ops Q4, researcher Q5)
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved closure 2026-09-27.
+Owner: Project Lead — Owner order 2026-09-27 (Owner rule: one false claim = −1 ladder step).
+Delivered (all VERIFIED via git): ai-scorecard rows for both T-052 false claims + ladder moves recorded in decision-log (ops stage 2→1 · researcher unrecorded→floor stage 1) — commit `1ba02be`. Stages taken from evidence (`PROJECT_BRIEF.th.md`), nothing invented.
+Gap (disclosed): reviewer-verdict artifact not found on this machine — UNKNOWN, not FALSE.
