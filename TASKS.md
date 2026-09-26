@@ -387,6 +387,260 @@ Budget: dev-time document work only; no new paid spend.
 
 Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, card T-038
 
+### T-041 — Advisor cannot reach the Project Lead: repair the agent-mode mismatch
+
+Status: IN_PROGRESS — Owner approved 2026-09-26; file change done + reviewed; open pending a live test (findings F1/F2)
+Owner: Project Lead (diagnose/plan/verify) — Owner instruction 2026-09-26 in chat ("ที่ปรึกษา คุยกับ pl ไม่ได้ แก้ไขให้หน่อย")
+Role: Project Lead (diagnose, plan, verify) + builder (one-line agent-config edit) + reviewer on a **different model**
+Risk: L1–L2 — dev tooling only (`.opencode/agents/project-lead.md`). No runtime, production, customer or data impact.
+
+Goal: the `advisor` can actually hand a work order to the `project-lead` and read the result, so the chain
+`Owner → advisor → PL → specialist` works in practice instead of existing only on paper.
+
+**Root cause (VERIFIED — repo config + opencode agent docs)**
+- `.opencode/agents/advisor.md` and `.opencode/agents/project-lead.md` are both `mode: primary`.
+- opencode's Task tool invokes **subagents only** (`mode: subagent`); primary→primary is not a channel.
+- So `permission: task: allow` on the advisor buys nothing toward the PL — the PL never appears in the Task
+  tool's list. Confirmed live in-session: the PL's own Task tool lists exactly the 7 `mode: subagent` agents
+  (assistant, builder, model-recruiter, ops, researcher, reviewer, security) and **not** project-lead/advisor.
+- Consequence: `ADVISOR_MANDATE.md` §2 ("may command any dev agent (`task` allowed), including PL") is
+  currently **unachievable**. The mandate is real; the mechanism was never wired.
+
+**Fix — smallest correct change**
+- `.opencode/agents/project-lead.md`: `mode: primary` → `mode: all`. Per opencode docs `all` means the agent
+  works as a primary you can Tab into **and** as a subagent the advisor can Task; `all` is also opencode's
+  default mode, so risk is low. Blast radius is already contained: every other subagent carries `task: deny`,
+  so only the advisor (and the PL itself) would be able to call the PL.
+
+Done when:
+- [x] `mode: all` set on `.opencode/agents/project-lead.md` (builder; one line) → `git diff` = one-line pair, PL-verified
+- [x] a reviewer on a different model confirms the edit and that no other agent file changed → `opencode-go/space-bunny-free`: ACCEPT-WITH-FINDINGS
+- [x] **F2: `subagent_depth: 2` added to `opencode.json`** (Owner approved 2026-09-26) → one-line diff; `node` parse prints `2 project-lead 9`; PL-verified
+- [ ] Owner restarts opencode; live test: the advisor's Task tool now offers `project-lead` **and startup does not fall back to `build`** (F1)
+- [ ] live round-trip: advisor issues one real work order → PL receives it → the result returns to the advisor
+- [ ] PL-as-subagent retains its own permissions (can write dev-process docs) and can still delegate to specialists
+- [ ] `ADVISOR_MANDATE.md` §2 re-checked against reality — touch it only if the live test disagrees
+
+Evidence to capture: the agent-file diff · the reviewer's verdict · the live test result.
+
+Team (pins already live-verified under T-035; no fresh HR probe proposed for a one-line change):
+builder `opencode-go/glm-5.3-flash` (paid — this is why Owner approval is required) · reviewer `opencode-go/space-bunny-free` (model ≠ author's).
+
+Workaround until the fix lands (needs no config change): the Owner relays — the advisor writes the work order
+and the Owner pastes it into the PL chat, or Tabs to the PL agent.
+
+Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
+Links: `.opencode/agents/project-lead.md`, `.opencode/agents/advisor.md`, `docs/warroom/ADVISOR_MANDATE.md` §2, `docs/product/MODEL_ROSTER.md`
+
+INTAKE T-041 — 2026-09-26 (Project Lead) — **ACCEPT** (Owner approved in chat 2026-09-26).
+Scope: one line in `.opencode/agents/project-lead.md` + a reviewer on a different model + a live test. Nothing else.
+Plan: builder edits → reviewer checks → Owner restarts opencode → live round-trip advisor → PL. Builder is paid (Go); Owner approved.
+Risk: dev tooling only. The one thing to watch is `default_agent` (finding F1 below).
+
+BUILDER DELIVERY — T-041 — `opencode-go/glm-5.3-flash` — 2026-09-26
+Changed: `.opencode/agents/project-lead.md` line 3, `mode: primary` → `mode: all`. One line, nothing else touched; no commit, no push.
+Evidence: `git diff .opencode/agents/project-lead.md` = a single `-mode: primary` / `+mode: all` pair.
+PL VERIFIED independently: the diff is exactly one line, and `git status --short` lists only that file plus this card.
+Not done by the builder (outside the scope lock): live test, review, round-trip.
+
+REVIEWER — T-041 — `opencode-go/space-bunny-free` (model ≠ author's `opencode-go/glm-5.3-flash`) — 2026-09-26
+VERDICT: **ACCEPT-WITH-FINDINGS.** Checks 1–3 VERIFIED: the edit is correct and minimal, the rest of the
+frontmatter is intact, and after the change **only `advisor`** can invoke `project-lead` (every other agent
+carries `task: deny`). `ADVISOR_MANDATE.md` §2 becomes achievable in principle; no permission leak via this path.
+
+Findings — **both CONFIRMED by the PL against the official opencode docs** (`opencode.ai/docs/config/`):
+- **F1 — `default_agent` with `mode: all` (should-fix; a blocker if it bites).** `opencode.json` sets
+  `default_agent: "project-lead"`. Docs: the default agent "must be a primary agent (not a subagent)" and
+  otherwise opencode "will fall back to `build` with a warning". Whether `mode: all` passes that check is
+  **UNKNOWN** — only a restart can prove it. If it falls back, the Owner silently gets `build` (full edit +
+  bash), which is **less safe**. Test item: on restart the agent must still be `project-lead`, no fallback warning.
+- **F2 — `subagent_depth` default is 1 (blocker for the chain).** Docs: default `1` "allows primary agents to
+  launch subagents but prevents those subagents from launching additional subagents"; `2` allows one more level.
+  So with only the `mode: all` change, advisor → PL works, but **PL-as-subagent cannot launch builder/reviewer** —
+  the chain still breaks at the second hop, which is precisely what the mandate requires.
+  **Proposed second change (awaiting Owner approval):** add `"subagent_depth": 2` to `opencode.json`.
+  Blast radius stays small: every specialist carries `task: deny`, so only advisor and PL can nest at all.
+- Minor: `project-lead` now appears in every session's `@` menu, and it can invoke itself. No evidence either causes harm.
+
+F2 CHANGE — T-041 — builder `opencode-go/glm-5.3-flash` + reviewer `opencode-go/space-bunny-free` — 2026-09-26
+Changed: `opencode.json` gains ONE top-level line, `"subagent_depth": 2,` (right after `default_agent`). Nothing else.
+Evidence: `git diff opencode.json` = `@@ -3,6 +3,7 @@` with a single added line; `node -e "JSON.parse(...)"` prints
+`2 project-lead 9`; `git status --short` = only `opencode.json` + `.opencode/agents/project-lead.md` + `TASKS.md`. PL verified independently.
+Reviewer verdict: **ACCEPT-WITH-FINDINGS**, 6/6 checks PASS — key name, top-level placement and the value `2` all match the
+official docs; the JSON is valid; and the blast radius stays limited to `advisor` + `project-lead` (every other agent carries `task: deny`).
+Reviewer minors (deferred, not fixes for this card): `subagent_depth` is global, so if F1 ever falls back to `build`, `build` would
+also nest two deep · the PL can self-invoke with no guard yet · F1 still cannot be proven without a real restart.
+
+Card state: **both file changes are DONE and independently reviewed.** The card stays **open** until the Owner restarts and the
+live test passes: (1) the startup agent is still `project-lead` — no silent fallback to `build` (F1); (2) the advisor's Task tool
+lists `project-lead`; (3) a real work order round-trips advisor → PL → builder.
+
+### T-042 — Project Lead model: switch to `openrouter/deepseek/deepseek-v4.1-flash` (Owner order)
+
+Status: IN_PROGRESS — Owner order 2026-09-26 executed; runtime files changed + reviewed on a different model; docs mirrored; open only pending the Owner's restart check
+INTAKE — T-042 — builder `opencode-go/glm-5.3-flash` — 2026-09-26
+Understanding: แก้ PL pin 3 จุดตาม scope lock (frontmatter line 4, body line 52, `opencode.json` agent.project-lead.model) ให้เป็น `openrouter/deepseek/deepseek-v4.1-flash` โดยไม่แตะ global fallback / advisor / docs
+Done when: diff โชว์ 3 สิ่งพอดี · บรรทัดไทย line 51-56 ครบ · JSON valid parse = `openrouter/deepseek/deepseek-v4.1-flash | opencode-go/mimo-v2.6-pro | 9` · git status = 3 ไฟล์เดิม
+Needs: ไฟล์ 2 ไฟล์ + bash (ไม่มี network) — มีครบ
+Missing: แค่ reviewer ต่างโมเดล + restart test ของ Owner (อยู่นอกบทบาทผม)
+Plan: edit 3 จุด → re-read ยืนยันบรรทัดไทย → run 4 verification commands → DELIVERY
+Risks: mangled Thai ระหว่าง encode; diff จะโชว์ T-041 ค้างอยู่ด้วย (baseline ยืนยันแล้ว)
+Decision: ACCEPT
+
+DELIVERY — T-042 — builder `opencode-go/glm-5.3-flash` — 2026-09-26
+Status claimed: DONE (builder-only runtime edits; card stays open for reviewer + Owner restart test)
+Done-when check:
+- [x] 2 runtime files carry the new slug + opencode.json parses → `node` prints `openrouter/deepseek/deepseek-v4.1-flash | opencode-go/mimo-v2.6-pro | 9` (global fallback เดิม ✓, 9 keys ✓)
+- [ ] reviewer ต่างโมเดลยืนยัน diff scope — อยู่นอกบทบาท builder ยังไม่ทำ
+- [ ] docs mirror — อยู่นอก scope lock ของงานนี้ (Owner สั่ง 3 edits/2 files เท่านั้น)
+- [ ] Owner restart check — ยังไม่ทำ รอ Owner
+Evidence: `git diff` โชว์เฉพาะ model: line, body line 52, JSON value (ส่วน mode:all + subagent_depth เป็น T-041 ค้างจากก่อน) · re-read lines 1-6 และ line 51-56 ไทยครบถ้วน · `git status --short` = 3 ไฟล์เดิม
+Changed: `.opencode/agents/project-lead.md` (line 4 + line 52), `opencode.json` (agent.project-lead.model เท่านั้น), TASKS.md (การ์ดนี้เท่านั้น) — ไม่ commit ไม่ push ตาม scope lock
+Problems: ไม่มี
+Confidence: high — คำสั่ง verify ทั้ง 4 ผ่านจริง
+Next: reviewer ต่างโมเดลตรวจ diff scope แล้ว Owner restart ทดสอบว่า PL session เริ่มที่ deepseek-v4.1-flash
+
+REVIEWER — T-042 — `opencode-go/space-bunny-free` (model ≠ author's `opencode-go/glm-5.3-flash`) — 2026-09-26
+VERDICT: **ACCEPT-WITH-FINDINGS**, no blockers. Verified: frontmatter carries the new slug with `mode: all` intact; the Thai body
+line survived un-mangled; `opencode.json` line 3 (global `model` fallback) and `small_model` are untouched; the JSON parses (9 keys,
+`subagent_depth: 2` and `default_agent` intact); `git status --short` limited to the expected three files. The slug was checked
+against the **live OpenRouter catalogue** — `deepseek/deepseek-v4.1-flash` exists (1,048,576 ctx, tools + tool_choice, $0.30/$1.20,
+cache-read $0.006). Roster rules pass: Primary (OpenRouter) vs Backup (OpenCode Go) = different providers; no anti-redundancy
+violation (reviewer/security still differ from both builder models); the "auditor ≠ advisor" rule is unaffected because the
+advisor's pin was not touched.
+Findings: (should-fix) the doc mirror was still pending at review time — done by the PL in this same card; (should-fix, money)
+**there is no provider fallback in `opencode.json`**, so if the OpenRouter credit empties the PL stops until the pin is changed
+(remaining ≈ $4.41–4.44); (minor) `MODEL_POLICY.md` marks this model's retention `0 days*` with no explanation of the asterisk →
+treat 0-day retention as **unverified** for this model; (minor) the card status lagged its own records.
+UNKNOWN (cannot be proven from the repo): whether the restart actually lands the PL session on the new model.
+
+Owner order (verbatim): "เปลี่ยน pl จาก mimo-v2.6-pro เป็น deepseek-v4.1" → then, after being shown the Go blocker, "ให้ไปใช้ที่ OpenRouter".
+Owner: Project Lead (docs) + builder (runtime files) + reviewer on a **different model**
+Risk: L1–L2 — dev tooling: `.opencode/agents/project-lead.md` + `opencode.json` (both runtime files), plus doc mirroring.
+No runtime/production/customer/data impact.
+
+Goal: the Project Lead position runs on `openrouter/deepseek/deepseek-v4.1-flash` — the model the Owner is already
+using in his live PL session — with a correct, non-duplicate Backup.
+
+Owner order (verbatim): "เปลี่ยน pl จาก mimo-v2.6-pro เป็น deepseek-v4.1" → then, after being shown the Go blocker,
+"ให้ไปใช้ที่ OpenRouter".
+Why OpenRouter (recorded): the Go variant `opencode-go/deepseek-v4.1-flash` is probed **blocked** (HTTP 400 "requires
+Global regions", T-035/T-037) — it needs the workspace Privacy setting changed to Global regions first. The Owner chose
+OpenRouter now; moving to Go later is a one-line change. Neither model arm of the project's policy is violated: OpenRouter
+is the sanctioned Backup provider, and the roster already listed this exact slug as the PL's Backup.
+
+Changes:
+1. `.opencode/agents/project-lead.md` line 4 — `model:` → `openrouter/deepseek/deepseek-v4.1-flash`
+2. `.opencode/agents/project-lead.md` (body, ~line 52) — update the PL pin text so the prompt does not contradict the frontmatter
+3. `opencode.json` — `agent.project-lead.model` → the same slug (it currently duplicates the agent file)
+4. Docs (PL writes these directly): `docs/product/MODEL_ROSTER.md` row 1 — Primary/Backup **swapped**, reasoning updated;
+   `docs/project-memory/CURRENT_STATE.md` pin table; `docs/project-memory/SESSION_HANDOFF.md` current-pin lines.
+   New Backup = `opencode-go/mimo-v2.6-pro` → different provider from the new Primary ✓ (anti-regression rule holds).
+5. Deliberately NOT touched: the global `opencode.json` `"model"` fallback, the advisor's pin (`opencode-go/mimo-v2.6-pro`,
+   unchanged — so the "auditor model ≠ the advisor's model" rule is unaffected), and every historical record
+   (`decision-log.md`, `ADVISOR_LOG.md`, `DEV_ERROR_LOG.md`, TASKS.md history) — history is never rewritten.
+
+Done when:
+- [x] both runtime files carry the new slug, and `opencode.json` still parses as valid JSON → `node` prints `openrouter/deepseek/deepseek-v4.1-flash | opencode-go/mimo-v2.6-pro | 9`
+- [x] reviewer on a different model confirms the diff is exactly scoped and the JSON is valid → `opencode-go/space-bunny-free`: ACCEPT-WITH-FINDINGS, no blockers; slug confirmed in the live OpenRouter catalogue
+- [x] docs mirror the change; no historical entry rewritten; PL Backup differs from PL Primary → `MODEL_ROSTER.md` row 1 (swapped), `CURRENT_STATE.md`, `SESSION_HANDOFF.md`, new `decision-log.md` entry
+- [ ] Owner restarts and confirms the PL session starts on `deepseek-v4.1-flash`; if it does not, report and revert
+- [ ] carry the money finding: **no provider fallback exists** — if the OpenRouter credit empties the PL stops (≈ $4.44 left) → decide with the Owner whether to add one
+
+Evidence to capture: the two diffs · the `node` JSON parse output · the reviewer verdict · the Owner's restart check.
+Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
+Links: `.opencode/agents/project-lead.md`, `opencode.json`, `docs/product/MODEL_ROSTER.md`, card T-041
+**Sequencing note:** T-041 and T-042 both touch `.opencode/agents/project-lead.md` → they are run **sequentially, never concurrently**.
+
+### T-043 — Enforce "the Project Lead does not write code": restrict the PL's `edit` and `bash` permissions
+
+Status: IN_PROGRESS — Owner approved 2026-09-26 ("อนุมัติล็อกสิทธิ์ PL ไม่ให้หลุดไปเขียนโค๊ด")
+Owner: Project Lead (plan/record) + builder (runtime file) + reviewer on a **different model**
+Risk: L2 — dev tooling, one file: `.opencode/agents/project-lead.md`. No runtime/production/customer/data impact.
+
+Goal: the long-standing **prose** rule ("the Project Lead must not hand-edit runtime files" — `AGENTS.md` file-type rule)
+becomes an **enforced permission** instead of a request inside a prompt. The Owner's reason: the PL's model is a reasoning
+model, not a coding model, so if the PL slips into writing code the result is bad code.
+
+Owner order (verbatim): "อนุมัติล็อกสิทธิ์ PL ไม่ให้หลุดไปเขียนโค๊ดไหม (ชั้น 1 จำกัด edit ให้แก้ได้เฉพาะเอกสาร dev +
+ชั้น 2 ตัดคำสั่ง bash ที่เขียนไฟล์ออกจาก allowlist ของ PL)"
+
+Changes — one file, two permission blocks:
+1. **Layer 1 — `edit` allowlist (fail-closed).** `permission.edit` becomes an object with `"*": deny` FIRST, then allows for
+   `TASKS.md`, `docs/**`, `runs/**`, `README*`, `AGENTS.md`, `WORKING_POLICY.md`, `PROJECT_STATE.md`, `ROADMAP.md`.
+   Everything else — `services/**`, `tests/**`, `migrations/**`, `scripts/**`, `.github/**`, `.opencode/**`, `opencode.json` —
+   is denied. That is exactly the `AGENTS.md` file-type rule, now enforced. `runs/**` is allowed because the headless
+   workflow requires writing briefs to `runs/briefs/<card>.md`.
+2. **Layer 2 — remove the file-writing bash commands from the PL's reach.** Add denies for `Set-Content`, `Add-Content`,
+   `New-Item`, `Copy-Item`, `Move-Item`, `Rename-Item`, `Remove-Item`, `Clear-Content`, `Out-File`, `Expand-Archive`,
+   `Compress-Archive`. Per the permissions docs (§Agents) **agent permissions are merged with the global config and agent rules
+   take precedence**, so these denies override the global allows while `git` / `gh` / `node` / `python` / `pytest` stay usable.
+   No catch-all `"*"` is added for bash, deliberately: only the file-writing commands are removed, so nothing else the PL
+   legitimately runs can break.
+
+**Documented residual (cannot be fully closed without breaking the role)**: `node -e` and `python -c` can still write files,
+and the PL must keep `node`/`python` to run `scripts/headless_run.mjs` and the test suite. So layer 2 makes code-writing
+awkward and detectable, **not impossible**. Detection stays: a reviewer sees every diff, and a PL diff touching a runtime
+path is a `docs/warroom/ai-scorecard.md` violation.
+
+Done when:
+- [x] the two permission blocks are in `.opencode/agents/project-lead.md` and the YAML still parses → reproducible `node` + `.opencode/node_modules/yaml` command (recorded below)
+- [x] reviewer on a different model confirms the syntax and the merge semantics (global allows vs agent denies) → `opencode-go/space-bunny-free`: ACCEPT-WITH-FINDINGS, no blockers
+- [x] the reviewer states explicitly whether layer 2 is **guaranteed** by merged-rule precedence, or only best-effort → **guaranteed for the 11 listed commands**; the overall goal ("the PL cannot write files") is **best-effort**, not absolute
+- [x] Owner restarts and checks: the PL can still write `TASKS.md` / `docs/**`, and is refused when editing e.g. `opencode.json` → **VERIFIED live 2026-09-26** (see the live-verification block below)
+
+Evidence to capture: the file diff · the reviewer verdict · the Owner's restart check.
+Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
+Links: `.opencode/agents/project-lead.md`, `AGENTS.md` (file-type rule), `docs/warroom/TASK_CONTROL.md` §8, cards T-041/T-042
+**Sequencing:** same file as T-041/T-042 → sequential, never concurrent.
+**Builder DELIVERY (retry run 2 / 2026-09-26, builder `opencode-go/glm-5.3-flash`):** DONE (builder-scoped only)
+- edited ONLY `.opencode/agents/project-lead.md` frontmatter `permission:` (added edit+bash blocks); diff shows untouched
+  lines only pre-existing local edits vs HEAD (mode/model + one roster bullet); no other file touched; no commit/push.
+- YAML verify (node + yaml pkg): `{"task":"allow","edit":{"*":"deny","TASKS.md":"allow","docs/**":"allow","runs/**":"allow","README*":"allow","AGENTS.md":"allow","WORKING_POLICY.md":"allow","PROJECT_STATE.md":"allow","ROADMAP.md":"allow"},"bash":{...11 denies...}}`
+- git diff --stat: `.opencode/agents/project-lead.md | 28 +++++++++++++++++++++++++--- (25 insertions, 3 deletions)` — the 3 deleted lines are PRE-EXISTING working-tree changes, not mine.
+- card lookups blocked by the new bash allowlist (rg) — used Grep/Read tools instead (expected behavior).
+
+PL RECORD — T-043 — 2026-09-26
+Builder: the first attempt (`opencode-go/glm-5.3-flash`) reported an INTAKE and then produced **no edit at all** — a known failure
+mode where a long read-heavy prompt exhausts the model. The change was verified on the file (not trusted from the report) and was
+NOT there. A retry with a short, instruction-only prompt on the same primary model succeeded.
+Reproducible evidence: `node -e "const Y=require('./.opencode/node_modules/yaml');const fs=require('fs');const p=Y.parse(fs.readFileSync('.opencode/agents/project-lead.md','utf8').split('---')[1]).permission;console.log(JSON.stringify(p))"`
+→ prints `task: allow` plus the full `edit` and `bash` objects. `git diff --stat` = **25 insertions / 3 deletions on that one file**
+(the 3 deletions are T-041/T-042's `mode`/`model`/body-line edits — no body damage).
+
+REVIEWER — T-043 — `opencode-go/space-bunny-free` (model ≠ the author's) — 2026-09-26
+VERDICT: **ACCEPT-WITH-FINDINGS** — no blockers, no regression to the open cards.
+- Layer 1 VERIFIED: `"*": "deny"` first + "last matching rule wins" ⇒ genuinely fail-closed; every path the PL legitimately writes
+  is allowlisted (`docs/archive/**`, `docs/audits/**`, `runs/briefs/**`, `README*`, `PROJECT_STATE.md`, `ROADMAP.md`).
+- Layer 2 VERIFIED as far as the docs go: *"Agent permissions are merged with the global config, and agent rules take
+  precedence"* ⇒ the agent denies DO override the global allows for those 11 commands.
+- **Correction to the residual note above (should-fix — recorded):** the honest list of remaining write-vectors is wider than
+  node/python. Any *allowed* command can be redirected (`git log > file`, `Write-Output x > file`, `Get-Content a > b`), and
+  `git checkout <branch> -- <path>`, `git switch`, `npm install`, `pg_dump -f`, `docker*`, `supabase*` can also write.
+  So the accurate claim is: **layer 2 blocks the obvious paths and makes code-writing detectable, but it cannot make it
+  impossible.** The card's original wording was right; only the list was too short.
+- minor, recorded honestly: the builder attributed the blocked `rg` to the *new* allowlist — `rg` was never allowlisted; it always
+  fell through the global `"*": "deny"`. No functional impact.
+- minor, deliberate looseness: `docs/**` also lets the PL edit `PDPA_COMPLIANCE.md` / `PRICING_V1*`, which `AGENTS.md` says the PL
+  must not write itself. Left as-is on purpose — this card is about code, and the prose rule still governs those documents in dev-time.
+- Cannot be proven from the repo: whether the merged rules behave as documented on a live run → that is exactly the Owner's restart check.
+
+LIVE VERIFICATION — T-043 — 2026-09-26 (Project Lead, after the Owner restarted opencode)
+Run from the PL agent itself, so the ruleset the permission engine returns is first-hand evidence.
+1. **Layer 1 — edit, denied path.** Writing `.opencode/perm-test-2.txt` was **BLOCKED**, and the engine returned the live
+   ruleset: global `edit: allow *`, then `edit: { "*": "deny", "TASKS.md": "allow", "docs/**": "allow", "runs/**": "allow",
+   "README*": "allow", "AGENTS.md": "allow", "WORKING_POLICY.md": "allow", "PROJECT_STATE.md": "allow", "ROADMAP.md": "allow" }`
+   → `*: deny` wins for unlisted paths. **The fail-closed allowlist is loaded and working.**
+2. **Layer 1 — edit, allowed path.** Writing `runs/perm-test-2-allowed.txt` **SUCCEEDED** → the PL can still write files where it
+   should, so its card/document duty is intact (exactly what the Owner required: writing files is the job; writing code is not).
+3. **Layer 2 — bash.** `Set-Content -LiteralPath "runs\perm-test-3.txt" ...` was **DENIED**. The live ruleset shows the global
+   `"Set-Content*": "allow"` first and the agent `"Set-Content*": "deny"` LAST → this **empirically confirms** the documented
+   "agent permissions are merged with the global config, and agent rules take precedence / last matching rule wins". No file was created.
+4. `node *` is still allowed, so the PL can still run `scripts/headless_run.mjs` and JSON checks — and it was used to delete the test file.
+Known consequence (accepted): PowerShell `Remove-Item*` is now denied for the PL, so it cannot delete files with PowerShell any
+more; `node -e "fs.rmSync(...)"` remains available for scratch cleanup. All test artifacts were removed — `git status` shows only
+the intended 7 modified files. Box 4 of "Done when" is therefore satisfied by live evidence, not by inference.
+
 ## REVIEW
 
 (none)

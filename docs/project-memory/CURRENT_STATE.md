@@ -16,7 +16,7 @@ error that fails with an opaque `Unexpected server error`. Card T-035.
 
 | Role | Primary | Notes |
 |---|---|---|
-| project-lead | `opencode-go/mimo-v2.6-pro` | re-pinned by T-037 after `opencode-go/deepseek-v4.1-flash` probed **HTTP 400 "requires Global regions"** |
+| project-lead | `openrouter/deepseek/deepseek-v4.1-flash` | **T-042 (2026-09-26, Owner order):** the Go variant is still blocked (HTTP 400 "requires Global regions"), so the Owner chose the OpenRouter endpoint of the same model; backup = `opencode-go/mimo-v2.6-pro`. No automatic provider fallback — if the OpenRouter credit empties, the PL stops. |
 | advisor ("ที่ปรึกษาวางแผน") | `opencode-go/mimo-v2.6-pro` | **new role, T-038** — Owner-facing; commands agents, approves/commits when the Owner is away, **cannot edit files** |
 | builder | `opencode-go/glm-5.3-flash` | the 2026-09-25 Owner lock was **lifted** (T-035) |
 | reviewer L1–L3 | `opencode-go/space-bunny-free` | free + zero-retention; L4 = `anthropic/claude-opus-5.5:batch` |

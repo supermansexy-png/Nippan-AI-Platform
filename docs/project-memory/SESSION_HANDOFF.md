@@ -11,14 +11,20 @@
 ### 1. ย้ายทีมทั้งชุดไป OpenCode Go (การ์ด T-035 / T-037)
 - `opencode-go/<id>` = **คลังหลัก** (พี่จ่าย $10/เดือนแล้ว) · OpenRouter + OpenCode Zen = สำรอง
 - pin ปัจจุบัน (ตรงกับไฟล์ agent จริงทั้งหมด):
-  - project-lead `opencode-go/mimo-v2.6-pro` (เดิมตั้ง deepseek-v4.1-flash แต่ **probe แล้ว HTTP 400 "requires Global regions"** จึงสลับ — mimo ฉลาดกว่า 46.3 vs 39.5 + retention 0 วัน)
+  - project-lead `openrouter/deepseek/deepseek-v4.1-flash` (**T-042, 2026-09-26 — Owner order** "เปลี่ยน pl เป็น deepseek-v4.1"; ฝั่ง Go ยังติด HTTP 400 "requires Global regions" จึงใช้ endpoint OpenRouter ของโมเดลเดียวกัน) · backup `opencode-go/mimo-v2.6-pro`
   - advisor `opencode-go/mimo-v2.6-pro` · builder `opencode-go/glm-5.3-flash` (Owner lock เดิม **ยกเลิกแล้ว**)
   - reviewer L1–L3 `opencode-go/space-bunny-free` · L4 `anthropic/claude-opus-5.5:batch`
   - ops `opencode-go/mimo-v2.6-flash` · HR `opencode-go/gpt-6-luna`
   - security `openrouter/nex-agi/nex-n2.5-mini:free` (Go ไม่มีตัวแทน) · researcher `opencode/nemotron-3.5-lightning-free` · assistant `opencode/nemotron-3-ultra-free`
-- `opencode.json`: model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`
+- `opencode.json`: global model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`, default_agent = project-lead, subagent_depth = 2 · agent override ของ project-lead = `openrouter/deepseek/deepseek-v4.1-flash` (T-042)
 - ทดสอบสดผ่าน: glm-5.3-flash, space-bunny-free, mimo-v2.6-flash, mimo-v2.6-pro, kimi-k3 · ติด region: deepseek-* ทั้งตระกูล
 - HR เขียนคำสั่งใหม่แล้วให้สรรหาจากคลัง Go เป็นหลัก
+
+### 1b. แก้ช่องทาง "ที่ปรึกษา → PL" + เปลี่ยนโมเดล PL (การ์ด T-041 / T-042) — 2026-09-26
+- **T-041:** ที่ปรึกษาคุยกับ PL ไม่ได้เลย เพราะ Task tool เรียกได้แค่ `subagent` แต่ทั้งคู่เป็น `primary` → แก้ `project-lead` เป็น `mode: all` และเพิ่ม `"subagent_depth": 2` (ค่า default = 1 ทำให้ PL สั่ง builder/reviewer ต่อไม่ได้) · reviewer คนละโมเดล verdict = ACCEPT-WITH-FINDINGS ทั้งสองรอบ
+- **T-042:** PL ย้ายไป `openrouter/deepseek/deepseek-v4.1-flash` (backup = `opencode-go/mimo-v2.6-pro`) — เครดิต OpenRouter เหลือ **≈ $4.44** และ **ไม่มี fallback อัตโนมัติ** ถ้าเครดิตหมด PL หยุด
+- **ยังไม่พิสูจน์:** `mode: all` ผ่านเงื่อนไข `default_agent` ไหม — ถ้าไม่ผ่าน opencode จะถอยไปใช้ `build` เงียบ ๆ → **ต้องรีสตาร์ทแล้วเช็คว่า agent เริ่มต้นยังเป็น project-lead**
+- **T-043 (Owner อนุมัติ + ทดสอบสดผ่าน 2026-09-26):** ล็อกสิทธิ์ PL — ชั้น 1 `edit` allowlist (`TASKS.md`, `docs/**`, `runs/**`, `README*`, `AGENTS.md`, `WORKING_POLICY.md`, `PROJECT_STATE.md`, `ROADMAP.md`; นอกนั้น deny) + ชั้น 2 deny 11 คำสั่ง bash ที่เขียนไฟล์ · **พิสูจน์สดแล้ว:** เขียน `.opencode/**` ถูกปฏิเสธ, เขียน `runs/**` ได้, `Set-Content` ถูกปฏิเสธ · หมายเหตุ: PL ลบไฟล์ด้วย `Remove-Item` ไม่ได้แล้ว (ใช้ `node -e fs.rmSync` แทน) · ย้ำ: กันไม่ได้ 100% (redirect / `git checkout <branch> -- <path>` / `node -e` ยังเขียนได้)
 
 ### 2. ตำแหน่งใหม่ "ที่ปรึกษาวางแผน" (advisor) + ระบบตรวจสอบ (การ์ด T-038 / T-039 / T-040)
 - ลำดับสั่งงาน: `Owner → advisor → Project Lead → specialist` · สั่ง agent ได้ทุกตัว · อนุมัติ/commit/push แทนพี่ได้ตอนพี่ไม่อยู่

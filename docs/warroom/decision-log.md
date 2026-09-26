@@ -879,3 +879,73 @@ usable again if the workspace privacy setting is set to Global regions.
 **Evidence**: cards T-038 / T-039 in `TASKS.md`; `docs/warroom/ADVISOR_MANDATE.md`; `docs/warroom/ADVISOR_LOG.md`;
 `docs/product/MODEL_ROSTER.md` § "แหล่งสรรหาหลัก: OpenCode Go"; runs under `runs/2026-09-26T10-*`.
 
+---
+
+## DECISION — 2026-09-26 — Project Lead moves to `openrouter/deepseek/deepseek-v4.1-flash`; the advisor→PL channel is repaired
+
+**Owner order (verbatim)**: "เปลี่ยน pl จาก mimo-v2.6-pro เป็น deepseek-v4.1" → and after being shown that the Go endpoint is
+blocked: "ให้ไปใช้ที่ OpenRouter".
+
+**Decision (Owner)**: the project-lead position is pinned to `openrouter/deepseek/deepseek-v4.1-flash`. The OpenCode Go endpoint of
+the same model (`opencode-go/deepseek-v4.1-flash`) remains **blocked** (HTTP 400 "requires Global regions", probed T-035/T-037), so
+the Owner chose the OpenRouter endpoint — the slug the roster already carried as this role's **Backup**. Primary/Backup are therefore
+swapped: Primary `openrouter/deepseek/deepseek-v4.1-flash`, Backup `opencode-go/mimo-v2.6-pro` (still two different providers, so the
+anti-regression rule holds). Moving to Go later is a one-line change once the workspace Privacy setting is Global regions.
+
+**Trade-offs stated to the Owner before he chose, and accepted**: intelligence 39.5 (vs 46.3 for mimo); the PL is a long-session
+agent whose cost is dominated by cached reads, so it now bills OpenRouter (~$0.006/M cache-read → ~$0.17 for a 28M-token session)
+instead of the flat-rate Go pool; and **there is no automatic provider fallback** — if the OpenRouter credit empties, the PL stops
+until the pin is changed. Remaining OpenRouter credit at the time of the change: **≈ $4.44**.
+
+**Second change the same day — the advisor could not reach the Project Lead at all (card T-041).** Root cause (VERIFIED against the
+repo config and the opencode docs): the Task tool invokes **subagents only**, and both `advisor` and `project-lead` were `mode: primary`,
+so the advisor had no channel to the PL — i.e. `ADVISOR_MANDATE.md` §2's claim ("may command any dev agent, `task` allowed, including
+PL") was unachievable as configured. Fixes: `project-lead` → `mode: all` (usable as a primary **and** as a subagent, so the advisor can
+invoke it), and `opencode.json` gains `"subagent_depth": 2` — the default is `1`, which lets a primary launch a subagent but blocks that
+subagent from launching any further one, so without it the PL could not have passed work on to builder/reviewer. Both changes were
+documented and independently reviewed on a different model (ACCEPT-WITH-FINDINGS, 6/6 checks). The global `opencode.json` `"model"`
+fallback is unchanged. **Still unproven and requiring a real restart:** whether `mode: all` satisfies the `default_agent` check
+("must be a primary agent"); if not, opencode silently falls back to `build` — a less safe agent — so the Owner checks the startup agent.
+
+**Recorded finding (no code change)**: the rule "the Project Lead must not hand-edit runtime files" is still **prose only** — nothing in
+the permissions enforces it. A proposal to enforce it (an `edit` allowlist limited to dev-process docs, plus removing the file-writing
+bash commands from the PL's own allowlist) was put to the Owner and is **awaiting his decision**. Residual hole stated honestly:
+`node -e` / `python -c` can still write files, and closing that would stop the PL from running scripts and tests at all.
+
+**Edits made**: `.opencode/agents/project-lead.md` and `opencode.json` (runtime files → written by the builder, checked by a different
+model); `docs/product/MODEL_ROSTER.md` row 1; `docs/project-memory/CURRENT_STATE.md`. Historical entries — including the T-037
+re-pin note above — are **not** rewritten. No production, customer or protected-document change.
+
+**Evidence**: cards T-041 / T-042 in `TASKS.md`; `git diff` on the two runtime files; `node` JSON parse output; reviewer verdicts
+(`opencode-go/space-bunny-free`) for both cards.
+
+---
+
+## DECISION — 2026-09-26 — "The PL does not write code" is now an enforced permission, verified live (card T-043)
+
+**Owner order (verbatim)**: "อนุมัติล็อกสิทธิ์ PL ไม่ให้หลุดไปเขียนโค๊ดไหม (ชั้น 1 จำกัด edit ให้แก้ได้เฉพาะเอกสาร dev +
+ชั้น 2 ตัดคำสั่ง bash ที่เขียนไฟล์ออกจาก allowlist ของ PL)" — and then the clarifying correction: "พี่อนุญาตให้เขียนไฟล์ได้
+แต่ห้ามเขียนโค๊ด เขียนไฟล์มันหน้าที่โดยตรงอยู่แล้ว".
+
+**Decision (Owner)**: the long-standing **prose** rule in `AGENTS.md` ("the Project Lead must not hand-edit runtime files")
+becomes an **enforced permission** on the `project-lead` agent —
+(1) an `edit` allowlist: `TASKS.md`, `docs/**`, `runs/**`, `README*`, `AGENTS.md`, `WORKING_POLICY.md`, `PROJECT_STATE.md`,
+`ROADMAP.md`, with everything else denied; and
+(2) denies for the 11 bash commands that write files, which override the global allows.
+Writing files stays the PL's own duty — only the **code/config** paths (`services/**`, `tests/**`, `migrations/**`, `scripts/**`,
+`.github/**`, `.opencode/**`, `opencode.json`) are locked.
+
+**Verified live (2026-09-26, run from the PL agent after the Owner's restart)**: writing to `.opencode/**` was **blocked** and the
+permission engine returned the loaded ruleset; writing to `runs/**` **succeeded**; `Set-Content` was **denied**, with the agent
+rule appearing after the global allow in the returned ruleset — which empirically confirms the documented semantics
+("agent permissions are merged with the global config, agent rules take precedence, last matching rule wins"). Test artifacts were
+removed afterwards.
+
+**Honest limit (recorded on the card, not hidden)**: the lock closes the direct paths and makes code-writing detectable, but it is
+**not airtight** — `git log > file`, `Write-Output x > file`, `git checkout <branch> -- <path>`, `node -e`, `python -c`,
+`npm install`, `docker`, `supabase` can still write. A reviewer (different model) confirmed this and the card's wording was
+corrected to say "blocks the obvious paths and makes it detectable" rather than "cannot write".
+
+**Evidence**: card T-043 in `TASKS.md` (LIVE VERIFICATION block); `git diff .opencode/agents/project-lead.md`; the rulesets the
+permission engine returned on the blocked calls; reviewer verdict `opencode-go/space-bunny-free` = ACCEPT-WITH-FINDINGS.
+
