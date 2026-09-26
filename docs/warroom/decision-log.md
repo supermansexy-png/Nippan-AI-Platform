@@ -1008,3 +1008,9 @@ The Owner is setting the real number, and accepting the above trade-off delibera
 **Evidence**: card T-046 in `TASKS.md`; `git diff docs/warroom/TASK_CONTROL.md` (§5 only — §3, §8 and §9 untouched);
 reviewer verdict `opencode-go/space-bunny-free`; `git diff TASKS.md` (the "Board size" block).
 
+## 2026-09-27 — Project Lead — T-054: PROJECT_BRIEF.th.md added as first required reading in AI_OPERATING_PROTOCOL.md
+Context: Owner order to add PROJECT_BRIEF.th.md as the FIRST required reading in the session-start list of AI_OPERATING_PROTOCOL.md (protected doc per TASK_CONTROL §8).
+Decision: Added `PROJECT_BRIEF.th.md` after `AGENTS.md` in the session-start reading list. No other changes.
+Reason: L3 protected-doc process — reviewer (opencode-go/space-bunny-free) verified diff contains only this one insertion. PROJECT_BRIEF.th.md row already existed in INDEX.md (line 12).
+Task: T-054
+
