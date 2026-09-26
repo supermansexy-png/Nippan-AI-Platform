@@ -17,6 +17,9 @@ from app.war_room.transport import (
     create_war_room_preview_router,
     preview_mount_allowed,
     trusted_preview_actor,
+    _room_create_attempts,
+    _ROOM_CREATE_WINDOW_SECONDS,
+    _ROOM_CREATE_MAX_PER_WINDOW,
 )
 
 
@@ -639,4 +642,328 @@ async def test_local_access_fallback_ignores_spoofed_forwarded_headers() -> None
 
     assert response.status_code == 403
     assert response.json()["detail"] == "war_room_preview_loopback_only"
+
+
+# ---- T-034b slice 2a: room create route ----
+
+def _room_create_settings(**overrides) -> Settings:
+    values = {
+        "environment": "test",
+        "database_url": "postgresql://example",
+        "war_room_preview_enabled": True,
+        "war_room_preview_local_access_enabled": True,
+        "war_room_preview_tenant_id": TENANT_ID,
+        "war_room_preview_application_id": APPLICATION_ID,
+        "war_room_preview_principal_id": "owner-preview",
+    }
+    values.update(overrides)
+    return Settings(**values)
+
+
+@pytest.mark.anyio
+async def test_room_create_rejects_empty_or_whitespace_title_before_db() -> None:
+    settings = _room_create_settings()
+
+    class _ExplodingDatabase:
+        def __getattr__(self, name):
+            raise AssertionError("database must not be touched on invalid title")
+
+    app_with_guard = FastAPI()
+    app_with_guard.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=_ExplodingDatabase(),
+        )
+    )
+
+    for bad_title in ["", "   "]:
+        async with AsyncClient(
+            transport=ASGITransport(app=app_with_guard, client=("127.0.0.1", 43129)),
+            base_url="https://war-room.example.test",
+        ) as client:
+            response = await client.post(
+                "/war-room/rooms",
+                json={"title": bad_title},
+            )
+
+        assert response.status_code == 422
+
+
+@pytest.mark.anyio
+async def test_room_create_fails_closed_without_authentication() -> None:
+    settings = _room_create_settings(
+        war_room_preview_local_access_enabled=False,
+        war_room_preview_remote_access_enabled=True,
+        cloudflare_access_team_domain="https://nippan-test.cloudflareaccess.com",
+        cloudflare_access_audience="war-room-preview-audience",
+        cloudflare_access_owner_email="owner@example.com",
+    )
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+            remote_access_verifier=_FakeRemoteVerifier(),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("203.0.113.10", 43130)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องใหม่"},
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "war_room_preview_remote_auth_required"
+
+
+@pytest.mark.anyio
+async def test_room_create_seeds_room_with_stubbed_helper(monkeypatch) -> None:
+    settings = _room_create_settings()
+    received: dict[str, object] = {}
+
+    def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+        received["room_id"] = room_id
+        received["title"] = title
+        return (TENANT_ID, APPLICATION_ID, UUID(int=1))
+
+    import scripts.seed_war_room_preview as seed_module
+
+    monkeypatch.setattr(seed_module, "seed", _fake_seed)
+
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43131)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องประชุมทดสอบ"},
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert UUID(body["room_id"]) == received["room_id"]
+    assert body["title"] == "ห้องประชุมทดสอบ"
+    assert received["title"] == "ห้องประชุมทดสอบ"
+
+
+@pytest.mark.anyio
+async def test_room_create_returns_503_without_database_url() -> None:
+    settings = _room_create_settings(database_url="")
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43132)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องทดสอบ"},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "war_room_preview_room_create_not_configured"
+
+
+@pytest.mark.anyio
+async def test_room_create_rejects_title_over_255_chars() -> None:
+    settings = _room_create_settings()
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43133)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "x" * 256},
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.anyio
+async def test_room_create_rejects_unknown_extra_field() -> None:
+    settings = _room_create_settings()
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43134)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องใหม่", "unknown_field": 1},
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.anyio
+async def test_room_create_seed_value_error_returns_409_and_operational_error_503(monkeypatch) -> None:
+    settings = _room_create_settings()
+
+    def _fake_seed_bad(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+        raise ValueError("seed guard triggered")
+
+    import scripts.seed_war_room_preview as seed_module
+    monkeypatch.setattr(seed_module, "seed", _fake_seed_bad)
+
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43135)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องทดสอบ"},
+        )
+    assert response.status_code == 409
+    assert response.json()["detail"] == "war_room_preview_room_create_refused"
+
+    # psycopg.OperationalError should map to 503
+    def _fake_seed_db_down(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+        import psycopg
+        raise psycopg.OperationalError("database connection failed")
+
+    monkeypatch.setattr(seed_module, "seed", _fake_seed_db_down)
+
+    app2 = FastAPI()
+    app2.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app2, client=("127.0.0.1", 43136)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องทดสอบ"},
+        )
+    assert response.status_code == 503
+    assert response.json()["detail"] == "war_room_preview_room_create_failed"
+
+
+@pytest.mark.anyio
+async def test_room_create_rate_limit_allows_first_ten_then_blocks_11th(monkeypatch) -> None:
+    from app.war_room import transport
+
+    # Reset limiter before case.
+    transport._room_create_attempts.clear()
+
+    settings = _room_create_settings()
+
+    seed_called: list[bool] = []
+
+    def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+        seed_called.append(True)
+        return (TENANT_ID, APPLICATION_ID, UUID(int=1))
+
+    import scripts.seed_war_room_preview as seed_module
+    monkeypatch.setattr(seed_module, "seed", _fake_seed)
+
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43137)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        # First 10 creations allowed.
+        for i in range(10):
+            seed_called.clear()
+            response = await client.post(
+                "/war-room/rooms",
+                json={"title": f"ห้องทดสอบ{i}"},
+            )
+            assert response.status_code == 201, f"Attempt {i + 1} unexpectedly blocked"
+            assert len(seed_called) == 1, f"Seed stub must be called for attempt {i + 1}"
+
+        # 11th should be rate-limited (429) and NOT invoke seed.
+        seed_called.clear()
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องทดสอบ11"},
+        )
+        assert response.status_code == 429
+        assert response.json()["detail"] == "war_room_preview_room_create_rate_limited"
+        assert len(seed_called) == 0, "Rate-rejected call must not invoke seed stub"
+
+
+@pytest.mark.anyio
+async def test_room_create_rate_limit_resets_after_window(monkeypatch) -> None:
+    from app.war_room import transport
+
+    transport._room_create_attempts.clear()
+    # Simulate 10 attempts in the past (older than window).
+    old_time = 0.0
+    transport._room_create_attempts.extend([old_time] * 10)
+
+    settings = _room_create_settings()
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43138)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        # Old attempts should be dropped, allowing a new creation.
+        seed_called: list[bool] = []
+
+        def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+            seed_called.append(True)
+            return (TENANT_ID, APPLICATION_ID, UUID(int=1))
+
+        import scripts.seed_war_room_preview as seed_module
+        monkeypatch.setattr(seed_module, "seed", _fake_seed)
+
+        seed_called.clear()
+        # Directly patch the attempts back to simulate cleared state after time passes
+        transport._room_create_attempts.clear()
+
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องใหม่"},
+        )
+        assert response.status_code == 201
+        assert len(seed_called) == 1
 

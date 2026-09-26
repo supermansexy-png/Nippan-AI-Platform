@@ -14,7 +14,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.db import Database
 from app.model_gateway import ModelPolicy, ModelRoute, OpenRouterGateway
+from app.preview_bootstrap import PreviewBootstrapError
 from app.settings import Settings
+
+import time
+
+import psycopg
 
 from .auth import DatabaseRoomCommandAuthorizer, DatabaseRoomReadAuthorizer
 from .budget import PostgresRoomTurnGuard
@@ -68,6 +73,11 @@ from .state_machine import InvalidRoomTransition
 
 _ASSET_ROOT = Path(__file__).resolve().parents[3] / "control-plane-web" / "war-room"
 
+# In-process rate limit for the single-instance preview; resets on restart.
+_ROOM_CREATE_WINDOW_SECONDS = 3600
+_ROOM_CREATE_MAX_PER_WINDOW = 10
+_room_create_attempts: list[float] = []
+
 
 class CorrelationPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -118,6 +128,22 @@ class RoomCommandPayload(BaseModel):
             content_text=self.content_text,
             content_reference=self.content_reference,
         )
+
+
+class RoomCreatePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+
+    @field_validator("title")
+    @classmethod
+    def _validate_title(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("title must not be empty or whitespace only")
+        if len(stripped) > 255:
+            raise ValueError("title must be at most 255 characters")
+        return value
 
 
 class _DisabledModelGateway:
@@ -1011,5 +1037,59 @@ def create_war_room_preview_router(
                         break
 
         return serialize_ordered_event(event)
+
+    @router.post("/war-room/rooms", status_code=201)
+    async def room_create(payload: RoomCreatePayload, request: Request):
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
+        actor = trusted_preview_actor(settings)
+        if not settings.database_url:
+            raise HTTPException(
+                status_code=503,
+                detail="war_room_preview_room_create_not_configured",
+            )
+        title = payload.title.strip()
+        new_room_id = uuid4()
+
+        # Sliding-window rate limit. This is an in-process guard for the
+        # single-instance preview; it resets when the service restarts, and
+        # it is not shared across instances.
+        now = time.monotonic()
+        _room_create_attempts[:] = [
+            ts for ts in _room_create_attempts
+            if now - ts < _ROOM_CREATE_WINDOW_SECONDS
+        ]
+        if len(_room_create_attempts) >= _ROOM_CREATE_MAX_PER_WINDOW:
+            raise HTTPException(
+                status_code=429,
+                detail="war_room_preview_room_create_rate_limited",
+            )
+        _room_create_attempts.append(now)
+
+        from scripts.seed_war_room_preview import seed
+
+        try:
+            await asyncio.to_thread(
+                seed,
+                settings=settings,
+                admin_dsn=settings.database_url,
+                room_id=new_room_id,
+                title=title,
+            )
+        except (PreviewBootstrapError, ValueError, RuntimeError) as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="war_room_preview_room_create_refused",
+            ) from exc
+        except psycopg.Error as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="war_room_preview_room_create_failed",
+            ) from exc
+
+        return {"room_id": str(new_room_id), "title": title}
 
     return router
