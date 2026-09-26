@@ -262,6 +262,13 @@ Estimate: HR study = one headless job; approved implementation = one working ses
 Risks: routing/config drift, Go shared usage buckets and privacy restrictions; current repo has unrelated uncommitted changes that must remain untouched. No secrets/customer data go to free models.
 Decision: ACCEPT
 
+**WORK LOG — T-035 reviewer swap (PL, 2026-09-27)** — Owner order: reviewer too slow, switch to muse-spark-1.3 free.
+- Probe: headless worker on `opencode/muse-spark-1.3-contributor-free` → PROBE-OK + correct self-id, ~2s, clean stop (`runs/2026-09-26T21-25-34Z-t035-reviewer-probe`).
+- Writer `assistant`: `reviewer.md` exactly 2 lines (frontmatter model + L1–L3 policy line, with Zen no-secrets note); follow-up 1 line in `project-lead.md:75` (stale pin mirror). No commit/push by writer.
+- Roster mirrored by PL: `MODEL_ROSTER.md` row 3 (Primary muse-spark-1.3, Backup ex-primary nemotron-3.5-lightning:free) + security anti-redundancy note + team table; cache-bug revert path recorded.
+- Check (different model `opencode/space-bunny-free`, headless `runs/2026-09-26T21-27-28Z-t035-reviewer-diff-check`): **ACCEPT** — 2-line diff exact, slug prefixed, anti-redundancy PASS (≠ builder laguna-s, ≠ security space-bunny). Non-blocking notes: reviewer.md:57 builder ref stale (pre-existing, out of scope); project-lead.md:75 fixed in follow-up.
+- RISK disclosed: `muse-spark-*` pins failed 2026-09-26 via dead cached id in `opencode.global.dat` (ops/researcher) — if the reviewer agent fails to open after restart, revert to Backup. Takes effect after Owner restarts opencode.
+
 ### T-038 — Advisor mandate + governance rule repair after the OpenCode Go re-staffing
 
 Status: IN_PROGRESS (Owner instruction 2026-09-26 in chat)

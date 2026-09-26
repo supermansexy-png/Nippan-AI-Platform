@@ -1,7 +1,7 @@
 ﻿---
 description: Reviewer / Auditor (dev-time) ตรวจงานโดยคนละโมเดล หาบั๊ก regression และการอ้างเกินจริง ตามการ์ดงาน โดยไม่แก้ไฟล์
 mode: subagent
-model: openrouter/nvidia/nemotron-3.5-lightning:free
+model: opencode/muse-spark-1.3-contributor-free
 permission:
   edit: deny
   task: deny
@@ -53,7 +53,7 @@ INTAKE ≤ 8 บรรทัด, DELIVERY/verdict ≤ 15 บรรทัด; fin
 
 ## Model & cost policy (T-020–T-023)
 
-- reviewer L1–L3 → `opencode-go/space-bunny-free` (zero-retention); **L4/ความแม่นสูง → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
+- reviewer L1–L3 → `opencode/muse-spark-1.3-contributor-free` (free; no secrets/customer data — Zen may log/train); **L4/ความแม่นสูง → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
 - ห้ามใช้โมเดล builder (`opencode-go/glm-5.3-flash` — `qwen3.7-flash` แบนถาวร) ตรวจ (anti-redundancy) และ reviewer ต้องไม่ซ้ำ security
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว

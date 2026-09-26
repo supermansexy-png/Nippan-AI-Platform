@@ -72,7 +72,7 @@ docs/warroom/decision-log.md — เอกสารเหล่านี้เ�
 - **PL = คิด/วางแผน/สั่ง/รายงานเท่านั้น** ไม่ลงมือเอง
 - **builder = paid `opencode-go/glm-5.3-flash` (OpenCode Go)** — Owner lock เดิมบน GLM-5.3-Flash **ถูก LIFT แล้วเมื่อ 2026-09-26** (Owner directive, การ์ด T-035) · `qwen/qwen3.7-flash` แบนถาวร · ตำแหน่งผู้ช่วย = โมเดลฟรี Zen
 - **project-lead = `opencode/nemotron-3-ultra-free`** (backup `openrouter/deepseek/deepseek-v4.1-flash`) · **advisor = `opencode-go/mimo-v2.6-pro`** (ตำแหน่งใหม่)
-- ตรวจงาน (Team update 2026-09-25, pin ปัจจุบัน): reviewer L1–L3 → `opencode-go/space-bunny-free`; security L1–L3 → `opencode-go/kimi-k3`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
+- ตรวจงาน (Team update 2026-09-25, pin ปัจจุบัน): reviewer L1–L3 → `opencode/muse-spark-1.3-contributor-free`; security L1–L3 → `opencode-go/kimi-k3`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
 - งานปฏิบัติการ/สนับสนุน: **ops = `opencode-go/mimo-v2.6-flash`** · **researcher = `opencode/nemotron-3.5-lightning-free`** · **assistant = `opencode/nemotron-3-ultra-free`** · **model-recruiter (HR) = `opencode-go/gpt-6-luna`**
 - **งานเสียเงินที่ไม่รีบทุกงาน → ส่ง Batch API (`:batch` variant) เสมอ** (ถูกกว่า ~40–60%); งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว
