@@ -816,3 +816,26 @@ when he returns and decides whether he is satisfied with it.
   for non-urgent paid work; credit ≈ $1.60, so no unnecessary paid calls.
 
 **Evidence**: Owner message 2026-09-26 (this entry). Recorded so the delegation is traceable and does not need to be re-derived.
+
+---
+
+## COST ALERT — 2026-09-26 — the expensive runs are the ones that stall, not the ones that work
+
+**Measured**: after the War Room work the OpenRouter account reports `total_credits` 45 and `total_usage` 44.35 — **remaining
+≈ $0.65**. Cost per run was read from each run's own log (`runs/*/stdout.log`, summed `cost` fields).
+
+**What the money went on** — the single most expensive item of this session was a **paid builder run that stalled without writing
+a single file**: `runs/2026-09-25T20-34-38Z-t034a-glm-final` = **$1.2239**. The headless harness elides large tool output, the
+model kept re-reading the same file, and every step re-sent a growing context. By contrast the runs that actually delivered were
+cents: the whole server slice `t034b-slice2a` = $0.0335, the seed-script work = $0.0269 and $0.0174, and every free-model run
+(GLM's replacements, the reviewers, the security substitute) = $0.
+
+**Rules that follow (for the next session, so the same money is not burned again)**:
+1. When a job needs a large file, hand it a **spec file** and tell it to read only small regions — that instruction is what turned
+   `glm-5.3-flash` from a two-time failure into a working job.
+2. **Stop a paid job that shows no file edit after a couple of minutes** instead of letting it run; a stall costs dollars, a retry
+   costs cents, and the free model performs the mechanical edits reliably.
+3. Never ask a paid model to "read the file and work it out" from scratch on this harness.
+
+**Action**: no further paid calls this period. Anything still open waits for the Owner to top up, or runs on a free model.
+
