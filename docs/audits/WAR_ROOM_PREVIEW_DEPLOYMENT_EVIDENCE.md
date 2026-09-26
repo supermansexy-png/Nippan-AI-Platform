@@ -305,6 +305,59 @@ This supersedes the earlier "NOT VERIFIED … whether a Cloudflare Access applic
   `403 war_room_preview_remote_auth_failed` → the Render env values do not match this Access application.
   A Render/host error page → `warroom.nippan.org` is not fronting this service.
 
+## T-034b — starting and reading a meeting (2026-09-26)
+
+Work done while the Owner was away, under the delegation recorded in `docs/warroom/decision-log.md` (2026-09-26).
+
+**Server**
+
+- `POST /war-room/rooms` creates a meeting room (one room, eight participants, one agenda item) by calling the
+  **already-tested seed helper** rather than writing new insert logic. Authorization runs first with the same gate every other
+  route uses; the actor is server-established; the room id is generated server-side; the title is the only client-controlled
+  value (pydantic: non-empty after strip, ≤255 characters, extra fields forbidden) and is passed as a bound parameter; a falsy
+  database url answers 503 without reaching the seed helper; a refusal maps to 409 with a static detail and a database failure to
+  503, so no DSN, SQL or exception text can reach the client; the synchronous seed runs on a worker thread.
+- A **sliding-window limiter (10 per hour → 429)** answers the security review's one blocking finding (unlimited room creation).
+  It is in-process for the single-instance preview and resets on restart, which the code comments state.
+- The command-line path (slice 1) stays: the seed script takes `--room-id`, `--title` and `--force`; every delete is scoped to
+  the preview tenant and application, an existing non-default room is refused without `--force`, a room that does not exist yet is
+  created without any flag, an empty or whitespace title is refused **before** any delete, and deletes plus inserts run in one
+  transaction.
+
+**Client**
+
+- a meeting-title input plus a **`เริ่มประชุมใหม่`** button that posts the title and then loads the new room (URL replaced, window
+  state reset, snapshot reloaded); failures map to Thai reasons (422 / 409 / 503 / other); an empty title never leaves the
+  browser; the button is disabled in flight so a double click cannot create two rooms.
+- the conversation renders only the newest **30** events with a **`ดูข้อความก่อนหน้า`** control (30 more per press, with a count
+  line), and the system log keeps only its newest **50** lines — so a long meeting no longer becomes one endless page.
+
+**Live evidence (run, not inferred)**
+
+- full `services/core` suite against an embedded **PostgreSQL 16** with all nine migrations applied: **171 passed, 0 failed**
+  (transport file alone 39 passed).
+- a purpose-written live trial (`runs/t034b_acceptance.py`, local harness, writes nothing into the repo) that seeds a **second**
+  room and proves: the new room is complete (8 participants + 1 agenda item), the default room is untouched, a repeat seed of the
+  non-default room without `--force` is refused **and destroys nothing**, `--force` resets it, and a whitespace title is refused
+  before any delete. This trial is what caught the bug the code review missed — the `--force` guard was refusing to create a
+  brand-new room at all.
+- CI caught a second defect the local run could not: importing `app.preview_bootstrap` at module level pulls
+  `scripts.seed_war_room_preview`, which the CI collection path cannot import, so every module importing the transport failed to
+  collect. The transport no longer imports it; the seed helper is reached through a small factory so tests can stub it without
+  importing `scripts`.
+
+**Reviews on different models** (each verdict recorded before merge): code reviewer — ACCEPT after fixes (it found an unhandled
+`RuntimeError` path that would have returned 500); UI reviewer — ACCEPT after its must-fix (the top bar had four children in a
+three-column grid) and its scroll-anchor finding; security review — ACCEPT-WITH-FINDINGS, its single blocker (no rate limit)
+fixed and re-verified. The appointed security model `openrouter/nex-agi/nex-n2.5-mini:free` **no longer resolves**, so a
+substitute free model was used and the substitution is recorded rather than hidden.
+
+**Honest limits**
+
+- the deployed assets sit behind Cloudflare Access, so this session can confirm the deployed revision, the service health and the
+  database-level behaviour, but **not the rendered page** — the Owner confirms that in the browser.
+- the **agenda panel is still read-only**: creating, editing and closing agenda items in-room is the remaining piece of the card.
+
 ## T-034a deployed to the preview (2026-09-26)
 
 - **PR #84** squash-merged into `phase2/postgres-logical-schema`: commit **`a4e7c5335f52ba96baf8dea58d6a2ac9a3dee9ea`** — the three UI
