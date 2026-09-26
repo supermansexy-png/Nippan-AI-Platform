@@ -32,6 +32,33 @@
 **เริ่มแชทใหม่:** "อ่าน docs/project-memory/SESSION_HANDOFF.md แล้วทำงานต่อ"
 <!-- AUTO-HANDOFF:END -->
 
+> ## ▶ สถานะล่าสุด 2026-09-26 (session 4) — ยึดบล็อกนี้ก่อนบล็อกอื่นทั้งหมด
+>
+> **commit:** `a4ce52d` — "feat(team): move the dev team onto OpenCode Go, add the advisor role and its oversight"
+> (24 ไฟล์) · working tree สะอาด
+>
+> **ทีมย้ายไป OpenCode Go แล้ว (การ์ด T-035/T-037)** — `opencode-go/<id>` = คลังหลัก, OpenRouter/Zen = สำรอง
+> - project-lead `opencode-go/mimo-v2.6-pro` (เดิมตั้ง `deepseek-v4.1-flash` แต่ **probe แล้วได้ HTTP 400 "requires Global
+>   regions"** จึงสลับ)
+> - builder `opencode-go/glm-5.3-flash` (Owner lock เดิม **ถูกยกเลิก** 2026-09-26)
+> - reviewer L1–L3 `opencode-go/space-bunny-free` · ops `opencode-go/mimo-v2.6-flash` · HR `opencode-go/gpt-6-luna`
+> - security `openrouter/nex-agi/nex-n2.5-mini:free` (Go ไม่มีตัวแทน) · researcher/assistant = Zen ฟรีเดิม
+> - `opencode.json`: model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`
+>
+> **ตำแหน่งใหม่ "ที่ปรึกษาวางแผน" (advisor) — การ์ด T-038/T-039**
+> - ลำดับสั่งงาน: `Owner → advisor → Project Lead → specialist` · สั่ง agent ได้ทุกตัว
+> - อนุมัติ/commit แทนพี่ได้ตอนพี่ไม่อยู่ · **แก้ไฟล์เองไม่ได้** · สั่งงานนอกระเบียบไม่ได้
+> - **ห้ามอนุมัติเอกสาร protected** (เป็น conflict of interest — ตัวมันเองคือสิ่งที่ถูกกำกับ)
+> - ระบบตรวจสอบ: `docs/warroom/ADVISOR_MANDATE.md` + `docs/warroom/ADVISOR_LOG.md`
+>   (ผู้รับคำสั่งเป็นคนบันทึก ไม่ใช่ที่ปรึกษา · audit โดยโมเดลอื่นทุกการ์ด · verdict 3 ค่า · ออกนอกอำนาจ = หยุด + แจ้งพี่ + ลง scorecard)
+> - audit รอบแรก: `opencode-go/kimi-k3` → WITHIN-MANDATE-WITH-FINDINGS (finding แก้แล้ว)
+>
+> **พี่ต้องทำ:** (1) ตั้งค่า Privacy ของ workspace OpenCode เป็น **Global regions** ถ้าต้องการใช้โมเดลตระกูล DeepSeek บน Go
+> (2) **ปิดเปิดแอป opencode** เพื่อให้ agent ใหม่และ config มีผล
+>
+> **งานเปิดค้าง:** T-034b เหลือ slice 2b (แก้วาระจากหน้าเว็บ) · T-032 รอพี่ตอบ 4 ข้อ · housekeeping: T-034a เป็น DONE แล้วยังอยู่บนบอร์ด
+> (ควรย้ายเข้า `docs/archive/TASKS_DONE_ARCHIVE.md`) · เครดิต OpenRouter ≈ $1.19 (งานเสียเงินให้ใช้ Go/ฟรีแทน)
+
 > ## ▶ เริ่มที่แชทใหม่ — สถานะล่าสุด 2026-09-26 (ยึดบล็อกนี้; ทุกอย่างด้านล่างเป็นประวัติก่อนวันนี้)
 >
 > **บอร์ด:** T-030 = **DONE** (พี่เชษอนุมัติ 2026-09-26) · T-032 = READY รอ INTAKE · T-031 = DROPPED (record รอ move เข้า `TASKS_PARKED.md`)
