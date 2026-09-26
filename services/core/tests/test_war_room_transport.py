@@ -729,9 +729,9 @@ async def test_room_create_seeds_room_with_stubbed_helper(monkeypatch) -> None:
         received["title"] = title
         return (TENANT_ID, APPLICATION_ID, UUID(int=1))
 
-    import scripts.seed_war_room_preview as seed_module
+    from app.war_room import transport
 
-    monkeypatch.setattr(seed_module, "seed", _fake_seed)
+    monkeypatch.setattr(transport, "_room_seed_helper", lambda: _fake_seed)
 
     app = FastAPI()
     app.include_router(
@@ -828,8 +828,8 @@ async def test_room_create_seed_value_error_returns_409_and_operational_error_50
     def _fake_seed_bad(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
         raise ValueError("seed guard triggered")
 
-    import scripts.seed_war_room_preview as seed_module
-    monkeypatch.setattr(seed_module, "seed", _fake_seed_bad)
+    from app.war_room import transport
+    monkeypatch.setattr(transport, "_room_seed_helper", lambda: _fake_seed_bad)
 
     app = FastAPI()
     app.include_router(
@@ -854,7 +854,7 @@ async def test_room_create_seed_value_error_returns_409_and_operational_error_50
         import psycopg
         raise psycopg.OperationalError("database connection failed")
 
-    monkeypatch.setattr(seed_module, "seed", _fake_seed_db_down)
+    monkeypatch.setattr(transport, "_room_seed_helper", lambda: _fake_seed_db_down)
 
     app2 = FastAPI()
     app2.include_router(
@@ -890,8 +890,7 @@ async def test_room_create_rate_limit_allows_first_ten_then_blocks_11th(monkeypa
         seed_called.append(True)
         return (TENANT_ID, APPLICATION_ID, UUID(int=1))
 
-    import scripts.seed_war_room_preview as seed_module
-    monkeypatch.setattr(seed_module, "seed", _fake_seed)
+    monkeypatch.setattr(transport, "_room_seed_helper", lambda: _fake_seed)
 
     app = FastAPI()
     app.include_router(
@@ -953,8 +952,7 @@ async def test_room_create_rate_limit_resets_after_window(monkeypatch) -> None:
             seed_called.append(True)
             return (TENANT_ID, APPLICATION_ID, UUID(int=1))
 
-        import scripts.seed_war_room_preview as seed_module
-        monkeypatch.setattr(seed_module, "seed", _fake_seed)
+        monkeypatch.setattr(transport, "_room_seed_helper", lambda: _fake_seed)
 
         seed_called.clear()
         # Directly patch the attempts back to simulate cleared state after time passes

@@ -70,6 +70,11 @@ from .service import (
 from .state_machine import InvalidRoomTransition
 
 
+def _room_seed_helper():
+    from scripts.seed_war_room_preview import seed
+    return seed
+
+
 _ASSET_ROOT = Path(__file__).resolve().parents[3] / "control-plane-web" / "war-room"
 
 # In-process rate limit for the single-instance preview; resets on restart.
@@ -1068,16 +1073,21 @@ def create_war_room_preview_router(
             )
         _room_create_attempts.append(now)
 
-        from scripts.seed_war_room_preview import seed
-
         try:
+            seed = _room_seed_helper()
             await asyncio.to_thread(
-                seed,
-                settings=settings,
-                admin_dsn=settings.database_url,
-                room_id=new_room_id,
-                title=title,
+                lambda: seed(
+                    settings=settings,
+                    admin_dsn=settings.database_url,
+                    room_id=new_room_id,
+                    title=title,
+                ),
             )
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="war_room_preview_room_create_not_configured",
+            ) from exc
         except (ValueError, RuntimeError) as exc:
             raise HTTPException(
                 status_code=409,
