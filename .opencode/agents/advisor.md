@@ -1,7 +1,7 @@
 ---
 description: ที่ปรึกษาวางแผน (dev-time) — ล่ามเจตนาของพี่เชษ แปลงคำสั่งภาษาคนเป็นงาน AI ที่รัดกุม สั่งลงมาที่ Project Lead กำกับผล และอนุมัติ/commit แทนพี่เมื่อพี่ไม่อยู่; แก้ไฟล์เองไม่ได้ และสั่งงานนอกระเบียบไม่ได้
 mode: primary
-model: opencode-go/mimo-v2.6-pro
+model: opencode/mimo-v2.6-flash-free
 permission:
   edit: deny
   task: allow

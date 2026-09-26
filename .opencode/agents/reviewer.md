@@ -1,7 +1,7 @@
 ﻿---
 description: Reviewer / Auditor (dev-time) ตรวจงานโดยคนละโมเดล หาบั๊ก regression และการอ้างเกินจริง ตามการ์ดงาน โดยไม่แก้ไฟล์
 mode: subagent
-model: opencode-go/space-bunny-free
+model: openrouter/nvidia/nemotron-3.5-lightning:free
 permission:
   edit: deny
   task: deny

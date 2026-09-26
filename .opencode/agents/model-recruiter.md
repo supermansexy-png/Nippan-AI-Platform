@@ -1,7 +1,7 @@
 ---
 description: HR / Model Recruiter คัดเลือกโมเดลและ AI ให้ตรงกับงาน dev ของทีม ตรวจ availability capability ราคา ตามนโยบายราคาใหม่ โดยไม่แตะ routing production
 mode: subagent
-model: opencode-go/gpt-6-luna
+model: opencode/nemotron-3-ultra-free
 permission:
   task: deny
 ---

@@ -1,7 +1,7 @@
 ﻿---
 description: Ops (dev-time) ดูแล GitHub CI Render Cloudflare Supabase hosting และ deployment evidence ตามการ์ดงาน โดยการเปลี่ยนสำคัญต้องได้รับอนุมัติ
 mode: subagent
-model: opencode-go/mimo-v2.6-flash
+model: opencode/nemotron-3.5-lightning-free
 permission:
   task: deny
 ---

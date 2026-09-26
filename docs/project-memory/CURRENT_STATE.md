@@ -16,21 +16,20 @@ error that fails with an opaque `Unexpected server error`. Card T-035.
 
 | Role | Primary | Notes |
 |---|---|---|
-| project-lead | `openrouter/deepseek/deepseek-v4.1-flash` | **T-042 (2026-09-26, Owner order):** the Go variant is still blocked (HTTP 400 "requires Global regions"), so the Owner chose the OpenRouter endpoint of the same model; backup = `opencode-go/mimo-v2.6-pro`. No automatic provider fallback — if the OpenRouter credit empties, the PL stops. |
-| advisor ("ที่ปรึกษาวางแผน") | `opencode-go/mimo-v2.6-pro` | **new role, T-038** — Owner-facing; commands agents, approves/commits when the Owner is away, **cannot edit files** |
-| builder | `opencode-go/glm-5.3-flash` | the 2026-09-25 Owner lock was **lifted** (T-035) |
-| reviewer L1–L3 | `opencode-go/space-bunny-free` | free + zero-retention; L4 = `anthropic/claude-opus-5.5:batch` |
-| security L1–L3 | `openrouter/nex-agi/nex-n2.5-mini:free` | no OpenCode Go equivalent |
-| ops | `opencode-go/mimo-v2.6-flash` | |
-| model-recruiter (HR) | `opencode-go/gpt-6-luna` | instructions rewritten to recruit from the Go pool |
+| project-lead | `opencode/nemotron-3-ultra-free` | **T-042 re-pin 2026-09-26.** Free Zen; Backup `openrouter/deepseek/deepseek-v4.1-flash` (paid, unusable at current credit). Takes effect after Owner restarts opencode. |
+| advisor ("ที่ปรึกษาวางแผน") | `opencode/mimo-v2.6-flash-free` | **CHANGED 2026-09-27 (T-035 free migration):** moved from Go to free Zen. Probe: T-042 confirmed 3× live launches. Former Go pin `opencode-go/mimo-v2.6-pro` → Backup. |
+| builder | `openrouter/poolside/laguna-s-2.1:free` | **CHANGED 2026-09-27 (T-035 free migration):** moved from paid Go to live free OpenRouter. Probe: PROBE OK. Former Go pin `opencode-go/glm-5.3-flash` → Backup. |
+| reviewer L1–L3 | `openrouter/nvidia/nemotron-3.5-lightning:free` | **CHANGED 2026-09-27 (T-035 free migration):** moved from Go to live free OpenRouter. Probe: launches. Former Go pin `opencode-go/space-bunny-free` → Backup (zero-retention Zen). L4 = `anthropic/claude-opus-5.5:batch`. |
+| security L1–L3 | `opencode/space-bunny-free` | **CHANGED 2026-09-27 (T-035 free migration):** moved from dead `nex-agi/*` to free Zen (zero-retention). Former Go pin `opencode-go/kimi-k3` → Backup. Anti-redundancy: ≠ builder, ≠ reviewer. |
+| ops | `opencode/nemotron-3.5-lightning-free` | **CHANGED 2026-09-27 (T-035 free migration):** moved from Go to free Zen. Former Go pin `opencode-go/mimo-v2.6-flash` → Backup. |
+| model-recruiter (HR) | `opencode/nemotron-3-ultra-free` | **CHANGED 2026-09-27 (T-035 free migration):** moved from Go to free Zen. Former Go pin `opencode-go/gpt-6-luna` → Backup (30-day logs, never for secrets). |
 | researcher | `opencode/nemotron-3.5-lightning-free` | unchanged free |
 | assistant | `opencode/nemotron-3-ultra-free` | unchanged free |
 
-`opencode.json`: default model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`.
-Dead models removed from the rules: `opencode/big-pickle`, `opencode/ling-3.0-flash-fin-free`,
-`opencode/mimo-v2.6-flash-free`; `qwen/qwen3.7-flash` remains permanently banned.
+`opencode.json`: default model = `opencode/mimo-v2.6-flash-free`, small_model = `opencode/nemotron-3.5-lightning-free`.
+Dead models removed from the rules: `opencode/big-pickle`, `opencode/ling-3.0-flash-fin-free`; `qwen/qwen3.7-flash` permanently banned. **Note:** `opencode/mimo-v2.6-flash-free` dead-list entry is STALE — T-042 confirmed 3× live probes today.
 
-**Governance.** The `advisor` role, its mandate and its oversight are defined in
+**Governance & Enforcement.** The 4-stage enforcement protocol (Intake Check, Runtime Evidence Delivery Check, Cross-Model Review, and Scorecard Penalties) is strictly enforced by Project Lead and Reviewer to prevent False DONE and ensure runtime verifiability without bloating task cards.
 `docs/warroom/ADVISOR_MANDATE.md` (now protected) and `docs/warroom/ADVISOR_LOG.md` (append-only,
 written by the receiver of an instruction, never by the advisor). `AGENTS.md`,
 `AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md` and `START_PROMPT.md` were updated (cards T-038/T-039).
