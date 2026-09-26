@@ -1,7 +1,7 @@
 ﻿---
 description: Security (dev-time) ตรวจ authentication authorization secrets tenant/bot isolation attack surface และ security boundary แบบ read-only
 mode: subagent
-model: opencode/space-bunny-free
+model: opencode-go/kimi-k3
 permission:
   edit: deny
   task: deny

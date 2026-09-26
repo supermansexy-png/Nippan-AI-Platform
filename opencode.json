@@ -126,7 +126,7 @@
       "model": "opencode/nemotron-3.5-lightning-free"
     },
     "security": {
-      "model": "opencode/space-bunny-free"
+      "model": "opencode-go/kimi-k3"
     },
     "reviewer": {
       "model": "openrouter/nvidia/nemotron-3.5-lightning:free"
