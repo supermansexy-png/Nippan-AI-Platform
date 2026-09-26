@@ -190,6 +190,18 @@ that references the old one.
 - evidence: to be recorded after edits and review
 - notes: written by the receiver, not the advisor. This follows the T-050 (follow-up 2) gate placement and the CORRECTION entry.
 
+### Link test — 2026-09-27 — Advisor→PL connectivity test (repositioned 2026-09-27 by the PL: first written in the middle of the T-055 entry above by mistake; content unchanged, moved here to restore entry order; the T-055 entry is whole again)
+- owner_intent_verbatim: "Test that you can now reach the project-lead agent."
+- order (as understood by the receiver): print the test message and return the current git branch name.
+- receiver: project-lead `opencode/nemotron-3-ultra-free`
+- scope_in: this append-only record; the test output.
+- scope_out: no code/runtime/production/deploy/database/credential change; no commits/pushes; no edits except this record.
+- prohibitions: no commit, no push, no runtime file edits, no other work.
+- auditor: not required (link test, not a card closure)
+- verdict: PASS — advisor issued the order, PL received + executed + returned the branch name (`dev-workspace`); record written by the receiver per mandate
+- evidence: this log entry; live round-trip observed 2026-09-27 after opencode restart
+- notes: written by the receiver, not the advisor.
+
 ### T-051 finding 2 — 2026-09-26 — Owner picked option 2, participants-only seed
 - owner_intent_verbatim: 2
 - order as understood by the receiver: implement option 2 of the T-051 finding-2 write-up — a new room created through `POST /war-room/rooms` keeps the 8 participants (so meetings run and `ASK_ALL` works) but gets **no** seeded agenda item, **no** finding and **no** decision; the owner starts with an empty agenda. The same seed helper is shared with the bootstrap preview room, so scope the change so the preview bootstrap keeps its full fixtures exactly as before. Minimal diff, written by builder/worker (not the PL). Prove with tests and a local throwaway DB: a freshly created room has 8 participants / 0 agenda / 0 findings / 0 decisions, and the preview bootstrap still seeds its full fixtures; run the `services/core` suite and state exact counts. Verify on the local throwaway stack (create one room, check DB rows, delete the throwaway DB). A reviewer on a different model checks the diff and test evidence before it is reported done. Security re-review only if the diff touches auth/actor/tenant. Append this record as the receiver; run a mandate audit A1–A5; expect spend 0 (free models only).

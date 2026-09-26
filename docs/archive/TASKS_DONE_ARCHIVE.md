@@ -395,8 +395,6 @@ Next: Any future task card marked DONE should be similarly archived per this pat
 
 ---
 
----
-
 ### T-018 — Cost reduction: shrink always-read preamble + enforce short reports (item 2)
 Status: DONE (L1 self-check by Project Lead — independent reviewer deferred, would cost tokens)
 Owner: Project Lead (deepseek-v4.1-flash) — 2026-09-25
@@ -1641,3 +1639,91 @@ REVIEW T-049 — `opencode-go/space-bunny-free` (different model from the author
 - Items 1–6: 2/4/6 PASS · 1 PASS-with-findings · 3 PASS · 5 PASS; the blocker claim (item 6 blocks Step 1's handoff-to-owner/outage fallback) checked against `STARTUP_PLAYBOOK.md:25,31` = honest; process PASS (card+INTAKE preceded FINDINGS; `ADVISOR_LOG.md:102–112` present; `git status` shows no `services/**`/`migrations/**`/`tests/**` change, no DB write, no restore, no deploy).
 - Findings actioned on this card: (a) the item-1 "n8n→PG proven" citation was wrong (`CURRENT_STATE.md:107` actually says the proof is still open) → re-pointed to T-030 + `docs/n8n/T-030-execution-evidence.md:24`, with the stale line noted; (b) the silent-skip line range corrected from `73–80` to `117–119` (docstring `16–18` stands).
 - Reviewer could not verify: that no process is actually running (files/git only); and whether the real Supabase has platform-managed backups (not observable from the repo — reported as UNKNOWN).
+
+---
+
+### T-048 — Read-only inventory of all pending work (Owner-facing; nothing started)
+
+Status: DONE (archived 2026-09-27 — all done-whens met + reviewer ACCEPT-WITH-FINDINGS; the board header said IN_PROGRESS, corrected at archive time, body preserved verbatim).
+Owner: Project Lead — 2026-09-26 (Owner intent: "ไปคุยกับ pl สิ รายละเอียดงานทั้งหมดที่รอทำอยู่มีอะไรบ้างเอามาดูแล้วพี่จะสั่งงาน")
+Role: Project Lead (compile + verify) + reviewer `opencode-go/space-bunny-free` (different model)
+Risk: L1 — read-only documentation; no code/runtime/production/database/credential change, no spend, no execution of any listed item.
+Goal: one plain-Thai inventory of every pending item, separating the customer-product launch path from internal tooling/governance, each with goal / status / blocker / dependency / source.
+Done when:
+- [x] the inventory card exists; the receiver's advisor instruction record is appended to `ADVISOR_LOG.md`
+- [x] every remaining open card is covered, plus documented customer-launch prerequisites without cards
+- [x] customer-product launch separated from internal tooling; the War Room classified as internal
+- [x] statuses from current evidence only; RUNNING claimed only with live process evidence; no percentages
+- [x] reviewer `opencode-go/space-bunny-free` verifies coverage + status accuracy → **ACCEPT-WITH-FINDINGS** (A coverage PASS · B status PASS-with-findings · C nothing-started PASS)
+Budget: read-only; free model only — no paid spend.
+Links: `TASKS.md`, `docs/warroom/STARTUP_PLAYBOOK.md`, `docs/warroom/ADVISOR_LOG.md`
+
+INTAKE T-048 — 2026-09-26 (Project Lead) — ACCEPT (Owner approved). Read-only inventory; creates only this card plus the ADVISOR_LOG record; starts no listed work.
+
+**INVENTORY (Owner-facing; no task IDs; compiled 2026-09-26 from current repo evidence; statuses: READY / IN_PROGRESS / BLOCKED / NEEDS_OWNER_DECISION / CODE-COMPLETE-NOT-DEPLOYED. No item is RUNNING — no live-process evidence exists for any of them.)**
+
+*A. Customer-product launch path (`docs/warroom/STARTUP_PLAYBOOK.md` Steps 0–3)* — **no cards exist for any of these**; the whole customer-facing path is uncarded.
+
+- Market-test foundation (self-hosted n8n + PostgreSQL, HTTPS, daily backups; owner alert channel). Status: **UNKNOWN/partly done** — the hosting card is recorded CLOSED and the lite-schema and tools cards are DONE, but the playbook's Step 0 checklist still shows self-hosted n8n+PostgreSQL and the owner alert channel unchecked, and no current card tracks them. Blocker/Owner decision: confirm what actually exists before building on it. Source: playbook Step 0; `docs/archive/TASKS_PARKED.md`.
+- One bot end to end on LINE (LINE channel, bot core, memory, handoff-to-owner, outage fallback, web-fetch, file-reader, onboarding, auditor test). Status: not started; no card. Blocker: the foundation above. Source: playbook Step 1.
+- Tenant #1 live and watched (onboard with the Owner, measure real cost per reply, confirm quota, daily monitoring read). Status: not started; no card. Blocker: the LINE bot. Source: playbook Step 2.
+- Tenants #2–10 + storefront + web-chat channel + a second bot type + summary/retention jobs + weekly review. Status: not started; no card. Blocker: tenant #1. Source: playbook Step 3.
+- Pre-runtime hardening before real customers (data / isolation): the real-tenant RLS residual (superuser / `SECURITY DEFINER`), Supabase backup-and-restore, and the still-unverified retention behaviour of the PL model provider. Status: recorded as residuals; no card. Blocker: needed at the dev→runtime switch. Source: card residuals; `docs/data/LITE_SCHEMA_V1.md`; `docs/product/MODEL_POLICY.md`.
+- Customer PDPA / onboarding gates — **no card; required before onboarding real customers.** Status: documented requirements, nothing built or confirmed; completion **UNKNOWN**. (a) an end-customer consent/privacy notice shown automatically on the first message; (b) a tenant agreement stating plainly that the tenant is the data controller and Nippan is the processor, reviewed by a lawyer; (c) an actionable end-customer data-deletion path against the tenant-scoped tables; (d) the exact retention period confirmed with a legal/PDPA advisor before launch (the doc gives only a default, not a confirmed figure). Source: `docs/security/PDPA_COMPLIANCE.md` Layers 1–2; `docs/product/ONBOARDING_FLOW.md`; `docs/product/BUSINESS_OPERATIONS.md` §3.
+- Pricing / operational launch decisions — **no card; needed for real onboarding.** Status: documented as decisions to confirm, completion **UNKNOWN**. (a) the starting reply quota (600/month) is explicitly a starting value to confirm/adjust after the first real tenants; (b) onboarding must tell the owner plainly that chat replies are unlimited and reminders are capped (200/month per bot); (c) the manual payment / cancellation process (bank transfer / PromptPay, cancel anytime, 7-day refund, 30-day data retention, a bot paused not deleted 7 days late); (d) re-check LINE's current terms before launch; (e) a lawyer reviews the tenant-agreement wording. Source: `docs/product/PRICING_V1.md`; `docs/product/BUSINESS_OPERATIONS.md` §2/§3/§4/§5; `STARTUP_PLAYBOOK.md` Step 2.
+
+*B. Internal tooling / governance (all eight remaining open cards are here; the War Room is internal dev-time tooling, not a customer-launch prerequisite)*
+
+- Git work channel (issues → branches → draft PRs → CI → review → merge). Status: **READY**, blocked on Owner decisions. What: dispatch work to the external assistant without a chat relay. Blocker/Owner decision: whether to protect the working branch, four external-side settings, and the two pilots. Source: board card.
+- War Room — manage a meeting's agenda from the room page. Status: **CODE-COMPLETE-NOT-DEPLOYED**; acceptance/trial pending. What: create/edit/close agenda items in-room, owner-only and fail-closed. Blocker: a deploy decision and the acceptance run; one rate-limit hardening waits for verification. Source: board card; `services/core/app/war_room/`.
+- War Room — used as the team's real meeting room. Status: **pilot already run**; remaining Owner decisions. What: plan/assign/report/debate with durable artifacts. Blocker/Owner decision: a fresh room per meeting, and who joins / who pays. Source: board card; `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md`.
+- War Room internal residuals (**internal tooling — NOT a customer-launch gate**): an agenda-write rate limit (the card notes it as required before production), the `updated_at` refresh note, and the “durable record” architecture option. Status: recorded as residuals on the War Room cards; no standalone card. Source: War Room card residuals; `services/core/app/war_room/`.
+- Dev-team re-staffing on OpenCode Go. Status: **IN_PROGRESS**; roster/config mapping is in the tree but the card's remaining steps are not shown complete. Blocker: the outstanding recruiting/decision items and per-role end-to-end evidence. Source: board card; `docs/product/MODEL_ROSTER.md`.
+- Advisor mandate + rule repair. Status: **IN_PROGRESS**. Confirmed remaining item: the card's own close-out box (`CURRENT_STATE.md` refresh + board housekeeping). The card's conflict-scan also lists three stale-rule findings (#3–#5: project-lead prompt naming the advisor/Go provider, the working guide's free-only wording, and the fallback guide's dead-model list). **UNKNOWN which side is authoritative:** the card text says those are OPEN, but a reviewer re-check says the prompt and working guide already reflect the new team/provider and the fallback guide marks its dead-model list as historical — two review runs disagreed, so confirm with a one-line check before closing. Source: board card; `project-lead.md`, `DEV_WORKING_GUIDE.md`, `FREE_MODEL_FALLBACK_GUIDE.md`.
+- Advisor→Project-Lead channel. Status: changes done and reviewed; **live test pending**. Blocker/Owner decision: restart opencode, then one real round-trip. Source: board card.
+- Project-Lead model switch. Status: changes done and reviewed; **restart check pending**. Blocker/Owner decision: restart to confirm; and a money decision — no provider fallback exists, so if the OpenRouter credit empties the PL stops. Source: board card; `docs/product/MODEL_ROSTER.md`.
+- Free writer for the PL's config edits. Status: implemented and reviewed; **close-out boxes not ticked**. What: the PL never writes runtime files itself and never needs a paid builder for a config edit. Blocker: none technical. Source: board card; `.opencode/agents/assistant.md`.
+
+*Owner actions / decisions with no card:* (a) set the workspace Privacy to "Global regions" if DeepSeek models are to run on OpenCode Go; (b) the OpenRouter credit level / whether to add a provider fallback; (c) the one large audit at project close (before real use) — planned, not started.
+
+**Internal coverage map (for the reviewer only — not for the Owner-facing report):** Git channel → T-032 · War Room room-in-use → T-033 · War Room create/agenda → T-034b · Go re-staffing → T-035 · advisor mandate → T-038 · advisor→PL → T-041 · PL model → T-042 · free writer → T-044. Board: **8 pre-existing open cards** (9 including this card T-048), cap 10 (card T-044 sits under the REVIEW heading but its status is IN_PROGRESS).
+
+**Known board drift (recorded, not hidden):** the headers of the archived cards were stale (T-034a/T-039/T-043 showed READY/IN_PROGRESS though their done-when and evidence were complete), and two remaining cards have stale headers — T-034b still says "BLOCKED behind T-034a" although T-034a is now archived DONE, and T-033 still says "READY for INTAKE" although its pilot result is recorded. The evidence confirming the archived cards is in the working tree (not yet committed), so their DONE state is verified from the files, not from git history.
+
+REVIEW — T-048 — `opencode-go/space-bunny-free` (different model from the author) — 2026-09-26 — **ACCEPT-WITH-FINDINGS** (2 runs)
+- Run 1 — `runs/2026-09-26T14-58-09Z-t048-inventory-review`: A coverage PASS · B status PASS-with-findings · C nothing-started PASS.
+- Run 2 after the revision — `runs/2026-09-26T15-04-25Z-t048-inventory-rereview`: A coverage PASS (8 open cards + playbook Steps 0–3 + the newly added PDPA/onboarding and pricing/ops gates verified against source) · B status PASS-with-findings · C nothing-started PASS.
+- Findings actioned on this card: (a) the omitted uncarded customer PDPA/onboarding gates were added; (b) the omitted uncarded pricing/operational decisions were added; (c) the War Room residuals were separated out of customer pre-runtime hardening into internal War Room residuals; (d) the advisor-mandate item was corrected — run 1 claimed the rule conflicts were open, run 2 showed the files already name the advisor/Go provider, so the card now records the conflict as **UNKNOWN** with both sides; (e) the LINE-terms citation corrected to `BUSINESS_OPERATIONS.md` §4.
+- Left as-is by design: the internal coverage map contains task IDs but is explicitly marked reviewer-only and is kept out of the Owner-facing report.
+- Reviewer could not verify: that no process is actually running (only files/git were inspected); whether the uncommitted working-tree evidence will survive (nothing is committed); and whether the War Room slice-3 acceptance trial started by a concurrent session is finished (the inventory shows it as not deployed).
+
+---
+
+### T-057 — HR adopts Owner's model-selection framework as standing policy (CORRECTION — the true record)
+
+Status: DONE 2026-09-27 (commit `a2c642e`). NOTE: an earlier session fabricated a "12-item checklist" version of this card (on the board and in this archive); that fabrication was removed 2026-09-27 and is NOT preserved. The truth, verified against `docs/product/MODEL_POLICY.md` lines 252–296:
+Owner: Project Lead (plan/record) + model-recruiter (HR)
+Role: HR (model-recruiter) — dev-time policy adoption
+Risk: L2 — `MODEL_POLICY.md` update (dev-time PL approved on Owner's behalf)
+What was actually written: Owner's Model-Selection Framework — 4 principles (พอดี/ยิงทดสอบจริง/สำรองคนละเจ้า/ใช้ของที่จ่ายแล้ว) + **6-item** pre-pin checklist (no additions allowed) + pin-version rule + 2-day review round + ops usage example + 4-step wallet ladder + 5-row membership table.
+Done when (all VERIFIED): framework in `MODEL_POLICY.md` · `model-recruiter.md` read-first reference · `decision-log.md` CORRECTION entry documenting the PL's 3 false claims (MODEL_POLICY untouched claim, 12-item fabrication, wrong protected-doc claim) · `ADVISOR_LOG.md` CORRECTION ORDER entry (this order + PL fault + advisor's truncated-prompt fault) · `ai-scorecard.md` false-claim entry (project-lead seat −1 ladder step, stage 4→3) · reviewer PASS on all files.
+Links: commit `a2c642e`, `docs/product/MODEL_POLICY.md`, `docs/warroom/decision-log.md`, `docs/warroom/ADVISOR_LOG.md`
+
+---
+
+### T-041 — Advisor cannot reach the Project Lead: repair the agent-mode mismatch
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history).
+Owner: Project Lead — Owner instruction 2026-09-26 ("ที่ปรึกษา คุยกับ pl ไม่ได้ แก้ไขให้หน่อย")
+Fix (both DONE + independently reviewed before close): `.opencode/agents/project-lead.md` `mode: primary` → `mode: all` (builder `opencode-go/glm-5.3-flash`; reviewer `opencode-go/space-bunny-free` ACCEPT-WITH-FINDINGS) · `opencode.json` + `"subagent_depth": 2` (same pair, ACCEPT-WITH-FINDINGS 6/6).
+Live test 2026-09-27 (after Owner restarted opencode): startup agent is still `project-lead` (no fallback to `build` — F1 closed) · advisor's Task tool offers `project-lead` · real round-trip advisor → PL → result returned (`dev-workspace`) · record written by the receiver in `docs/warroom/ADVISOR_LOG.md` ("Link test", verdict PASS). All four done-when live boxes met.
+Carried (not blockers): reviewer minors — `subagent_depth` is global · PL can self-invoke · PL appears in every session's `@` menu.
+
+---
+
+### T-052 — Six-question compliance Q&A (all roles answer, PL verifies)
+
+Status: DONE 2026-09-26 (archived from the board 2026-09-27; full Q&A body preserved in git history).
+Owner: Project Lead — Owner-ordered verbatim six-question order. Read-only (L1): no code/runtime/production/database/deploy/credential change, no spend.
+Result: all six roles answered in format (one letter + evidence note); 34/36 answers VERIFIED against repo evidence. 2 false claims recorded per protocol: ops Q4=A (correct B — GA gate was a team proposal, never Owner-approved) · researcher Q5=1.09 "live dashboard" (figure lifted from ADVISOR_LOG note; latest live read $0.6641). Follow-up penalties applied under T-056 (committed `1ba02be`).
+Reviewer: `opencode-go/space-bunny-free` ACCEPT-WITH-FINDINGS (2 runs).

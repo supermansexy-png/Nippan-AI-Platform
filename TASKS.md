@@ -311,93 +311,7 @@ Budget: dev-time doc work + free/Go-model headless jobs only; no new paid spend.
 Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, `.opencode/agents/advisor.md`,
 `docs/product/MODEL_ROSTER.md`, `docs/warroom/decision-log.md`
 
-### T-041 — Advisor cannot reach the Project Lead: repair the agent-mode mismatch
-
-Status: IN_PROGRESS — Owner approved 2026-09-26; file change done + reviewed; open pending a live test (findings F1/F2)
-Owner: Project Lead (diagnose/plan/verify) — Owner instruction 2026-09-26 in chat ("ที่ปรึกษา คุยกับ pl ไม่ได้ แก้ไขให้หน่อย")
-Role: Project Lead (diagnose, plan, verify) + builder (one-line agent-config edit) + reviewer on a **different model**
-Risk: L1–L2 — dev tooling only (`.opencode/agents/project-lead.md`). No runtime, production, customer or data impact.
-
-Goal: the `advisor` can actually hand a work order to the `project-lead` and read the result, so the chain
-`Owner → advisor → PL → specialist` works in practice instead of existing only on paper.
-
-**Root cause (VERIFIED — repo config + opencode agent docs)**
-- `.opencode/agents/advisor.md` and `.opencode/agents/project-lead.md` are both `mode: primary`.
-- opencode's Task tool invokes **subagents only** (`mode: subagent`); primary→primary is not a channel.
-- So `permission: task: allow` on the advisor buys nothing toward the PL — the PL never appears in the Task
-  tool's list. Confirmed live in-session: the PL's own Task tool lists exactly the 7 `mode: subagent` agents
-  (assistant, builder, model-recruiter, ops, researcher, reviewer, security) and **not** project-lead/advisor.
-- Consequence: `ADVISOR_MANDATE.md` §2 ("may command any dev agent (`task` allowed), including PL") is
-  currently **unachievable**. The mandate is real; the mechanism was never wired.
-
-**Fix — smallest correct change**
-- `.opencode/agents/project-lead.md`: `mode: primary` → `mode: all`. Per opencode docs `all` means the agent
-  works as a primary you can Tab into **and** as a subagent the advisor can Task; `all` is also opencode's
-  default mode, so risk is low. Blast radius is already contained: every other subagent carries `task: deny`,
-  so only the advisor (and the PL itself) would be able to call the PL.
-
-Done when:
-- [x] `mode: all` set on `.opencode/agents/project-lead.md` (builder; one line) → `git diff` = one-line pair, PL-verified
-- [x] a reviewer on a different model confirms the edit and that no other agent file changed → `opencode-go/space-bunny-free`: ACCEPT-WITH-FINDINGS
-- [x] **F2: `subagent_depth: 2` added to `opencode.json`** (Owner approved 2026-09-26) → one-line diff; `node` parse prints `2 project-lead 9`; PL-verified
-- [ ] Owner restarts opencode; live test: the advisor's Task tool now offers `project-lead` **and startup does not fall back to `build`** (F1)
-- [ ] live round-trip: advisor issues one real work order → PL receives it → the result returns to the advisor
-- [ ] PL-as-subagent retains its own permissions (can write dev-process docs) and can still delegate to specialists
-- [ ] `ADVISOR_MANDATE.md` §2 re-checked against reality — touch it only if the live test disagrees
-
-Evidence to capture: the agent-file diff · the reviewer's verdict · the live test result.
-
-Team (pins already live-verified under T-035; no fresh HR probe proposed for a one-line change):
-builder `opencode-go/glm-5.3-flash` (paid — this is why Owner approval is required) · reviewer `opencode-go/space-bunny-free` (model ≠ author's).
-
-Workaround until the fix lands (needs no config change): the Owner relays — the advisor writes the work order
-and the Owner pastes it into the PL chat, or Tabs to the PL agent.
-
-Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
-Links: `.opencode/agents/project-lead.md`, `.opencode/agents/advisor.md`, `docs/warroom/ADVISOR_MANDATE.md` §2, `docs/product/MODEL_ROSTER.md`
-
-INTAKE T-041 — 2026-09-26 (Project Lead) — **ACCEPT** (Owner approved in chat 2026-09-26).
-Scope: one line in `.opencode/agents/project-lead.md` + a reviewer on a different model + a live test. Nothing else.
-Plan: builder edits → reviewer checks → Owner restarts opencode → live round-trip advisor → PL. Builder is paid (Go); Owner approved.
-Risk: dev tooling only. The one thing to watch is `default_agent` (finding F1 below).
-
-BUILDER DELIVERY — T-041 — `opencode-go/glm-5.3-flash` — 2026-09-26
-Changed: `.opencode/agents/project-lead.md` line 3, `mode: primary` → `mode: all`. One line, nothing else touched; no commit, no push.
-Evidence: `git diff .opencode/agents/project-lead.md` = a single `-mode: primary` / `+mode: all` pair.
-PL VERIFIED independently: the diff is exactly one line, and `git status --short` lists only that file plus this card.
-Not done by the builder (outside the scope lock): live test, review, round-trip.
-
-REVIEWER — T-041 — `opencode-go/space-bunny-free` (model ≠ author's `opencode-go/glm-5.3-flash`) — 2026-09-26
-VERDICT: **ACCEPT-WITH-FINDINGS.** Checks 1–3 VERIFIED: the edit is correct and minimal, the rest of the
-frontmatter is intact, and after the change **only `advisor`** can invoke `project-lead` (every other agent
-carries `task: deny`). `ADVISOR_MANDATE.md` §2 becomes achievable in principle; no permission leak via this path.
-
-Findings — **both CONFIRMED by the PL against the official opencode docs** (`opencode.ai/docs/config/`):
-- **F1 — `default_agent` with `mode: all` (should-fix; a blocker if it bites).** `opencode.json` sets
-  `default_agent: "project-lead"`. Docs: the default agent "must be a primary agent (not a subagent)" and
-  otherwise opencode "will fall back to `build` with a warning". Whether `mode: all` passes that check is
-  **UNKNOWN** — only a restart can prove it. If it falls back, the Owner silently gets `build` (full edit +
-  bash), which is **less safe**. Test item: on restart the agent must still be `project-lead`, no fallback warning.
-- **F2 — `subagent_depth` default is 1 (blocker for the chain).** Docs: default `1` "allows primary agents to
-  launch subagents but prevents those subagents from launching additional subagents"; `2` allows one more level.
-  So with only the `mode: all` change, advisor → PL works, but **PL-as-subagent cannot launch builder/reviewer** —
-  the chain still breaks at the second hop, which is precisely what the mandate requires.
-  **Proposed second change (awaiting Owner approval):** add `"subagent_depth": 2` to `opencode.json`.
-  Blast radius stays small: every specialist carries `task: deny`, so only advisor and PL can nest at all.
-- Minor: `project-lead` now appears in every session's `@` menu, and it can invoke itself. No evidence either causes harm.
-
-F2 CHANGE — T-041 — builder `opencode-go/glm-5.3-flash` + reviewer `opencode-go/space-bunny-free` — 2026-09-26
-Changed: `opencode.json` gains ONE top-level line, `"subagent_depth": 2,` (right after `default_agent`). Nothing else.
-Evidence: `git diff opencode.json` = `@@ -3,6 +3,7 @@` with a single added line; `node -e "JSON.parse(...)"` prints
-`2 project-lead 9`; `git status --short` = only `opencode.json` + `.opencode/agents/project-lead.md` + `TASKS.md`. PL verified independently.
-Reviewer verdict: **ACCEPT-WITH-FINDINGS**, 6/6 checks PASS — key name, top-level placement and the value `2` all match the
-official docs; the JSON is valid; and the blast radius stays limited to `advisor` + `project-lead` (every other agent carries `task: deny`).
-Reviewer minors (deferred, not fixes for this card): `subagent_depth` is global, so if F1 ever falls back to `build`, `build` would
-also nest two deep · the PL can self-invoke with no guard yet · F1 still cannot be proven without a real restart.
-
-Card state: **both file changes are DONE and independently reviewed.** The card stays **open** until the Owner restarts and the
-live test passes: (1) the startup agent is still `project-lead` — no silent fallback to `build` (F1); (2) the advisor's Task tool
-lists `project-lead`; (3) a real work order round-trips advisor → PL → builder.
+---
 
 ### T-042 — Project Lead model: switch to `openrouter/deepseek/deepseek-v4.1-flash` (Owner order)
 
@@ -475,61 +389,6 @@ Evidence to capture: the two diffs · the `node` JSON parse output · the review
 Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
 Links: `.opencode/agents/project-lead.md`, `opencode.json`, `docs/product/MODEL_ROSTER.md`, card T-041
 **Sequencing note:** T-041 and T-042 both touch `.opencode/agents/project-lead.md` → they are run **sequentially, never concurrently**.
-
-### T-048 — Read-only inventory of all pending work (Owner-facing; nothing started)
-
-Status: IN_PROGRESS — Owner-approved 2026-09-26 ("อนุมัติ").
-Owner: Project Lead — 2026-09-26 (Owner intent: "ไปคุยกับ pl สิ รายละเอียดงานทั้งหมดที่รอทำอยู่มีอะไรบ้างเอามาดูแล้วพี่จะสั่งงาน")
-Role: Project Lead (compile + verify) + reviewer `opencode-go/space-bunny-free` (different model)
-Risk: L1 — read-only documentation; no code/runtime/production/database/credential change, no spend, no execution of any listed item.
-Goal: one plain-Thai inventory of every pending item, separating the customer-product launch path from internal tooling/governance, each with goal / status / blocker / dependency / source.
-Done when:
-- [x] the inventory card exists; the receiver's advisor instruction record is appended to `ADVISOR_LOG.md`
-- [x] every remaining open card is covered, plus documented customer-launch prerequisites without cards
-- [x] customer-product launch separated from internal tooling; the War Room classified as internal
-- [x] statuses from current evidence only; RUNNING claimed only with live process evidence; no percentages
-- [x] reviewer `opencode-go/space-bunny-free` verifies coverage + status accuracy → **ACCEPT-WITH-FINDINGS** (A coverage PASS · B status PASS-with-findings · C nothing-started PASS)
-Budget: read-only; free model only — no paid spend.
-Links: `TASKS.md`, `docs/warroom/STARTUP_PLAYBOOK.md`, `docs/warroom/ADVISOR_LOG.md`
-
-INTAKE T-048 — 2026-09-26 (Project Lead) — ACCEPT (Owner approved). Read-only inventory; creates only this card plus the ADVISOR_LOG record; starts no listed work.
-
-**INVENTORY (Owner-facing; no task IDs; compiled 2026-09-26 from current repo evidence; statuses: READY / IN_PROGRESS / BLOCKED / NEEDS_OWNER_DECISION / CODE-COMPLETE-NOT-DEPLOYED. No item is RUNNING — no live-process evidence exists for any of them.)**
-
-*A. Customer-product launch path (`docs/warroom/STARTUP_PLAYBOOK.md` Steps 0–3)* — **no cards exist for any of these**; the whole customer-facing path is uncarded.
-
-- Market-test foundation (self-hosted n8n + PostgreSQL, HTTPS, daily backups; owner alert channel). Status: **UNKNOWN/partly done** — the hosting card is recorded CLOSED and the lite-schema and tools cards are DONE, but the playbook's Step 0 checklist still shows self-hosted n8n+PostgreSQL and the owner alert channel unchecked, and no current card tracks them. Blocker/Owner decision: confirm what actually exists before building on it. Source: playbook Step 0; `docs/archive/TASKS_PARKED.md`.
-- One bot end to end on LINE (LINE channel, bot core, memory, handoff-to-owner, outage fallback, web-fetch, file-reader, onboarding, auditor test). Status: not started; no card. Blocker: the foundation above. Source: playbook Step 1.
-- Tenant #1 live and watched (onboard with the Owner, measure real cost per reply, confirm quota, daily monitoring read). Status: not started; no card. Blocker: the LINE bot. Source: playbook Step 2.
-- Tenants #2–10 + storefront + web-chat channel + a second bot type + summary/retention jobs + weekly review. Status: not started; no card. Blocker: tenant #1. Source: playbook Step 3.
-- Pre-runtime hardening before real customers (data / isolation): the real-tenant RLS residual (superuser / `SECURITY DEFINER`), Supabase backup-and-restore, and the still-unverified retention behaviour of the PL model provider. Status: recorded as residuals; no card. Blocker: needed at the dev→runtime switch. Source: card residuals; `docs/data/LITE_SCHEMA_V1.md`; `docs/product/MODEL_POLICY.md`.
-- Customer PDPA / onboarding gates — **no card; required before onboarding real customers.** Status: documented requirements, nothing built or confirmed; completion **UNKNOWN**. (a) an end-customer consent/privacy notice shown automatically on the first message; (b) a tenant agreement stating plainly that the tenant is the data controller and Nippan is the processor, reviewed by a lawyer; (c) an actionable end-customer data-deletion path against the tenant-scoped tables; (d) the exact retention period confirmed with a legal/PDPA advisor before launch (the doc gives only a default, not a confirmed figure). Source: `docs/security/PDPA_COMPLIANCE.md` Layers 1–2; `docs/product/ONBOARDING_FLOW.md`; `docs/product/BUSINESS_OPERATIONS.md` §3.
-- Pricing / operational launch decisions — **no card; needed for real onboarding.** Status: documented as decisions to confirm, completion **UNKNOWN**. (a) the starting reply quota (600/month) is explicitly a starting value to confirm/adjust after the first real tenants; (b) onboarding must tell the owner plainly that chat replies are unlimited and reminders are capped (200/month per bot); (c) the manual payment / cancellation process (bank transfer / PromptPay, cancel anytime, 7-day refund, 30-day data retention, a bot paused not deleted 7 days late); (d) re-check LINE's current terms before launch; (e) a lawyer reviews the tenant-agreement wording. Source: `docs/product/PRICING_V1.md`; `docs/product/BUSINESS_OPERATIONS.md` §2/§3/§4/§5; `STARTUP_PLAYBOOK.md` Step 2.
-
-*B. Internal tooling / governance (all eight remaining open cards are here; the War Room is internal dev-time tooling, not a customer-launch prerequisite)*
-
-- Git work channel (issues → branches → draft PRs → CI → review → merge). Status: **READY**, blocked on Owner decisions. What: dispatch work to the external assistant without a chat relay. Blocker/Owner decision: whether to protect the working branch, four external-side settings, and the two pilots. Source: board card.
-- War Room — manage a meeting's agenda from the room page. Status: **CODE-COMPLETE-NOT-DEPLOYED**; acceptance/trial pending. What: create/edit/close agenda items in-room, owner-only and fail-closed. Blocker: a deploy decision and the acceptance run; one rate-limit hardening waits for verification. Source: board card; `services/core/app/war_room/`.
-- War Room — used as the team's real meeting room. Status: **pilot already run**; remaining Owner decisions. What: plan/assign/report/debate with durable artifacts. Blocker/Owner decision: a fresh room per meeting, and who joins / who pays. Source: board card; `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md`.
-- War Room internal residuals (**internal tooling — NOT a customer-launch gate**): an agenda-write rate limit (the card notes it as required before production), the `updated_at` refresh note, and the “durable record” architecture option. Status: recorded as residuals on the War Room cards; no standalone card. Source: War Room card residuals; `services/core/app/war_room/`.
-- Dev-team re-staffing on OpenCode Go. Status: **IN_PROGRESS**; roster/config mapping is in the tree but the card's remaining steps are not shown complete. Blocker: the outstanding recruiting/decision items and per-role end-to-end evidence. Source: board card; `docs/product/MODEL_ROSTER.md`.
-- Advisor mandate + rule repair. Status: **IN_PROGRESS**. Confirmed remaining item: the card's own close-out box (`CURRENT_STATE.md` refresh + board housekeeping). The card's conflict-scan also lists three stale-rule findings (#3–#5: project-lead prompt naming the advisor/Go provider, the working guide's free-only wording, and the fallback guide's dead-model list). **UNKNOWN which side is authoritative:** the card text says those are OPEN, but a reviewer re-check says the prompt and working guide already reflect the new team/provider and the fallback guide marks its dead-model list as historical — two review runs disagreed, so confirm with a one-line check before closing. Source: board card; `project-lead.md`, `DEV_WORKING_GUIDE.md`, `FREE_MODEL_FALLBACK_GUIDE.md`.
-- Advisor→Project-Lead channel. Status: changes done and reviewed; **live test pending**. Blocker/Owner decision: restart opencode, then one real round-trip. Source: board card.
-- Project-Lead model switch. Status: changes done and reviewed; **restart check pending**. Blocker/Owner decision: restart to confirm; and a money decision — no provider fallback exists, so if the OpenRouter credit empties the PL stops. Source: board card; `docs/product/MODEL_ROSTER.md`.
-- Free writer for the PL's config edits. Status: implemented and reviewed; **close-out boxes not ticked**. What: the PL never writes runtime files itself and never needs a paid builder for a config edit. Blocker: none technical. Source: board card; `.opencode/agents/assistant.md`.
-
-*Owner actions / decisions with no card:* (a) set the workspace Privacy to "Global regions" if DeepSeek models are to run on OpenCode Go; (b) the OpenRouter credit level / whether to add a provider fallback; (c) the one large audit at project close (before real use) — planned, not started.
-
-**Internal coverage map (for the reviewer only — not for the Owner-facing report):** Git channel → T-032 · War Room room-in-use → T-033 · War Room create/agenda → T-034b · Go re-staffing → T-035 · advisor mandate → T-038 · advisor→PL → T-041 · PL model → T-042 · free writer → T-044. Board: **8 pre-existing open cards** (9 including this card T-048), cap 10 (card T-044 sits under the REVIEW heading but its status is IN_PROGRESS).
-
-**Known board drift (recorded, not hidden):** the headers of the archived cards were stale (T-034a/T-039/T-043 showed READY/IN_PROGRESS though their done-when and evidence were complete), and two remaining cards have stale headers — T-034b still says "BLOCKED behind T-034a" although T-034a is now archived DONE, and T-033 still says "READY for INTAKE" although its pilot result is recorded. The evidence confirming the archived cards is in the working tree (not yet committed), so their DONE state is verified from the files, not from git history.
-
-REVIEW — T-048 — `opencode-go/space-bunny-free` (different model from the author) — 2026-09-26 — **ACCEPT-WITH-FINDINGS** (2 runs)
-- Run 1 — `runs/2026-09-26T14-58-09Z-t048-inventory-review`: A coverage PASS · B status PASS-with-findings · C nothing-started PASS.
-- Run 2 after the revision — `runs/2026-09-26T15-04-25Z-t048-inventory-rereview`: A coverage PASS (8 open cards + playbook Steps 0–3 + the newly added PDPA/onboarding and pricing/ops gates verified against source) · B status PASS-with-findings · C nothing-started PASS.
-- Findings actioned on this card: (a) the omitted uncarded customer PDPA/onboarding gates were added; (b) the omitted uncarded pricing/operational decisions were added; (c) the War Room residuals were separated out of customer pre-runtime hardening into internal War Room residuals; (d) the advisor-mandate item was corrected — run 1 claimed the rule conflicts were open, run 2 showed the files already name the advisor/Go provider, so the card now records the conflict as **UNKNOWN** with both sides; (e) the LINE-terms citation corrected to `BUSINESS_OPERATIONS.md` §4.
-- Left as-is by design: the internal coverage map contains task IDs but is explicitly marked reviewer-only and is kept out of the Owner-facing report.
-- Reviewer could not verify: that no process is actually running (only files/git were inspected); whether the uncommitted working-tree evidence will survive (nothing is committed); and whether the War Room slice-3 acceptance trial started by a concurrent session is finished (the inventory shows it as not deployed).
 
 ### T-050 — Whole-project study: convene an existing-role committee and return a detailed draft roadmap
 
@@ -631,6 +490,123 @@ Assessment vs the T-034b create-room intent: the card's intent is "each meeting 
 3. **Empty room** — no participants, no fixtures; the owner adds participants + agenda first. Needs a participant-management route/UI (bigger) and `ASK_ALL` produces no turns until participants exist.
 
 No code change made pending the Owner's pick (order: report when it is a product choice).
+
+**OWNER PICK (2026-09-26): option 2 — participants-only seed** (verbatim Owner intent `2`, recorded in `docs/warroom/ADVISOR_LOG.md`, "T-051 finding 2"). Advisor work order received by the PL `openrouter/deepseek/deepseek-v4.1-flash`.
+Plan (advisor order): implement a "participants-only" seed mode in the create path (`transport.py room_create` → the shared seed helper in `scripts/seed_war_room_preview.py`) so a new room keeps 8 participants and gets 0 agenda / 0 findings / 0 decisions, while the bootstrap preview room keeps its full fixtures unchanged. Minimal diff; written by builder/worker on `opencode/nemotron-3.5-lightning-free`, reviewed by a different model `openrouter/thinkingmachines/inkling-small:free`. Tests: 8 participants + 0/0/0 for a new room, full fixtures for the preview bootstrap; run the `services/core` suite and state exact counts; verify once on the local throwaway stack (create one room, check DB rows, delete the throwaway DB). Security re-review only if the diff touches auth/actor/tenant. Expected spend 0 (free models only).
+
+### T-053 — Create BUILD_ROLES.md (dev-time roles), INDEX.md row, hold ROLES.md contradiction
+
+Status: READY for INTAKE — Owner-ordered governance doc work
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (plan/record) + assistant writer (free `opencode/nemotron-3-ultra-free`) + reviewer on different free model
+Risk: L2 — creates new dev-process doc; ROLES.md is protected but NOT edited (contradiction held for Owner)
+Goal: create `docs/warroom/BUILD_ROLES.md` with dev-time role table + mapping table placeholder; create `docs/project-memory/INDEX.md` with BUILD_ROLES row; explicitly NOT edit ROLES.md (Owner decision #3 vs work-1 contradiction recorded)
+Done when:
+- [ ] BUILD_ROLES.md created with header (Thai), Table 1 (8 dev-time roles + duties), Table 2 (placeholder NEEDS_OWNER_DECISION for mapping table)
+- [ ] INDEX.md created with row pointing to BUILD_ROLES.md
+- [ ] ROLES.md contradiction documented in the card and reported to Owner (no edit)
+- [ ] reviewer on different free model verifies the new files
+- [ ] one commit for this work only; no push
+Budget: free models only; one assistant write + one free review
+Links: `docs/warroom/ROLES.md`, `docs/project-memory/PROJECT_BRIEF.th.md:99`, `docs/warroom/decision-log.md` (decision #3), Owner order verbatim
+
+INTAKE T-053 — 2026-09-27 (Project Lead) — ACCEPT
+Understanding: Owner wants a separate dev-time roles document (BUILD_ROLES.md) because current ROLES.md describes runtime roles. The mapping table Owner referenced doesn't exist in repo — must insert placeholder. ROLES.md must NOT be edited (Owner decision #3 governs over work-1 text). INDEX.md must be created.
+Scope: three new files (BUILD_ROLES.md, INDEX.md, and the card itself). No ROLES.md edit.
+Needs: assistant writer (free), reviewer (different free model)
+Missing: nothing blocking
+Plan: 1) Write BUILD_ROLES.md with header, Table 1, Table 2 placeholder; 2) Write INDEX.md with BUILD_ROLES row; 3) Free reviewer checks both; 4) Commit only these files; 5) Report contradiction on ROLES.md.
+Estimate: within budget
+Risks: none — dev-process docs only
+Decision: ACCEPT
+
+---
+
+### T-054 — Register PROJECT_BRIEF.th.md in INDEX.md + add to AI_OPERATING_PROTOCOL.md required reading
+
+Status: READY for INTAKE — Owner-ordered; AI_OPERATING_PROTOCOL.md is PROTECTED → L3: own card + reviewer on different model + decision-log entry
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (plan/record) + assistant writer (free) + reviewer on different free model
+Risk: L3 — modifies protected `docs/warroom/AI_OPERATING_PROTOCOL.md` (required reading order)
+Goal: add PROJECT_BRIEF.th.md row to INDEX.md; add PROJECT_BRIEF.th.md as FIRST required reading in AI_OPERATING_PROTOCOL.md session-start list; flag AGENTS.md session-start conflict (reads SESSION_HANDOFF.md first) for Owner
+Done when:
+- [ ] INDEX.md updated with PROJECT_BRIEF.th.md row (per Owner format)
+- [ ] AI_OPERATING_PROTOCOL.md session-start reading list updated: PROJECT_BRIEF.th.md first, then others
+- [ ] AGENTS.md session-start conflict flagged in card and reported to Owner (no AGENTS.md edit)
+- [ ] reviewer on different free model verifies the protected-doc diff
+- [ ] decision-log.md entry written for this L3 change
+- [ ] one commit for this work only; no push
+Budget: free models only; one assistant write + one free review + decision-log entry
+Links: `docs/project-memory/PROJECT_BRIEF.th.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`, `AGENTS.md`, `docs/warroom/TASK_CONTROL.md` §8, `docs/warroom/decision-log.md`
+Owner note: AI_OPERATING_PROTOCOL.md is PROTECTED — L3 process mandatory; AGENTS.md NOT edited
+
+INTAKE T-054 — 2026-09-27 (Project Lead) — ACCEPT
+Understanding: PROJECT_BRIEF.th.md exists untracked. Must be indexed and made first required reading. AI_OPERATING_PROTOCOL.md change is L3 protected. AGENTS.md conflict recorded but not edited.
+Scope: INDEX.md update, AI_OPERATING_PROTOCOL.md edit (L3), decision-log.md entry. No AGENTS.md edit.
+Needs: assistant writer, free reviewer (different model), decision-log entry
+Missing: nothing blocking
+Plan: 1) Update INDEX.md; 2) Edit AI_OPERATING_PROTOCOL.md session-start list; 3) Free reviewer verifies diff; 4) Write decision-log.md entry; 5) Commit only these files; 6) Report AGENTS.md conflict.
+Estimate: within budget
+Risks: L3 protected doc — must follow full process
+Decision: ACCEPT
+
+---
+
+### T-055 — Record six Owner decisions in decision-log.md; annotate GA gate in ROADMAP_STUDY_DRAFT
+
+Status: READY for INTAKE — Owner-ordered decision recording
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (writes decision-log directly) + assistant writer (free) for ROADMAP_STUDY_DRAFT annotation + reviewer on different free model
+Risk: L2 — decision-log.md is append-only (not protected); ROADMAP_STUDY_DRAFT is draft
+Goal: write six Owner decisions as new decision-log.md entry; annotate/remove GA gate in ROADMAP_STUDY_DRAFT_2026-09-26.md (keep DRAFT — NOT APPROVED, record removal)
+Done when:
+- [ ] decision-log.md new entry with six decisions (verbatim from Owner order)
+- [ ] ROADMAP_STUDY_DRAFT_2026-09-26.md GA gate annotated/removed with note "Owner: GA gate NOT approved — removed from draft"
+- [ ] reviewer on different free model verifies both changes
+- [ ] one commit for this work only; no push
+Budget: free models only; PL writes decision-log, assistant writes draft annotation, free review
+Links: Owner order verbatim (six decisions), `docs/warroom/decision-log.md`, `docs/warroom/ROADMAP_STUDY_DRAFT_2026-09-26.md`, `docs/warroom/ADVISOR_LOG.md` T-050 follow-up 2 correction
+
+INTAKE T-055 — 2026-09-27 (Project Lead) — ACCEPT
+Understanding: Six Owner decisions to record; GA gate in draft roadmap to annotate as NOT approved. Both are documentation only.
+Scope: decision-log.md append, ROADMAP_STUDY_DRAFT edit, review
+Needs: assistant writer for draft, free reviewer
+Missing: nothing blocking
+Plan: 1) Append decision-log.md entry; 2) Annotate ROADMAP_STUDY_DRAFT; 3) Free review; 4) Commit.
+Estimate: within budget
+Risks: none — documentation only
+Decision: ACCEPT
+
+---
+
+### T-056 — False claims ladder penalty: ops Q4, researcher Q5 → -1 step each; record in decision-log.md
+
+Status: READY for INTAKE — Owner-ordered scorecard + ladder enforcement
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (record in decision-log) + assistant writer (free) for ai-scorecard + reviewer on different free model
+Risk: L2 — ai-scorecard.md update; decision-log.md append; ladder stages from evidence (PROJECT_BRIEF.th.md:99)
+Goal: add two false claim entries to ai-scorecard.md (ops Q4=A false, researcher Q5=live-read false); apply -1 autonomy ladder step to each seat per Owner rule; establish current stages from evidence (Operations=step 2, others=step 1 or unrecorded); record ladder moves in decision-log.md
+Done when:
+- [ ] ai-scorecard.md entries added for both false claims (labelled honestly per AI_OPERATING_PROTOCOL.md)
+- [ ] current ladder stages established from evidence (Operations step 2 per PROJECT_BRIEF.th.md:99; researcher/ops/others: state if recorded or unrecorded — do not invent)
+- [ ] -1 step applied to each seat; if at floor, record autonomy falls to floor (owner-run), cannot act unsupervised
+- [ ] decision-log.md entry for each ladder move (per DECISION_LOG_FORMAT.md)
+- [ ] reviewer on different free model verifies scorecard + decision-log entries
+- [ ] one commit for this work only; no push
+Budget: free models only; assistant writes scorecard/decision-log, free review
+Links: `docs/warroom/ai-scorecard.md`, `docs/project-memory/PROJECT_BRIEF.th.md:99`, `docs/warroom/decision-log.md`, `docs/warroom/DECISION_LOG_FORMAT.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md` (Scorecard §False DONE), T-052 verification results
+
+INTAKE T-056 — 2026-09-27 (Project Lead) — ACCEPT
+Understanding: Two false claims from T-052 verification: ops answered Q4=A ("Owner ordered") but correct is B; researcher claimed live credit read but figure came from old ADVISOR_LOG. Owner rule: one false claim = -1 ladder step immediately. Must establish current stages from evidence, not invent.
+Scope: ai-scorecard.md, decision-log.md, review
+Needs: assistant writer, free reviewer
+Missing: nothing blocking
+Plan: 1) Read PROJECT_BRIEF.th.md:99 for current stages; 2) Add scorecard entries; 3) Apply ladder moves; 4) Write decision-log entries; 5) Free review; 6) Commit.
+Estimate: within budget
+Risks: must not invent stages; floor handling per Owner rule
+Decision: ACCEPT
+
+---
 
 ## REVIEW
 
