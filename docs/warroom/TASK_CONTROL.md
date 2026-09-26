@@ -103,6 +103,30 @@ BLOCKED or NEEDS_DECISION. Do not keep going.
 Why: overruns are usually a sign the task was misunderstood or is bigger
 than thought. Stopping to re-plan is cheaper than finishing the wrong thing.
 
+## 6b. Sweep-type work — set the stop boundary up front
+
+Some work is "inspect then fix": document cleanups, hunting one wrong value across the
+repo, consistency passes. These have no natural end — every pass finds one more instance.
+Before starting one, the card must state its **stop boundary**, at least one of:
+
+- the maximum number of files to inspect, or
+- the maximum number of passes / commits the job will spend, or
+- the exact list of items that count as "the job"
+
+When the sweep finds a problem **beyond** that boundary, **do not open a new card to chase it.**
+Record it once in `docs/warroom/decision-log.md` as a **known-not-fixing** item — what it is,
+where it is, and that it was deliberately left — and close the card. It gets picked up later as
+part of ordinary work (for example when that file is being changed for another reason), not by a
+hunt card of its own.
+
+Why: an unbounded "fix everything wrong" card never closes, keeps the board filled with the same
+class of work, and re-charges the same context every round. A boundary plus a written known-list
+keeps the original goal reachable and the leftovers visible instead of forgotten.
+
+Worked example: cards T-059 and T-061 — the boundary was 5 lines each. Findings past that boundary
+(a ban slug missing its `openrouter/` prefix; a roster table disagreeing with the per-role table)
+went to the known-not-fixing list, not to new cards.
+
 ## 7. The path to DONE
 
 Every AI follows `AI_OPERATING_PROTOCOL.md`: an Intake report before

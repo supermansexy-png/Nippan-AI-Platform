@@ -1108,3 +1108,32 @@ The edits touch **two protected documents** (`TASK_CONTROL.md`, `AI_OPERATING_PR
 
 **Task**: T-058
 
+## 2026-09-27 — Project Lead — Sweep round closed: known-not-fixing list + `TASK_CONTROL.md` §6b (stop boundary for sweep work)
+
+**Context**: The Owner closed the document/model-pin sweep rounds (T-058 → T-061) and ordered three things together: (1) no more new cards for the same class of problem; (2) whatever the sweep found beyond its own boundary is recorded once here as **known-not-fixing**; (3) a new rule in `TASK_CONTROL.md` requiring sweep-type work to declare a **stop boundary** up front.
+
+**Known-not-fixing list (deliberately left; Owner order 2026-09-27).** Each item is picked up later as part of ordinary work on that file — when it is being changed for another reason — not by a chase card of its own:
+
+1. `qwen/qwen3.7-flash` is written without its `openrouter/` prefix in the ban notice at `.opencode/agents/project-lead.md:74` and `.opencode/agents/builder.md:46`. It is a ban notice, not a live pin, so it does not mislead anyone about which model is current — but it breaks the prefix rule in `MODEL_ROSTER.md` § "Model-id format". Found by the T-061 reviewer.
+2. `docs/product/MODEL_ROSTER.md` disagrees with itself: § "Review tiers" still names `opencode-go/space-bunny-free` as the L1/L2 reviewer model while § "Per-role staffing" row 3 names `opencode/muse-spark-1.3-contributor-free`. The per-role table is the authoritative one. Found by the T-061 reviewer.
+3. `WORKING_POLICY.md` "What done means" still points at `PROJECT_STATE.md` (superseded by `CURRENT_STATE.md`), and Rule 4 still tells contributors to update `PROJECT_STATE.md`. Same stale-pointer family as Rule 1, but changing them changes the definition of "done", so they are outside this card's boundary and were left. The Owner still has to decide whether `PROJECT_STATE.md` / `ROADMAP.md` are deleted or kept as history.
+4. Per-line authorship of the stale pins fixed in T-059/T-061 could not be established: `git blame` and `git log -S` are **blocked by the session permission config**, so only commit-level attribution was possible. Recorded so this gap is never mistaken for proof.
+
+**Decision (new rule)**: `TASK_CONTROL.md` gains **§6b — Sweep-type work: set the stop boundary up front**. A sweep card must declare a boundary (a maximum number of files, a maximum number of passes/commits, or an explicit item list); findings beyond it are recorded in this log as known-not-fixing and the card closes.
+
+**Reason**: an unbounded "fix everything wrong" card never closes, refills the board with the same class of work, and re-charges the same context every round. Owner order 2026-09-27.
+
+**Scope boundary of this edit itself**: exactly one new section in `TASK_CONTROL.md` (§6b) plus Rule 1 of `WORKING_POLICY.md`. No other line of either document changed; no code touched.
+
+**Reviewer (different model)**: `opencode-go/space-bunny-free`, run `runs/2026-09-26T22-22-25Z-t062-taskcontrol-6b-review`. **Round 1 = CHANGES REQUIRED**, and both findings were correct: (a) the §6b worked-example asserted that the known-not-fixing list already existed when it did not — this entry is what makes that claim true; (b) `TASK_CONTROL.md` §8 requires a **card** for a protected-document change, so the rule was folded into the already-open card T-060 instead of opening a new one (Owner order: no new cards this round). Round 2 verdict is recorded on the T-060 card.
+
+**Task**: T-060
+
+## 2026-09-27 — Project Lead — T-060 follow-up: one more known-not-fixing item (START_PROMPT.md)
+
+**Context**: the T-060 round-2 reviewer (different model, run `runs/2026-09-26T22-26-02Z-t060-round2-review`) returned ACCEPT-WITH-FINDINGS and reported one further instance of the same stale-pointer family, outside the card's declared 2-file boundary.
+
+**Known-not-fixing list — item 5 (appended)**: `docs/warroom/START_PROMPT.md:8-9` — the paste-box at the top still tells the AI to read "`AGENTS.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`, `PROJECT_STATE.md`, `TASKS.md`", i.e. a competing reading list that also names the superseded `PROJECT_STATE.md`. T-058 fixed only that file's verification checklist, not this box. Recorded, not fixed — no chase card is opened (Owner order 2026-09-27).
+
+**Task**: T-060
+

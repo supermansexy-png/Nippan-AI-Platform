@@ -32,20 +32,16 @@ below assume it.
 
 ## Rule 1 — Read state before acting, every time
 
-Before doing anything, read in this order:
-1. `PROJECT_STATE.md` — what's actually built right now, not what's
-   designed
-2. `ROADMAP.md` — which phase is active
-3. `TASKS.md` — what is claimed, in review, or blocked
-4. `docs/warroom/decision-log.md` if it exists — recent decisions and why
-5. The specific doc for the task at hand (`docs/product/`, `docs/data/`,
-   `docs/security/`, `docs/warroom/`)
+The list of files to read at the start of a session is defined **once**, in `AGENTS.md`
+§ "Session Start" — read that list, not a copy of it (Owner decision 2026-09-27, card
+T-060). For recent decisions and the reasons behind them, search
+`docs/warroom/decision-log.md`.
 
-Never assume a document describes the live system. `PROJECT_STATE.md`'s
-"built vs. designed" section is the only place that says what's real. This
-project has a documented history of confusing "we wrote a design doc" with
-"we shipped it" — see the note at the bottom of `PROJECT_STATE.md`. Do not
-repeat that mistake.
+This rule keeps only the behaviour it stands for: **never assume a document describes the
+live system.** Read what is actually built before acting, and update the file that
+describes reality when reality changes. This project has a documented history of confusing
+"we wrote a design doc" with "we shipped it" (`docs/future/README.md` records the scale of
+what that produced before the pivot). Do not repeat that mistake.
 
 ## Rule 2 — Know which role you're acting as
 
