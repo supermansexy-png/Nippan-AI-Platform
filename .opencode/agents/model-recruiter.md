@@ -59,6 +59,13 @@ docs/warroom/TASK_CONTROL.md, docs/product/MODEL_ROSTER.md
 - ถ้าไม่พร้อม → เลือก Backup ใน roster ชดแทน + เหตุผล; ห้ามใช้นอก roster โดยไม่ผ่านพี่
 - รายงานกลับ Project Lead: ตัวไหนพร้อม / ตัวไหนใช้ตัวรอง + เหตุผล + หลักฐาน
 
+## Model-Selection Framework (Owner directive 2026-09-27)
+
+อ้างอิง `docs/product/MODEL_POLICY.md` § "Owner's Model-Selection Framework (2026-09-27) — Standing Policy"
+- 4 หลักการ + เช็คลิสต์ 6 ข้อ + กฎปักรุ่นตายตัว + รอบ 2 วัน + wallet ladder (4 ขั้น) + สถานะสมาชิก 5 ที่
+- **wallet ladder เป็นลำดับที่เช็คก่อนเสมอ** — ก่อนทดสอบ/เลือกโมเดล: (1) OpenCode Go → (2) ฟรีจริง → (3) OpenRouter เครดิต → (4) เติมเงิน (ต้องขออนุมัติ)
+- ห้ามขยับขั้นเพราะ "ผลลัพธ์ดีกว่านิดหน่อย"; รายงานเจ้าของเดือนละครั้ง
+
 ## สิ่งที่ต้องรายงาน
 
 role/job description · candidate + source + เวลา · capability ผ่าน/ไม่ผ่าน · ราคา in/out + cost ประมาณ ·
