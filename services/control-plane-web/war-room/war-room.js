@@ -57,6 +57,35 @@ function randomTraceId() {
   return [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
 }
 
+function resolveSpeaker(event) {
+  if (event.event_type === 'ROOM_STATE_CHANGED' && event.message_type === 'OWNER_DECISION') {
+    return app.snapshot?.participants?.find(p => p.role === 'OWNER') || null;
+  }
+  const pid = event.participant_id || event.payload?.participant_id || event.payload?.actor_id;
+  if (!pid || !app.snapshot?.participants) return null;
+  return app.snapshot.participants.find(p => p.participant_id === pid || p.id === pid);
+}
+
+function speakerLabel(event, speaker) {
+  if (event.event_type === 'ROOM_STATE_CHANGED' && event.message_type === 'OWNER_DECISION') {
+    return { name: speaker?.display_name || speaker?.name || "เจ้าของห้อง", role: speaker?.role || "เจ้าของ", isOwner: true };
+  }
+  if (event.message_type === "OWNER_MESSAGE") {
+    return { name: "เจ้าของห้อง", role: "เจ้าของ", isOwner: true };
+  }
+  if (speaker) {
+    return { name: speaker.display_name || speaker.name, role: speaker.role || "—", isOwner: false };
+  }
+  return { name: "ระบบ", role: "ไม่ระบุ", isOwner: false };
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return String(ts).slice(0, 19);
+  return d.toLocaleString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+}
+
 function buildCorrelation() {
   const agenda = activeAgenda();
   if (!agenda) throw new Error("This room has no agenda item for command correlation.");
@@ -87,6 +116,27 @@ function renderRoster() {
     card.append(el("div", "role", participant.role));
     root.append(card);
   }
+}
+
+function renderSystemLog(events) {
+  const log = $("#system-log");
+  const btn = $("#system-log-toggle");
+  const wasOpen = log.classList.contains("open");
+  log.replaceChildren();
+  if (!events.length) {
+    log.className = "system-log" + (wasOpen ? " open" : "");
+    if (btn) btn.textContent = wasOpen ? "ซ่อนบันทึกระบบ" : "แสดงบันทึกระบบ";
+    return;
+  }
+  log.className = "system-log" + (wasOpen ? " open" : "");
+  for (const event of events) {
+    const item = el("div", "message system-log-item");
+    const ts = formatTimestamp(event.occurred_at);
+    const line = `[${event.event_type}] #${event.sequence}${ts ? " · " + ts : ""} · ${String(eventContent(event)).slice(0, 120)}`;
+    item.textContent = line;
+    log.append(item);
+  }
+  if (btn) btn.textContent = wasOpen ? "ซ่อนบันทึกระบบ" : "แสดงบันทึกระบบ";
 }
 
 function renderUsage() {
@@ -143,35 +193,77 @@ function eventContent(event) {
 
 function renderMessages() {
   const root = $("#message-list");
+  const wasNearBottom = root.scrollHeight - root.scrollTop - root.clientHeight < 50;
+  const isConversationEvent = (e) => e.event_type === 'MESSAGE_APPENDED' || (e.event_type === 'ROOM_STATE_CHANGED' && e.message_type === 'OWNER_DECISION');
+  const conversationEvents = [...app.events].filter(isConversationEvent).sort((a, b) => a.sequence - b.sequence);
+  const systemLog = [...app.events].filter(e => !isConversationEvent(e)).sort((a, b) => a.sequence - b.sequence);
   root.replaceChildren();
-  const events = [...app.events].sort((a, b) => a.sequence - b.sequence);
-  if (!events.length) {
+
+  if (!conversationEvents.length && !systemLog.length) {
     root.className = "messages empty";
     root.textContent = "ยังไม่มีเหตุการณ์ในห้อง";
+    renderSystemLog(systemLog);
     return;
   }
-  root.className = "messages";
-  for (const event of events) {
-    const messageType = event.message_type || "SYSTEM_EVENT";
-    const classes = [
-      "message",
-      messageType === "OWNER_MESSAGE" ? "owner" : "",
-      event.event_type === "TURN_FAILED" ? "error" : "",
-    ].filter(Boolean).join(" ");
-    const article = el("article", classes);
-    const head = el("div", "message-head");
-    head.append(el("span", "", `#${event.sequence} · ${messageType}`));
-    head.append(el("span", "", event.event_type));
-    article.append(head);
-    article.append(el("div", "content", String(eventContent(event))));
-    const model = event.payload?.model;
-    const providerRequest = event.payload?.provider_request_id;
-    if (model || providerRequest) {
-      article.append(el("div", "evidence", [model, providerRequest].filter(Boolean).join(" · ")));
+  if (!conversationEvents.length) {
+    root.className = "messages empty";
+    root.textContent = "ยังไม่มีข้อความในห้อง";
+  } else {
+    root.className = "messages";
+    let prevSpeakerKey = null;
+    for (let i = 0; i < conversationEvents.length; i++) {
+      const event = conversationEvents[i];
+      const speaker = resolveSpeaker(event);
+      const label = speakerLabel(event, speaker);
+      const speakerKey = label.name + "|" + label.role;
+      const isGrouped = speakerKey === prevSpeakerKey && i > 0;
+      const messageType = event.message_type || (!isConversationEvent(event) ? "SYSTEM_EVENT" : "MESSAGE_APPENDED");
+      const isSystem = !isConversationEvent(event);
+      const classes = ["message"];
+      if (messageType === "OWNER_MESSAGE") classes.push("owner");
+      else if (label.isOwner) classes.push("owner");
+      else { classes.push("ai"); }
+      if (event.event_type === "TURN_FAILED") classes.push("error");
+      if (isGrouped && i < conversationEvents.length - 1) classes.push("grouped");
+      else if (isGrouped) classes.push("grouped-last");
+      const article = el("article", classes.join(" "));
+
+      const head = el("div", "message-head");
+      const speakerSpan = el("span", `speaker ${label.isOwner ? "owner" : ""}`, label.name);
+      const roleSpan = el("span", "role-label", label.role);
+      head.append(speakerSpan, roleSpan);
+      const meta = el("span", "", `#${event.sequence}`);
+      if (event.occurred_at) meta.textContent = `#${event.sequence} · ${formatTimestamp(event.occurred_at)}`;
+      else meta.textContent = `#${event.sequence}`;
+      if (messageType === "OWNER_MESSAGE") meta.textContent += " · ข้อความจากเจ้าของ";
+      head.append(meta);
+      article.append(head);
+      article.append(el("div", "content", String(eventContent(event))));
+      const model = event.payload?.model;
+      const tokens = event.payload?.usage_tokens ? `(${event.payload.usage_tokens} tokens)` : "";
+      const modelLine = model ? `${model} ${tokens}` : tokens;
+      if (modelLine.trim()) {
+        article.append(el("div", "evidence", modelLine.trim()));
+      }
+      const providerRequestId = event.payload?.provider_request_id;
+      const correlation = event.correlation || event.payload?.correlation;
+      if (providerRequestId) {
+        article.append(el("div", "evidence", `request_id: ${providerRequestId}`));
+      }
+      if (correlation && correlation.agenda_item_id) {
+        const agendaItem = app.snapshot?.agenda?.find(a => a.agenda_item_id === correlation.agenda_item_id);
+        if (agendaItem) {
+          article.append(el("div", "evidence", `วาระ: ${agendaItem.title || agendaItem.sequence}`));
+        }
+      }
+      root.append(article);
+      prevSpeakerKey = speakerKey;
     }
-    root.append(article);
   }
-  root.scrollTop = root.scrollHeight;
+  renderSystemLog(systemLog);
+  if (wasNearBottom) {
+    root.scrollTop = root.scrollHeight;
+  }
 }
 
 function renderSnapshot() {
@@ -318,6 +410,11 @@ $("#load-room").addEventListener("click", async () => {
     setConnection("ผิดพลาด", "error");
     setNotice(error.message);
   }
+});
+
+$("#jump-latest").addEventListener("click", () => {
+  const root = $("#message-list");
+  root.scrollTop = root.scrollHeight;
 });
 
 $("#reconnect").addEventListener("click", () => connectEvents());
