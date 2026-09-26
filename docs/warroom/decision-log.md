@@ -1028,3 +1028,15 @@ Decision: All six items recorded as-is per Owner verbatim intent.
 Reason: Owner required these six decisions in substance appended to decision-log.md before T-055 closes.
 Task: T-055
 
+## 2026-09-27 — Project Lead — T-056: Autonomy ladder −1 for ops (T-052 false claim Q4)
+Context: T-052 false claim by ops `opencode/muse-spark-1.3-contributor-free` — claimed Q4=A (correct answer B). AI_OPERATING_PROTOCOL Scorecard: one false DONE claim → drops one ladder stage immediately.
+Decision: Operations ladder stage 2 → 1 (per PROJECT_BRIEF.th.md:99 records Operations at stage 2).
+Reason: Owner rule: 1 false claim = −1 autonomy ladder step, immediately. At stage 1 (Drafting), ops cannot act unsupervised — AI prepares the work, owner decides every time.
+Task: T-056
+
+## 2026-09-27 — Project Lead — T-056: Autonomy ladder −1 for researcher (T-052 false claim Q5)
+Context: T-052 false claim by researcher `opencode/muse-spark-1.3-contributor-free` — claimed "live dashboard 1.09" (not a live read; figure lifted from ADVISOR_LOG entry). AI_OPERATING_PROTOCOL Scorecard: one false DONE claim → drops one ladder stage immediately.
+Decision: Researcher ladder stage unrecorded → floor (stage 1). PROJECT_BRIEF.th.md does not record a baseline stage for researcher.
+Reason: Owner rule: 1 false claim = −1 autonomy ladder step, immediately. Since no prior stage recorded, researcher remains at stage 1 (floor) and cannot act unsupervised.
+Task: T-056
+
