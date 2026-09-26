@@ -1,35 +1,54 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-26
-**หัวข้อ:** War Room: meeting room live (T-034a + T-034b 1/2a/2c/2d); agenda CRUD left; credit + second-writer alerts
+**หัวข้อ:** Nippan: team on OpenCode Go + ที่ปรึกษาวางแผน (advisor) + ระบบตรวจสอบ
 
-## งาน War Room ถึงไหนแล้ว (2026-09-26, session: PL ทำแทนพี่ช่วงพี่ไม่อยู่)
+## งานรอบนี้ (session 4 — 2026-09-26) ทำอะไรเสร็จแล้ว
 
-**เสร็จและขึ้นพรีวิวแล้ว (live):** `https://warroom.nippan.org/war-room/` — commit `243c322`, Render deploy `dep-darp059pc0ec73dclg30` (live 09:29Z), `GET /health` = 200
-- **T-034a** (หน้าจอแชทอ่านง่าย): ชื่อ+บทบาทผู้พูดทุกข้อความ, คำตัดสินเจ้าของแสดงเต็มในบทสนทนา, log ระบบแยกไปกล่องพับได้, auto-scroll เฉพาะเมื่ออยู่ล่างสุด + ปุ่ม "ล่าสุด", จัดกลุ่มข้อความ, เวลา/โมเดล/โทเคน, รายชื่อผู้เข้าร่วม, แผงวาระ, ฟอนต์อ่านง่าย
-- **T-034b slice 1**: สคริปต์ seed สร้างห้องใหม่จากบรรทัดคำสั่ง (`--room-id`/`--title`/`--force`) — ลบข้อมูลทุกคำสั่งผูก tenant+application, ห้องเดิมต้อง `--force`, ชื่อว่างถูกปฏิเสธก่อนลบ, ลบ+เพิ่มใน transaction เดียว
-- **T-034b slice 2a**: `POST /war-room/rooms` สร้างห้องจากหน้าเว็บได้ (ตรวจสิทธิ์ก่อน, room id ออกฝั่ง server, seed รันใน worker thread, 429 เมื่อเกิน 10 ครั้ง/ชม.)
-- **T-034b slice 2c/2d**: ฟอร์มชื่อห้อง + ปุ่ม `เริ่มประชุมใหม่` และ การแสดง 30 ข้อความล่าสุด + ปุ่ม `ดูข้อความก่อนหน้า` + log ระบบ 50 บรรทัด
+**ทุกอย่าง commit + push แล้ว · working tree สะอาด**
+- `3d92735` feat(skills): advisor skills · `01c8f52` docs(memory): handoff · `a4ce52d` feat(team): Go + advisor
+- push ขึ้น `origin/dev-workspace` แล้ว (ไม่มี commit ค้าง)
 
-**หลักฐาน (รันจริง):** ชุดทดสอบเต็มกับ embedded PostgreSQL 16 = **171 passed / 0 failed**; สคริปต์ทดลอง `runs/t034b_acceptance.py` = ALL PASS (สร้างห้องใหม่ได้จริง, ห้องเดิมไม่ถูกแตะ, รีเซ็ตห้องอื่นโดยไม่ใส่ `--force` ถูกปฏิเสธและไม่ทำลายอะไร, ชื่อว่างถูกปฏิเสธก่อนลบ); CI ผ่านทั้ง remote-auth + postgres-regression; PR #84 และ #85 merged
-เอกสารหลักฐาน: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (§T-034b) · work log ในการ์ด T-033/T-034a/T-034b ใน `TASKS.md`
+### 1. ย้ายทีมทั้งชุดไป OpenCode Go (การ์ด T-035 / T-037)
+- `opencode-go/<id>` = **คลังหลัก** (พี่จ่าย $10/เดือนแล้ว) · OpenRouter + OpenCode Zen = สำรอง
+- pin ปัจจุบัน (ตรงกับไฟล์ agent จริงทั้งหมด):
+  - project-lead `opencode-go/mimo-v2.6-pro` (เดิมตั้ง deepseek-v4.1-flash แต่ **probe แล้ว HTTP 400 "requires Global regions"** จึงสลับ — mimo ฉลาดกว่า 46.3 vs 39.5 + retention 0 วัน)
+  - advisor `opencode-go/mimo-v2.6-pro` · builder `opencode-go/glm-5.3-flash` (Owner lock เดิม **ยกเลิกแล้ว**)
+  - reviewer L1–L3 `opencode-go/space-bunny-free` · L4 `anthropic/claude-opus-5.5:batch`
+  - ops `opencode-go/mimo-v2.6-flash` · HR `opencode-go/gpt-6-luna`
+  - security `openrouter/nex-agi/nex-n2.5-mini:free` (Go ไม่มีตัวแทน) · researcher `opencode/nemotron-3.5-lightning-free` · assistant `opencode/nemotron-3-ultra-free`
+- `opencode.json`: model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`
+- ทดสอบสดผ่าน: glm-5.3-flash, space-bunny-free, mimo-v2.6-flash, mimo-v2.6-pro, kimi-k3 · ติด region: deepseek-* ทั้งตระกูล
+- HR เขียนคำสั่งใหม่แล้วให้สรรหาจากคลัง Go เป็นหลัก
 
-**ยังเหลือ 1 ข้อ = T-034b slice 2b: แก้วาระจากในหน้าเว็บ** (สร้าง/แก้/ปิดวาระ) — ตอนนี้แผงวาระยัง read-only ต้องเพิ่ม endpoint ฝั่งเขียน + UI + reviewer + security reviewer
+### 2. ตำแหน่งใหม่ "ที่ปรึกษาวางแผน" (advisor) + ระบบตรวจสอบ (การ์ด T-038 / T-039 / T-040)
+- ลำดับสั่งงาน: `Owner → advisor → Project Lead → specialist` · สั่ง agent ได้ทุกตัว · อนุมัติ/commit/push แทนพี่ได้ตอนพี่ไม่อยู่
+- **แก้ไฟล์เองไม่ได้** (edit deny) · shell ได้แค่ git · **สั่งงานนอกระเบียบไม่ได้** · **ห้ามอนุมัติเอกสาร protected** (conflict of interest)
+- ระบบตรวจสอบ: `docs/warroom/ADVISOR_MANDATE.md` (protected) + `docs/warroom/ADVISOR_LOG.md` (append-only)
+  - **ผู้รับคำสั่งเป็นคนบันทึก ไม่ใช่ที่ปรึกษา** · audit ทุกการ์ดโดยโมเดลอื่น (≠ mimo-v2.6-pro) · verdict 3 ค่า
+  - audit รอบแรกผ่าน: `opencode-go/kimi-k3` → WITHIN-MANDATE-WITH-FINDINGS
+  - บันทึกคำสั่งของพี่รอบนี้ = entry T-038 ใน ADVISOR_LOG แล้ว
+- สกิล 2 ตัว (`.opencode/skills/`): `advisor-work-order` (แปลงคำสั่งพี่เป็นใบสั่งงาน + เทมเพลตบันทึก) และ `advisor-mandate-audit` (ตรวจ A1–A5)
+- กฎซ่อมแล้ว: `AGENTS.md`, `START_PROMPT.md`, `AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md`, `DEV_WORKING_GUIDE.md`, `FREE_MODEL_FALLBACK_GUIDE.md`, `MODEL_ROSTER.md`, `CURRENT_STATE.md` — ล้างโมเดลตาย (`big-pickle`, `ling-3.0`, `mimo-v2.6-flash-free`) และ pre-Go facts หมดแล้ว
 
-**🚨 ข่าวร้าย 2 เรื่องที่ต้องรู้ก่อนทำอะไรต่อ**
-1. **เครดิต OpenRouter เหลือ ≈ $0.65** (usage 44.35/45) — ตัวกินเงินมากสุดคือ paid run ที่ "ค้าง" ไม่ยอมเขียนไฟล์ = $1.22 (`runs/2026-09-25T20-34-38Z-t034a-glm-final`) เพราะ headless runner ตัดทอน output แล้วโมเดลอ่านซ้ำวน ๆ. **หยุดงานเสียเงินแล้ว** บทเรียน+กติกากันซ้ำอยู่ใน `decision-log.md` (entry COST ALERT 2026-09-26) ⇒ งานที่เหลือให้ใช้โมเดลฟรี หรือรอพี่เติมเครดิต/เปิด Open Go
-2. **มีนักเขียนคนที่สองใน repo** — การ์ด "T-030 OpenCode Go" + `docs/product/MODEL_POLICY.md` + `docs/warroom/DEV_ERROR_LOG.md` ถูกแก้แบบยังไม่ commit โดยเซสชันอื่น (น่าจะอีกแชท/Codex) ผม **preserve ไว้ แต่ไม่ commit และไม่แตะ** — ก่อนเริ่มงานใหม่ให้เช็ค `git status` และหลีกเลี่ยงการทับไฟล์ที่เขาแก้
+## พี่ต้องทำ (ค้างอยู่)
+1. **ปิดเปิดแอป opencode** → agent "ที่ปรึกษาวางแผน" + สกิลทั้ง 2 จะโผล่ (config commit แล้วแต่ต้องรี)
+2. ถ้าต้องการใช้ DeepSeek บน Go → ตั้ง Privacy ของ workspace (https://opencode.ai/auth) เป็น **Global regions** — *ยังยืนยันจากเอกสารสาธารณะไม่ได้ว่าปุ่มชื่ออะไรแน่ (UNVERIFIED)* ไม่ตั้งก็ไม่กระทบงาน
+3. หลังรี: ลองเรียก HR อีกที และ **ทดสอบสกิล** (ให้ที่ปรึกษาเรียก `advisor-work-order`) เพื่อยืนยันว่าค้นเจอจริง
 
-**บทเรียนเครื่องมือ (สำคัญมาก กันงานเสียเวลา/เงินซ้ำ)**
-- headless runner ตัดทอน output ขนาดใหญ่ ⇒ ส่งงานเป็น **ไฟล์ spec** แล้วสั่ง "อ่านเฉพาะช่วงสั้น ๆ" (ทำแล้ว GLM ที่เคยล้ม 2 ครั้งทำงานสำเร็จ)
-- `z-ai/glm-5.3-flash` ค้างบ่อยถ้าให้อ่านไฟล์ทั้งไฟล์; โมเดลฟรี `openrouter/thinkingmachines/inkling:free` แก้ไฟล์ได้เสถียรและ $0 (แต่ต้องระบุสเปกให้ชัด)
-- `builder` agent **ไม่มีสิทธิ์ edit** ⇒ งานโค้ดต้องยิงผ่าน `--agent worker --model <builder model>`
-- ชื่อโมเดล OpenRouter ต้องมี prefix `openrouter/<author>/<slug>` (ไม่มี prefix จะขึ้น `Unexpected server error` หลอก ๆ)
-- security agent pin `openrouter/nex-agi/nex-n2.5-mini:free` **หายไปจากระบบแล้ว** ("Model not found") → ต้องแก้ pin + **restart opencode** จึงมีผล (รอบนี้ใช้ตัวฟรีอื่นแทนและบันทึกไว้)
+## งานเปิดค้าง
+- **T-034b เหลือ slice 2b**: แก้วาระ (agenda CRUD) จากหน้าเว็บ War Room — ยัง read-only
+- **T-032**: รอพี่ตอบ 4 ข้อฝั่ง Codex + ตัดสินใจเปิด protection ของ `dev-workspace`
+- **housekeeping**: T-034a เป็น DONE แล้วยังอยู่บนบอร์ด → ควรย้ายเข้า `docs/archive/TASKS_DONE_ARCHIVE.md` (บอร์ดเกิน cap 5)
+- **เครดิต OpenRouter ≈ $1.19** → งานเสียเงินให้ใช้ Go/โมเดลฟรีแทน
+- ยังไม่แตะ: `docs/warroom/ROLES.md` (เป็นนิเวศ runtime ไม่ใช่ทีม dev)
 
-**บอร์ด:** T-032 READY (รอพี่ตอบ 2 เรื่อง: protection `dev-workspace` + ค่า 4 ข้อฝั่ง Codex) · T-033 (pilot เสร็จ, ห้องใช้ได้) · T-034a DONE · T-034b เหลือ slice 2b · T-030 (OpenCode Go) = การ์ดของเซสชันอื่น
-**พี่ต้องทำเมื่อกลับ:** (1) เปิด `https://warroom.nippan.org/war-room/?room_id=d3333333-3333-4333-8333-333333333333` ดูว่าห้องพอใจไหม และลองกด `เริ่มประชุมใหม่` (2) ตัดสินใจเรื่องเครดิต/Open Go (3) ตรวจงานของนักเขียนคนที่สองก่อนให้ commit
-
-**เริ่มแชทใหม่:** "อ่าน docs/project-memory/SESSION_HANDOFF.md แล้วทำงานต่อ"
+## บทเรียนเครื่องมือ (กันเสียเวลารอบหน้า)
+- `headless_run.mjs --agent <subagent>` **silently fallback ไป default agent** (ได้ edit permission โดยไม่ตั้งใจ) → ใช้ `--agent worker` เท่านั้นสำหรับงาน headless
+- prompt ยาว ๆ ถูกตัดที่ ~600 ตัวอักษรผ่าน powershell wrapper → ใส่ brief ลง `runs/briefs/<card>.md` แล้ว `--prompt` เป็น pointer ประโยคสั้น
+- โมเดล reasoning (glm-5.3-flash, mimo, kimi บนงานอ่านเยอะ) **หมดโควตา reasoning แล้วตายกลางทาง** (reason: length) — งานอ่านไฟล์เยอะให้แบ่งเป็นงานเล็ก หรือ PL ทำเองถ้าเป็น dev-process doc
+- `git diff -- <paths>` **โดน permission engine ตีความผิด** → ใช้ `git diff <paths>` (ไม่มี `--`)
+- ชื่อโมเดลต้องมี prefix เสมอ: `opencode-go/`, `opencode/`, `openrouter/author/` — ไม่ใส่จะขึ้น `Unexpected server error` หลอก ๆ
+- demo agent skill: สกิลอยู่ที่ `.opencode/skills/<name>/SKILL.md` (`name` ต้องตรงชื่อโฟลเดอร์, lowercase-hyphen)
 <!-- AUTO-HANDOFF:END -->
 
 > ## ▶ สถานะล่าสุด 2026-09-26 (session 4) — ยึดบล็อกนี้ก่อนบล็อกอื่นทั้งหมด
