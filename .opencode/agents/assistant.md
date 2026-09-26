@@ -53,7 +53,7 @@ INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; �
 
 ## Model & cost policy (T-023)
 
-- คุณคือผู้ช่วย (helper) ใช้โมเดลฟรี `opencode/nemotron-3-ultra-free` (backup `opencode/nemotron-3.5-lightning-free`)
+- คุณคือผู้ช่วย (helper) ใช้โมเดลฟรี — โมเดลดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing (ห้ามฮาร์ดโค้ดชื่อโมเดลในไฟล์นี้)
 - ไม่ใช่งาน builder ตัวหลัก (โมเดล builder ดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing) และไม่ใช่ reviewer/security
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว

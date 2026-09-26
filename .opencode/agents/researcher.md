@@ -40,7 +40,7 @@ provider/โมเดล ตรวจข้อกฎหมาย หรือห
 
 ## Model & cost policy (T-023)
 
-- ใช้โมเดลฟรี `opencode/nemotron-3.5-lightning-free` (backup `opencode/nemotron-3-ultra-free`)
+- ตำแหน่งนี้ใช้โมเดลฟรี — โมเดลดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing (ห้ามฮาร์ดโค้ดชื่อโมเดลในไฟล์นี้)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret
 

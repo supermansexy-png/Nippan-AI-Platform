@@ -44,7 +44,7 @@ INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; แยก r
 
 ## Model & cost policy (T-023)
 
-- ใช้ `opencode-go/mimo-v2.6-flash` (OpenCode Go) (backup `opencode/nemotron-3-ultra-free` ฟรี)
+- โมเดลของตำแหน่ง ops ดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing (ห้ามฮาร์ดโค้ดชื่อโมเดลในไฟล์นี้)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret
 
