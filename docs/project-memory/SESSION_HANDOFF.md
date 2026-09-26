@@ -1,17 +1,41 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-26
-**หัวข้อ:** T-041–T-044 done & pushed: advisor→PL channel, PL on DeepSeek, PL code lock, free writer
+**หัวข้อ:** T-045/046/047 — security re-pin, WIP cap 10, ปิดช่อง protected doc
 
-**เสร็จ + push ครบแล้ว** (5 commits, tree สะอาด, HEAD `b04828a` = origin/dev-workspace)
-1. **T-041** ที่ปรึกษา→PL ติดต่อได้: Task tool เรียกได้แค่ subagent แต่ทั้งคู่เป็น primary → `project-lead` = `mode: all` + `opencode.json` `subagent_depth: 2` (reviewer ACCEPT-WITH-FINDINGS)
-2. **T-042** PL = `openrouter/deepseek/deepseek-v4.1-flash`, backup `opencode-go/mimo-v2.6-pro` (ฝั่ง Go ยังติด HTTP 400 "requires Global regions"; **ไม่มี fallback อัตโนมัติ**, เครดิต OpenRouter เหลือ ≈ $4.4; retention deepseek ยังไม่ยืนยัน 0 วัน)
-3. **T-043** ล็อก PL ห้ามเขียนโค๊ด: `edit` allowlist เฉพาะเอกสาร dev + deny 11 คำสั่ง bash ที่เขียนไฟล์ → **พิสูจน์สด** (เขียน `.opencode/**` ถูกปฏิเสธ · `runs/**` ผ่าน · `Set-Content` ถูกปฏิเสธ = agent ทับ global จริง) กันได้ไม่ 100%
-4. **T-044** มือเขียนฟรี = `assistant` (`opencode/nemotron-3-ultra-free`) — **พิสูจน์สดว่าเขียนไฟล์ runtime ให้ PL ได้จริง $0** · reviewer จับ 3 จุดแล้วแก้ครบ (deny `git commit/push`, `edit` allowlist fail-closed, แก้บรรทัดหลักฐานให้เป็น `<ไฟล์ที่ถูกสั่งแก้>`) + PL เพิ่มห้ามแก้ไฟล์นิยามตัวเอง (`assistant.md: deny`) และห้ามอ่าน secret ผ่าน shell
-**มติสำคัญ:** PL เขียนไฟล์ได้แต่ห้ามเขียนโค๊ด · งาน config ส่ง "มือเขียน" (`assistant`, ฟรี) หรือ builder · ทุกงานต้องมี reviewer คนละโมเดล · PL แก้ `.opencode/**`/`opencode.json`/ลบไฟล์ด้วย `Remove-Item` เองไม่ได้แล้ว
-**ค้าง:** T-034b เหลือ slice 2b (แก้วาระจากหน้าเว็บ) · T-032 รอพี่ตอบ 4 ข้อฝั่ง Codex + ตัดสินใจ protection `dev-workspace` · บอร์ดเกิน cap ควรย้าย T-034a (DONE) เข้า archive · เอกสารใต้ `services/` ยังห้าม PL เขียน · ตั้ง Privacy เป็น Global regions ถ้าจะย้าย PL ไป Go
-**ถัดไปที่แนะนำ:** อ่าน `docs/project-memory/SESSION_HANDOFF.md` เป็นไฟล์แรก แล้วเริ่มจาก T-034b slice 2b หรือ housekeeping บอร์ด
-**บทเรียน:** builder/assistant อาจรายงานว่าเสร็จแต่ไม่ได้แก้ไฟล์ → เปิดไฟล์ตรวจเองเสมอ · ชื่อโมเดลต้องมี prefix (`opencode-go/`, `opencode/`, `openrouter/author/`) · ใช้ `--agent worker` สำหรับ headless
+## งานที่เสร็จ (การ์ด DONE 3 ใบ — ยังไม่ commit)
+- **T-045** security pin เดิม `openrouter/nex-agi/nex-n2.5-mini:free` **ตายจริง** (ยืนยัน: author `nex-agi` เหลือ 0 โมเดล) → เปลี่ยนเป็น `opencode-go/kimi-k3` (Primary) + `openrouter/qwen/qwen3.8-flash` (Backup) · ปิดช่อง `assistant.md` ที่แก้ protected doc ได้ (+10 บรรทัด deny ครบ 10/10 ตาม §8) · writer = assistant (ฟรี) + builder (เสียเงิน พี่อนุมัติ) · reviewer `space-bunny-free` ACCEPT / ACCEPT-WITH-FINDINGS
+- **T-046** `TASK_CONTROL.md` §5 เพดานงานพร้อมกัน **3 → 10** (REVIEW คงที่ 5) — L3 บนเอกสาร protected · reviewer รอบ 1 **REJECT** (ยังไม่มี decision-log entry + เอกสารอ้างผิด) → แก้ → รอบ 2 ACCEPT · แตะแค่ §5, §3/§8/§9 ไม่ถูกแตะ
+- **T-047** `project-lead.md` แก้ข้อความ WIP 3 → 10 (บรรทัดเดียว frontmatter ไม่ถูกแตะ) · reviewer ACCEPT-WITH-FINDINGS
+- `MODEL_ROSTER.md`: Go **35 → 43** โมเดล + แถว security/review tier / บอร์ดรับ **10 การ์ด** (`TASKS.md`) / decision-log มี entry ใหม่ 2 รายการ (ไม่เขียนทับประวัติ)
+- หลักฐาน: `git diff` ของแต่ละไฟล์ ตรวจเองทุกครั้ง ไม่เชื่อรายงานผู้เขียน
+
+## การตัดสินใจสำคัญ
+บอร์ด 10 การ์ด · งานพร้อมกัน 10 · รอตรวจ 5 · Google/Groq ต่อแล้วแต่ **Google โหมดฟรีเทรนข้อมูล → ห้ามใช้กับโค้ด repo** · Groq ใช้ได้ 2 ตัว (`groq/openai/gpt-oss-20b`, `-120b`) · `kimi-k3` โควตาน้อย (~490 req/เดือน) เก็บไว้ตรวจงานจริง
+
+## ยังค้าง
+9 ไฟล์ใน working tree ยังไม่ commit (ของ T-045/046/047 + `CURRENT_STATE.md`/`ADVISOR_LOG.md` ที่ **session อื่น** แก้ — ห้าม commit รวมกัน) · 7 การ์ด IN_PROGRESS (T-035/038/039/041/042/043/044) · ช่องเขียนไฟล์ผ่าน bash (`Set-Content`/`node`/`python`) ของ assistant ยังเปิด · advisor เรียกเป็น subagent ไม่ได้ (`mode: primary`) · `CURRENT_STATE.md` ถูกลบประโยคอธิบาย advisor/mandate โดย session อื่น (ยังไม่ยืนยันว่าใคร)
+
+## ความปลอดภัย
+คีย์ทั้ง 5 ใน `C:\Users\chetgo\.local\share\opencode\auth.json` หลุดเข้าประวัติแชทนี้ (ผมไม่ได้พิมพ์ซ้ำ) → **แนะนำให้หมุนคีย์**
+
+## ขั้นถัดไปที่แนะนำ
+commit แยกตามการ์ด (อย่ารวมไฟล์ session อื่น) → แล้วปิด 7 การ์ดค้าง หรือให้ HR/ops เดินงานต่อตามคำสั่งพี่
 <!-- AUTO-HANDOFF:END -->
+
+> ## ▶ สถานะล่าสุด 2026-09-26 (session 5) — ยึดบล็อกนี้ก่อนบล็อกอื่นทั้งหมด (AUTO block ด้านบนล้าสมัยแล้ว)
+>
+> **commit ใหม่ 2 ตัวบน `dev-workspace` — ยังไม่ push:**
+> - `2324fe8` — `docs(team)`: T-045/046/047 (security re-pin `opencode-go/kimi-k3`, WIP cap 10, ปิดช่อง protected-doc) · 8 ไฟล์ · **commit แล้ว** (AUTO block ด้านบนที่เขียนว่า "ยังไม่ commit" = ล้าสมัย)
+> - `03b674b` — `feat(core)`: `services/core/dev_server.py` (Windows-safe local dev launcher) + test + README · 3 ไฟล์ · reviewer ตรวจ 2 รอบ: รอบแรก ACCEPT-WITH-FINDINGS (major = patch เป็น silent no-op บน uvicorn 0.35.x) → builder แก้ 3 จุด (major 1 + minor 2) + เพิ่ม test → ตรวจซ้ำ **ACCEPT**
+> - git identity ของ repo ตั้งเป็น `Nippan Dev Team <dev@nippan.ai>` แล้ว (author และ committer ตรงกัน)
+>
+> **branch `phase-a-market-test-pivot` — ค้างอยู่ (Owner สั่งพัก):** fetch จาก `C:\opencode\phase-a-branch.bundle` เข้า branch ในเครื่องสำเร็จ (tip `6c6afe6`) แต่ **push ถูกปฏิเสธแบบ non-fast-forward** เพราะบน GitHub มี branch นี้อยู่แล้วที่ `b3fbe3d` ("Add base .gitignore…") — สองสายแยกจากจุดร่วม `1ec9367` · ตรวจแล้ว merge กัน**ไม่มี conflict** (ยืนยันด้วย `git merge-tree`) · วิธีที่ Owner เลือก = merge (ไม่ rebase, **ไม่ force push**) แต่ยังไม่ได้ทำ
+>
+> **ยังไม่ commit โดยเจตนา:** `docs/project-memory/CURRENT_STATE.md` + `docs/warroom/ADVISOR_LOG.md` = งานของ**หน้าต่างอื่นของ Owner** (ให้เจ้าของไฟล์ commit เอง) · `docs/warroom/ROADMAP_STUDY_DRAFT_2026-09-26.md` ปล่อย untracked ไว้ (ไม่เดาเจ้าของ)
+>
+> **บทเรียนจากรอบนี้:** (1) `git stash pop` จะล้มถ้าไฟล์ถูกหน้าต่างอื่นเขียนทับระหว่างนั้น → ต้องสำรองไฟล์ก่อน แล้วคืนไฟล์เป็น HEAD ชั่วคราว — **ระวัง line ending ต้องเป็น CRLF** จึงจะถือว่า clean (2) ไฟล์ `.opencode/agents/**` PL แก้เองไม่ได้ (guardrail ทำงานถูก) ต้องผ่าน writer เช่น subagent `assistant`/`builder` (3) มีหน้าต่างอื่นเขียนไฟล์ใน working tree พร้อมกันได้ ต้องเช็ค `git status` ก่อน/หลังทุกครั้ง
+>
+> **ค้างเดิมยังไม่เปลี่ยน:** 7 การ์ด IN_PROGRESS (T-035/038/039/041/042/043/044) · push/merge ของ `phase-a-market-test-pivot` รอ Owner สั่ง
 
 > ## ▶ สถานะล่าสุด 2026-09-26 (session 4) — ยึดบล็อกนี้ก่อนบล็อกอื่นทั้งหมด
 >
