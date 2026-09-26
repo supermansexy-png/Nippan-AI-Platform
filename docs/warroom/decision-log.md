@@ -1149,5 +1149,19 @@ The edits touch **two protected documents** (`TASK_CONTROL.md`, `AI_OPERATING_PR
 
 **Known-not-fixing list — item 5 (appended)**: `docs/warroom/START_PROMPT.md:8-9` — the paste-box at the top still tells the AI to read "`AGENTS.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`, `PROJECT_STATE.md`, `TASKS.md`", i.e. a competing reading list that also names the superseded `PROJECT_STATE.md`. T-058 fixed only that file's verification checklist, not this box. Recorded, not fixed — no chase card is opened (Owner order 2026-09-27).
 
+## 2026-09-27 — Project Lead — Cleanup round CLOSED; known-not-fixing item 6 appended
+
+**Context**: the Owner accepted the cold-start re-test (13 files → **6**, card T-063) and ordered the whole cleanup round closed, with no new chase cards for anything found along the way.
+
+**Known-not-fixing list — item 6 (appended)**: `README.md:77-78` still points at `PROJECT_STATE.md`, retired in place on 2026-09-27. It is a stale pointer, not a broken link (the tombstone redirects), so a reader loses nothing — but the README's start-here list is wrong and should be fixed the next time README is edited for another reason. Deliberately **no** separate card (Owner order).
+
+**Round closed**: the document/governance cleanup that ran as **T-058 → T-063 is closed**. What it produced: one authoritative reading list in `AGENTS.md` with four tiers (T-058, T-063); one home per fact — model pins in `MODEL_ROSTER.md`, open items in `SESSION_HANDOFF.md`, rules in `TASK_CONTROL.md` + the protocol; the stale model pins inside the agent prompts replaced by roster pointers (T-059, T-061); a rebuilt `INDEX.md` with no dead link; both superseded root documents retired in place (T-060 item 6); and a **measured** cold-start cost of 6 files, down from 13.
+
+**Not carried as cards (Owner order)**: known-not-fixing items 1–6 in this log. Each is picked up when its file is next edited for another reason.
+
+**Reason**: an unbounded "fix everything" pass never closes and re-charges the same context every round — now written as `TASK_CONTROL.md` §6b.
+
+**Task**: T-063 (round close-out)
+
 **Task**: T-060
 

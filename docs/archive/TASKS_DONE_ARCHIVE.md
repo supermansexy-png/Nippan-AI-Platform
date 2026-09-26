@@ -1823,3 +1823,19 @@ Owner: Owner-ordered, same conditions as T-059. Fixer `opencode-go/glm-5.3-flash
 Delivered (VERIFIED): five lines that contradicted `MODEL_ROSTER.md` § "Per-role staffing" now point at the roster instead of naming a slug — `ops.md:47` (primary and backup both wrong for ops), `researcher.md:43` and `assistant.md:56` (the backups were wrong), `project-lead.md:75` (the advisor slug was its Backup) and `project-lead.md:77` (ops and model-recruiter HR named with their Backup slugs). `project-lead.md:76` (reviewer/security/L4) was checked and is correct — deliberately untouched. Diff is model-pin-only: 4 files, 5 insertions, 5 deletions.
 Review: reviewer on a third model `opencode-go/space-bunny-free` (run `runs/2026-09-26T22-20-41Z-t061-review`) = **ACCEPT-WITH-FINDINGS**, all 5 lines PASS, no other contradicting pin found anywhere under `.opencode/agents/`.
 Findings beyond the boundary → known-not-fixing (no chase card, Owner order): the `qwen/qwen3.7-flash` ban slug missing its `openrouter/` prefix at `project-lead.md:74` and `builder.md:46`; `MODEL_ROSTER.md` § "Review tiers" disagreeing with its own per-role table.
+
+### T-062 — Fresh-session reading-order probe (L1)
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner-ordered.
+Result: a brand-new session (new process, no prior context, model `opencode-go/space-bunny-free`, run `runs/2026-09-26T22-31-39Z-t062-fresh-session-probe`) was given only "work out what you must read before starting, then report the files in order" — no hint of the expected answer — and opened **13 files**: SESSION_HANDOFF, PROJECT_BRIEF.th, CURRENT_STATE, AI_OPERATING_PROTOCOL, TASK_CONTROL, TASKS.md (whole board), WORKING_POLICY, MODEL_ROSTER, START_PROMPT, PROJECT_STATE (identified it as a tombstone), INDEX, decision-log tail, DECISIONS.
+Role of this card: it was a measurement, not a fix. Its stop boundary was one run, so nothing was changed here — the findings became T-063.
+Findings passed to T-063: a real session opens 13 files, not the 5 the tier plan called "every session"; `INDEX.md` was not listed inside itself (the probe found it by luck); the PROJECT_STATE tombstone behaved correctly; the on-demand set was correctly left alone.
+
+### T-063 — Tier-1 order fixed, tier-3 read-ahead forbidden, cold-start price re-measured
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Committed `79556c3` + `bf5a69d`, pushed (`444b3b5..bf5a69d`).
+Owner: Owner-ordered. Risk: L1–L2 — documentation/governance only, but it changes what every future session reads first, so the re-test was the verification.
+Owner requirements faithfully recorded: **add `INDEX.md` as the first tier-1 file** (it had been found by luck, not by the system), **reorder tier 1** to INDEX → PROJECT_BRIEF.th.md → SESSION_HANDOFF.md → CURRENT_STATE.md → DECISIONS.md, **read only the assigned card** in `TASKS.md` and never the whole board, and **forbid opening tier-3 files in advance** (the Owner's Thai sentence carried verbatim).
+Delivered: `AGENTS.md` § "Session Start" (the diff was shown to the Owner verbatim) + `docs/project-memory/INDEX.md` mirroring the same order, so the map now contains itself.
+Verification: a second fresh-process probe on the same model, same read-only instruction, task = fix one typo in README.md → **6 files** opened (SESSION_HANDOFF, README the target file, INDEX, CURRENT_STATE, PROJECT_BRIEF.th, DECISIONS) = tier 1 plus the task's own file. **13 → 6, target 6–7 met.** The seven that disappeared are exactly the tier-3/4 set probe #1 had opened ahead of time.
+Side finding (recorded, not fixed): `README.md:77-78` still points at the retired `PROJECT_STATE.md` — became known-not-fixing item 6.
