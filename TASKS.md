@@ -424,47 +424,6 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 
 ---
 
-### T-058 — Doc cleanup: stale content out, duplicate rules de-duplicated, INDEX rebuilt
-
-Status: DONE (2026-09-27) — reviewer ACCEPT-WITH-FINDINGS, findings answered; **pushed** `a0a5e1b..be7d3e7`, `origin/dev-workspace` == `HEAD` (`be7d3e7`)
-Owner: Project Lead — 2026-09-27
-Role: PL (dev-doc writes only) · writer `opencode/nemotron-3-ultra-free` (runtime pin files) · reviewer `openrouter/nvidia/nemotron-3.5-lightning:free` (different model)
-Risk: L3 — edits the protected documents `AI_OPERATING_PROTOCOL.md` + `TASK_CONTROL.md` (`TASK_CONTROL.md` §8), so card + Owner approval + different-model reviewer + decision-log entry are all required
-Goal: the always-read doc set is small and honest — stale/superseded blocks gone, one definition per rule, and `INDEX.md` lists every real file with no dead link
-Done when: 1) **Part A removed**: SESSION_HANDOFF stale session blocks · CURRENT_STATE pre-Go + session-log tail · MODEL_ROSTER two superseded cross-check tables · INDEX phantom rows · START_PROMPT duplicated model-policy block; 2) **Part B merged**: model pins out of the handoff file, open items out of CURRENT_STATE (single home each) · EN protocol declared binding vs the Thai mirror · duplicated "by job" table removed from MODEL_POLICY (ROSTER is the single source); 3) **AGENTS.md is the authoritative required-reading list**; TASK_CONTROL keeps the single definition of the advisor mandate-check + the 2× budget stop, the protocol points to it instead of restating it; 4) **security seat back on the Go path** (`opencode-go/kimi-k3`) in the docs AND in the runtime pin files; 5) **INDEX.md rebuilt** with the reviewed maintainer column, every entry verified to exist; 6) reviewer on a different model = ACCEPT · decision-log entry written · **nothing pushed until the Owner confirms**
-Budget: one working session
-Links: `docs/project-memory/INDEX.md`, `AGENTS.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`, `docs/warroom/TASK_CONTROL.md`, `docs/product/MODEL_ROSTER.md`
-Commit plan (one commit per item, never bundled): `docs(cleanup)` A-items · `docs(cleanup)` B-items · `docs(governance)` reading-list + rule consolidation (protected docs) · `docs(roster)` security re-pin · `config(security)` runtime pin (writer) · `docs(index)` rebuild
-
-INTAKE T-058 — Project Lead — 2026-09-27
-Understanding: the Owner audited the always-read document set and approved a 3-part cleanup (A delete the stale, B merge the duplicates, C tier the reading list), then added four decisions: the security seat returns to the Go path, `AGENTS.md` becomes the authoritative required-reading list, the duplicated rules consolidate into `TASK_CONTROL.md`, and `INDEX.md` is rebuilt with the correct maintainer column.
-Done when: the six conditions above — each proven by `git diff` / line counts, not by claim.
-Needs: read-only inspection (done) · `edit` on dev docs (PL's own job) · the free writer for the runtime pin files (PL must not hand-edit runtime files) · one reviewer on a different model · a decision-log entry.
-Missing: none. Flagged, not fixed here: `PROJECT_BRIEF.th.md` is still **untracked in git** while `AGENTS.md` names it as required reading — committed separately.
-Plan: 1) A-items, one commit; 2) B-items, one commit; 3) protected-doc consolidation (AGENTS.md authoritative + one definition per rule); 4) security re-pin — docs commit + writer commit; 5) INDEX rebuild; 6) reviewer on a different model, then decision-log; 7) report; no push.
-Estimate: within one working session.
-Risks: (a) hand-editing two protected documents is exactly the failure this protocol exists to prevent → the different-model reviewer is mandatory before DONE, and the verdict is recorded on this card; (b) the currently pinned reviewer model (`opencode/muse-spark-1.3-contributor-free`) trains on prompts while this repo's own rule forbids sending repo content to it → the review runs on the pinned **Backup** (`openrouter/nvidia/nemotron-3.5-lightning:free`), disclosed on the card; (c) `services/core/**` carries another session's uncommitted edits — they must never be staged; (d) removing superseded text must not remove standing rules — `Protected Production System` and `Source-of-Truth Rule` are preserved deliberately.
-Decision: ACCEPT (Owner order 2026-09-27).
-
-DELIVERY T-058 — Project Lead (with the free writer `opencode/nemotron-3-ultra-free`) — 2026-09-27
-Status claimed: DONE
-Done-when check:
-[x] 1 Part A removed → `d5943f7` (4 files, 70 insertions / 466 deletions); standing rules kept on purpose
-[x] 2 Part B merged → `aaf4321`; B-6 checked and correctly needed no change (different layers)
-[x] 3 AGENTS.md authoritative + one definition per rule → `d9da8aa` (TASK_CONTROL §0 added; the protocol's reading list became a pointer; mandate check → §3; 2× budget → §6)
-[x] 4 security back on the Go path, docs + runtime → `21621f6` (roster row 4) + `61843ae` (`.opencode/agents/security.md` frontmatter + `opencode.json`), written by the writer; JSON parses (`JSON OK`); PL re-checked the diff itself = exactly 2 lines, `services/core/**` untouched
-[x] 5 INDEX.md rebuilt, no dead link → `3d5bfaa`; all 34 referenced paths verified to exist (Test-Path: 34 checked, 0 missing)
-[x] 6 reviewer on a different model → ACCEPT-WITH-FINDINGS (`opencode-go/space-bunny-free`, run `runs/2026-09-26T21-51-52Z-t058-review4`); findings 1/3/4 fixed, 5 carried to a new card, 6 noted for the Owner; decision-log entry written; **not pushed**
-Evidence: `git log --oneline a0a5e1b..HEAD` (the commits above); per-commit `git diff --stat`; the JSON parse output; the Test-Path result; the reviewer run directory.
-Changed: `AGENTS.md`, `TASKS.md`, `docs/project-memory/{SESSION_HANDOFF,CURRENT_STATE,INDEX}.md` + `PROJECT_BRIEF.th.md` (added), `docs/warroom/{TASK_CONTROL,AI_OPERATING_PROTOCOL,AI_OPERATING_PROTOCOL.th,START_PROMPT,BUILD_ROLES,decision-log}.md`, `docs/product/{MODEL_ROSTER,MODEL_POLICY}.md`, `.opencode/agents/security.md`, `opencode.json`
-Not done: `WORKING_POLICY.md` Rule 1 still has its own reading list (protected doc, outside this order) → needs its own L3 card; the agent-prompt model mirrors still name the builder wrongly (reviewer finding 5) → new card; `services/core/**` deliberately untouched (another session's work).
-Unverified: whether `PROJECT_STATE.md` / `ROADMAP.md` should be deleted is INFERRED, not Owner-decided — they are listed as superseded in `INDEX.md` only.
-Problems: reviewer run 1 was killed by a tool timeout; run 2 read a 41 KB tool-output file and hit the output-length limit; per the Owner's order the reviewer was switched to `opencode-go/space-bunny-free`.
-Confidence: high.
-Next: Owner confirmation → push; then open the two follow-up cards.
-
----
-
 ### T-059 — Agent prompts name the wrong builder model (reviewer finding 5 of T-058)
 
 Status: READY for INTAKE — **urgent** (Owner order 2026-09-27: this is more urgent than T-060; it affects real review/decision-making)
