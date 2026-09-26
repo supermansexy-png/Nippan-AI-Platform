@@ -14,7 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.db import Database
 from app.model_gateway import ModelPolicy, ModelRoute, OpenRouterGateway
-from app.preview_bootstrap import PreviewBootstrapError
 from app.settings import Settings
 
 import time
@@ -1079,7 +1078,7 @@ def create_war_room_preview_router(
                 room_id=new_room_id,
                 title=title,
             )
-        except (PreviewBootstrapError, ValueError, RuntimeError) as exc:
+        except (ValueError, RuntimeError) as exc:
             raise HTTPException(
                 status_code=409,
                 detail="war_room_preview_room_create_refused",
