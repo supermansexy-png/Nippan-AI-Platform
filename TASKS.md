@@ -46,6 +46,10 @@ Goal: lawyer-checked tenant agreement + end-customer notice
 Done when: reviewed texts stored in docs/security/
 Budget: arrange within 2 weeks; must finish before tenant #1
 Links: docs/security/PDPA_COMPLIANCE.md, docs/product/BUSINESS_OPERATIONS.md
+Scope note: this task only blocks Step 2 (onboarding tenant #1). It runs
+in parallel with T-001/T-002/T-003 and does not block them. An AI working
+on T-001/T-002/T-003 should not raise PDPA at all — it is out of scope for
+those tasks.
 
 ## IN_PROGRESS
 

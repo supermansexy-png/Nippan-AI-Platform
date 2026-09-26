@@ -150,6 +150,20 @@ that is merely weak, because its mistakes are hidden. Rewarding honesty
 and penalizing overclaiming is what makes a mixed team of different AI
 models trustworthy.
 
+## Do not import scope from other tasks
+
+A task card defines the full scope of the work. Do not pull in
+requirements, checks, or concerns from a *different* task, even a related
+or important one, unless the card links to it. The most common failure
+mode: raising legal/compliance/PDPA concerns while doing infrastructure
+work, because the project has real PDPA requirements *elsewhere*
+(T-004) — those apply to onboarding a real tenant, not to building the
+stack. If unsure whether something is in scope, check the card's "Links"
+and `PROJECT_STATE.md`'s "Current objective" before raising it. If it
+turns out not to be in scope, don't mention it at all — repeatedly
+circling back to an out-of-scope concern is itself a protocol violation
+(see execution rule 1, "stay in scope").
+
 ## Session rules
 
 **Start of every session:** read `AGENTS.md`, this file, `PROJECT_STATE.md`,

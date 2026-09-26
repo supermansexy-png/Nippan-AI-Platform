@@ -12,9 +12,24 @@ Rewritten after a pivot decided 2026-09-24. See `ROADMAP.md` for the full
 
 ## Current objective
 
-Stand up the Phase A stack (n8n core, lite schema, starting MCP tools,
-Onboarding assistant, PDPA layer, War Room Operations) and onboard the
-first real tenants — up to 30, at 299 THB/month flat.
+**Right now: build the infrastructure. There are zero real tenants.**
+Nobody is being onboarded yet. Do not act as if a live customer exists —
+if a task description implies one does, that's a signal to re-read this
+file, not to proceed as if it's true.
+
+The current work is standing up the Phase A stack per
+`docs/warroom/STARTUP_PLAYBOOK.md` Step 0-1: n8n core, lite schema,
+starting MCP tools, Onboarding assistant. Onboarding the first real
+tenant is Step 2 — a later, separate milestone, not something happening
+now.
+
+**PDPA is designed, not blocking.** The compliance approach
+(`docs/security/PDPA_COMPLIANCE.md`) is already written. The one thing
+still open is T-004 (a lawyer reviewing the tenant agreement) — that task
+runs in parallel with infrastructure work and only has to finish before
+Step 2 (onboarding tenant #1). It does not need to finish before, or
+block, any Step 0/1 infrastructure task. If a task card doesn't mention
+PDPA, don't bring it up.
 
 ## What's built vs. what's designed but not yet implemented
 
