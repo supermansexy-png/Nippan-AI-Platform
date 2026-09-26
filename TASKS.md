@@ -221,6 +221,44 @@ Decision: ACCEPT — slices as above.
 
 ---
 
+> NOTE (Project Lead, 2026-09-26): the card below was found uncommitted in the working tree and was authored **outside
+> this session**. It is preserved here untouched — not reviewed, not approved, and not counted as this session's work.
+
+### T-030 — Bring OpenCode Go ($10/mo) into the dev team as the paid provider
+Status: READY (plan written 2026-09-26; waiting Owner approval on the mapping)
+Owner: (unclaimed — Project Lead planning; HR readiness check pending)
+Role: Project Lead (plan) + Model Recruiter (availability/probe)
+Risk: L2 — dev-process model routing + cost policy; rewriting `MODEL_ROSTER.md` needs Owner approval
+Goal: roles whose model already exists inside the Go subscription run via `opencode-go/<id>`
+instead of the near-empty OpenRouter balance, with the model identity unchanged.
+Done when:
+- HR reports Go availability per role model, with a real probe result per model (VERIFIED/UNKNOWN marked)
+- Owner approves the role→`opencode-go` mapping (or a subset)
+- one headless job per migrated role runs end-to-end on the Go provider with evidence under `runs/`
+- `MODEL_ROSTER.md` + `SESSION_HANDOFF.md` updated and a `decision-log.md` entry written
+- fallback preserved: OpenRouter stays configured; no role left depending on one provider only
+Budget: one working session; HR probe calls only (no new paid spend beyond the subscription)
+Links: `docs/product/MODEL_ROSTER.md`, `opencode.json`, `scripts/headless_run.mjs`, `https://opencode.ai/docs/go/`
+
+Planned mapping (same model, different provider — model identity preserved):
+
+| Role | Current route | Proposed Go route | Go monthly limit |
+|---|---|---|---|
+| project-lead | `openrouter/deepseek/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` | $60 |
+| builder (Owner-locked model) | `z-ai/glm-5.3-flash` | `opencode-go/glm-5.3-flash` | $60 |
+| reviewer L1–L3 | `opencode/space-bunny-free` | `opencode-go/space-bunny-free` | unlimited (promo) |
+| model-recruiter (HR) | `openrouter/openai/gpt-6-luna` | `opencode-go/gpt-6-luna` | $15 |
+| ops / researcher / assistant | `opencode/muse-spark-1.2-contributor-free` | `opencode-go/muse-spark-1.3-contributor` | $60 |
+| security L1–L3 | `openrouter/nex-agi/nex-n2.5-mini:free` | unchanged — **not offered in Go** | — |
+
+Notes / constraints found 2026-09-26 (evidence in the card's DELIVERY when done):
+- `opencode-go` is already authenticated in this workspace; `/zen/go/v1/models` returns 35 models
+  incl. every paid-roster model above; `glm-5.3-flash` and `space-bunny-free` serve inference (HTTP 200).
+- Muse Spark under Go trains on prompts/outputs and is **not ZDR** → no secrets/sensitive code.
+- Go models still consume reasoning tokens: `max_tokens` in probes must be generous.
+- Drift found: `opencode.json` default/`small_model` = `opencode/ling-3.0-flash-fin-free`, a model
+  previously recorded as unusable/banned for PL+HR — fix alongside the mapping.
+
 ## REVIEW
 
 (none)
