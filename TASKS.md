@@ -478,6 +478,31 @@ Links: T-058 (carried item), `docs/project-memory/INDEX.md` § "ไฟล์ท�
 
 ---
 
+### T-061 — Five more stale model pins inside agent prompts (the T-059 reviewer findings)
+
+Status: READY for INTAKE — L2 (Owner order 2026-09-27: same conditions as T-059). Fixer unclaimed.
+Owner: (unclaimed) — see the attribution note below before assigning a model
+Role: writer on a model that did **not** write the offending lines · reviewer on a **third** model
+Risk: L2 — runtime files (`.opencode/agents/*.md`); the same class as T-059: a wrong pin in a prompt misleads the verification done from that prompt
+Goal: every model pin named inside an agent prompt matches `docs/product/MODEL_ROSTER.md` § "Per-role staffing" — or no model is named at all
+Done when: 1) the lines below are fixed, each to a **roster pointer** rather than a new hardcoded slug; 2) no other sentence of any prompt changes; 3) a reviewer on a third model states that only pin lines changed; 4) after the fix, no line under `.opencode/agents/**` names a pin that contradicts the roster — checked line by line against the roster table, with any remainder listed; 5) the commit is separate from T-059 and is **not pushed** until the Owner confirms
+Budget: 30 minutes
+Links: T-059 (this card continues it) · `runs/2026-09-26T22-13-13Z-t059-review` (the findings) · `docs/product/MODEL_ROSTER.md` § "Per-role staffing" · `docs/product/MODEL_POLICY.md` § "Never hardcode a model into a role"
+
+**The lines to fix (identified by content — line numbers as reported by the T-059 reviewer; the fixer must confirm them by reading the file):**
+- `ops.md:47` — names `opencode-go/mimo-v2.6-flash` as the ops **primary**, but the roster has it as the **Backup** (primary = `opencode/nemotron-3.5-lightning-free`); the backup named there is not the roster pair either
+- `project-lead.md` — the `ops` + `model-recruiter (HR)` bullet: both are named with slugs that the roster records as **Backups**
+- `project-lead.md` — the `advisor = opencode-go/mimo-v2.6-pro` mention: the roster primary for advisor is `opencode/mimo-v2.6-flash-free`
+- `assistant.md:56` — the assistant backup is given as `opencode/nemotron-3.5-lightning-free`; the roster backup is `opencode-go/mimo-v2.6-flash`
+- `researcher.md:43` — the researcher backup is given as `opencode/nemotron-3-ultra-free`; the roster backup is `openrouter/nvidia/nemotron-3.5-lightning:free`
+- Also re-check the `project-lead.md` reviewer/security line against the roster while in there (the reviewer flagged it; it may already be correct)
+
+**Owner conditions (recorded as given, 2026-09-27):** the fixer must not be the model that wrote the original wrong line — attribution must be checked **per line**, because the five lines may not share one author; the reviewer must be a **third** model; the diff must be confirmed to touch only model names; and the fix must point at the roster instead of re-typing a slug (the approach that worked on T-059).
+
+**Attribution — what is PROVEN and what is not (PL, 2026-09-27):** per-line attribution (`git blame`, `git log -S`) is **blocked by the session permission config**, so only commit-level attribution could be established. The commits that last touched these files are `e6330a1` (T-035, migrate 6 seats), `a0a5e1b`, `0a028bf`, `2324fe8`, `335630b`, `b4d3d67`, `a4ce52d`, `5a93eff`, `d4ec435`. The migration record (`ADVISOR_LOG.md`, T-035 bundle) states those edits were applied **by the free `assistant` writer** — the same exclusion T-059 used. **So `opencode/nemotron-3-ultra-free` (assistant) is excluded as fixer; the T-059 fixer `opencode-go/glm-5.3-flash` remains acceptable.** Per-line attribution stays **UNVERIFIED** — if a fixer is ever chosen for a line whose author is unknown, that gap must be stated rather than glossed over.
+
+---
+
 ## REVIEW
 
 (none)
