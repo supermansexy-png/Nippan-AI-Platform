@@ -31,10 +31,24 @@ NIPPAN_DATABASE_POOL_MAX_SIZE=5
 
 ## Run
 
+Linux / container:
+
 ```bash
 python -m pip install -e ".[test]"
 uvicorn app.main:app --reload
 ```
+
+Windows (from `services/core`):
+
+```bash
+python -m pip install -e ".[test]"
+python dev_server.py
+```
+
+`dev_server.py` is a local dev launcher. On Windows only, it swaps uvicorn's
+loop factory to a selector loop, because psycopg's async pool cannot run on the
+ProactorEventLoop uvicorn would otherwise use there; everywhere else it is a
+thin `--host`/`--port` CLI wrapper around `uvicorn.run("app.main:app")`.
 
 
 ## War Room guarded-turn database capacity
