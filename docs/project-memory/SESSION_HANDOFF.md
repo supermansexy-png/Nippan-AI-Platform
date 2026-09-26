@@ -1,60 +1,59 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-26
-**หัวข้อ:** Nippan: team on OpenCode Go + ที่ปรึกษาวางแผน (advisor) + ระบบตรวจสอบ
+**หัวข้อ:** T-041/042/043 done: advisor→PL channel, PL on DeepSeek, PL code lock
 
-## งานรอบนี้ (session 4 — 2026-09-26) ทำอะไรเสร็จแล้ว
+## สถานะล่าสุด (session 2026-09-26, ต่อจาก session 4)
 
-**ทุกอย่าง commit + push แล้ว · working tree สะอาด**
-- `3d92735` feat(skills): advisor skills · `01c8f52` docs(memory): handoff · `a4ce52d` feat(team): Go + advisor
-- push ขึ้น `origin/dev-workspace` แล้ว (ไม่มี commit ค้าง)
+**commit `b4d3d67`** — "fix(team): unblock advisor-to-PL, re-pin the PL model, enforce the PL code lock" (7 ไฟล์, 361+/8-)
+**ทำงานครบ + reviewer ตรวจแล้วทั้ง 3 การ์ด · working tree สะอาด · ⚠️ ยังไม่ push (อยู่ห่าง origin/dev-workspace 1 commit)**
 
-### 1. ย้ายทีมทั้งชุดไป OpenCode Go (การ์ด T-035 / T-037)
-- `opencode-go/<id>` = **คลังหลัก** (พี่จ่าย $10/เดือนแล้ว) · OpenRouter + OpenCode Zen = สำรอง
-- pin ปัจจุบัน (ตรงกับไฟล์ agent จริงทั้งหมด):
-  - project-lead `openrouter/deepseek/deepseek-v4.1-flash` (**T-042, 2026-09-26 — Owner order** "เปลี่ยน pl เป็น deepseek-v4.1"; ฝั่ง Go ยังติด HTTP 400 "requires Global regions" จึงใช้ endpoint OpenRouter ของโมเดลเดียวกัน) · backup `opencode-go/mimo-v2.6-pro`
-  - advisor `opencode-go/mimo-v2.6-pro` · builder `opencode-go/glm-5.3-flash` (Owner lock เดิม **ยกเลิกแล้ว**)
-  - reviewer L1–L3 `opencode-go/space-bunny-free` · L4 `anthropic/claude-opus-5.5:batch`
-  - ops `opencode-go/mimo-v2.6-flash` · HR `opencode-go/gpt-6-luna`
-  - security `openrouter/nex-agi/nex-n2.5-mini:free` (Go ไม่มีตัวแทน) · researcher `opencode/nemotron-3.5-lightning-free` · assistant `opencode/nemotron-3-ultra-free`
-- `opencode.json`: global model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`, default_agent = project-lead, subagent_depth = 2 · agent override ของ project-lead = `openrouter/deepseek/deepseek-v4.1-flash` (T-042)
-- ทดสอบสดผ่าน: glm-5.3-flash, space-bunny-free, mimo-v2.6-flash, mimo-v2.6-pro, kimi-k3 · ติด region: deepseek-* ทั้งตระกูล
-- HR เขียนคำสั่งใหม่แล้วให้สรรหาจากคลัง Go เป็นหลัก
+### 1. T-041 — ที่ปรึกษา → PL ติดต่อกันได้แล้ว (สาเหตุจริง + แก้)
+- สาเหตุ: opencode Task tool เรียกได้แค่ **subagent** แต่ `advisor` และ `project-lead` ตั้งเป็น `mode: primary` ทั้งคู่ → ที่ปรึกษาไม่มีช่องถึง PL เลย (คำกล่าวใน `ADVISOR_MANDATE.md` §2 จึงทำไม่ได้จริงมาตั้งแต่แรก — ไม่ใช่ปัญหาโมเดล/สิทธิ์)
+- แก้: `project-lead` → `mode: all` + `opencode.json` เพิ่ม `"subagent_depth": 2` (default = 1 ทำให้ PL สั่ง builder/reviewer ต่อไม่ได้ = สายขาดที่ข้อสอง)
+- reviewer `opencode-go/space-bunny-free` = ACCEPT-WITH-FINDINGS ทั้งสองรอบ
 
-### 1b. แก้ช่องทาง "ที่ปรึกษา → PL" + เปลี่ยนโมเดล PL (การ์ด T-041 / T-042) — 2026-09-26
-- **T-041:** ที่ปรึกษาคุยกับ PL ไม่ได้เลย เพราะ Task tool เรียกได้แค่ `subagent` แต่ทั้งคู่เป็น `primary` → แก้ `project-lead` เป็น `mode: all` และเพิ่ม `"subagent_depth": 2` (ค่า default = 1 ทำให้ PL สั่ง builder/reviewer ต่อไม่ได้) · reviewer คนละโมเดล verdict = ACCEPT-WITH-FINDINGS ทั้งสองรอบ
-- **T-042:** PL ย้ายไป `openrouter/deepseek/deepseek-v4.1-flash` (backup = `opencode-go/mimo-v2.6-pro`) — เครดิต OpenRouter เหลือ **≈ $4.44** และ **ไม่มี fallback อัตโนมัติ** ถ้าเครดิตหมด PL หยุด
-- **ยังไม่พิสูจน์:** `mode: all` ผ่านเงื่อนไข `default_agent` ไหม — ถ้าไม่ผ่าน opencode จะถอยไปใช้ `build` เงียบ ๆ → **ต้องรีสตาร์ทแล้วเช็คว่า agent เริ่มต้นยังเป็น project-lead**
-- **T-043 (Owner อนุมัติ + ทดสอบสดผ่าน 2026-09-26):** ล็อกสิทธิ์ PL — ชั้น 1 `edit` allowlist (`TASKS.md`, `docs/**`, `runs/**`, `README*`, `AGENTS.md`, `WORKING_POLICY.md`, `PROJECT_STATE.md`, `ROADMAP.md`; นอกนั้น deny) + ชั้น 2 deny 11 คำสั่ง bash ที่เขียนไฟล์ · **พิสูจน์สดแล้ว:** เขียน `.opencode/**` ถูกปฏิเสธ, เขียน `runs/**` ได้, `Set-Content` ถูกปฏิเสธ · หมายเหตุ: PL ลบไฟล์ด้วย `Remove-Item` ไม่ได้แล้ว (ใช้ `node -e fs.rmSync` แทน) · ย้ำ: กันไม่ได้ 100% (redirect / `git checkout <branch> -- <path>` / `node -e` ยังเขียนได้)
+### 2. T-042 — PL ย้ายโมเดล (คำสั่ง Owner)
+- PL = **`openrouter/deepseek/deepseek-v4.1-flash`** · backup = `opencode-go/mimo-v2.6-pro` (สลับกัน)
+- เหตุผล: ฝั่ง Go (`opencode-go/deepseek-v4.1-flash`) ยังติด **HTTP 400 "requires Global regions"** → ต้องตั้ง Privacy workspace เป็น Global ก่อน
+- เอกสาร mirror แล้ว: MODEL_ROSTER row 1, CURRENT_STATE, SESSION_HANDOFF, decision-log (ไม่แก้ประวัติเดิม)
+- ⚠️ **ไม่มี fallback อัตโนมัติ** — เครดิต OpenRouter เหลือ ≈ $4.4 ถ้าหมด PL หยุด
+- ⚠️ retention ของ deepseek ยังไม่ยืนยัน 0 วัน → อย่าให้ PL ถือข้อมูลอ่อนไหว
 
-### 2. ตำแหน่งใหม่ "ที่ปรึกษาวางแผน" (advisor) + ระบบตรวจสอบ (การ์ด T-038 / T-039 / T-040)
-- ลำดับสั่งงาน: `Owner → advisor → Project Lead → specialist` · สั่ง agent ได้ทุกตัว · อนุมัติ/commit/push แทนพี่ได้ตอนพี่ไม่อยู่
-- **แก้ไฟล์เองไม่ได้** (edit deny) · shell ได้แค่ git · **สั่งงานนอกระเบียบไม่ได้** · **ห้ามอนุมัติเอกสาร protected** (conflict of interest)
-- ระบบตรวจสอบ: `docs/warroom/ADVISOR_MANDATE.md` (protected) + `docs/warroom/ADVISOR_LOG.md` (append-only)
-  - **ผู้รับคำสั่งเป็นคนบันทึก ไม่ใช่ที่ปรึกษา** · audit ทุกการ์ดโดยโมเดลอื่น (≠ mimo-v2.6-pro) · verdict 3 ค่า
-  - audit รอบแรกผ่าน: `opencode-go/kimi-k3` → WITHIN-MANDATE-WITH-FINDINGS
-  - บันทึกคำสั่งของพี่รอบนี้ = entry T-038 ใน ADVISOR_LOG แล้ว
-- สกิล 2 ตัว (`.opencode/skills/`): `advisor-work-order` (แปลงคำสั่งพี่เป็นใบสั่งงาน + เทมเพลตบันทึก) และ `advisor-mandate-audit` (ตรวจ A1–A5)
-- กฎซ่อมแล้ว: `AGENTS.md`, `START_PROMPT.md`, `AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md`, `DEV_WORKING_GUIDE.md`, `FREE_MODEL_FALLBACK_GUIDE.md`, `MODEL_ROSTER.md`, `CURRENT_STATE.md` — ล้างโมเดลตาย (`big-pickle`, `ling-3.0`, `mimo-v2.6-flash-free`) และ pre-Go facts หมดแล้ว
+### 3. T-043 — ล็อกสิทธิ์ PL ไม่ให้เขียนโค๊ด (Owner อนุมัติ + พิสูจน์สดแล้ว)
+- Owner ย้ำเจตนา: **"เขียนไฟล์ได้ (หน้าที่โดยตรง) แต่ห้ามเขียนโค๊ด"**
+- ชั้น 1 `edit` allowlist: `TASKS.md`, `docs/**`, `runs/**`, `README*`, `AGENTS.md`, `WORKING_POLICY.md`, `PROJECT_STATE.md`, `ROADMAP.md` — นอกนั้น deny (fail-closed)
+- ชั้น 2 deny 11 คำสั่ง bash ที่เขียนไฟล์ (`Set-Content`, `New-Item`, `Move-Item`, `Out-File` ฯลฯ)
+- **หลักฐานสด (รันจากตัว PL เอง หลัง Owner รีสตาร์ท):** เขียน `.opencode/**` → ถูกปฏิเสธ · เขียน `runs/**` → สำเร็จ · `Set-Content` → ถูกปฏิเสธ (ชุดกฎที่ส่งกลับมายืนยันว่า agent ทับ global จริง)
+- ข้อจำกัดที่บันทึกตรง ๆ: **กันไม่ได้ 100%** — `git log > file`, `Write-Output x > file`, `git checkout <branch> -- <path>`, `node -e`, `python -c`, `npm install`, `docker`, `supabase` ยังเขียนได้ → ที่ถูกคือ "กันทางตรง + ตรวจจับได้"
+- ผลข้างเคียง: PL ใช้ `Remove-Item` ไม่ได้แล้ว (ใช้ `node -e fs.rmSync` แทน) และ **PL แก้ `.opencode/**`/`opencode.json` เองไม่ได้อีก → งาน config ต้องส่ง builder เสมอ**
 
-## พี่ต้องทำ (ค้างอยู่)
-1. **ปิดเปิดแอป opencode** → agent "ที่ปรึกษาวางแผน" + สกิลทั้ง 2 จะโผล่ (config commit แล้วแต่ต้องรี)
-2. ถ้าต้องการใช้ DeepSeek บน Go → ตั้ง Privacy ของ workspace (https://opencode.ai/auth) เป็น **Global regions** — *ยังยืนยันจากเอกสารสาธารณะไม่ได้ว่าปุ่มชื่ออะไรแน่ (UNVERIFIED)* ไม่ตั้งก็ไม่กระทบงาน
-3. หลังรี: ลองเรียก HR อีกที และ **ทดสอบสกิล** (ให้ที่ปรึกษาเรียก `advisor-work-order`) เพื่อยืนยันว่าค้นเจอจริง
+## Roster ปัจจุบัน (ยืนยันจากไฟล์ agent จริง)
+- ที่ปรึกษา (advisor) `opencode-go/mimo-v2.6-pro` (primary) · **PL `openrouter/deepseek/deepseek-v4.1-flash` (mode: all)** · builder `opencode-go/glm-5.3-flash`
+- reviewer L1–L3 `opencode-go/space-bunny-free` · L4 `anthropic/claude-opus-5.5:batch` · security `openrouter/nex-agi/nex-n2.5-mini:free`
+- ops `opencode-go/mimo-v2.6-flash` · HR `opencode-go/gpt-6-luna` · researcher `opencode/nemotron-3.5-lightning-free` · assistant `opencode/nemotron-3-ultra-free` · worker (headless) ไม่มี pin ส่ง `--model` ต่อ job
+- `opencode.json`: global model `opencode-go/mimo-v2.6-pro`, small_model `opencode-go/mimo-v2.6-flash`, default_agent project-lead, subagent_depth 2
 
-## งานเปิดค้าง
-- **T-034b เหลือ slice 2b**: แก้วาระ (agenda CRUD) จากหน้าเว็บ War Room — ยัง read-only
-- **T-032**: รอพี่ตอบ 4 ข้อฝั่ง Codex + ตัดสินใจเปิด protection ของ `dev-workspace`
-- **housekeeping**: T-034a เป็น DONE แล้วยังอยู่บนบอร์ด → ควรย้ายเข้า `docs/archive/TASKS_DONE_ARCHIVE.md` (บอร์ดเกิน cap 5)
-- **เครดิต OpenRouter ≈ $1.19** → งานเสียเงินให้ใช้ Go/โมเดลฟรีแทน
-- ยังไม่แตะ: `docs/warroom/ROLES.md` (เป็นนิเวศ runtime ไม่ใช่ทีม dev)
+## งานเปิดค้าง / รอพี่ตัดสิน
+1. **push** commit `b4d3d67` ขึ้น `origin/dev-workspace` (ทำแล้วยังไม่ได้ push)
+2. **T-034b เหลือ slice 2b** — แก้วาระ (agenda CRUD) จากหน้าเว็บ War Room (ยัง read-only)
+3. **T-032** — รอพี่ตอบ 4 ข้อฝั่ง Codex + ตัดสินใจเปิด protection ของ `dev-workspace`
+4. **เอกสารใต้ `services/`** — ตอนนี้ PL ถูกห้ามเขียนเพราะอยู่ใน `services/**` ถ้าต้องการให้เขียนได้ (เช่น `services/dev/DEPLOYMENT_GUIDE.md`) ต้องขยาย allowlist
+5. **housekeeping** — บอร์ดเกิน cap 5; T-034a เป็น DONE แล้วควรย้ายเข้า `docs/archive/TASKS_DONE_ARCHIVE.md`
+6. **ตั้ง Privacy workspace เป็น Global regions** ถ้าต้องการย้าย PL ไป Go (ประหยัดกว่า OpenRouter)
+7. ถ้าต้องทดสอบว่า `mode: all` ผ่านเงื่อนไข `default_agent` ไหม — เปิดแชทใหม่แล้วดูว่า agent เริ่มต้นเป็น `project-lead` ไม่ใช่ `build`
+8. ยังไม่แตะ: `docs/warroom/ROLES.md` (นิเวศ runtime ไม่ใช่ทีม dev)
 
 ## บทเรียนเครื่องมือ (กันเสียเวลารอบหน้า)
-- `headless_run.mjs --agent <subagent>` **silently fallback ไป default agent** (ได้ edit permission โดยไม่ตั้งใจ) → ใช้ `--agent worker` เท่านั้นสำหรับงาน headless
-- prompt ยาว ๆ ถูกตัดที่ ~600 ตัวอักษรผ่าน powershell wrapper → ใส่ brief ลง `runs/briefs/<card>.md` แล้ว `--prompt` เป็น pointer ประโยคสั้น
-- โมเดล reasoning (glm-5.3-flash, mimo, kimi บนงานอ่านเยอะ) **หมดโควตา reasoning แล้วตายกลางทาง** (reason: length) — งานอ่านไฟล์เยอะให้แบ่งเป็นงานเล็ก หรือ PL ทำเองถ้าเป็น dev-process doc
-- `git diff -- <paths>` **โดน permission engine ตีความผิด** → ใช้ `git diff <paths>` (ไม่มี `--`)
-- ชื่อโมเดลต้องมี prefix เสมอ: `opencode-go/`, `opencode/`, `openrouter/author/` — ไม่ใส่จะขึ้น `Unexpected server error` หลอก ๆ
-- demo agent skill: สกิลอยู่ที่ `.opencode/skills/<name>/SKILL.md` (`name` ต้องตรงชื่อโฟลเดอร์, lowercase-hyphen)
+- **builder อาจรายงานว่าเสร็จแต่ไม่ได้แก้ไฟล์เลย** (เจอใน T-043) → PL ต้องเปิดไฟล์/รัน diff ตรวจเองเสมอ ไม่เชื่อ report
+- prompt ยาว ๆ งานอ่านไฟล์เยอะ ทำให้โมเดล reasoning หมดโควตาแล้วตายกลางทาง → ใส่ brief สั้น ๆ หรือสั่งงานแบบ instruction-only
+- builder เขียน INTAKE/DELIVERY ต่อท้ายการ์ดได้ แต่ต้องสั่งให้ **append ท้ายเท่านั้น** (ครั้งหนึ่งมันแทรกกลางแล้วทำบรรทัดการ์ดพัง ผมต้องซ่อม)
+- `rg` ไม่เคยอยู่ใน bash allowlist (ตกที่ `"*": "deny"`) ไม่ใช่ผลจากล็อกใหม่
+- ชื่อโมเดลต้องมี prefix เสมอ: `opencode-go/`, `opencode/`, `openrouter/author/`
+- headless: ใช้ `--agent worker` เท่านั้น (subagent จะ silently fallback ไป default agent)
+- `git diff -- <paths>` โดน permission engine ตีความผิด → ใช้ `git diff <paths>`
+
+## เริ่มแชทใหม่
+อ่าน `docs/project-memory/SESSION_HANDOFF.md` เป็นไฟล์แรก แล้วอ่าน AGENTS.md + `docs/warroom/AI_OPERATING_PROTOCOL.md` + `TASK_CONTROL.md` + `TASKS.md` ตามระเบียบ
 <!-- AUTO-HANDOFF:END -->
 
 > ## ▶ สถานะล่าสุด 2026-09-26 (session 4) — ยึดบล็อกนี้ก่อนบล็อกอื่นทั้งหมด
