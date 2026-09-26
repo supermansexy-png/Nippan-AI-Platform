@@ -10,12 +10,17 @@
 |------|---------------|
 | **Project Lead** | คิด วางแผน สั่งงาน จัดการบอร์ด TASKS.md รายงาน Owner ตาม AI_OPERATING_PROTOCOL + TASK_CONTROL ไม่เขียนโค้ด runtime เอง (file-type rule) |
 | **advisor (ที่ปรึกษาวางแผน)** | แปลคำสั่ง Owner เป็น work order รัดกุม สั่ง agent ทุกตัวได้ อนุมัติ/commit แทน Owner ได้ตอน Owner ไม่อยู่ **ห้ามแก้ไฟล์เอง** ห้ามสั่งงานนอกระเบียบ (ADVISOR_MANDATE.md) |
-| **builder** | เขียนโค้ด tests implementation ตามการ์ด ใช้โมเดล paid `opencode-go/glm-5.3-flash` (Owner lock lifted 2026-09-26) |
-| **reviewer** | ตรวจงาน L1–L3 โดยโมเดลคนละตัวกับ builder (`opencode-go/space-bunny-free`) ให้ verdict ACCEPT/RETURN |
-| **security** | ตรวจ authentication authorization secrets tenant/bot isolation attack surface security boundary แบบ read-only (`openrouter/nex-agi/nex-n2.5-mini:free` primary, `opencode-go/kimi-k3` backup) |
+| **builder** | เขียนโค้ด tests implementation ตามการ์ด |
+| **reviewer** | ตรวจงาน L1–L3 ด้วยโมเดลคนละตัวกับ builder (anti-redundancy) ให้ verdict ACCEPT/RETURN |
+| **security** | ตรวจ authentication authorization secrets tenant/bot isolation attack surface security boundary แบบ read-only |
 | **ops** | ดูแล GitHub CI Render Cloudflare Supabase hosting deployment evidence ตามการ์ด |
 | **researcher** | ค้นข้อมูล เอกสาร เปรียบเทียบทางเลือก ให้ PL โดยไม่แก้ project |
-| **model-recruiter (HR)** | คัดเลือกโมเดล/AI ให้ตรงงาน dev ตรวจ availability capability ราคา ตามนโยบายราคา (`opencode-go/gpt-6-luna`) |
+| **model-recruiter (HR)** | คัดเลือกโมเดล/AI ให้ตรงงาน dev ตรวจ availability capability ราคา ตามนโยบายราคา |
+
+> **ไม่ระบุโมเดลในตารางนี้** (การ์ด T-058): ชื่อโมเดลของแต่ละตำแหน่งอยู่ในตารางจริงที่
+> `docs/product/MODEL_ROSTER.md` § "Per-role staffing" ที่เดียว — ห้าม hardcode ชื่อโมเดลลงในนิยามตำแหน่ง
+> (`docs/product/MODEL_POLICY.md` § "Never hardcode a model into a role"). เหตุผลที่ต้องตัดออก: ชื่อที่แปะไว้
+> ในตารางนี้ตกรุ่นแล้ว (เช่น security ยังชี้โมเดลที่ตายไปแล้ว) และขัดกับกฎข้างบน
 
 ---
 
