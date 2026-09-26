@@ -4,8 +4,9 @@
 
 ## สถานะล่าสุด (session 2026-09-26, ต่อจาก session 4)
 
-**commit `b4d3d67`** — "fix(team): unblock advisor-to-PL, re-pin the PL model, enforce the PL code lock" (7 ไฟล์, 361+/8-)
-**ทำงานครบ + reviewer ตรวจแล้วทั้ง 3 การ์ด · working tree สะอาด · ⚠️ ยังไม่ push (อยู่ห่าง origin/dev-workspace 1 commit)**
+**commit ล่าสุด `335630b`** (T-044) — **session นี้มี 4 commits และ push ขึ้น `origin/dev-workspace` เรียบร้อยแล้ว:**
+`b4d3d67` (T-041/042/043) → `4a29606` (handoff) → `614bf1d` (การ์ด T-044) → `335630b` (T-044 writer) · working tree สะอาด · ไม่มีอะไรค้าง push
+**การ์ดที่ทำครบ + reviewer คนละโมเดลตรวจแล้ว: T-041 · T-042 · T-043 · T-044**
 
 ### 1. T-041 — ที่ปรึกษา → PL ติดต่อกันได้แล้ว (สาเหตุจริง + แก้)
 - สาเหตุ: opencode Task tool เรียกได้แค่ **subagent** แต่ `advisor` และ `project-lead` ตั้งเป็น `mode: primary` ทั้งคู่ → ที่ปรึกษาไม่มีช่องถึง PL เลย (คำกล่าวใน `ADVISOR_MANDATE.md` §2 จึงทำไม่ได้จริงมาตั้งแต่แรก — ไม่ใช่ปัญหาโมเดล/สิทธิ์)
@@ -25,7 +26,14 @@
 - ชั้น 2 deny 11 คำสั่ง bash ที่เขียนไฟล์ (`Set-Content`, `New-Item`, `Move-Item`, `Out-File` ฯลฯ)
 - **หลักฐานสด (รันจากตัว PL เอง หลัง Owner รีสตาร์ท):** เขียน `.opencode/**` → ถูกปฏิเสธ · เขียน `runs/**` → สำเร็จ · `Set-Content` → ถูกปฏิเสธ (ชุดกฎที่ส่งกลับมายืนยันว่า agent ทับ global จริง)
 - ข้อจำกัดที่บันทึกตรง ๆ: **กันไม่ได้ 100%** — `git log > file`, `Write-Output x > file`, `git checkout <branch> -- <path>`, `node -e`, `python -c`, `npm install`, `docker`, `supabase` ยังเขียนได้ → ที่ถูกคือ "กันทางตรง + ตรวจจับได้"
-- ผลข้างเคียง: PL ใช้ `Remove-Item` ไม่ได้แล้ว (ใช้ `node -e fs.rmSync` แทน) และ **PL แก้ `.opencode/**`/`opencode.json` เองไม่ได้อีก → งาน config ต้องส่ง builder เสมอ**
+- ผลข้างเคียง: PL ใช้ `Remove-Item` ไม่ได้แล้ว (ใช้ `node -e fs.rmSync` แทน) และ **PL แก้ `.opencode/**`/`opencode.json` เองไม่ได้อีก → งาน config ต้องส่ง "มือเขียน" (T-044) หรือ builder**
+
+### 4. T-044 — มือเขียนฟรีของ PL = `assistant` (Owner เลือกใช้ตัวที่มีอยู่)
+- เพราะ PL แก้ไฟล์ runtime/config เองไม่ได้ (ล็อก T-043) จึงต้องมีมือเขียน → **Owner เลือกใช้ `assistant` ตัวเดิม** (ฟรี `opencode/nemotron-3-ultra-free`, subagent, `task: deny`) **ไม่จ้างใหม่ ไม่มีโมเดลใหม่ ค่าใช้จ่าย $0**
+- `assistant.md` ระบุหน้าที่แล้ว: ทำตามคำสั่ง "ตรงตัว" · ห้ามเดา/ห้ามขยายสโคป (ไม่ชัดให้ถามกลับ) · ห้าม commit/push/branch · ห้ามแตะไฟล์ secret · ต้องแนบ diff + `git status` เป็นหลักฐาน · **ต้องมี reviewer คนละโมเดลตรวจ diff เสมอ**
+- reviewer (คนละโมเดล) จับได้ 3 จุดและแก้ครบรอบ 2: (1) **`git commit/push/checkout/switch/merge/rebase` ยังถูก permission อนุญาต** ทั้งที่กฎว่าห้าม → deny 13 คำสั่งแล้ว (2) `edit` เคยได้สิทธิ์ "ทุกไฟล์ทั้ง repo" จาก global map → เปลี่ยนเป็น allowlist แคบ fail-closed (3) บรรทัดสั่งหลักฐาน hardcode ชื่อไฟล์ตัวเอง → แก้เป็น `git diff <ไฟล์ที่ถูกสั่งแก้>`
+- PL เพิ่มเอง 2 ข้อ: **ห้ามมือเขียนแก้ไฟล์นิยามของตัวเอง** (`assistant.md: deny` — กันยกระดับสิทธิ์ตัวเอง; ถ้าต้องแก้ต้องใช้ builder) และห้ามอ่าน secret ผ่าน shell (`Get-Content .env`)
+- **พิสูจน์สดแล้ว:** assistant เขียนไฟล์ runtime ให้ได้จริง 2 รอบ (PL เปิดไฟล์ตรวจเอง + reviewer ตรวจ) → มีทางเขียนฟรีที่ใช้ได้ ไม่ต้องเรียก builder แบบเสียเงิน
 
 ## Roster ปัจจุบัน (ยืนยันจากไฟล์ agent จริง)
 - ที่ปรึกษา (advisor) `opencode-go/mimo-v2.6-pro` (primary) · **PL `openrouter/deepseek/deepseek-v4.1-flash` (mode: all)** · builder `opencode-go/glm-5.3-flash`
@@ -34,7 +42,7 @@
 - `opencode.json`: global model `opencode-go/mimo-v2.6-pro`, small_model `opencode-go/mimo-v2.6-flash`, default_agent project-lead, subagent_depth 2
 
 ## งานเปิดค้าง / รอพี่ตัดสิน
-1. **push** commit `b4d3d67` ขึ้น `origin/dev-workspace` (ทำแล้วยังไม่ได้ push)
+1. ~~push~~ **เสร็จแล้ว (Owner อนุมัติ 2026-09-26)** — 4 commits ของ session นี้ (`b4d3d67` → `335630b`) อยู่บน `origin/dev-workspace` แล้ว ไม่มีอะไรค้าง push
 2. **T-034b เหลือ slice 2b** — แก้วาระ (agenda CRUD) จากหน้าเว็บ War Room (ยัง read-only)
 3. **T-032** — รอพี่ตอบ 4 ข้อฝั่ง Codex + ตัดสินใจเปิด protection ของ `dev-workspace`
 4. **เอกสารใต้ `services/`** — ตอนนี้ PL ถูกห้ามเขียนเพราะอยู่ใน `services/**` ถ้าต้องการให้เขียนได้ (เช่น `services/dev/DEPLOYMENT_GUIDE.md`) ต้องขยาย allowlist
