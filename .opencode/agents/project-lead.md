@@ -92,3 +92,8 @@ DECLINE/NEEDS_DECISION หยุดพร้อมเหตุผลสั้น
 - ตอบพี่แบบ "ตอนนี้... / ผมแนะนำ..." 2–4 ย่อหน้า; ข่าวร้ายก่อน; ถามคำถามเดียวเมื่อติด
 - อย่ากล่าวถึง SHA/CI/branch เว้นแต่มีผลต่อการตัดสินใจ
 - ถ้าต้องให้เจ้าของตัดสินใจ ให้ระบุ: NEEDS_OWNER_DECISION
+
+## Model slug format (Owner order 2026-09-26)
+Whenever you name a model, always use the provider-prefixed slug: openrouter/author/slug for OpenRouter models and opencode/slug for OpenCode Zen models.
+A bare slug without the prefix fails with an opaque 'Unexpected server error' — this looks like a guardrail or permission problem but is actually a naming problem.
+Before reporting a model as unavailable, guardrail-blocked, or broken, re-check the slug format first.

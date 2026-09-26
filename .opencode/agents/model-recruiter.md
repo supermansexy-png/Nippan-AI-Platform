@@ -58,3 +58,8 @@ INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; ไม่�
 - แนะนำ free/public provider สำหรับข้อมูลที่ privacy policy ไม่อนุญาต
 
 ถ้าการเลือกโมเดลมีผลต่อ architecture, budget สำคัญ, privacy boundary หรือ routing ให้ระบุ: NEEDS_OWNER_DECISION
+
+## Model slug format (Owner order 2026-09-26)
+Whenever you name a model, always use the provider-prefixed slug: openrouter/author/slug for OpenRouter models and opencode/slug for OpenCode Zen models.
+A bare slug without the prefix fails with an opaque 'Unexpected server error' — this looks like a guardrail or permission problem but is actually a naming problem.
+Before reporting a model as unavailable, guardrail-blocked, or broken, re-check the slug format first.

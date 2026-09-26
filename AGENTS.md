@@ -230,6 +230,19 @@ For authentication/security changes, preserve fail-closed behavior.
 
 For production-impacting work, check compatibility with existing systems first.
 
+## Calling a model — always use the provider-prefixed slug (Owner order 2026-09-26)
+
+Whenever the Project Lead, HR (`model-recruiter`) or any agent names a model — in a START_PROMPT, a `--model` flag, an agent
+frontmatter pin, or a roster entry — the slug **must** carry its provider prefix:
+
+- OpenRouter models: `openrouter/<author>/<slug>`, e.g. `openrouter/nvidia/nemotron-3.5-lightning:free`, `openrouter/z-ai/glm-5.3-flash`
+- OpenCode Zen models: `opencode/<slug>`, e.g. `opencode/space-bunny-free`
+
+A bare slug without the prefix fails with an opaque `Unexpected server error` (verified 2026-09-26: the same model answered fine
+through the OpenRouter API and answered fine through opencode once the prefix was added). **Before reporting that a model is
+unavailable, blocked by a guardrail, or broken, re-check the slug format first** — three failed runs were caused by this, not by
+the model. Evidence: `runs/2026-09-25T19-52-44Z-probe-free-id2` (PASS) vs the three prefixed-less failures.
+
 ---
 
 # Project Memory

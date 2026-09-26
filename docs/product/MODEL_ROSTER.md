@@ -126,6 +126,15 @@ Quality failure: one correction attempt, then step down to Backup. Never loop.
   model into a role definition.
 - **Free model availability**: The free tier pool remains narrow (~3-4 models). For non-critical roles (ops, researcher, model-recruiter, project-lead), backups can use either free (Inkling) or ultra-cheap paid (Nemotron Lightning at $0.08/$0.20). Nemotron Lightning is now preferred over Inkling for backup due to tool_choice support.
 - **GLM-5.3-flash single-provider**: Unlike qwen (Alibaba) and llama (DeepInfra + many others), GLM is currently only available through Z.ai on OpenRouter. If Z.ai goes down, GLM has no immediate Backup provider fallback. Mitigated by keeping Inkling as secondary backup for reviewer/security.
+- **Model-id format for opencode (verified 2026-09-26)**: an OpenRouter model must be passed to `--model` / agent frontmatter with the
+  provider prefix. `openrouter/nvidia/nemotron-3.5-lightning:free` launches (probe: "PROBE OK"), while the bare
+  `nvidia/nemotron-3.5-lightning:free` fails with an opaque `Unexpected server error` — which is easy to misread as a free-tier
+  guardrail or a broken endpoint. The model itself was reachable through the OpenRouter API at the same time, so when a job fails
+  that way, check the slug format first. All `.opencode/agents/*.md` pins were verified to use the prefix on 2026-09-26.
+- **HR checklist (mandatory, Owner order 2026-09-26)**: whenever `model-recruiter` reports on, recommends, or is asked to check a
+  model, it must (1) write the slug with its provider prefix (`openrouter/<author>/<slug>` or `opencode/<slug>`), and (2) state the
+  format check explicitly before declaring a model unavailable — a bare slug fails with an opaque `Unexpected server error` that
+  looks like a guardrail/permission problem but is a naming problem.
 - **Next recommended scan**: quarterly or upon major model releases (e.g., new GPT/Claude generations, open-source frontier drops).
 
 ## Review tiers (T-020 — Owner approved 2026-09-25)

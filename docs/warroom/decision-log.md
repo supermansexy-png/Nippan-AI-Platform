@@ -766,3 +766,53 @@ Owner's wording, and it has been corrected in that file.
 file touched; no model or subagent called.
 
 **Evidence**: Owner message 2026-09-26; `git diff` on the four documents above.
+
+---
+
+## DECISION — 2026-09-26 — Model slugs must carry the provider prefix (Owner order: "จดบันทึก…ให้ตัวเองจำ และฝ่ายบุคคลจำ เวลาเรียกชื่อเอไอ")
+
+**Owner order (verbatim)**: "จดบันทึกด้วยครับให้ตัวเองจำ และฝ่ายบุคคลจำ เวลาเรียกชื่อเอไอ"
+
+**What happened**: the T-034a UI job was first dispatched with `--model nvidia/nemotron-3.5-lightning:free` and failed three
+times with `UnknownError: Unexpected server error` (refs `err_379ad707`, `err_b75ed40c`, `err_9cce1bac`). The model itself was
+healthy at that moment (a direct OpenRouter API call answered), so the failure was misread as a free-tier guardrail or a
+permission problem and the Owner was asked to re-enable free models. Re-running the same job with the provider-prefixed slug
+`openrouter/nvidia/nemotron-3.5-lightning:free` answered immediately ("PROBE OK", run `runs/2026-09-25T19-52-44Z-probe-free-id2`).
+
+**Decision (Owner)**: every model reference — START_PROMPT, `--model` flag, agent frontmatter pin, roster entry — must use the
+provider-prefixed slug: `openrouter/<author>/<slug>` for OpenRouter, `opencode/<slug>` for OpenCode Zen. Before reporting a model
+as unavailable / guardrail-blocked / broken, re-check the slug format first.
+
+**Recorded for both roles**:
+- PL: `AGENTS.md` §"Calling a model — always use the provider-prefixed slug"; `SESSION_HANDOFF.md` standing rule 13.
+- HR (`model-recruiter`): `docs/product/MODEL_ROSTER.md` note + the HR checklist line; the rule is also written into
+  `.opencode/agents/model-recruiter.md` and `.opencode/agents/project-lead.md` (runtime files → written by a worker and checked by
+  a different model, per the file-type rule).
+
+**Verification**: all 8 `.opencode/agents/*.md` pins were inspected on 2026-09-26 and already carry the correct prefix — no latent
+config bug was found; the mistake was in the ad-hoc `--model` argument only.
+
+**Honesty note**: the Owner also changed his OpenRouter free-model setting at the same time, so the two variables moved together;
+what is proven is that the prefixed slug works and the unprefixed one failed on three consecutive attempts.
+
+---
+
+## DECISION — 2026-09-26 — Owner delegates full approval and decision authority for the away period
+
+**Owner order (verbatim)**: "เดี๋ยวพี่ไม่อยู่ เราสามารถทำแทนพี่ได้เลย ทั้งอนุมัติและตัดสินใจในการแก้ปัญหา และเมื่องานแก้ห้องแชทเสร็จแล้วก็ทำงานอื่นต่อได้เลย งานห้องแชทพี่กลับมาแล้วจะมาดูว่าพอใจมั้ย รันงานต่อได้เลย"
+
+**Decision (Owner)**: while the Owner is away the Project Lead acts for him — approving and deciding, including solving problems
+as they arise — and continues with the next work items after the chat-room work is finished. The Owner reviews the chat room
+when he returns and decides whether he is satisfied with it.
+
+**Scope of the delegation (unchanged boundaries still hold)**:
+- Allowed: approve and close L1–L3 cards, run and review subagents/workers, commit and push documentation and reviewed code on the
+  working branch, swap a failing model for another model already on the roster (reporting it), open/close cards, fix problems
+  inside an approved scope, run the free models and the already-approved paid builder for the split work.
+- Still needs the Owner: production deploy, changes to the protected production system (`Ai-bot-Nippan`), architecture changes,
+  spending above the agreed ceilings or on a paid Independent Auditor, and runtime-phase decisions on `PRICING_V1` /
+  `PDPA_COMPLIANCE` / `CUSTOMER_FACING_RULES`.
+- Standing cost rules stay: free models first; the paid builder only for the work the Owner already approved (T-034b); batch API
+  for non-urgent paid work; credit ≈ $1.60, so no unnecessary paid calls.
+
+**Evidence**: Owner message 2026-09-26 (this entry). Recorded so the delegation is traceable and does not need to be re-derived.
