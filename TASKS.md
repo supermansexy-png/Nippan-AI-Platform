@@ -311,85 +311,6 @@ Budget: dev-time doc work + free/Go-model headless jobs only; no new paid spend.
 Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, `.opencode/agents/advisor.md`,
 `docs/product/MODEL_ROSTER.md`, `docs/warroom/decision-log.md`
 
----
-
-### T-042 — Project Lead model: switch to `openrouter/deepseek/deepseek-v4.1-flash` (Owner order)
-
-Status: IN_PROGRESS — Owner order 2026-09-26 executed; runtime files changed + reviewed on a different model; docs mirrored; open only pending the Owner's restart check
-INTAKE — T-042 — builder `opencode-go/glm-5.3-flash` — 2026-09-26
-Understanding: แก้ PL pin 3 จุดตาม scope lock (frontmatter line 4, body line 52, `opencode.json` agent.project-lead.model) ให้เป็น `openrouter/deepseek/deepseek-v4.1-flash` โดยไม่แตะ global fallback / advisor / docs
-Done when: diff โชว์ 3 สิ่งพอดี · บรรทัดไทย line 51-56 ครบ · JSON valid parse = `openrouter/deepseek/deepseek-v4.1-flash | opencode-go/mimo-v2.6-pro | 9` · git status = 3 ไฟล์เดิม
-Needs: ไฟล์ 2 ไฟล์ + bash (ไม่มี network) — มีครบ
-Missing: แค่ reviewer ต่างโมเดล + restart test ของ Owner (อยู่นอกบทบาทผม)
-Plan: edit 3 จุด → re-read ยืนยันบรรทัดไทย → run 4 verification commands → DELIVERY
-Risks: mangled Thai ระหว่าง encode; diff จะโชว์ T-041 ค้างอยู่ด้วย (baseline ยืนยันแล้ว)
-Decision: ACCEPT
-
-DELIVERY — T-042 — builder `opencode-go/glm-5.3-flash` — 2026-09-26
-Status claimed: DONE (builder-only runtime edits; card stays open for reviewer + Owner restart test)
-Done-when check:
-- [x] 2 runtime files carry the new slug + opencode.json parses → `node` prints `openrouter/deepseek/deepseek-v4.1-flash | opencode-go/mimo-v2.6-pro | 9` (global fallback เดิม ✓, 9 keys ✓)
-- [ ] reviewer ต่างโมเดลยืนยัน diff scope — อยู่นอกบทบาท builder ยังไม่ทำ
-- [ ] docs mirror — อยู่นอก scope lock ของงานนี้ (Owner สั่ง 3 edits/2 files เท่านั้น)
-- [ ] Owner restart check — ยังไม่ทำ รอ Owner
-Evidence: `git diff` โชว์เฉพาะ model: line, body line 52, JSON value (ส่วน mode:all + subagent_depth เป็น T-041 ค้างจากก่อน) · re-read lines 1-6 และ line 51-56 ไทยครบถ้วน · `git status --short` = 3 ไฟล์เดิม
-Changed: `.opencode/agents/project-lead.md` (line 4 + line 52), `opencode.json` (agent.project-lead.model เท่านั้น), TASKS.md (การ์ดนี้เท่านั้น) — ไม่ commit ไม่ push ตาม scope lock
-Problems: ไม่มี
-Confidence: high — คำสั่ง verify ทั้ง 4 ผ่านจริง
-Next: reviewer ต่างโมเดลตรวจ diff scope แล้ว Owner restart ทดสอบว่า PL session เริ่มที่ deepseek-v4.1-flash
-
-REVIEWER — T-042 — `opencode-go/space-bunny-free` (model ≠ author's `opencode-go/glm-5.3-flash`) — 2026-09-26
-VERDICT: **ACCEPT-WITH-FINDINGS**, no blockers. Verified: frontmatter carries the new slug with `mode: all` intact; the Thai body
-line survived un-mangled; `opencode.json` line 3 (global `model` fallback) and `small_model` are untouched; the JSON parses (9 keys,
-`subagent_depth: 2` and `default_agent` intact); `git status --short` limited to the expected three files. The slug was checked
-against the **live OpenRouter catalogue** — `deepseek/deepseek-v4.1-flash` exists (1,048,576 ctx, tools + tool_choice, $0.30/$1.20,
-cache-read $0.006). Roster rules pass: Primary (OpenRouter) vs Backup (OpenCode Go) = different providers; no anti-redundancy
-violation (reviewer/security still differ from both builder models); the "auditor ≠ advisor" rule is unaffected because the
-advisor's pin was not touched.
-Findings: (should-fix) the doc mirror was still pending at review time — done by the PL in this same card; (should-fix, money)
-**there is no provider fallback in `opencode.json`**, so if the OpenRouter credit empties the PL stops until the pin is changed
-(remaining ≈ $4.41–4.44); (minor) `MODEL_POLICY.md` marks this model's retention `0 days*` with no explanation of the asterisk →
-treat 0-day retention as **unverified** for this model; (minor) the card status lagged its own records.
-UNKNOWN (cannot be proven from the repo): whether the restart actually lands the PL session on the new model.
-
-Owner order (verbatim): "เปลี่ยน pl จาก mimo-v2.6-pro เป็น deepseek-v4.1" → then, after being shown the Go blocker, "ให้ไปใช้ที่ OpenRouter".
-Owner: Project Lead (docs) + builder (runtime files) + reviewer on a **different model**
-Risk: L1–L2 — dev tooling: `.opencode/agents/project-lead.md` + `opencode.json` (both runtime files), plus doc mirroring.
-No runtime/production/customer/data impact.
-
-Goal: the Project Lead position runs on `openrouter/deepseek/deepseek-v4.1-flash` — the model the Owner is already
-using in his live PL session — with a correct, non-duplicate Backup.
-
-Owner order (verbatim): "เปลี่ยน pl จาก mimo-v2.6-pro เป็น deepseek-v4.1" → then, after being shown the Go blocker,
-"ให้ไปใช้ที่ OpenRouter".
-Why OpenRouter (recorded): the Go variant `opencode-go/deepseek-v4.1-flash` is probed **blocked** (HTTP 400 "requires
-Global regions", T-035/T-037) — it needs the workspace Privacy setting changed to Global regions first. The Owner chose
-OpenRouter now; moving to Go later is a one-line change. Neither model arm of the project's policy is violated: OpenRouter
-is the sanctioned Backup provider, and the roster already listed this exact slug as the PL's Backup.
-
-Changes:
-1. `.opencode/agents/project-lead.md` line 4 — `model:` → `openrouter/deepseek/deepseek-v4.1-flash`
-2. `.opencode/agents/project-lead.md` (body, ~line 52) — update the PL pin text so the prompt does not contradict the frontmatter
-3. `opencode.json` — `agent.project-lead.model` → the same slug (it currently duplicates the agent file)
-4. Docs (PL writes these directly): `docs/product/MODEL_ROSTER.md` row 1 — Primary/Backup **swapped**, reasoning updated;
-   `docs/project-memory/CURRENT_STATE.md` pin table; `docs/project-memory/SESSION_HANDOFF.md` current-pin lines.
-   New Backup = `opencode-go/mimo-v2.6-pro` → different provider from the new Primary ✓ (anti-regression rule holds).
-5. Deliberately NOT touched: the global `opencode.json` `"model"` fallback, the advisor's pin (`opencode-go/mimo-v2.6-pro`,
-   unchanged — so the "auditor model ≠ the advisor's model" rule is unaffected), and every historical record
-   (`decision-log.md`, `ADVISOR_LOG.md`, `DEV_ERROR_LOG.md`, TASKS.md history) — history is never rewritten.
-
-Done when:
-- [x] both runtime files carry the new slug, and `opencode.json` still parses as valid JSON → `node` prints `openrouter/deepseek/deepseek-v4.1-flash | opencode-go/mimo-v2.6-pro | 9`
-- [x] reviewer on a different model confirms the diff is exactly scoped and the JSON is valid → `opencode-go/space-bunny-free`: ACCEPT-WITH-FINDINGS, no blockers; slug confirmed in the live OpenRouter catalogue
-- [x] docs mirror the change; no historical entry rewritten; PL Backup differs from PL Primary → `MODEL_ROSTER.md` row 1 (swapped), `CURRENT_STATE.md`, `SESSION_HANDOFF.md`, new `decision-log.md` entry
-- [ ] Owner restarts and confirms the PL session starts on `deepseek-v4.1-flash`; if it does not, report and revert
-- [ ] carry the money finding: **no provider fallback exists** — if the OpenRouter credit empties the PL stops (≈ $4.44 left) → decide with the Owner whether to add one
-
-Evidence to capture: the two diffs · the `node` JSON parse output · the reviewer verdict · the Owner's restart check.
-Budget: one small builder call + one review call (both on OpenCode Go) — trivial.
-Links: `.opencode/agents/project-lead.md`, `opencode.json`, `docs/product/MODEL_ROSTER.md`, card T-041
-**Sequencing note:** T-041 and T-042 both touch `.opencode/agents/project-lead.md` → they are run **sequentially, never concurrently**.
-
 ### T-050 — Whole-project study: convene an existing-role committee and return a detailed draft roadmap
 
 Status: IN_PROGRESS — Owner-ordered 2026-09-26 (verbatim order below); read-only study; deliverables are **DRAFT — NOT APPROVED**
@@ -499,50 +420,6 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 ## REVIEW
 
 (none)
-
-### T-044 — A FREE writer that performs the file writes the Project Lead is no longer allowed to do
-
-Status: IN_PROGRESS — **Owner decision 2026-09-26: Option B** ("assistant ใช่ เรามีอยู่แล้ว ใช้ตัวนี้เป็นคนเขียน") — use the existing free `assistant` as the PL's writer; no new role, no new model, no paid spend
-Owner: Project Lead (plan/record) + `model-recruiter` (verify the free model) + the writer + a reviewer on a different model
-Risk: L2 — the writer holds edit rights on `.opencode/**` and `opencode.json` (runtime/config).
-Mitigations: `task: deny` (it cannot command anyone), the PL writes the exact order, a reviewer on a different model checks every
-diff, and those files carry only `{env:...}` references — never secret values.
-
-**Why this card exists (the Owner's order, in his words):** the T-043 lock means the Project Lead can no longer write
-`.opencode/**` or `opencode.json` itself, and cannot delete files with PowerShell. So a **free** agent must exist whose whole job
-is to perform those writes exactly as the PL instructs.
-
-Goal: the PL keeps a free "hands" agent it can order, so no config change ever forces a paid builder call, and the PL still never
-writes runtime files itself.
-
-Proposed plan (two options — the Owner picks):
-1. **A — new dedicated free writer (`scribe`)** *(recommended)*: a new agent file with a free model, `mode: subagent`, `edit: allow`,
-   `task: deny`. Duty: "execute the exact file edit the Project Lead orders — no improvising, no widening the scope, no commit, no
-   push". Keeps duties clean (the `assistant` stays a drafting/summarising helper).
-2. **B — reuse the existing `assistant`** (free `opencode/nemotron-3-ultra-free`, already `mode: subagent`, `task: deny`, edit
-   allowed by the global map): zero new files, zero new hire — only its description and prompt are extended to name the duty.
-
-Steps either way: `model-recruiter` verifies the free model is **live** (free Zen models have died before: `big-pickle`,
-`ling-3.0-flash-fin-free`, `mimo-v2.6-flash-free`) and names the best live free substitute if it is dead → Owner approves the pick →
-the writer implements its own agent file (it has edit rights, which also proves the pattern) → a reviewer on a different model
-checks the file and the permissions → one live round-trip: PL orders a real config edit, the writer performs it, the reviewer checks it.
-
-Constraints:
-- **No secrets to a free model.** Free Zen may log or train. `.opencode/**` and `opencode.json` contain `{env:...}` references only,
-  so they are safe to share — but the writer must never be handed the `.env` or any credential.
-- The writer has **no decision power**: it writes what it is told and nothing more. Detection stays in place (reviewer + scorecard).
-- **The chicken-and-egg is real:** the PL cannot create this agent file, so the first implementation of T-044 must itself be performed
-  by an existing writer (the free `assistant`, which already has edit rights, or the paid `builder`).
-
-Done when:
-- [ ] `model-recruiter` reports the free model's live availability + price ($0) and the substitute if dead
-- [ ] the writer's agent definition names the duty and keeps `task: deny`
-- [ ] reviewer on a different model verifies the file and the permission block
-- [ ] live round-trip proven: the PL orders one real config edit → the writer performs it → the reviewer checks the diff
-
-Evidence to capture: the agent-file diff · the HR availability report · the reviewer verdict · the round-trip diff.
-Budget: HR runs on Go (flat monthly) + free models only — **no new paid spend**.
-Links: `.opencode/agents/assistant.md`, `.opencode/agents/worker.md` (`edit: allow`, `task: deny`, headless), `docs/product/FREE_MODEL_FALLBACK_GUIDE.md` (historical reference), card T-043
 
 ## DONE
 

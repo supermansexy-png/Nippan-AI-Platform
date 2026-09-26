@@ -1764,3 +1764,24 @@ Status: DONE 2026-09-27 (archived from the board; full card body preserved in gi
 Owner: Project Lead — Owner order 2026-09-27 (Owner rule: one false claim = −1 ladder step).
 Delivered (all VERIFIED via git): ai-scorecard rows for both T-052 false claims + ladder moves recorded in decision-log (ops stage 2→1 · researcher unrecorded→floor stage 1) — commit `1ba02be`. Stages taken from evidence (`PROJECT_BRIEF.th.md`), nothing invented.
 Gap (disclosed): reviewer-verdict artifact not found on this machine — UNKNOWN, not FALSE.
+
+---
+
+### T-042 — Project Lead model switch (round 1 paid pin, round 2 free pin)
+
+Status: DONE 2026-09-27 (archived from the board; full round-1 card body preserved in git history; round-2 record in `docs/warroom/ADVISOR_LOG.md`). Owner approved closure 2026-09-27.
+Owner: Project Lead — Owner orders 2026-09-26 ("เปลี่ยน pl จาก mimo-v2.6-pro เป็น deepseek-v4.1" → OpenRouter → free model).
+Round 1 (superseded): PL pinned to `openrouter/deepseek/deepseek-v4.1-flash` (builder `opencode-go/glm-5.3-flash`; reviewer `opencode-go/space-bunny-free` ACCEPT-WITH-FINDINGS; Go variant blocked HTTP 400 "requires Global regions").
+Round 2 (final, committed `0a028bf` 2026-09-27): PL re-pinned to free `opencode/nemotron-3-ultra-free` (backup: previous deepseek slug) — writer `assistant`, reviewer `openrouter/nvidia/nemotron-3.5-lightning:free` ACCEPT 5/5, docs mirrored (`MODEL_ROSTER.md`, `CURRENT_STATE.md`). PL overrode HR's #1 (`mimo-v2.6-flash-free`) because repo docs list it dead — disclosed in ADVISOR_LOG with the finding that the dead-list looks stale (flagged for Owner, guide not edited).
+Restart check 2026-09-27 (after Owner restarted opencode): session runs as `project-lead`, no fallback to `build` — F1 closed. Money finding moot: free pin consumes no OpenRouter credit, so the no-fallback cliff no longer applies to the PL seat.
+
+---
+
+### T-044 — Free writer for the PL's file writes (assistant, Option B)
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved closure 2026-09-27 (Option B chosen 2026-09-26).
+Owner: Project Lead — Owner order 2026-09-26.
+Delivered (all VERIFIED in repo): `.opencode/agents/assistant.md` names the writer duty ("มือเขียนของ Project Lead ... เขียนไฟล์แทน PL ตามคำสั่งตรงตัว"), `mode: subagent` + `task: deny` kept · fail-closed edit allowlist (only `.opencode/**`, `opencode.json`, `docs/**`, `runs/**`; self-file, protected docs, PRICING/CUSTOMER_FACING/INTEGRATIONS/PDPA/LITE_SCHEMA/ROLES/PROTOCOL/MANDATE/TASK_CONTROL/WORKING_POLICY denied) · git commit/push/add/checkout/switch/restore/reset/stash/merge/rebase/cherry-pick/mv/rm denied at the permission layer.
+Review: scorecard records round 1 (both ordered edits correct, PL-verified; Gate-1 deviation — no INTAKE block — recorded) and round 2 (all three reviewer findings applied: fail-closed allowlist, git denied at permission layer, corrected evidence line, INTAKE included). No false DONE, no scope violation.
+Live round-trip proven: assistant-as-writer performed the T-057 CORRECTION writes (5 files via exact PL order) and the reviewer passed all files — the pattern works end to end with zero paid spend.
+Gap (disclosed): standalone HR-availability report artifact not found on this machine — but the model ran the T-042 probe jobs live the same week (ADVISOR_LOG evidence), so liveness is VERIFIED by use; formal report row = UNKNOWN.
