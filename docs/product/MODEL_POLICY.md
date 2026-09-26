@@ -160,15 +160,10 @@ high-stakes tasks and final code, where the context is small.
 `deepseek-v4-pro` is **rejected** — intelligence 30.4, the lowest of the
 set, despite the "Pro" name.
 
-By job:
-
-| Job | Model | Why |
-|---|---|---|
-| Long planning / strategy conversation | `mimo-v2.6-pro` | best brain per dollar, 0-day retention, 1.05M context |
-| Code writing and code review | `kimi-k3` | coding 76.2 / agentic 50.0 — best coder available; but only ~490 requests/month, so use on final code, not every edit |
-| Everyday work, high volume | `deepseek-v4.1-flash` | $60 bucket, ~130,000 requests/month |
-| Anything sensitive | `mimo-v2.6-pro` or `space-bunny-free` | 0-day retention |
-
+By job: **the per-job pick list is not duplicated here.** It lives in
+`docs/product/MODEL_ROSTER.md` § "คู่มือเลือกตามงาน" (with correctly provider-prefixed
+slugs). This section keeps only the rule above: expensive model for a short chat,
+cheap model for a long chat. Model **pins** belong to the roster; **rules** belong here.
 
 ### Go data-handling (privacy) rules
 
