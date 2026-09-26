@@ -296,18 +296,29 @@ into context for every task.
 At the beginning of a new work session:
 
 **This is the authoritative required-reading list for the project** (Owner decision 2026-09-27,
-card T-058). Other documents — `docs/warroom/AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md`,
+cards T-058 / T-063). Other documents — `docs/warroom/AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md`,
 `WORKING_POLICY.md` — point here instead of keeping their own copy. Model pins are not part of
-this list; they live in `docs/product/MODEL_ROSTER.md` (§ "Per-role staffing").
+this list; they live in `docs/product/MODEL_ROSTER.md` (§ "Per-role staffing"). This `AGENTS.md`
+itself is the list — it is already in front of you, so it is not a step you have to fetch.
 
-1. Read this `AGENTS.md`.
-2. Read `docs/project-memory/PROJECT_BRIEF.th.md` — โครงการ ภาระกิจ และขอบเขต (required reading บรรทัดแรก)
-3. Read `docs/project-memory/SESSION_HANDOFF.md` — latest work state and the **single** open-items
-   list. (Written/refreshed by `/handoff`.)
-4. Read `docs/project-memory/CURRENT_STATE.md` — what is actually built / shared today.
-5. Inspect Git status and current branch.
-6. Verify any claimed PR/commit/CI state from the actual repository when relevant.
-7. Continue from the first unfinished item.
+**Tier 1 — read every session, in this order:**
+
+1. `docs/project-memory/INDEX.md` — the doc map and the reading tiers. Read this first: it is what
+   tells you which other documents exist and when each one is needed.
+2. `docs/project-memory/PROJECT_BRIEF.th.md` — โครงการ ภาระกิจ และขอบเขต (required reading บรรทัดแรก)
+3. `docs/project-memory/SESSION_HANDOFF.md` — latest work state and the **single** open-items list.
+   (Written/refreshed by `/handoff`.)
+4. `docs/project-memory/CURRENT_STATE.md` — what is actually built / shared today.
+5. `docs/project-memory/DECISIONS.md` — durable decisions, and who has authority to decide.
+6. Inspect Git status and current branch.
+7. Verify any claimed PR/commit/CI state from the actual repository when relevant.
+8. Continue from the first unfinished item.
+
+**The assigned card only — never the whole board:** when you are given a card, read **that card's
+block in `TASKS.md`**, not the entire `TASKS.md`. Opening the whole board is board housekeeping
+(tier 4) and needs a reason of its own.
+
+ห้ามเปิดไฟล์ในชั้น 3 (ตามประเภทงาน) ล่วงหน้า เว้นแต่การ์ดงานที่ได้รับมอบหมายจริงระบุไว้ชัดว่าเป็นงานประเภทนั้น การเดาว่า "อาจจะต้องรู้" ไม่ใช่เหตุผลให้เปิดก่อน — เปิดไม่ทันตอนจำเป็นจริงดีกว่าเปิดเผื่อไว้ทุกครั้ง เพราะเปิดทีหลังทำได้เสมอ
 
 Do not restart completed work merely because it is absent from chat history.
 

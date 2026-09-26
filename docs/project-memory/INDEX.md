@@ -13,13 +13,19 @@
 
 | ไฟล์ | อ่านแค่ไหน | เจ้าของไฟล์ (dev) | ปลายทาง (runtime) |
 |---|---|---|---|
-| `AGENTS.md` | ทั้งไฟล์ — และเป็น**ฉบับหลักของรายการอ่าน** | Project Lead (แก้ต้องอนุมัติจาก Project Owner) | Project Lead |
+| `docs/project-memory/INDEX.md` | ทั้งไฟล์ — **อ่านเป็นไฟล์แรก**: มันคือแผนผังที่บอกว่าไฟล์อื่นมีอะไรและเปิดเมื่อไหร่ | Project Lead | Project Lead |
 | `docs/project-memory/PROJECT_BRIEF.th.md` | ทั้งไฟล์ (ภาพรวม+ขอบเขต+กฎเหล็ก) | **Project Owner เท่านั้น** | Project Owner |
 | `docs/project-memory/SESSION_HANDOFF.md` | ทั้งไฟล์ — มี**รายการงานค้างที่เดียว** | Project Lead | Project Lead |
 | `docs/project-memory/CURRENT_STATE.md` | ทั้งไฟล์ (ตัดแล้ว ~115 บรรทัด) | Project Lead | Project Lead |
 | `docs/project-memory/DECISIONS.md` | ทั้งไฟล์ (เล็ก) | Project Lead | Project Lead |
 
 บวกคำสั่งเดียว: เช็ค `git status` + branch ปัจจุบัน
+
+**การ์ดที่ได้รับมอบหมายเท่านั้น — ไม่ใช่ทั้งบอร์ด:** เมื่อมีการ์ด ให้อ่าน **เฉพาะบล็อกของการ์ดนั้นใน `TASKS.md`**
+ไม่ต้องเปิดทั้งเล่ม การเปิดทั้งบอร์ดเป็นงาน housekeeping (ชั้น 4) ต้องมีเหตุผลของตัวเอง
+
+**ห้ามเปิดไฟล์ชั้น 3 ล่วงหน้า** เว้นแต่การ์ดที่ได้รับมอบหมายจริงระบุว่าเป็นงานประเภทนั้น — การเดาว่า
+"อาจจะต้องรู้" ไม่ใช่เหตุผลให้เปิดก่อน (Owner decision 2026-09-27, การ์ด T-063)
 
 ## ชั้น 2 — อ่านตามบทบาท
 
