@@ -8,11 +8,16 @@ const EVENT_TYPES = [
   "TURN_FAILED",
 ];
 
+const CONVERSATION_PAGE = 30;
+const SYSTEM_LOG_PAGE = 50;
+
 const app = {
   roomId: null,
   snapshot: null,
   events: [],
   source: null,
+  convShowFrom: null,
+  prevAnchorSequence: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -123,13 +128,23 @@ function renderSystemLog(events) {
   const btn = $("#system-log-toggle");
   const wasOpen = log.classList.contains("open");
   log.replaceChildren();
-  if (!events.length) {
+
+  const fullLog = [...events].sort((a, b) => a.sequence - b.sequence);
+  const hiddenCount = Math.max(0, fullLog.length - SYSTEM_LOG_PAGE);
+  const showFrom = Math.max(0, fullLog.length - SYSTEM_LOG_PAGE);
+  const visibleLog = fullLog.slice(showFrom);
+
+  if (hiddenCount > 0) {
+    log.append(el("div", "system-log-muted muted", `...และอีก ${hiddenCount} รายการ`));
+  }
+
+  if (!fullLog.length) {
     log.className = "system-log" + (wasOpen ? " open" : "");
     if (btn) btn.textContent = wasOpen ? "ซ่อนบันทึกระบบ" : "แสดงบันทึกระบบ";
     return;
   }
   log.className = "system-log" + (wasOpen ? " open" : "");
-  for (const event of events) {
+  for (const event of visibleLog) {
     const item = el("div", "message system-log-item");
     const ts = formatTimestamp(event.occurred_at);
     const line = `[${event.event_type}] #${event.sequence}${ts ? " · " + ts : ""} · ${String(eventContent(event)).slice(0, 120)}`;
@@ -191,28 +206,68 @@ function eventContent(event) {
     event.halt_reason || event.event_type;
 }
 
+function ensureOlderButton() {
+  if (document.getElementById("older-messages")) return;
+  const wrap = el("div", "older-bar");
+  wrap.style.padding = "4px 16px 0";
+  const btn = el("button", "ghost", "ดูข้อความก่อนหน้า");
+  btn.id = "older-messages";
+  btn.style.display = "none";
+  btn.addEventListener("click", () => {
+    const full = [...app.events].filter((e) => e.event_type === 'MESSAGE_APPENDED' || (e.event_type === 'ROOM_STATE_CHANGED' && e.message_type === 'OWNER_DECISION')).sort((a, b) => a.sequence - b.sequence);
+    const oldShowFrom = (app.convShowFrom !== null && app.convShowFrom !== undefined) ? app.convShowFrom : Math.max(0, full.length - CONVERSATION_PAGE);
+    app.prevAnchorSequence = full[oldShowFrom] ? full[oldShowFrom].sequence : null;
+    app.convShowFrom = Math.max(0, oldShowFrom - CONVERSATION_PAGE);
+    renderSnapshot();
+  });
+  const countLine = el("p", "muted", "");
+  countLine.id = "conversation-count";
+  countLine.style.margin = "4px 0 0";
+  wrap.append(btn, countLine);
+  const msgList = $("#message-list");
+  msgList.parentNode.insertBefore(wrap, msgList);
+}
+
 function renderMessages() {
   const root = $("#message-list");
   const wasNearBottom = root.scrollHeight - root.scrollTop - root.clientHeight < 50;
   const isConversationEvent = (e) => e.event_type === 'MESSAGE_APPENDED' || (e.event_type === 'ROOM_STATE_CHANGED' && e.message_type === 'OWNER_DECISION');
   const conversationEvents = [...app.events].filter(isConversationEvent).sort((a, b) => a.sequence - b.sequence);
   const systemLog = [...app.events].filter(e => !isConversationEvent(e)).sort((a, b) => a.sequence - b.sequence);
+
+  ensureOlderButton();
+  const btn = $("#older-messages");
+  const countLine = $("#conversation-count");
+
+  // Window conversation
+  const fullConv = conversationEvents;
+  const showFrom = (app.convShowFrom !== null && app.convShowFrom !== undefined) ? app.convShowFrom : Math.max(0, fullConv.length - CONVERSATION_PAGE);
+  app.convShowFrom = showFrom; // stabilize
+  const visibleConv = fullConv.slice(showFrom);
+
+  if (btn) btn.style.display = (showFrom > 0) ? "block" : "none";
+  if (countLine) {
+    countLine.textContent = fullConv.length ? `แสดง ${visibleConv.length} จาก ${fullConv.length} ข้อความ` : "";
+    countLine.style.display = fullConv.length ? "block" : "none";
+  }
+
   root.replaceChildren();
 
-  if (!conversationEvents.length && !systemLog.length) {
+  if (!fullConv.length && !systemLog.length) {
     root.className = "messages empty";
     root.textContent = "ยังไม่มีเหตุการณ์ในห้อง";
     renderSystemLog(systemLog);
     return;
   }
-  if (!conversationEvents.length) {
+  let anchorEl = null;
+  if (!fullConv.length) {
     root.className = "messages empty";
     root.textContent = "ยังไม่มีข้อความในห้อง";
   } else {
     root.className = "messages";
     let prevSpeakerKey = null;
-    for (let i = 0; i < conversationEvents.length; i++) {
-      const event = conversationEvents[i];
+    for (let i = 0; i < visibleConv.length; i++) {
+      const event = visibleConv[i];
       const speaker = resolveSpeaker(event);
       const label = speakerLabel(event, speaker);
       const speakerKey = label.name + "|" + label.role;
@@ -224,7 +279,7 @@ function renderMessages() {
       else if (label.isOwner) classes.push("owner");
       else { classes.push("ai"); }
       if (event.event_type === "TURN_FAILED") classes.push("error");
-      if (isGrouped && i < conversationEvents.length - 1) classes.push("grouped");
+      if (isGrouped && i < visibleConv.length - 1) classes.push("grouped");
       else if (isGrouped) classes.push("grouped-last");
       const article = el("article", classes.join(" "));
 
@@ -256,12 +311,25 @@ function renderMessages() {
           article.append(el("div", "evidence", `วาระ: ${agendaItem.title || agendaItem.sequence}`));
         }
       }
+
       root.append(article);
       prevSpeakerKey = speakerKey;
+
+      // Scroll anchor: keep previously first visible message roughly stable
+      if (app.prevAnchorSequence !== null && event.sequence === app.prevAnchorSequence) {
+        anchorEl = article;
+      }
     }
+    // Apply anchor scroll after DOM is updated
+    if (anchorEl) {
+      root.scrollTop = anchorEl.offsetTop - root.offsetTop + root.scrollTop;
+    }
+    app.prevAnchorSequence = null;
   }
   renderSystemLog(systemLog);
-  if (wasNearBottom) {
+  if (anchorEl) {
+    // anchor handled above; skip near-bottom scroll
+  } else if (wasNearBottom && root.scrollHeight > root.clientHeight) {
     root.scrollTop = root.scrollHeight;
   }
 }
@@ -337,6 +405,8 @@ async function loadRoom(roomId) {
   app.roomId = snapshot.room_id;
   app.snapshot = snapshot;
   app.events = Array.isArray(snapshot.recent_events) ? [...snapshot.recent_events] : [];
+  app.convShowFrom = null;
+  app.prevAnchorSequence = null;
 
   $("#room-id").value = snapshot.room_id;
   const url = new URL(window.location.href);
@@ -430,6 +500,63 @@ document.querySelectorAll("[data-command]").forEach((button) => {
 });
 
 $("#owner-message-form").addEventListener("submit", (event) => event.preventDefault());
+
+async function createRoom() {
+  const input = $("#new-room-title");
+  const btn = $("#create-room");
+  const title = input.value.trim();
+  if (!title) {
+    setNotice("กรุณาใส่ชื่อการประชุมก่อนเริ่ม");
+    return;
+  }
+  btn.disabled = true;
+  try {
+    setNotice("");
+    const response = await fetch("/war-room/rooms", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ title: title }),
+    });
+    if (response.status === 201) {
+      const data = await response.json();
+      const newId = data.room_id;
+      // reset conversation window state
+      app.convShowFrom = null;
+      app.prevAnchorSequence = null;
+      // load new room
+      await loadRoom(newId);
+      setNotice("เริ่มประชุมใหม่แล้ว");
+    } else if (response.status === 422) {
+      setNotice("ชื่อการประชุมว่างเปล่าหรือยาวเกิน 255 ตัวอักษร");
+    } else if (response.status === 409) {
+      setNotice("เซิร์ฟเวอร์ปฏิเสธการสร้างห้อง");
+    } else if (response.status === 503) {
+      setNotice("การสร้างห้องยังไม่พร้อมใช้งานบนตัวอย่างนี้");
+    } else {
+      setNotice(`เกิดข้อผิดพลาด (${response.status})`);
+    }
+  } catch (error) {
+    setNotice("เกิดข้อผิดพลาดในการสร้างห้อง: " + error.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$("#create-room").addEventListener("click", async () => {
+  try {
+    await createRoom();
+  } catch (error) {
+    setNotice(error.message);
+  }
+});
+
+$("#new-room-title").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    $("#create-room").click();
+  }
+});
 
 window.addEventListener("beforeunload", disconnect);
 
