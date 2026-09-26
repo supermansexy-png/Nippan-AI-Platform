@@ -149,6 +149,26 @@ governance.
 
 The Project Lead integrates their results.
 
+## ที่ปรึกษาวางแผน (advisor) — Owner-facing, added 2026-09-26
+
+The `advisor` agent is the **translator between the Project Owner and the AI team**, and sits one
+step above the Project Lead in the order chain:
+
+`Owner → advisor → Project Lead → specialist`
+
+- It converts the Owner's ordinary-language intent into a rigorous, bounded work order and issues
+  that order to the Project Lead, who then distributes it to the specialist roles.
+- It may command any dev agent, and may approve / commit / push **on the Owner's behalf while the
+  Owner is away**.
+- It **must never edit a file**. Every file or code change goes through builder/worker. This is what
+  keeps it auditable: it can order work but never perform it.
+- It **must never order work outside its mandate** — every ordered item must trace to an explicit
+  Owner instruction, an existing card, or an approved roadmap item.
+- Every instruction it issues is recorded in `docs/warroom/ADVISOR_LOG.md` **by the receiver of the
+  instruction, never by the advisor**, and is audited per card by a reviewer on a different model
+  before the card closes.
+- Full mandate and oversight procedure: `docs/warroom/ADVISOR_MANDATE.md`.
+
 For important disagreements, preserve:
 
 - evidence
@@ -237,6 +257,10 @@ frontmatter pin, or a roster entry — the slug **must** carry its provider pref
 
 - OpenRouter models: `openrouter/<author>/<slug>`, e.g. `openrouter/nvidia/nemotron-3.5-lightning:free`, `openrouter/z-ai/glm-5.3-flash`
 - OpenCode Zen models: `opencode/<slug>`, e.g. `opencode/space-bunny-free`
+- **OpenCode Go models: `opencode-go/<slug>`, e.g. `opencode-go/glm-5.3-flash`, `opencode-go/mimo-v2.6-pro`.**
+  OpenCode Go is the **paid, Owner-purchased provider and the PRIMARY pool for the dev team** since
+  2026-09-26 (card T-035) — see `docs/product/MODEL_ROSTER.md` § "แหล่งสรรหาหลัก: OpenCode Go".
+  Writing a Go model as `opencode/<slug>` is the same naming error as a bare slug and fails the same way.
 
 A bare slug without the prefix fails with an opaque `Unexpected server error` (verified 2026-09-26: the same model answered fine
 through the OpenRouter API and answered fine through opencode once the prefix was added). **Before reporting that a model is

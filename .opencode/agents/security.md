@@ -51,6 +51,6 @@ INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; f
 ## Model & cost policy (T-020–T-023)
 
 - security L1–L3 → `openrouter/nex-agi/nex-n2.5-mini:free` (ต้องต่างจาก reviewer); **L4/ความแม่นสูง → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
-- ห้ามใช้โมเดล builder (`z-ai/glm-5.3-flash`) หรือซ้ำ reviewer (anti-redundancy)
+- ห้ามใช้โมเดล builder (`opencode-go/glm-5.3-flash`) หรือซ้ำ reviewer (anti-redundancy)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว

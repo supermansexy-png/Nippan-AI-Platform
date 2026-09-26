@@ -46,3 +46,77 @@
 - Live Supabase `xzxwakvsbdzkdybijbzs`: `nippan_n8n` rolcanlogin=true, `nippan_runtime` false; 7 `lite_*` tables `rls=true force=true`.
 - `gh pr view 83` = MERGED (2026-09-25T14:06:40Z).
 - No paid model and no subagent was called in session 2.
+
+---
+
+## Session 3 — 2026-09-26 (OpenCode Go onboarding; read-only + headless)
+
+### DEFECT — `headless_run.mjs --agent <subagent>` silently falls back to the default agent
+- Command: `node scripts/headless_run.mjs --agent model-recruiter --model opencode-go/gpt-6-luna --label go-restaff --prompt ...`
+  → run dir `runs/2026-09-26T09-21-40Z-go-restaff` (pid 12928).
+- `stderr.log` line 1: `! agent "model-recruiter" is a subagent, not a primary agent. Falling back to default agent`.
+- Impact: the job (card T-035) runs as **`project-lead`** — a primary agent that HAS `edit` permission — although the
+  worker was scoped as a read-only HR proposal and the prompt explicitly said "do not edit any file". The worker did
+  write to `TASKS.md` (it appended its INTAKE under T-035) and used `todowrite`. Model was still `opencode-go/gpt-6-luna`
+  as explicitly passed; only the agent identity/permission set was wrong.
+- Also observed: the command wrapper reported `Unknown: ChildProcess.kill` while the detached child kept running — the
+  run is fine, the wrapper's exit status is misleading. Always verify a queued job with `headless_status.mjs`.
+- Not yet fixed: `headless_run.mjs` should reject a non-primary `--agent` (or resolve the subagent's own permission set)
+  instead of falling back silently. Fix belongs to a builder card, not to this session.
+- Safety rule until fixed: never pass `--agent <subagent>` to a job that must not edit files; the fallback agent grants edit.
+
+### INCIDENT (again) — `TASKS.md` was in a broken 33-line state when this session started
+- At session start `TASKS.md` held only the header + board-size rules + "(no open cards)": cards T-032, T-033, T-034,
+  T-034a/b and the archived T-030/T-031 pointers were missing from the working tree (same failure mode as session 2).
+  A `read` at that moment returned 33 lines / "(no open cards)".
+- The PL then appended a new card using **`edit`** (append-style, not `write`). A second session repaired the board
+  afterwards and preserved that card with an "authored outside this session" note. Current file = 294 lines and holds
+  T-032, T-033, T-034, T-034a, T-035.
+- Numbering collision: the new card was written as `T-030`, but T-030 is the archived n8n/RLS card → **renumbered T-035**
+  on 2026-09-26. Next free number after that is T-036 (T-034a/b sub-cards exist).
+- Lesson repeated: two sessions can be live on this repo at once; always re-read `TASKS.md` before editing, edit (never
+  write) the board, and re-check the number you are about to use against `docs/archive/`.
+
+### VERIFIED — OpenCode Go provider is live in this workspace (2026-09-26)
+- `auth.json` holds an `opencode-go` entry (`type: api`); `GET https://opencode.ai/zen/go/v1/models` → HTTP 200, 35 ids.
+- Chat completions through Go: `glm-5.3-flash` HTTP 200 (1.2s, `served_model` echoed) and `space-bunny-free` HTTP 200
+  (1.4s, prompt cache hit 149 tokens). Note: these are reasoning models — with `max_tokens` too small the visible
+  `content` came back empty because all 8 tokens were spent on `reasoning_tokens`.
+- `openrouter_get-credits` = total 45 / used 43.8119 → **remaining ≈ $1.19**. PL, builder and HR still route through
+  OpenRouter → the Go provider is now the cheaper path (card T-035).
+
+### FAILED — first HR job (T-035) produced zero output
+- Run `runs/2026-09-26T09-21-40Z-go-restaff`, model `opencode-go/gpt-6-luna`, 37 stdout events, **0 text parts**,
+  exit without an answer. Final step: `step_finish reason:"length"` with `reasoning: 4096, output: 0` — the model spent
+  its whole reasoning budget on one step and the run ended with nothing usable.
+- Consequence: the assistant-session summary for T-035 is still missing; HR has to be re-run. Cost ≈ 120k tokens
+  (~$0.006 of Go usage, mostly cached read) — cheap, but a wasted round.
+- Second attempt queued as `runs/2026-09-26T09-27-58Z-go-restaff-v2`, agent `worker` (a real primary agent → no
+  fallback warning; `stderr.log` empty), model `opencode-go/mimo-v2.6-pro`, brief rewritten to demand a compact
+  one-pass answer. Lesson: give a reasoning model a tight output budget and an explicit "do not narrate" instruction.
+
+### FOUND — a second session is writing this repo, and it already drafted the Go policy
+- `git diff --stat` at 2026-09-26 showed three modified files with work this session did not author: `TASKS.md`
+  (board repaired + cards T-032/T-033/T-034/T-034a restored), `docs/product/MODEL_POLICY.md` (+84 lines) and this log.
+- The `MODEL_POLICY.md` addition is titled "OpenCode Go — approved provider (Owner decision 2026-09-26)" and contains
+  Artificial Analysis numbers per Go model, a long-conversation cost rule, a privacy/retention table and per-job picks
+  (e.g. `mimo-v2.6-pro` for long planning, `kimi-k3` for final code, `deepseek-v4.1-flash` for volume, `grok-4.7` and
+  `deepseek-v4-pro` rejected).
+- Status: **uncommitted, not reviewed by this session, and not yet a decision**. It was handed to HR as input. The two
+  sessions must be reconciled by the Owner (see the report): two Project-Lead chats on one worktree can clobber the
+  board — this is the third board incident recorded in this log.
+
+### DEFECT — a long `--prompt` is silently truncated before the worker sees it
+- Run `runs/2026-09-26T09-27-58Z-go-restaff-v2` (agent `worker`, model `opencode-go/mimo-v2.6-pro`) came back
+  **NEEDS_DECISION**: it said the assignment text "ถูกตัดจบ ที่ section OpenCode" — i.e. it received only the first
+  ~600 characters of a ~5.5 KB brief — and correctly refused to guess. Cost ≈ $0.028.
+- Cause: `headless_run.mjs` does **not** truncate (it writes `prompt` verbatim into `status.json`); the loss happens in
+  the `powershell -Command ... --prompt (Get-Content -Raw <file>)` wrapper that passes a long multi-line argument.
+- Verified good pattern: keep `--prompt` to one short pointer sentence and put the real brief in a file inside the repo —
+  `runs/briefs/<card>-<name>.md` (`runs/` is gitignored) — then tell the worker to read that file in full. Run
+  `runs/2026-09-26T09-31-09Z-go-restaff-v3` used this: `status.json.prompt` = 190 chars, complete.
+- Blast radius: every earlier headless job with a brief longer than ~600-700 characters lost the tail of its instructions
+  (including HR run v1). This is a real defect in how the PL queues work, not a model failure — fix belongs to a builder card.
+
+
+

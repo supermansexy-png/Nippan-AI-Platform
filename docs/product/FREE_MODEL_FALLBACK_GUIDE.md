@@ -1,3 +1,9 @@
+> **HISTORICAL REFERENCE — superseded 2026-09-26 (T-035/T-038).** The dev team moved onto the paid
+> **OpenCode Go** provider; the current Primary/Backup pins live in `docs/product/MODEL_ROSTER.md`
+> § "แหล่งสรรหาหลัก: OpenCode Go". Models named in this file such as `opencode/big-pickle`,
+> `opencode/ling-3.0-flash-fin-free` and `opencode/mimo-v2.6-flash-free` **no longer exist / are no
+> longer assigned**. Keep this file for the historical cross-run evidence only.
+
 # Free model fallback guide (dev-time)
 
 Status: **RECORD ONLY — reference guide** (Owner order 2026-09-25: เก็บไว้ใช้
@@ -69,6 +75,8 @@ Grab order: `nex-agi/nex-n2.5-mini:free` → `opencode/muse-spark-1.2-contributo
 | assistant (`opencode/mimo-v2.6-flash-free`) | `opencode/muse-spark-1.2-contributor-free` | `opencode/big-pickle` | `opencode/space-bunny-free` |
 | model-recruiter (paid `openai/gpt-6-luna`) | `nex-agi/nex-n2.5-mini:free` (precision-proven) | `opencode/muse-spark-1.2-contributor-free` | `opencode/space-bunny-free` |
 | L4 verify (paid `anthropic/claude-opus-5.5:batch`) — Owner-selected; free fallback ONLY if Owner approves | `nex-agi/nex-n2.5-mini:free` | `opencode/space-bunny-free` (zero-retention) | `opencode/muse-spark-1.2-contributor-free` |
+
+**The four rows directly above are historical pins (2026-09-25); see MODEL_ROSTER.md for the current ones.**
 
 Anti-redundancy check for the substitutes above: none of the free picks equals
 builder Primary `z-ai/glm-5.3-flash` or Backup `nvidia/nemotron-3.5-lightning`;

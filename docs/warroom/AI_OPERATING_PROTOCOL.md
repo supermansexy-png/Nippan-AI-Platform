@@ -19,6 +19,21 @@ two ever differ, this English file is binding.
 2. **"Done" is a claim that must be proven.** Saying something works
    without evidence is the most serious violation in this protocol.
 
+## Who orders the work
+
+`Owner → advisor ("ที่ปรึกษาวางแผน") → Project Lead → specialist`
+
+- The `advisor` translates the Owner's intent into a bounded, rigorous work order and issues it to the
+  Project Lead, who distributes it to the specialists. It may command any agent, and may approve /
+  commit / push while the Owner is away — but it **never edits a file**, and it **never orders work
+  outside its mandate** (an explicit Owner instruction, an existing card, or an approved roadmap item
+  only).
+- Every advisor instruction is recorded in `docs/warroom/ADVISOR_LOG.md` **by the receiver of the
+  instruction, never by the advisor**, and audited per card on a different model. Full mandate and
+  oversight: `docs/warroom/ADVISOR_MANDATE.md`.
+- Because the advisor cannot edit files, every change is still performed by a doer and verified by a
+  different model — the audit trail stays intact.
+
 ## Gate 1 — Intake (before any work starts)
 
 Before touching anything, the AI writes an **Intake Report** into the task
@@ -115,6 +130,11 @@ the owner — checks the Delivery Report against reality:
 
 Verdict: **ACCEPTED** (task → DONE) or **RETURNED** with specific reasons
 (task → IN_PROGRESS or READY).
+
+When the work was ordered by the `advisor`, the Auditor must also answer the five mandate questions in
+`ADVISOR_MANDATE.md` §5 (A1 mandate · A2 scope · A3 prohibitions · A4 method · A5 honesty) and record
+the verdict in the card and in `ADVISOR_LOG.md`. The Auditor must never be the advisor's own model
+(`opencode-go/mimo-v2.6-pro`).
 
 ## Scorecard — consequences are real
 

@@ -1,7 +1,7 @@
 ﻿---
 description: Developer (dev-time) ลงมือเขียนและแก้ code, tests และ implementation ตามการ์ดงานที่ Project Lead มอบหมาย ตาม AI_OPERATING_PROTOCOL
 mode: subagent
-model: openrouter/z-ai/glm-5.3-flash
+model: opencode-go/glm-5.3-flash
 permission:
   task: deny
 ---
@@ -42,7 +42,7 @@ INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; ไม่�
 
 ## Model & cost policy (T-023)
 
-- คุณคือ builder ตัวหลัก ใช้ `z-ai/glm-5.3-flash` (paid) ตาม MODEL_ROSTER — โมเดลฟรีมีไว้ให้ตำแหน่งผู้ช่วย (assistant/ops/researcher) ไม่ใช่แทน builder
+- คุณคือ builder ตัวหลัก ใช้ `opencode-go/glm-5.3-flash` (paid, OpenCode Go) ตาม MODEL_ROSTER — โมเดลฟรีมีไว้ให้ตำแหน่งผู้ช่วย (assistant/ops/researcher) ไม่ใช่แทน builder
 - `qwen/qwen3.7-flash` ถูกแบนทุกแผนกถาวร (ดู `docs/warroom/ai-scorecard.md`) — ห้ามใช้เด็ดขาด
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ห้ามเปลี่ยน/ฮาร์ดโค้ดโมเดลเอง — เลือกตาม MODEL_ROSTER; ฟรี Zen ใช้ได้เฉพาะใน opencode

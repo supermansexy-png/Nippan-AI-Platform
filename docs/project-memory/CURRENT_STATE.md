@@ -1,7 +1,45 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-25 (session 2 — rules settled, Git work channel chosen, meeting closed)
-Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time) — work dispatched over Git; bridge dropped
+Last updated: 2026-09-26 (session 4 — OpenCode Go re-staffing, advisor role, rule repair)
+Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
+Warning: the sections further down this file still describe the **pre-Go** team (OpenRouter/Zen). Read
+the block below first; it supersedes them for model and role facts.
+
+## 2026-09-26 — what changed this session (authoritative for models/roles)
+
+**Provider.** The dev team moved onto the paid **OpenCode Go** provider (`opencode-go/<model-id>`,
+Owner subscription, flat monthly). OpenCode Go is the **PRIMARY** pool; OpenRouter and OpenCode Zen are
+backup/emergency. Slug rule: `opencode-go/<id>` — writing `opencode/<id>` for a Go model is a naming
+error that fails with an opaque `Unexpected server error`. Card T-035.
+
+**Current pins (verified against the running config):**
+
+| Role | Primary | Notes |
+|---|---|---|
+| project-lead | `opencode-go/mimo-v2.6-pro` | re-pinned by T-037 after `opencode-go/deepseek-v4.1-flash` probed **HTTP 400 "requires Global regions"** |
+| advisor ("ที่ปรึกษาวางแผน") | `opencode-go/mimo-v2.6-pro` | **new role, T-038** — Owner-facing; commands agents, approves/commits when the Owner is away, **cannot edit files** |
+| builder | `opencode-go/glm-5.3-flash` | the 2026-09-25 Owner lock was **lifted** (T-035) |
+| reviewer L1–L3 | `opencode-go/space-bunny-free` | free + zero-retention; L4 = `anthropic/claude-opus-5.5:batch` |
+| security L1–L3 | `openrouter/nex-agi/nex-n2.5-mini:free` | no OpenCode Go equivalent |
+| ops | `opencode-go/mimo-v2.6-flash` | |
+| model-recruiter (HR) | `opencode-go/gpt-6-luna` | instructions rewritten to recruit from the Go pool |
+| researcher | `opencode/nemotron-3.5-lightning-free` | unchanged free |
+| assistant | `opencode/nemotron-3-ultra-free` | unchanged free |
+
+`opencode.json`: default model = `opencode-go/mimo-v2.6-pro`, small_model = `opencode-go/mimo-v2.6-flash`.
+Dead models removed from the rules: `opencode/big-pickle`, `opencode/ling-3.0-flash-fin-free`,
+`opencode/mimo-v2.6-flash-free`; `qwen/qwen3.7-flash` remains permanently banned.
+
+**Governance.** The `advisor` role, its mandate and its oversight are defined in
+`docs/warroom/ADVISOR_MANDATE.md` (now protected) and `docs/warroom/ADVISOR_LOG.md` (append-only,
+written by the receiver of an instruction, never by the advisor). `AGENTS.md`,
+`AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md` and `START_PROMPT.md` were updated (cards T-038/T-039).
+
+**Open items:** (1) the workspace privacy setting must be set to **Global regions** before any
+`opencode-go/deepseek-*` model can be used; (2) `AI_OPERATING_PROTOCOL.md`/`TASK_CONTROL.md` edits
+(card T-039) still need the independent reviewer's verdict recorded; (3) board housekeeping — T-034a is
+DONE and still sits on the board; (4) the 2026-09-26 advisor-governance work is committed together with
+the Go migration.
 
 ## Repository & Workspace
 

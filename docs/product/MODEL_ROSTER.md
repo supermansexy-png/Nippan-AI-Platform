@@ -37,7 +37,7 @@ These are the models actively used in this roster, verified against the full cat
 
 | Model | Provider(s) | Input / Output ($/1M tok) | Context | Tools | tool_choice | Coding Index | Notes |
 |---|---|---|---|---|---|---|---|
-| `qwen/qwen3.7-flash` | Alibaba (default) | $0.03 / $0.13 (≥32k→$0.10/$0.40; ≥256k→$0.20/$0.80) | 1M | ✓ | auto + required ✓ | — | Primary for most roles. Fastest + cheapest among high-quality models. Supports structured_outputs + tool_choice. Benchmark pricing consistent at $0.435/$0.87/M tok (source: artificial-analysis conversion). |
+| `qwen/qwen3.7-flash` | Alibaba (default) | $0.03 / $0.13 (≥32k→$0.10/$0.40; ≥256k→$0.20/$0.80) | 1M | ✓ | auto + required ✓ | — | **BANNED 2026-09-25 — historical entry, do not use.** (Owner order after a False-DONE incident; see `docs/warroom/ai-scorecard.md`.) Was formerly "Primary for most roles". Fastest + cheapest among high-quality models. Supports structured_outputs + tool_choice. Benchmark pricing consistent at $0.435/$0.87/M tok (source: artificial-analysis conversion). |
 | `nvidia/nemotron-3.5-lightning:free` | NVIDIA (free endpoint only) | $0 / $0 | 1M | ✓ | tool_choice ✓ (no structured_outputs) | 26.8 | Builder Backup + general fallback. Free variant: 1M context, slower than qwen flash but strong for a free model. Priced endpoint ($0.08/$0.20) has structured_outputs too. Coding index 26.8 (lower than qwen-flash but sufficient for ops/research). Always route to free endpoint for backup use. |
 | `z-ai/glm-5.3-flash` | Z.ai (default provider) | $0.15 / $0.50 | 1.3M | ✓ | auto + required ✓ | 71.5 | **NEW reviewer/security Primary** (T-014 replacement). Intelligence 41.8 / agentic 50.9 — highest quality within self-approval budget. Multimodal (text+image+video). Supports structured_outputs, reasoning_effort, parallel_tool_calls. Free alternative does not exist for GLM. |
 | `thinkingmachines/inkling:free` | Thinking Machines | $0 / $0 | 1M | ✓ | ✗ | 52.1 | Reviewer/security Backup (same as before). Agentic/coding strong for a free model; no `tool_choice` param (limits to retry only, no structured output guarantee). |
@@ -55,25 +55,62 @@ These are the models actively used in this roster, verified against the full cat
 | `openai/gpt-*` (all except mini variants) | Most GPT models have input ≥$0.10-$0.30 or output ≥$1.00; GPT-4o-mini has low index scores | Mixed fit, mostly overpriced or weak |
 | Free/public models not on roster (Zen etc.) | tool-calling UNVERIFIED, zero-retention UNKNOWN | Cannot verify against MODEL_POLICY requirements |
 
-## Per-role staffing (T-014 re-staffed)
+## แหล่งสรรหาหลัก: OpenCode Go (T-035, 2026-09-26)
+
+**OpenCode Go = คลังสรรหาหลัก (PRIMARY) ของทีม dev** — พี่เชษจ่ายค่าบริการรายเดือนแล้ว (flat $10/mo)
+ส่วน OpenRouter และ OpenCode Zen เป็น **คลังสำรอง/ฉุกเฉิน** ใช้เมื่อ Go ไม่มีตัวที่เหมาะ หรือเป็น free ที่ $0 จริง ๆ
+
+- slug ของ Go ต้องเขียน `opencode-go/<model-id>` เสมอ — เขียนเป็น `opencode/<id>` สำหรับโมเดล Go = ผิด
+  และจะล้มด้วย `Unexpected server error` ที่อ่านหลอกว่าเป็นเรื่องสิทธิ์ (จริง ๆ คือชื่อผิดรูปแบบ)
+- VERIFIED 2026-09-26: `GET https://opencode.ai/zen/go/v1/models` → HTTP 200, 35 ids
+- งบของ Go คิดเป็น bucket **ต่อโมเดล**: 5 ชั่วโมง = 20%, สัปดาห์ = 50%, เดือน = 100% ของวงเงินโมเดลนั้น
+  → โมเดลแพงเก็บไว้ใช้สั้น ๆ กับงานสำคัญ
+- retention/training: `muse-spark-1.2-contributor` และ `muse-spark-1.3-contributor` เทรนบน prompt/output
+  → ห้ามใช้กับโค้ดใน repo หรือข้อมูลจริง · `grok-4.6`, `grok-4.7`, `gpt-5.6-luna`, `gpt-6-luna` เก็บ log
+  30 วัน (abuse monitoring) → ห้ามใช้กับความลับ · ที่เหลือใน Go = no-training / 0-day retention
+  · `opencode-go/space-bunny-free` ฟรี + zero-retention
+
+### 35 model ids ใน Go (2026-09-26)
+
+`deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `deepseek-flash`, `deepseek-v4.1-flash`,
+`deepseek-v4-pro`, `glm-5.1`, `glm-5.2`, `glm-5.3`, `glm-5.3-flash`, `grok-4.6`, `grok-4.7`,
+`muse-spark-1.2-contributor`, `muse-spark-1.3-contributor`, `omen-alpha`, `gpt-5.6-luna`, `gpt-6-luna`,
+`hy3`, `hy4-preview`, `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k3`, `mimo-v2.5`, `mimo-v2.5-pro`,
+`mimo-v2.6-flash`, `mimo-v2.6-pro`, `minimax-m2.5`, `minimax-m2.7`, `minimax-m3`, `space-bunny-free`,
+`longcat-2.0`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.7-max`, `qwen3.8-flash`, `qwen3.8-max`
+
+### คู่มือเลือกตามงาน (INFERRED จาก benchmark/index + ราคา + retention — ยังไม่ใช่การแต่งตั้งรายตำแหน่ง)
+
+| งาน | โมเดลที่แนะนำ | เหตุผล |
+|---|---|---|
+| วางแผน/คิดยาว ๆ (project-lead, advisor) | `opencode-go/mimo-v2.6-pro` | intelligence 46.3 เทียบเท่า Grok-4.7 (46.4) แต่ cached read ถูกกว่า ~138 เท่า ($0.0036 vs $0.50 ต่อ 1M), retention 0 วัน, context 1.05M |
+| เขียน/ตรวจโค้ดชิ้นสำคัญ | `opencode-go/kimi-k3` | coding 76.2 / agentic 50.0 — เก่งสุดในกลุ่ม แต่โควตาน้อย (~490 requests/เดือน) → ใช้เฉพาะงานปลายทาง |
+| งานประจำ ปริมาณมาก | `opencode-go/deepseek-v4.1-flash` | cached read $0.003, bucket ประมาณ $60 (~130,000 requests/เดือน) |
+| ตรวจงาน L1–L3 | `opencode-go/space-bunny-free` | ฟรีไม่จำกัด + zero-retention |
+| งานที่แตะข้อมูลอ่อนไหว | `opencode-go/mimo-v2.6-pro` หรือ `opencode-go/space-bunny-free` | retention 0 วัน |
+| ตัดออกจากรายการ | `grok-4.7`, `deepseek-v4-pro` | Grok แพงเกินไป + log 30 วัน; deepseek-v4-pro intelligence 30.4 ต่ำสุดในกลุ่ม |
+
+## Per-role staffing (T-014 re-staffed — ตารางข้างล่างคือสถานะจริง 2026-09-26)
 
 Each role has Primary + Backup from a different provider.
 
 Anti-regression rule: all Primary↔Backup pairs use different providers.
 Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MODEL from builder's Primary AND Backup.
 
-| # | Role | Primary Model | Primary Provider | Backup Model | Backup Provider | Price (Primary in/out) | Price (Backup in/out) | Reasoning |
-|---|---|---|---|---|---|---|---|---|
-| 1 | **project-lead** | `deepseek/deepseek-v4.1-flash` | DeepSeek | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.15 / $0.60 | $0.08 / $0.20 | **CHANGED 2026-09-24 (Owner order).** Previous: qwen3.7-flash — suspended for protocol violations. New: DeepSeek V4.1 Flash — Real-time, 1M context, Intelligence 39.5, supports tool_choice + structured_outputs + reasoning_effort. Only PL-capable real-time model within self-approval budget ($0.25/$1.00). Nemotron Lightning backup from different provider (NVIDIA ≠ DeepSeek). |
-| 2 | **builder** | `z-ai/glm-5.3-flash` | Z.ai | `nvidia/nemotron-3.5-lightning` | NVIDIA | $0.045 / $0.60 | $0.08 / $0.20 | **LOCKED 2026-09-25 (Owner order): the builder uses `z-ai/glm-5.3-flash` ONLY — not to be swapped to another model. `qwen/qwen3.7-flash` is permanently banned. See "Team update 2026-09-25" below (authoritative).** |
-| 3 | **reviewer** | L1–L3: `opencode/nemotron-3-ultra-free` · L4: `z-ai/glm-5.3-flash` | OpenCode Zen / Z.ai | `opencode/space-bunny-free` | OpenCode Zen | $0 · L4 $0.15/$0.50 | $0 / $0 | **CHANGED 2026-09-25 (T-020/T-023): free for L1–L3, paid GLM only for L4 critical verification.** |
-| 4 | **security** | L1–L3: `opencode/big-pickle` · L4: `z-ai/glm-5.3-flash` | OpenCode Zen / Z.ai | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 · L4 $0.15/$0.50 | $0 / $0 | **CHANGED 2026-09-25 (T-023, Owner order): security free model kept DIFFERENT from the reviewer's free model.** |
-| 5 | **ops** | `opencode/big-pickle` | OpenCode Zen | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
-| 6 | **researcher** | `opencode/ling-3.0-flash-fin-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **CHANGED 2026-09-25 (T-022): execution roles use free models.** Was `qwen/qwen3.7-flash`. |
-| 7 | **model-recruiter** | `openai/gpt-6-luna` | OpenAI | `tencent/hy3-preview` | Tencent | $0.10 / $0.50 | $0.18 / $0.60 | **APPOINTED 2026-09-24 (Owner approved).** Replaces qwen3.7-flash (dismissed for False DONE). Spec: HIGH INTEGRITY + DETAIL-ORIENTED. Vetted with 2 live probes (precision: PostgreSQL partial-index bug; honesty: filesystem access claim) — gpt-6-luna PASS both; hy3-preview PASS both; ling-3.0-flash-vl FAILED precision. Both real-time, tool+structured_outputs capable, within budget. Primary provider OpenAI is distinct from all other team providers. **TEMPORARY SWAP 2026-09-26 (Owner order): the PL may re-pin HR to a free model without asking; HR currently runs `opencode/nemotron-3-ultra-free` — the paid pin repeatedly sent invalid model-listing calls and produced no usable roster check. Restore the paid pin once that behaviour is fixed.** |
-| 8 | **assistant** | `opencode/mimo-v2.6-flash-free` | OpenCode Zen | `opencode/big-pickle` | OpenCode Zen | $0 / $0 | $0 / $0 | **NEW 2026-09-25 (T-023, Owner order): a FREE "helper" position for support work (draft/summarize/collect), so the paid builder is not used for grunt work.** |
+| # | Role | Primary Model | Primary Provider | Backup Model | Backup Provider | Reasoning |
+|---|---|---|---|---|---|---|
+| 1 | **project-lead** | `opencode-go/mimo-v2.6-pro` | OpenCode Go | `openrouter/deepseek/deepseek-v4.1-flash` | OpenRouter | **CHANGED 2026-09-26 (T-035/T-037): routed to OpenCode Go.** Original Go pick `deepseek-v4.1-flash` was probed **FAILING (HTTP 400)**: *"This Go model requires Global regions. Select Global in your workspace's Privacy settings"* → re-pinned to `mimo-v2.6-pro` (probed HTTP 200; intelligence 46.3 vs 39.5; 0-day retention; cheap cached read). `deepseek-v4.1-flash` becomes usable as backup once the workspace Privacy setting is set to Global regions. |
+| 2 | **builder** | `opencode-go/glm-5.3-flash` | OpenCode Go | `openrouter/z-ai/glm-5.3-flash` | OpenRouter | **Builder lock LIFTED 2026-09-26 (Owner directive, T-035): the whole team is re-selected; GLM-5.3-Flash stays as the OpenCode Go primary for now.** `qwen/qwen3.7-flash` remains permanently banned. |
+| 3 | **reviewer L1–L3** | `opencode-go/space-bunny-free` | OpenCode Go | `opencode/space-bunny-free` | OpenCode Zen | **CHANGED 2026-09-26 (T-035): routed to OpenCode Go.** Free + stated zero-retention; model identity unchanged. |
+| 3b | **reviewer L4** | `anthropic/claude-opus-5.5:batch` | OpenRouter | — | — | Paid, Batch API only, Owner-approved per use. Not offered in Go. |
+| 4 | **security L1–L3** | `openrouter/nex-agi/nex-n2.5-mini:free` | OpenRouter | `opencode/space-bunny-free` | OpenCode Zen | OpenCode Go has **no equivalent** for this model → it stays on the OpenRouter free endpoint. Owner may re-pick from Go later. |
+| 5 | **ops** | `opencode-go/mimo-v2.6-flash` | OpenCode Go | `opencode/nemotron-3-ultra-free` | OpenCode Zen | **CHANGED 2026-09-26 (T-035): routed to OpenCode Go.** |
+| 6 | **researcher** | `opencode/nemotron-3.5-lightning-free` | OpenCode Zen | `openrouter/nvidia/nemotron-3.5-lightning:free` | OpenRouter | Free; **unchanged by T-035** (candidate to move onto Go when the team is finalised). |
+| 7 | **model-recruiter (HR)** | `opencode-go/gpt-6-luna` | OpenCode Go | `openrouter/openai/gpt-6-luna` | OpenRouter | **CHANGED 2026-09-26 (T-035): routed to OpenCode Go**, and its instructions were rewritten so it recruits from the Go pool first (OpenRouter/Zen = backup). Note: gpt-6-luna keeps 30-day abuse logs → never for secrets. |
+| 8 | **assistant** | `opencode/nemotron-3-ultra-free` | OpenCode Zen | `opencode-go/mimo-v2.6-flash` | OpenCode Go | Free helper; **unchanged by T-035**. |
+| 9 | **advisor (NEW)** | `opencode-go/mimo-v2.6-pro` | OpenCode Go | `openrouter/deepseek/deepseek-v4.1-flash` | OpenRouter | **NEW 2026-09-26 (T-036, Owner request).** An **Owner-facing planning agent**: it does not execute work, does not edit files and does not make decisions — it produces options, trade-offs and analysis for the Project Owner to decide on. Model picked for best brain-per-dollar (intelligence 46.3 ≈ Grok-4.7 at ~1/138 the cached-read cost), 0-day retention, 1.05M context. |
 
-### Anti-redundancy cross-check (P+B verification — T-014 updated)
+### Anti-redundancy cross-check (P+B verification — T-014, historical, superseded by the T-035 staffing table above)
 
 | Relationship | Roles checked | Models compared | Status |
 |---|---|---|---|
@@ -143,8 +180,8 @@ Review/security model is chosen by risk level (TASK_CONTROL §3). Covers L1, L2 
 
 | Tier | reviewer / security Primary | Backup | Notes |
 |---|---|---|---|
-| L1/L2 (reversible, non-sensitive) | reviewer: `opencode/nemotron-3-ultra-free` · security: `opencode/big-pickle` | `opencode/space-bunny-free` | Free; caught both planted bugs in the T-020 test. Reviewer free model ≠ security free model (T-023). |
-| L3 (hard to undo / sensitive) | `opencode/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention. L3 inputs must be redacted. |
+| L1/L2 (reversible, non-sensitive) | reviewer: `opencode-go/space-bunny-free` · security: `openrouter/nex-agi/nex-n2.5-mini:free` | `opencode/nemotron-3-ultra-free` | Free; caught both planted bugs in the T-020 test. Reviewer free model ≠ security free model (T-023). **Updated 2026-09-26 (T-035):** the old L1/L2 entries (`opencode/nemotron-3-ultra-free`, `opencode/big-pickle`) no longer exist / are no longer assigned, so the L1/L2 tier now uses the same free zero-retention reviewer across tiers. |
+| L3 (hard to undo / sensitive) | `opencode-go/space-bunny-free` | `opencode/nemotron-3-ultra-free` | `space-bunny-free` = stated zero-retention (runs on OpenCode Go since 2026-09-26). L3 inputs must be redacted. |
 | **L4 (critical / high-accuracy verification)** | **`anthropic/claude-opus-5.5:batch`** | — (Owner will appoint if needed) | **Paid, Owner-selected 2026-09-25. Intelligence 57.6 (highest shortlisted); batch $2/$10 per 1M (real-time $4/$20).** Exceeds the normal MODEL_POLICY cap — this is an explicit Owner-approved L4 exception; it is used rarely. E.g. security boundary, tenant/bot isolation, data-handling reviews. **Approval per use (Owner 2026-09-25): the Owner approves, or the PL approves on the Owner's behalf when the Owner is unavailable; Batch API (`:batch`) is required; this is a normal review step, not an Independent Audit — see `AGENTS.md` §Independent Audit Status.** |
 | Paid fallback (free endpoint down) | `anthropic/claude-opus-5.5:batch` | — | Batch $2/$10 per 1M. |
 
@@ -167,6 +204,10 @@ When Project Lead invokes specialist agents:
 4. Any future violation: HR will blacklist the non-compliant model from specialist roles immediately. 如果再发生类似事件 [model name] 将被禁止从 HR 调用执行工作.
 
 ## Team update 2026-09-25 (Owner-approved appointments)
+
+> **Superseded 2026-09-26 (T-035):** the "Per-role staffing" table at the top of this file is the
+> authoritative one. The rows below are kept as history only — in particular the `ops` and
+> `researcher` free pins and the builder lock were replaced when the team moved onto **OpenCode Go**.
 
 Supersedes the earlier builder and L4 assignments in this file. Builder Primary is now GLM (Owner plan); the L4 paid reviewer slot is now filled by `anthropic/claude-opus-5.5:batch` (Owner-selected 2026-09-25).
 

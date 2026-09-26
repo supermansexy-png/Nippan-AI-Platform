@@ -839,3 +839,43 @@ cents: the whole server slice `t034b-slice2a` = $0.0335, the seed-script work = 
 
 **Action**: no further paid calls this period. Anything still open waits for the Owner to top up, or runs on a free model.
 
+
+
+## ADVISOR — 2026-09-26 — the "ที่ปรึกษาวางแผน" role, its oversight, and the rule repair after the OpenCode Go move
+
+**Decision (Owner, in chat 2026-09-26)**: a new Owner-facing agent `advisor` ("ที่ปรึกษาวางแผน") sits one step above the Project Lead:
+`Owner → advisor → Project Lead → specialist`. It translates the Owner's ordinary-language intent into a rigorous work order and
+issues it to the PL; the PL then distributes it to the specialists. It may command every dev agent, and may approve / commit / push
+**on the Owner's behalf while the Owner is away**. It **may never edit a file**, and it **may never order work outside the working
+protocol** (an explicit Owner instruction, an existing card, or an approved roadmap item only).
+
+**Why the "cannot edit files" limit is the point**: it makes the advisor auditable. It can order work but never perform it, so every
+change still goes through a doer and a different-model reviewer, and the audit trail stays intact.
+
+**Oversight (new)**: every advisor instruction is recorded in `docs/warroom/ADVISOR_LOG.md` **by the receiver of the instruction,
+never by the advisor** — the party who must obey the order is the party who states, on the record, what they understood it to mean.
+Per card, a reviewer on a model **different from the advisor's** (`opencode-go/mimo-v2.6-pro`) answers five questions
+(mandate · scope · prohibitions · method · honesty) and returns `WITHIN-MANDATE` / `WITHIN-MANDATE-WITH-FINDINGS` / `OUT-OF-MANDATE`.
+An `OUT-OF-MANDATE` verdict stops the work, notifies the Owner, and is logged in `docs/warroom/ai-scorecard.md`.
+Full procedure: `docs/warroom/ADVISOR_MANDATE.md` — now itself a protected document.
+
+**Rule repair (cards T-038/T-039)**: after the wholesale model/provider/role change, the rules were scanned for contradictions.
+Fixed in this pass: `START_PROMPT.md` still assigned an Owner-locked `z-ai/glm-5.3-flash` builder and dead review models
+(`opencode/big-pickle`, `opencode/nemotron-3-ultra-free`, `opencode/ling-3.0-flash-fin-free`); `AGENTS.md` did not know the
+`opencode-go/` prefix; `.opencode/agents/project-lead.md` had the same gap and did not know the advisor existed; `DEV_WORKING_GUIDE.md`
+stated "OpenCode Zen = free models only" without saying that Go is a different, paid provider; `FREE_MODEL_FALLBACK_GUIDE.md`
+presented dead models as current pins; `docs/project-memory/CURRENT_STATE.md` still described the pre-Go team.
+`AI_OPERATING_PROTOCOL.md` and `TASK_CONTROL.md` (both protected) were amended on card T-039 with the order chain, the record rule
+and the advisor audit. `docs/warroom/ROLES.md` was deliberately left alone — it describes the runtime (live-system) role ecosystem,
+and the advisor is a dev-time role.
+
+**Provider note**: the team moved onto the paid **OpenCode Go** provider (`opencode-go/<id>`, flat monthly, card T-035) as the
+PRIMARY pool; OpenRouter and OpenCode Zen are backup/emergency. `opencode-go/deepseek-v4.1-flash` was probed **failing**
+(HTTP 400, "requires Global regions") so the project-lead was re-pinned to `opencode-go/mimo-v2.6-pro`; the DeepSeek model becomes
+usable again if the workspace privacy setting is set to Global regions.
+
+**Scope limit**: dev-time governance only. No runtime model routing, no production system and no customer-facing policy changed.
+
+**Evidence**: cards T-038 / T-039 in `TASKS.md`; `docs/warroom/ADVISOR_MANDATE.md`; `docs/warroom/ADVISOR_LOG.md`;
+`docs/product/MODEL_ROSTER.md` § "แหล่งสรรหาหลัก: OpenCode Go"; runs under `runs/2026-09-26T10-*`.
+

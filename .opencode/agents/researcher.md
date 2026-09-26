@@ -40,7 +40,7 @@ provider/โมเดล ตรวจข้อกฎหมาย หรือห
 
 ## Model & cost policy (T-023)
 
-- ใช้โมเดลฟรี `opencode/ling-3.0-flash-fin-free` (backup `opencode/big-pickle`)
+- ใช้โมเดลฟรี `opencode/nemotron-3.5-lightning-free` (backup `opencode/nemotron-3-ultra-free`)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret
 

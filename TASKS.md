@@ -221,43 +221,168 @@ Decision: ACCEPT — slices as above.
 
 ---
 
-> NOTE (Project Lead, 2026-09-26): the card below was found uncommitted in the working tree and was authored **outside
-> this session**. It is preserved here untouched — not reviewed, not approved, and not counted as this session's work.
+> NOTE (Project Lead, 2026-09-26, second session): this card was authored by the Project Lead while the working-tree
+> board was in its broken 33-line state (see `DEV_ERROR_LOG.md`); another session then repaired the board and
+> preserved the card. It was first written as "T-030" — **renumbered T-035** here because the card number T-030
+> belongs to the archived n8n/RLS card. Content is unchanged apart from the number and the intake header.
 
-### T-030 — Bring OpenCode Go ($10/mo) into the dev team as the paid provider
-Status: READY (plan written 2026-09-26; waiting Owner approval on the mapping)
-Owner: (unclaimed — Project Lead planning; HR readiness check pending)
-Role: Project Lead (plan) + Model Recruiter (availability/probe)
-Risk: L2 — dev-process model routing + cost policy; rewriting `MODEL_ROSTER.md` needs Owner approval
-Goal: roles whose model already exists inside the Go subscription run via `opencode-go/<id>`
-instead of the near-empty OpenRouter balance, with the model identity unchanged.
+### T-035 — Re-staff the dev team on OpenCode Go (paid primary, free as backup)
+Status: IN_PROGRESS (HR re-study queued 2026-09-26 as run `2026-09-26T09-27-58Z-go-restaff-v2`; Owner asked for it in chat)
+Owner: Project Lead (plan/record) + Model Recruiter (proposal)
+Role: Project Lead + model-recruiter
+Risk: L2 — dev-process model routing + cost policy; `MODEL_ROSTER.md` rewrite needs Owner approval
+Goal: every dev role is staffed by the best-suited model available in the OpenCode Go
+subscription (paid, flat $10/mo with per-model caps); free models drop to backup/fallback
+instead of being primary.
 Done when:
-- HR reports Go availability per role model, with a real probe result per model (VERIFIED/UNKNOWN marked)
-- Owner approves the role→`opencode-go` mapping (or a subset)
-- one headless job per migrated role runs end-to-end on the Go provider with evidence under `runs/`
-- `MODEL_ROSTER.md` + `SESSION_HANDOFF.md` updated and a `decision-log.md` entry written
-- fallback preserved: OpenRouter stays configured; no role left depending on one provider only
-Budget: one working session; HR probe calls only (no new paid spend beyond the subscription)
+- HR delivers a role×model proposal built on Go availability + price/limit + privacy + capability
+  evidence, with each claim marked VERIFIED / INFERRED / UNKNOWN and a `needs-owner-decision` list
+- Owner approves the mapping (all of it, or a subset)
+- `opencode.json` + `MODEL_ROSTER.md` updated to the approved mapping; free models kept as backup
+- one headless job per migrated role runs end-to-end on the Go provider, evidence under `runs/`
+- `SESSION_HANDOFF.md` refreshed and a `decision-log.md` entry written
+Budget: HR study = one headless job; implementation = one working session
 Links: `docs/product/MODEL_ROSTER.md`, `opencode.json`, `scripts/headless_run.mjs`, `https://opencode.ai/docs/go/`
 
-Planned mapping (same model, different provider — model identity preserved):
+**Owner directive 2026-09-26 (verbatim intent):** now that we pay for this package, the team must
+stop using free models as primary — HR must find the model that best suits each job.
 
-| Role | Current route | Proposed Go route | Go monthly limit |
-|---|---|---|---|
-| project-lead | `openrouter/deepseek/deepseek-v4.1-flash` | `opencode-go/deepseek-v4.1-flash` | $60 |
-| builder (Owner-locked model) | `z-ai/glm-5.3-flash` | `opencode-go/glm-5.3-flash` | $60 |
-| reviewer L1–L3 | `opencode/space-bunny-free` | `opencode-go/space-bunny-free` | unlimited (promo) |
-| model-recruiter (HR) | `openrouter/openai/gpt-6-luna` | `opencode-go/gpt-6-luna` | $15 |
-| ops / researcher / assistant | `opencode/muse-spark-1.2-contributor-free` | `opencode-go/muse-spark-1.3-contributor` | $60 |
-| security L1–L3 | `openrouter/nex-agi/nex-n2.5-mini:free` | unchanged — **not offered in Go** | — |
+**Owner directive 2026-09-26 (second — supersedes the builder lock):** re-select the WHOLE team; the
+new stronger models are already included in the paid monthly package; prefer better coders and
+better coordinating agents; HR selects from published reviews/benchmarks only — **no testing**; HR
+proposes, and the Owner discusses the report **before** any appointment is approved. → the builder
+lock to GLM-5.3-Flash is **lifted**.
 
-Notes / constraints found 2026-09-26 (evidence in the card's DELIVERY when done):
-- `opencode-go` is already authenticated in this workspace; `/zen/go/v1/models` returns 35 models
-  incl. every paid-roster model above; `glm-5.3-flash` and `space-bunny-free` serve inference (HTTP 200).
-- Muse Spark under Go trains on prompts/outputs and is **not ZDR** → no secrets/sensitive code.
-- Go models still consume reasoning tokens: `max_tokens` in probes must be generous.
-- Drift found: `opencode.json` default/`small_model` = `opencode/ling-3.0-flash-fin-free`, a model
-  previously recorded as unusable/banned for PL+HR — fix alongside the mapping.
+**HR run log (T-035):**
+- run `2026-09-26T09-21-40Z-go-restaff` — **FAILED, 0 output.** `--agent model-recruiter` is a
+  subagent, so the CLI silently fell back to `project-lead` (see `DEV_ERROR_LOG.md`), and the model
+  then hit its reasoning-length cap (`step_finish reason "length"`, reasoning 4096, output 0). The
+  only artefact is its INTAKE below. Cost ≈ $0.006 of Go usage. Superseded.
+- run `2026-09-26T09-27-58Z-go-restaff-v2` — agent `worker` (primary agent, no fallback), model
+  `opencode-go/mimo-v2.6-pro`; brief = full re-selection of all 9 roles, benchmark/review-based, no
+  testing, proposal only (no appointment). **Result: NEEDS_DECISION — the brief reached the worker truncated
+  (~600 chars) so it refused to guess.** Cost ≈ $0.028. Defect recorded in `DEV_ERROR_LOG.md`.
+- run `2026-09-26T09-31-09Z-go-restaff-v3` — same agent/model; prompt reduced to a 190-char pointer and the
+  full brief moved to `runs/briefs/t035-hr-restaff.md` (repo-local, gitignored). This is the authoritative
+  run for the T-035 proposal.
+- Already in the tree as input: `docs/product/MODEL_POLICY.md` § "OpenCode Go — approved provider"
+  — an uncommitted draft authored by another session. Handed to HR as **input**, not as a decision.
+
+Verified facts 2026-09-26 (PL, evidence class VERIFIED unless noted):
+- Provider `opencode-go` is authenticated in this workspace (`auth.json` entry, type `api`) and
+  serves inference: `GET /zen/go/v1/models` → HTTP 200, 35 model ids; `glm-5.3-flash` and
+  `space-bunny-free` chat completions → HTTP 200 with `served_model` echoed.
+- Go catalogue ids returned: deepseek-v4-flash, deepseek-v4-flash-vision-exp, deepseek-flash,
+  deepseek-v4.1-flash, deepseek-v4-pro, glm-5.1, glm-5.2, glm-5.3, grok-4.6, grok-4.7,
+  muse-spark-1.2-contributor, muse-spark-1.3-contributor, glm-5.3-flash, omen-alpha, gpt-5.6-luna,
+  gpt-6-luna, hy3, hy4-preview, kimi-k2.6, kimi-k2.7-code, kimi-k3, mimo-v2.5, mimo-v2.6-flash,
+  mimo-v2.5-pro, mimo-v2.6-pro, minimax-m2.5, minimax-m2.7, minimax-m3, space-bunny-free,
+  longcat-2.0, qwen3.6-plus, qwen3.7-max, qwen3.8-max, qwen3.8-flash, qwen3.7-plus
+- Cost context: OpenRouter balance ≈ **$1.19** left ($45 credits, $43.81 used, checked 2026-09-26);
+  PL, builder and HR currently route through OpenRouter → cliff risk.
+- Privacy (from the Go doc): most models no-training / 0-day retention; **Muse Spark 1.2 & 1.3
+  Contributor train on prompts+outputs and are NOT ZDR**; Grok 4.7/4.6 and GPT Luna keep 30-day
+  abuse-monitoring logs.
+- Constraint carried over: builder is Owner-locked to GLM-5.3-Flash (2026-09-25) — HR may propose a
+  change only as an explicit owner-decision item. Reviewer model ≠ builder model; reviewer model ≠
+  security model. No training/non-ZDR model as primary where repo code or config is handled.
+- Drift found: `opencode.json` default + `small_model` = `opencode/ling-3.0-flash-fin-free`
+  (a model previously recorded unusable/banned for PL+HR) — fix alongside the mapping.
+- Policy nuance to record on approval: `DEV_WORKING_GUIDE.md` says "OpenCode Zen = FREE MODELS
+  ONLY"; OpenCode Go is a separate Owner-purchased subscription, not a per-call paid Zen model.
+
+INTAKE — T-035 — `opencode-go/gpt-6-luna` — 2026-09-26
+Understanding: I will have HR evaluate suitable OpenCode Go models per dev role using verified availability, limits/cost, privacy, capability and probe evidence, then implement only the mapping the Owner approves. Free models may remain as backups; no customer/runtime routing is in scope.
+Done when: (1) evidenced role×model proposal with VERIFIED/INFERRED/UNKNOWN + owner decisions; (2) Owner approves mapping; (3) approved `opencode.json` + `MODEL_ROSTER.md` mapping, free backups retained; (4) one end-to-end Go headless job per migrated role, evidence in `runs/`; (5) refreshed handoff + decision-log entry.
+Needs: HR (`opencode/nemotron-3-ultra-free`, temporary roster assignment) and Go provider access; later, Owner's mapping approval, builder, independent reviewer, and per-role headless evidence.
+Missing: fresh per-candidate limits/privacy/capability/readiness evidence and Owner-approved role mapping; `opencode.json`/roster changes and per-role end-to-end runs are not yet authorized by an approved mapping.
+Plan: L2 — 1) HR runs one bounded readiness/recruitment job; 2) report proposal and wait for Owner mapping approval; 3) after approval, delegate only approved config changes; 4) validate, run one headless check per migrated role, obtain different-model review, then record handoff/decision evidence.
+Estimate: HR study = one headless job; approved implementation = one working session; within card budget.
+Risks: routing/config drift, Go shared usage buckets and privacy restrictions; current repo has unrelated uncommitted changes that must remain untouched. No secrets/customer data go to free models.
+Decision: ACCEPT
+
+### T-038 — Advisor mandate + governance rule repair after the OpenCode Go re-staffing
+
+Status: IN_PROGRESS (Owner instruction 2026-09-26 in chat)
+Owner: Project Lead (documents) + builder/worker (agent files); Owner approved the mandate in chat
+Role: Project Lead (plan/record) + builder (agent config) + reviewer (independent audit)
+Risk: L2 for the agent files; **L3 for any change to a protected doc** (`AI_OPERATING_PROTOCOL.md`,
+`TASK_CONTROL.md`) — those need a reviewer on a different model + a `decision-log.md` entry
+
+Goal: the Owner-facing `advisor` ("ที่ปรึกษาวางแผน") exists with its full mandate, and the project's
+rule set no longer contradicts the new model/provider/role reality.
+
+Owner instruction (intent): the advisor may command every agent, translates the Owner's words into
+rigorous AI work orders and issues them to the PL (who distributes); it may approve/commit while the
+Owner is away; it may NOT edit files and may NOT order work outside the working protocol. An
+oversight system must exist that detects out-of-mandate orders and rule violations. The rules must be
+improved and checked for contradictions after the wholesale model/role change.
+Record: `docs/warroom/ADVISOR_LOG.md` T-038 (written by the receiver).
+
+Done when:
+- [x] `.opencode/agents/advisor.md` carries the final mandate (`task: allow`, git commit/push allowed, `edit: deny`)
+- [x] `docs/warroom/ADVISOR_MANDATE.md` defines powers, limits, the instruction record and the per-card audit
+- [x] `docs/warroom/ADVISOR_LOG.md` created; record is written **by the receiver**, not the advisor
+- [x] `AGENTS.md` recognises the advisor in the order chain `Owner → advisor → Project Lead → specialist`
+- [x] `docs/warroom/START_PROMPT.md` no longer assigns dead/old models and carries the Go provider rule
+- [x] independent audit of this card's advisor instructions, run on a model ≠ `opencode-go/mimo-v2.6-pro`
+      → `opencode-go/kimi-k3`, verdict **WITHIN-MANDATE-WITH-FINDINGS** (recorded in `ADVISOR_LOG.md`)
+- [x] protected docs updated on the separate L3 card T-039 with a Decision Log entry —
+      `AI_OPERATING_PROTOCOL.md` + `TASK_CONTROL.md` (both) · `ROLES.md` deliberately untouched
+      (it describes the runtime role ecosystem, not the dev-time team)
+- [ ] `docs/project-memory/CURRENT_STATE.md` refreshed; board housekeeping (T-034a is DONE → archive)
+
+Conflict scan (2026-09-26, PL, grep-based — see the findings reported to the Owner):
+1. `docs/warroom/START_PROMPT.md` still assigned `z-ai/glm-5.3-flash` as an Owner-locked builder, plus
+   `opencode/nemotron-3-ultra-free` / `opencode/big-pickle` for review tiers → **FIXED** in this card.
+2. `AGENTS.md` slug rule listed only `openrouter/` and `opencode/` → **FIXED** (added `opencode-go/`).
+3. `.opencode/agents/project-lead.md` slug line lacks `opencode-go/` and does not name the advisor upstream → **OPEN**.
+4. `docs/warroom/DEV_WORKING_GUIDE.md` still says "OpenCode Zen = FREE MODELS ONLY" with no Go primary → **OPEN**.
+5. `docs/product/FREE_MODEL_FALLBACK_GUIDE.md` still lists dead models as current pins → **OPEN**.
+6. `docs/project-memory/CURRENT_STATE.md` still lists the pre-Go models/roles → **OPEN**.
+7. No doc previously described the advisor role or any oversight for it → **FIXED** by ADVISOR_MANDATE + AGENTS.md.
+
+Budget: dev-time doc work + free/Go-model headless jobs only; no new paid spend.
+
+Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, `.opencode/agents/advisor.md`,
+`docs/product/MODEL_ROSTER.md`, `docs/warroom/decision-log.md`
+
+### T-039 — L3: write the advisor into the protected governance docs
+
+Status: IN_PROGRESS (Owner instruction 2026-09-26: "เปิดการ์ดทำเลย")
+Owner: Project Lead (docs) + reviewer on a different model
+Role: Project Lead + reviewer
+Risk: **L3** — edits two protected documents (`docs/warroom/AI_OPERATING_PROTOCOL.md`,
+`docs/warroom/TASK_CONTROL.md`). Per TASK_CONTROL §8 this needs: a card · a reviewer on a **different
+model** · a Decision Log entry with reasons. Owner approval given in chat 2026-09-26 (dev-time, so the
+PL may also substitute for the owner's approval).
+
+Goal: the protected rule books recognise the new order chain and the advisor oversight, so no rule in
+force contradicts the new role.
+
+Done when:
+- [x] `AI_OPERATING_PROTOCOL.md` — new section "Who orders the work" (`Owner → advisor → PL →
+      specialist`), the record-written-by-the-receiver rule, and the Gate-4 requirement that the
+      Auditor answer the five mandate questions on a model ≠ the advisor's
+- [x] `TASK_CONTROL.md` §3 — advisor-ordered work gets the extra per-card advisor audit
+- [x] `TASK_CONTROL.md` §4 — an advisor order with no record in `ADVISOR_LOG.md` must not start
+- [x] `TASK_CONTROL.md` §8 — `docs/warroom/ADVISOR_MANDATE.md` added to the protected list;
+      `ADVISOR_LOG.md` declared **append-only**, written by the receiver
+- [x] independent reviewer (model ≠ `opencode-go/mimo-v2.6-pro`) verifies the two protected edits —
+      `opencode-go/kimi-k3`, run `runs/2026-09-26T10-19-22Z-t039-protected-review` → **ACCEPT-WITH-FINDINGS**,
+      checks 1–6 PASS
+- [x] finding resolved: protected-document approval is now explicitly **outside** the advisor's
+      substitute authority (`ADVISOR_MANDATE.md` §6 + `TASK_CONTROL.md` §8)
+- [x] `docs/warroom/decision-log.md` entry with reasons (entry `## ADVISOR — 2026-09-26`)
+- [x] `docs/project-memory/CURRENT_STATE.md` refreshed (2026-09-26 block at the top)
+
+Note: `docs/warroom/ROLES.md` was deliberately **not** touched — it describes the runtime (live-system)
+role ecosystem, and the advisor is a dev-time role. Rule: protected docs are edited one card at a time
+so each change keeps a single reviewable diff.
+
+Budget: dev-time document work only; no new paid spend.
+
+Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, card T-038
 
 ## REVIEW
 

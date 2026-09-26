@@ -101,6 +101,90 @@ must be a genuinely independent set of eyes, not the same brain.
 OpenCode Zen is **FREE MODELS ONLY**. Never apply OpenRouter's paid-model
 policy to OpenCode Zen, and never authorize a paid Zen model.
 
+## OpenCode Go — approved provider (Owner decision 2026-09-26)
+
+OpenCode **Go** is a separate provider from Zen (provider id `opencode-go` in
+config, model slugs written `opencode-go/<model-id>`). The Project Owner
+subscribed to Go at $10/month. Go is an **approved provider** for dev-time
+work, and it is NOT covered by the Zen "free models only" rule above.
+
+Go models are already paid for by the subscription, so their per-token list
+price is a *usage-meter unit*, not a new cash cost. A Go model may therefore
+be used even when its list price would exceed the self-approval guideline —
+the cap that applies is the Go per-model usage limit, which the Owner can see
+and stop at any time.
+
+- Zen stays free-models-only. Do not mix the two rules.
+- Go model ids MUST be written `opencode-go/<model-id>`. A Zen-style
+  `opencode/<model-id>` slug for a Go-only model fails with an opaque
+  `Unexpected server error` that looks like a permission problem but is a
+  naming problem.
+- One Go subscription per workspace: the main chat and the headless workers
+  share the same 5-hour / weekly / monthly buckets.
+
+### Go usage limits
+
+Limits are denominated in monthly dollar value of usage, in three layers per
+model: **5-hour = 20%** of the model monthly limit, **weekly = 50%**,
+**monthly = 100%**. When a bucket is empty the request is blocked (free
+models still work). Enabling **Use balance** in the console makes Go fall
+back to the Zen balance instead of blocking.
+
+A $15 model therefore allows only ~$3 per 5 hours. Queue the strong models
+for short high-stakes tasks; do not hold long conversations on them.
+
+### Long-conversation cost rule (Owner-approved 2026-09-26)
+
+A planning conversation re-sends the whole history every turn, so **cached
+read** dominates the bill, not output tokens. Measured on a real 202-turn
+session (~28M cached-read tokens), against Artificial Analysis indices
+verified live on 2026-09-26:
+
+| Go model | intelligence | cached read /1M | That session | Retention |
+|---|---:|---:|---:|---|
+| `mimo-v2.6-pro` | **46.3** | $0.0036 | **$0.10** | 0 days |
+| `grok-4.7` | **46.4** | $0.50 | $14.00 | 30 days |
+| `kimi-k3` | 43.6 | $0.30 | $8.40 | 0 days |
+| `gpt-6-luna` | 37.3 | $0.01 | $0.28 | 30 days |
+| `deepseek-v4.1-flash` | 39.5 | $0.003 | $0.08 | 0 days* |
+| `deepseek-v4-pro` | 30.4 | $0.022 | $0.62 | 0 days* |
+
+Rule: **expensive model for a short chat, cheap model for a long chat.**
+
+`grok-4.7` and `mimo-v2.6-pro` have effectively identical intelligence
+(46.4 vs 46.3) — Grok costs **138x more** per long thread and retains data
+for 30 days. Grok is therefore not used. `kimi-k3` and `qwen3.8-max` are
+strong but 25x-175x dearer on a long thread; reserve them for short
+high-stakes tasks and final code, where the context is small.
+
+`deepseek-v4-pro` is **rejected** — intelligence 30.4, the lowest of the
+set, despite the "Pro" name.
+
+By job:
+
+| Job | Model | Why |
+|---|---|---|
+| Long planning / strategy conversation | `mimo-v2.6-pro` | best brain per dollar, 0-day retention, 1.05M context |
+| Code writing and code review | `kimi-k3` | coding 76.2 / agentic 50.0 — best coder available; but only ~490 requests/month, so use on final code, not every edit |
+| Everyday work, high volume | `deepseek-v4.1-flash` | $60 bucket, ~130,000 requests/month |
+| Anything sensitive | `mimo-v2.6-pro` or `space-bunny-free` | 0-day retention |
+
+
+### Go data-handling (privacy) rules
+
+Go publishes retention per model and the project must respect it:
+
+- **0-day retention** — safe for sensitive/redacted input: GLM, Kimi, Qwen,
+  MiMo, MiniMax, DeepSeek, LongCat, Hy, `space-bunny-free`.
+- **30-day retention — not for secrets**: `grok-4.7`, `grok-4.6`,
+  `gpt-6-luna`, `gpt-5.6-luna` (abuse-monitoring logs).
+- **Trains on your prompts — never send project or customer data**:
+  `muse-spark-1.3-contributor`, `muse-spark-1.2-contributor`.
+
+`opencode-go/space-bunny-free` remains free, unlimited and zero-retention —
+keep it as the default whenever retention is unknown or the input is
+sensitive.
+
 ## Speed matters on LINE
 
 Default models for end-customer replies must answer fast enough for LINE's

@@ -43,6 +43,12 @@ effort is reasonable.
 
 When unsure, pick the higher level.
 
+Work that the `advisor` ("ที่ปรึกษาวางแผน") ordered carries an extra check on top of the level above:
+the per-card **advisor audit** in `docs/warroom/ADVISOR_MANDATE.md` §5, run on a model **different
+from the advisor's** (`opencode-go/mimo-v2.6-pro`). Its verdict (`WITHIN-MANDATE` /
+`WITHIN-MANDATE-WITH-FINDINGS` / `OUT-OF-MANDATE`) is recorded in the card and in the `verdict`
+field of `docs/warroom/ADVISOR_LOG.md`.
+
 Why: checking everything heavily wastes money and time (this project has
 already burned tokens that way); checking nothing lets mistakes reach
 customers. Matching checks to risk is the balance.
@@ -57,6 +63,11 @@ Why: two AIs editing the same file in parallel silently overwrite each
 other. A written claim is the cheapest lock there is.
 
 A claim older than 7 days with no update returns to READY.
+
+If the work was ordered by the `advisor`, the **receiver** of that instruction (usually the PL) must
+first write the instruction record into `docs/warroom/ADVISOR_LOG.md` — fields and rules in
+`ADVISOR_MANDATE.md` §4. An order with no record must not start: it is outside the mandate by
+definition.
 
 ## 5. Work-in-progress limit
 
@@ -94,7 +105,11 @@ documents and reality.
 Changing these is always L3: `docs/product/PRICING_V1.md`,
 `docs/product/CUSTOMER_FACING_RULES.md`, `docs/security/PDPA_COMPLIANCE.md`,
 `docs/data/LITE_SCHEMA_V1.md`, `docs/product/INTEGRATIONS.md`, `docs/warroom/ROLES.md`, `docs/warroom/AI_OPERATING_PROTOCOL.md`,
-`WORKING_POLICY.md`, this file.
+`docs/warroom/ADVISOR_MANDATE.md`, `WORKING_POLICY.md`, this file.
+
+Related, but with a different rule: `docs/warroom/ADVISOR_LOG.md` is **append-only** — its records are
+written by the receiver of the advisor's instruction, never by the advisor, and entries are never
+rewritten or deleted (corrections are added as a new entry referencing the old one).
 
 Who approves (Owner decision 2026-09-25) — depends on the phase:
 
@@ -113,6 +128,11 @@ The phase switches when the owner declares the system live for customers.
 Never relaxed in either phase: a card first, a reviewer on a **different model**, and a Decision
 Log entry with reasons for L3. The PL substitutes only for the owner's *approval*, never for the
 review.
+
+**The `advisor` is not an approver of protected documents.** Its substitute authority (approve /
+commit while the Owner is away, `docs/warroom/ADVISOR_MANDATE.md` §6) covers ordinary cards only. For
+the documents in this section the approvers are the Owner, or the PL on the Owner's behalf — never the
+advisor, because it is itself the subject of the governance these documents define.
 
 Why: these are the rules everyone else relies on. A silent edit to them
 changes the behavior of every AI that reads them next.

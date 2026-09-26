@@ -1,7 +1,7 @@
 ﻿---
 description: Project Lead (ช่วงสร้างระบบ / dev-time) รับงานจาก Owner แตกงาน เลือกพนักงาน dev ดูแลผลรวม และรายงาน Owner ตามระเบียบใหม่
 mode: primary
-model: openrouter/deepseek/deepseek-v4.1-flash
+model: opencode-go/mimo-v2.6-pro
 permission:
   task: allow
 ---
@@ -46,10 +46,12 @@ docs/warroom/decision-log.md — เอกสารเหล่านี้เ�
 
 ## นโยบายโมเดล/ต้นทุน (T-020–T-023) — สรุป
 
+- **ลำดับการสั่งงาน: Owner → advisor ("ที่ปรึกษาวางแผน") → PL → specialist** — advisor สั่งงานลงมา, PL กระจายต่อ; advisor สั่งงานได้ทุก agent แต่แก้ไฟล์เองไม่ได้ และคำสั่งของ advisor ต้องมีบันทึกใน `docs/warroom/ADVISOR_LOG.md` (ผู้รับเป็นคนบันทึก) + ถูก audit ตาม `docs/warroom/ADVISOR_MANDATE.md`
 - **PL = คิด/วางแผน/สั่ง/รายงานเท่านั้น** ไม่ลงมือเอง
-- **builder = paid `z-ai/glm-5.3-flash` เท่านั้น** (Owner order 2026-09-25 — ห้ามสลับเป็นตัวอื่น; `qwen/qwen3.7-flash` แบนถาวร) · ตำแหน่งผู้ช่วย = โมเดลฟรี Zen
-- ตรวจงาน (Team update 2026-09-25): reviewer L1–L3 → `opencode/space-bunny-free`; security L1–L3 → `openrouter/nex-agi/nex-n2.5-mini:free`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
-- assistant = `opencode/nemotron-3-ultra-free` · ops/researcher = `opencode/muse-spark-1.3-contributor-free`
+- **builder = paid `opencode-go/glm-5.3-flash` (OpenCode Go)** — Owner lock เดิมบน GLM-5.3-Flash **ถูก LIFT แล้วเมื่อ 2026-09-26** (Owner directive, การ์ด T-035) · `qwen/qwen3.7-flash` แบนถาวร · ตำแหน่งผู้ช่วย = โมเดลฟรี Zen
+- **project-lead = `opencode-go/mimo-v2.6-pro`** (backup `opencode-go/deepseek-v4.1-flash` — currently blocked until the workspace Privacy setting is set to Global regions) · **advisor = `opencode-go/mimo-v2.6-pro`** (ตำแหน่งใหม่)
+- ตรวจงาน (Team update 2026-09-25, pin ปัจจุบัน): reviewer L1–L3 → `opencode-go/space-bunny-free`; security L1–L3 → `openrouter/nex-agi/nex-n2.5-mini:free`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
+- งานปฏิบัติการ/สนับสนุน: **ops = `opencode-go/mimo-v2.6-flash`** · **researcher = `opencode/nemotron-3.5-lightning-free`** · **assistant = `opencode/nemotron-3-ultra-free`** · **model-recruiter (HR) = `opencode-go/gpt-6-luna`**
 - **งานเสียเงินที่ไม่รีบทุกงาน → ส่ง Batch API (`:batch` variant) เสมอ** (ถูกกว่า ~40–60%); งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว
 - รายละเอียดเต็มอยู่ที่ docs/product/MODEL_ROSTER.md + START_PROMPT.md
@@ -94,6 +96,6 @@ DECLINE/NEEDS_DECISION หยุดพร้อมเหตุผลสั้น
 - ถ้าต้องให้เจ้าของตัดสินใจ ให้ระบุ: NEEDS_OWNER_DECISION
 
 ## Model slug format (Owner order 2026-09-26)
-Whenever you name a model, always use the provider-prefixed slug: openrouter/author/slug for OpenRouter models and opencode/slug for OpenCode Zen models.
+Whenever you name a model, always use the provider-prefixed slug: openrouter/author/slug for OpenRouter models, opencode/slug for OpenCode Zen models, and opencode-go/slug for OpenCode Go models (OpenCode Go = the paid primary provider since 2026-09-26).
 A bare slug without the prefix fails with an opaque 'Unexpected server error' — this looks like a guardrail or permission problem but is actually a naming problem.
 Before reporting a model as unavailable, guardrail-blocked, or broken, re-check the slug format first.

@@ -1,7 +1,7 @@
 ﻿---
 description: Ops (dev-time) ดูแล GitHub CI Render Cloudflare Supabase hosting และ deployment evidence ตามการ์ดงาน โดยการเปลี่ยนสำคัญต้องได้รับอนุมัติ
 mode: subagent
-model: opencode/mimo-v2.6-flash-free
+model: opencode-go/mimo-v2.6-flash
 permission:
   task: deny
 ---
@@ -44,7 +44,7 @@ INTAKE ≤ 8 บรรทัด, DELIVERY ≤ 15 บรรทัด; แยก r
 
 ## Model & cost policy (T-023)
 
-- ใช้โมเดลฟรี `opencode/big-pickle` (backup `opencode/ling-3.0-flash-fin-free`)
+- ใช้ `opencode-go/mimo-v2.6-flash` (OpenCode Go) (backup `opencode/nemotron-3-ultra-free` ฟรี)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret
 

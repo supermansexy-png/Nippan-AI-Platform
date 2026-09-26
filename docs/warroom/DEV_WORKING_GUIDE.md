@@ -114,6 +114,12 @@ authentication".
   above that, ask the owner. Roster models already approved are not
   re-asked.
 - OpenCode Zen = FREE MODELS ONLY (never authorize a paid Zen model).
+  **OpenCode Zen is NOT the same provider as OpenCode Go.** Go (`opencode-go/<id>`) is the paid,
+  Owner-purchased subscription and the **PRIMARY pool for the dev team** since 2026-09-26 (T-035) —
+  the Zen "free only" rule does not apply to it. See `MODEL_ROSTER.md` § "แหล่งสรรหาหลัก: OpenCode Go".
+- Work order chain: Owner → `advisor` ("ที่ปรึกษาวางแผน") → Project Lead → specialist. The advisor
+  never edits files; its instructions are recorded by the receiver in `docs/warroom/ADVISOR_LOG.md`
+  and audited per `docs/warroom/ADVISOR_MANDATE.md`.
 - Retry/failover: retry Primary at most once → switch to approved Backup →
   both failed: STOP and report. Never create an endless retry loop.
 - Quality failure: allow one reasonable correction; if the same model stays
