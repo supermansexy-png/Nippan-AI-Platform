@@ -86,13 +86,20 @@ button.ghost { background: transparent; }
 .message {
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: #0e1217;
+  line-height: 1.65;
+  font-size: 14px;
 }
-.message.owner { border-color: #3b6075; }
+.message.owner { border-color: #3b6075; background: #12222e; }
+.message.ai { border-color: #2d3d2d; background: #0f1a0f; }
 .message.error { border-color: #714047; }
-.message .message-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; margin-bottom: 6px; }
-.message .content { white-space: pre-wrap; word-break: break-word; font-size: 13px; }
+.message.grouped { border-top-left-radius: 3px; border-top-right-radius: 3px; border-top-width: 1px; }
+.message.grouped-last { border-bottom-left-radius: 3px; border-bottom-right-radius: 3px; border-top-width: 0; }
+.message .message-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; color: var(--muted); font-size: 11px; margin-bottom: 6px; }
+.message .message-head .speaker { color: #b8c8e0; font-weight: 600; }
+.message .message-head .speaker.owner { color: #7fb4d4; }
+.message .content { white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.7; max-width: 72ch; }
 .message .evidence { margin-top: 6px; color: var(--muted); font-size: 11px; }
 
 .composer { border-top: 1px solid var(--border); padding: 14px 16px 16px; }
@@ -115,6 +122,12 @@ button.ghost { background: transparent; }
   background: rgba(18, 22, 27, .96);
   backdrop-filter: blur(12px);
 }
+
+.system-log-wrap { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+.system-log { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+.system-log.open { max-height: 300px; overflow-y: auto; }
+.system-log .system-log-item { border-radius: 6px; margin-bottom: 4px; }
+#jump-latest:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 12px; }
 
