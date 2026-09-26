@@ -1014,3 +1014,17 @@ Decision: Added `PROJECT_BRIEF.th.md` after `AGENTS.md` in the session-start rea
 Reason: L3 protected-doc process — reviewer (opencode-go/space-bunny-free) verified diff contains only this one insertion. PROJECT_BRIEF.th.md row already existed in INDEX.md (line 12).
 Task: T-054
 
+## 2026-09-27 — Project Lead — T-055: Six Owner decisions recorded (cross-ref T-053/ROLES.md step 2, T-055/ROADMAP_STUDY_DRAFT)
+Context: Owner verbatim resolution of six items for decision-log per STEP 4.
+
+1. **services/core = internal tool only** — confirmed, nothing more to do. services/core is a dev-time tooling component (FastAPI gateway, War Room, model gateway) not a customer-facing service. No further action.
+2. **Supabase stays dev/test** — no production-host decision yet. Current Supabase project `xzxwakvsbdzkdybijbzs` used for development/testing only. Production hosting decision (VPS vs managed, self-host vs Supabase) remains NEEDS_OWNER_DECISION.
+3. **ROLES.md unchanged except authorized advisor addition** — cross-references STEP 2 (commit af5d9a7). Only change was adding `## advisor (ที่ปรึกษาวางแผน)` section; all 8 existing roles and autonomy ladder remain byte-identical.
+4. **GA audit gate NOT approved** — removed from plan. Any future proposal needs separate Owner approval with reasons why existing Auditor + autonomy ladder is insufficient. Implemented in ROADMAP_STUDY_DRAFT_2026-09-26.md (P2.6 removed, GA gate row removed, critical path updated, Gantt updated).
+5. **OpenRouter credit: PL moved to a free model** — Project Lead role now uses `openrouter/deepseek/deepseek-v4.1-flash` (paid) for planning only per MODEL_ROSTER.md; actual dev work delegated to builder (`opencode-go/glm-5.3-flash` on OpenCode Go). PL does not consume OpenRouter credit for implementation.
+6. **P0–P3/G1–G5 stays a DRAFT; STARTUP_PLAYBOOK.md remains the authoritative plan** — ROADMAP_STUDY_DRAFT_2026-09-26.md is explicitly labeled DRAFT — NOT APPROVED; STARTUP_PLAYBOOK.md (Phase A market test: n8n + lite schema + OpenRouter) is the only approved execution plan.
+
+Decision: All six items recorded as-is per Owner verbatim intent.
+Reason: Owner required these six decisions in substance appended to decision-log.md before T-055 closes.
+Task: T-055
+
