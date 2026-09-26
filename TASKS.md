@@ -426,7 +426,7 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 
 ### T-058 — Doc cleanup: stale content out, duplicate rules de-duplicated, INDEX rebuilt
 
-Status: DONE (2026-09-27) — reviewer ACCEPT-WITH-FINDINGS, findings answered; **not pushed** — awaiting the Owner's confirmation (`TASKS.md` §REVIEW note below)
+Status: DONE (2026-09-27) — reviewer ACCEPT-WITH-FINDINGS, findings answered; **pushed** `a0a5e1b..be7d3e7`, `origin/dev-workspace` == `HEAD` (`be7d3e7`)
 Owner: Project Lead — 2026-09-27
 Role: PL (dev-doc writes only) · writer `opencode/nemotron-3-ultra-free` (runtime pin files) · reviewer `openrouter/nvidia/nemotron-3.5-lightning:free` (different model)
 Risk: L3 — edits the protected documents `AI_OPERATING_PROTOCOL.md` + `TASK_CONTROL.md` (`TASK_CONTROL.md` §8), so card + Owner approval + different-model reviewer + decision-log entry are all required
@@ -462,6 +462,35 @@ Unverified: whether `PROJECT_STATE.md` / `ROADMAP.md` should be deleted is INFER
 Problems: reviewer run 1 was killed by a tool timeout; run 2 read a 41 KB tool-output file and hit the output-length limit; per the Owner's order the reviewer was switched to `opencode-go/space-bunny-free`.
 Confidence: high.
 Next: Owner confirmation → push; then open the two follow-up cards.
+
+---
+
+### T-059 — Agent prompts name the wrong builder model (reviewer finding 5 of T-058)
+
+Status: READY for INTAKE — **urgent** (Owner order 2026-09-27: this is more urgent than T-060; it affects real review/decision-making)
+Owner: (unclaimed)
+Role: writer on a model **different from the one that wrote the current prompt text** · reviewer on a **third** model
+Risk: L2 — runtime files (`.opencode/agents/*.md`); a wrong model name in a prompt misleads the verification the team does from that prompt
+Goal: every agent prompt that names another seat's model either names the **current** pin or names no model at all
+Done when: 1) `.opencode/agents/project-lead.md` (~lines 73, 76) and `.opencode/agents/reviewer.md` (~line 57) no longer present `opencode-go/glm-5.3-flash` as the builder; 2) the diff touches **only** those model-name lines — no other sentence of the prompt changes; 3) a reviewer on a third model states in one line that only model names changed; 4) `git grep -n "glm-5.3-flash" -- .opencode/agents/` returns no line presenting it as the current builder pin
+Budget: 30 minutes
+Links: T-058 (finding 5; `runs/2026-09-26T21-51-52Z-t058-review4`), `docs/product/MODEL_ROSTER.md` row 2 (builder), `docs/product/MODEL_POLICY.md` § "Never hardcode a model into a role"
+
+**Owner requirements (recorded as given, 2026-09-27):** the fixer must not be the model that wrote the original prompt — the migration record (T-035 bundle, `ADVISOR_LOG.md`) shows the last writer of those files was the free `assistant` (`opencode/nemotron-3-ultra-free`), so that model is excluded from this card; the reviewer must be a **third** model and must confirm the diff is model-name-only.
+**Fixer hint:** prefer pointing at `MODEL_ROSTER.md` over re-typing a slug that will drift again (`MODEL_POLICY.md` forbids hardcoding a model into a role). If a slug must be named, take it from the roster at the moment of editing, not from memory.
+
+---
+
+### T-060 — `WORKING_POLICY.md` Rule 1 still keeps its own required-reading list
+
+Status: READY for INTAKE — **not urgent** (Owner order 2026-09-27: do this after T-059)
+Owner: (unclaimed)
+Role: PL (dev-doc writes) · reviewer on a different model · Owner approval (protected document)
+Risk: L3 — `WORKING_POLICY.md` is a protected document (`TASK_CONTROL.md` §8): card + Owner approval + different-model reviewer + decision-log entry
+Goal: `WORKING_POLICY.md` stops carrying a competing session-start reading list and points at `AGENTS.md` § "Session Start"
+Done when: 1) Rule 1's own list (`PROJECT_STATE.md`, `ROADMAP.md`, `TASKS.md`, `decision-log.md`, the task doc) is replaced by a pointer to the `AGENTS.md` list, while keeping the part that is a genuine behaviour rule ("read state before acting, every time"); 2) no other rule in the file changes meaning; 3) a reviewer on a different model confirms nothing else changed; 4) a decision-log entry is written (L3); 5) the Owner has answered, or explicitly left open, what happens to the now-superseded `PROJECT_STATE.md` / `ROADMAP.md` that only Rule 1 still points at
+Budget: 30 minutes
+Links: T-058 (carried item), `docs/project-memory/INDEX.md` § "ไฟล์ที่ยังใช้ แต่มีปัญหาค้าง", `AGENTS.md` § "Session Start"
 
 ---
 
