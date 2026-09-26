@@ -465,7 +465,8 @@ Confidence: high.
 
 ### T-063 — Tighten tier 1 and forbid reading tier 3 in advance, then re-run the cold-start probe
 
-Status: IN_PROGRESS — claimed 2026-09-27 (PL; Owner order)
+Status: DONE (2026-09-27) — **re-test count = 6 files, target 6–7 met.** The cleanup round can close
+History: IN_PROGRESS — claimed 2026-09-27 (PL; Owner order)
 Owner: Project Lead — Owner order 2026-09-27
 Role: PL (dev-doc writes; `AGENTS.md` is governance and needed the Owner's approval, which came with the order) · the re-test runs on a fresh session
 Risk: L1–L2 — documentation/governance only, but it changes what every future session reads first, so the re-test is the verification
@@ -484,6 +485,23 @@ Plan: 1) edit `AGENTS.md`; 2) mirror the order in `INDEX.md`; 3) one commit for 
 Estimate: under 30 minutes.
 Risks: a probe prompt that leaks the expected files would invalidate the test → the prompt names only the task type; the re-test must not run in this chat (this session already knows the answer) → it runs in a new process.
 Decision: ACCEPT (Owner order).
+
+DELIVERY T-063 — PL (edits) + probe session on `opencode-go/space-bunny-free` (run `runs/2026-09-26T22-36-02Z-t063-fresh-session-probe2`) — 2026-09-27
+Status claimed: DONE
+Done-when check:
+[x] 1 `AGENTS.md` § "Session Start" now puts `INDEX.md` first and orders the five as INDEX → PROJECT_BRIEF.th.md → SESSION_HANDOFF.md → CURRENT_STATE.md → DECISIONS.md (it also notes that `AGENTS.md` is the list itself, so it is not a step to fetch)
+[x] 2 the assigned-card-only rule is stated: read that card's block in `TASKS.md`, never the whole board (board = tier 4)
+[x] 3 the Owner's prohibition on opening tier-3 files in advance is carried **verbatim**
+[x] 4 `INDEX.md` tier 1 mirrors the same order and now lists itself first ("the map contains itself")
+[x] 5 **re-test = 6 files** (target ≤ 7): `SESSION_HANDOFF.md` · `README.md` (the target file) · `INDEX.md` · `CURRENT_STATE.md` · `PROJECT_BRIEF.th.md` · `DECISIONS.md` — plus read-only checks (`git status/log`, `gh repo view`, `Test-Path`), which are not file reads
+[x] 6 count is inside the target, so no further over-read needed reporting; the round closes
+Evidence: `git show 79556c3 -- AGENTS.md` (the diff, shown to the Owner) · run `runs/2026-09-26T22-36-02Z-t063-fresh-session-probe2` · commit `79556c3`.
+Changed: `AGENTS.md` (Session Start) · `docs/project-memory/INDEX.md` (tier 1) · `TASKS.md`.
+Before → after: **13 → 6 files** for a one-line typo task. The 7 files that disappeared are exactly the tier-3/tier-4 set the probe had been opening: `AI_OPERATING_PROTOCOL.md`, `TASK_CONTROL.md`, `TASKS.md` (whole board), `WORKING_POLICY.md`, `MODEL_ROSTER.md`, `START_PROMPT.md`, `decision-log.md` tail. It also no longer opened the `PROJECT_STATE.md` tombstone (it had gone looking for it only because a stale pointer was still in the reading set).
+Unverified: the 6 = 5 tier-1 + the task's own target file; whether that is the floor or whether tier 1 itself could shrink further is an open judgement, not a claim made here.
+Problems: none — the rule change alone produced the drop; no other tuning was needed.
+Side finding (not fixed, needs the Owner): the probe reported that `README.md:77-78` still points at `PROJECT_STATE.md` (now a tombstone) — staleness, not a typo; recorded here rather than fixed, since the card's boundary was 2 files.
+Confidence: high.
 
 ---
 
