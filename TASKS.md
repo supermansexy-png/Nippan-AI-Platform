@@ -323,6 +323,9 @@ Done when:
 - [x] `.opencode/agents/advisor.md` carries the final mandate (`task: allow`, git commit/push allowed, `edit: deny`)
 - [x] `docs/warroom/ADVISOR_MANDATE.md` defines powers, limits, the instruction record and the per-card audit
 - [x] `docs/warroom/ADVISOR_LOG.md` created; record is written **by the receiver**, not the advisor
+- [x] advisor agent skills created (T-040): `.opencode/skills/advisor-work-order/SKILL.md` (bounded work
+      order + the record format) and `.opencode/skills/advisor-mandate-audit/SKILL.md` (the A1–A5 audit
+      with the three verdict values) — discovered by opencode from `.opencode/skills/<name>/SKILL.md`
 - [x] `AGENTS.md` recognises the advisor in the order chain `Owner → advisor → Project Lead → specialist`
 - [x] `docs/warroom/START_PROMPT.md` no longer assigns dead/old models and carries the Go provider rule
 - [x] independent audit of this card's advisor instructions, run on a model ≠ `opencode-go/mimo-v2.6-pro`
