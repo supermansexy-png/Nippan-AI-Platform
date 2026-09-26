@@ -1129,6 +1129,20 @@ The edits touch **two protected documents** (`TASK_CONTROL.md`, `AI_OPERATING_PR
 
 **Task**: T-060
 
+## 2026-09-27 — Owner decision — `PROJECT_STATE.md` and `ROADMAP.md` retired in place (T-060 item 6)
+
+**Context**: T-060 item 6 was left open for the Owner: what happens to the two superseded root documents that only `WORKING_POLICY.md` Rule 1 still pointed at. The Owner answered on 2026-09-27.
+
+**Decision**: both files are **retired in place** rather than deleted. Their content is replaced by a short tombstone that redirects the reader to the live source: `PROJECT_STATE.md` → `docs/project-memory/CURRENT_STATE.md` (plus `SESSION_HANDOFF.md`, `STARTUP_PLAYBOOK.md`, `INDEX.md`); `ROADMAP.md` → `docs/warroom/STARTUP_PLAYBOOK.md` (plus `docs/future/` for the archived blueprint and the unapproved roadmap draft). The old content stays in git history.
+
+**Reason (Owner choice)**: the delete had a price — 15 live references would have been left dangling across `README.md`, `WORKING_POLICY.md`, `TASK_CONTROL.md`, `STARTUP_PLAYBOOK.md`, `INDEX.md`, the four agent prompts' read-first lists and other live docs; repairing all of them means touching two protected documents and four runtime agent prompts. A tombstone keeps every existing reference valid, removes the "two competing plans" confusion just as effectively, and costs two small edits. The Owner picked this option.
+
+**Scope boundary of this edit**: exactly **2 files** (`PROJECT_STATE.md`, `ROADMAP.md`), both simply rewritten. No other file changed in this commit. Historical records that mention the old files (`decision-log.md` earlier entries, `docs/archive/**`, `docs/audits/**`, `docs/future/**`) are deliberately **not** rewritten.
+
+**Still standing (known-not-fixing item 3)**: `WORKING_POLICY.md` Rule 4 and "What done means" still tell contributors to update `PROJECT_STATE.md`. With the tombstone in place those pointers now land on a redirect instead of a dead file, so they are not broken — changing them would change the definition of "done" and is out of this boundary. `docs/project-memory/PROJECT_BRIEF.th.md:181` has the same kind of pointer, but that file is **Owner-owned**: the PL must not edit it, so it needs the Owner or a drafted patch.
+
+**Task**: T-060 (item 6)
+
 ## 2026-09-27 — Project Lead — T-060 follow-up: one more known-not-fixing item (START_PROMPT.md)
 
 **Context**: the T-060 round-2 reviewer (different model, run `runs/2026-09-26T22-26-02Z-t060-round2-review`) returned ACCEPT-WITH-FINDINGS and reported one further instance of the same stale-pointer family, outside the card's declared 2-file boundary.
