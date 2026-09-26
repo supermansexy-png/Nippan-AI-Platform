@@ -1795,3 +1795,31 @@ Delivered (VERIFIED in repo): Part A removed superseded content — SESSION_HAND
 Review: reviewer on a different model `opencode-go/space-bunny-free` = ACCEPT-WITH-FINDINGS (`runs/2026-09-26T21-51-52Z-t058-review4`); findings 1/3/4 fixed in `4b2bc93`, finding 5 carried to T-059, finding 6 noted for the Owner. The pinned reviewer model (`opencode/muse-spark-1.3-contributor-free`) was deliberately NOT used: this repo's own Go data-handling rule forbids sending project content to a model that trains on prompts. No false DONE, no scope violation.
 Push: `a0a5e1b..be7d3e7` — `origin/dev-workspace` == `HEAD`.
 Carried: `WORKING_POLICY.md` Rule 1 → T-060; the wrong builder slug in the agent prompts → T-059.
+
+### T-059 — Agent prompts named the wrong builder model (the T-058 reviewer finding 5)
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved the push 2026-09-27.
+Owner: Owner-ordered; fixer `opencode-go/glm-5.3-flash` (run `runs/2026-09-26T22-11-02Z-t059-fix3`) — chosen by the Owner for speed and explicitly NOT the model that wrote the original prompt text (the free `assistant`, per the T-035 migration record).
+Risk: L2 — runtime files (`.opencode/agents/*.md`).
+Delivered (VERIFIED): the stale `opencode-go/glm-5.3-flash` builder claim was replaced by a pointer to `MODEL_ROSTER.md` § "Per-role staffing" in 5 files — `security.md:54`, `reviewer.md:57`, `builder.md:45`, `assistant.md:56`, `project-lead.md:74`; grep for the old slug under `.opencode/agents/` = **0 hits**; no rule text weakened. Commit `6660dbb` (also carries the Owner's one-line frontmatter allowlist change that unblocked the card).
+Review: reviewer on a third model `opencode-go/space-bunny-free` (run `runs/2026-09-26T22-13-13Z-t059-review`) = **ACCEPT-WITH-FINDINGS**; it read all 10 agent files and confirmed no rule was weakened. Its out-of-scope findings became T-061.
+Blocked-then-unblocked: no session could write `.opencode/agents/**` (the allowlist card T-043 created, which the headless runner inherits through the primary-agent fallback). The Owner added `".opencode/agents/**": allow` by hand. The PL's first instruction wrongly told him to add a JSON-style comma to a YAML file, which broke the config load until he removed it — recorded as the PL's error.
+Gap disclosed: per-line authorship of the offending lines is UNVERIFIED (`git blame` / `git log -S` are blocked by the permission config); only commit-level attribution was possible.
+
+### T-060 — `WORKING_POLICY.md` Rule 1 deduplicated + `TASK_CONTROL.md` §6b (sweep stop-boundary)
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Committed `22cd0fd` + `94e31f9`, pushed.
+Owner: Owner-ordered. Risk: L3 — both files are protected (`TASK_CONTROL.md` §8), so the card, the Owner approval, a different-model reviewer and a decision-log entry were all required.
+Delivered: **A** `WORKING_POLICY.md` Rule 1 no longer keeps its own session-start reading list — it points at `AGENTS.md` § "Session Start" and keeps the behaviour rule plus a `decision-log.md` pointer; Rules 00/0/2/3/4/5/6 and "What done means" untouched. **B** `TASK_CONTROL.md` gained **§6b**: sweep-type work must declare a stop boundary up front (max files / max passes-commits / explicit item list); findings beyond it are recorded once in `decision-log.md` as known-not-fixing and the card closes — no chase card. Section numbering 0–10 intact.
+Scope boundary (the new §6b applied to itself): exactly 2 files. Two Owner-ordered governance edits were folded into this one already-open card instead of opening a new card, because the Owner ordered no new cards this round.
+Review: `opencode-go/space-bunny-free` — round 1 (`runs/2026-09-26T22-22-25Z-t062-taskcontrol-6b-review`) = **CHANGES REQUIRED**, both findings correct (the §6b worked example asserted a known-not-fixing list that did not exist yet; §8 requires a card); round 2 (`runs/2026-09-26T22-26-02Z-t060-round2-review`) = **ACCEPT-WITH-FINDINGS**, both resolved, `AGENTS.md` still the single authoritative list.
+Left open for the Owner (item 6): whether the superseded `PROJECT_STATE.md` / `ROADMAP.md` are deleted or kept as history.
+Also produced: the **known-not-fixing list** (5 items) in `docs/warroom/decision-log.md`.
+
+### T-061 — Five more stale model pins inside agent prompts (the T-059 reviewer findings)
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Committed `76f3462` + `4cf242a`, pushed.
+Owner: Owner-ordered, same conditions as T-059. Fixer `opencode-go/glm-5.3-flash` (run `runs/2026-09-26T22-18-38Z-t061-fix`) — not the `assistant`, which wrote the offending lines in the T-035 migration bundle. Risk: L2.
+Delivered (VERIFIED): five lines that contradicted `MODEL_ROSTER.md` § "Per-role staffing" now point at the roster instead of naming a slug — `ops.md:47` (primary and backup both wrong for ops), `researcher.md:43` and `assistant.md:56` (the backups were wrong), `project-lead.md:75` (the advisor slug was its Backup) and `project-lead.md:77` (ops and model-recruiter HR named with their Backup slugs). `project-lead.md:76` (reviewer/security/L4) was checked and is correct — deliberately untouched. Diff is model-pin-only: 4 files, 5 insertions, 5 deletions.
+Review: reviewer on a third model `opencode-go/space-bunny-free` (run `runs/2026-09-26T22-20-41Z-t061-review`) = **ACCEPT-WITH-FINDINGS**, all 5 lines PASS, no other contradicting pin found anywhere under `.opencode/agents/`.
+Findings beyond the boundary → known-not-fixing (no chase card, Owner order): the `qwen/qwen3.7-flash` ban slug missing its `openrouter/` prefix at `project-lead.md:74` and `builder.md:46`; `MODEL_ROSTER.md` § "Review tiers" disagreeing with its own per-role table.
