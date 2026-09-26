@@ -21,18 +21,11 @@ Role: [ROLE] (docs/product/MODEL_ROSTER.md row [ROW])
 Primary: `[PRIMARY_MODEL_SLUG]`   Backup: `[BACKUP_MODEL_SLUG]`
 Retry Primary at most once, then switch to Backup; if both fail, STOP and
 report. Name the model actually used in DELIVERY.
-Model policy (MODEL_ROSTER.md — OpenCode Go is the PRIMARY pool since 2026-09-26, T-035):
-- The team runs on **OpenCode Go** (`opencode-go/<model-id>`); OpenRouter / OpenCode Zen are backup/emergency only.
-  Writing a Go model as `opencode/<id>` is WRONG (fails with an opaque `Unexpected server error`).
-- `qwen/qwen3.7-flash` is permanently banned. Dead models — never assign: `opencode/big-pickle`,
-  `opencode/ling-3.0-flash-fin-free`, `opencode/mimo-v2.6-flash-free`.
-- builder = `opencode-go/glm-5.3-flash` (the 2026-09-25 Owner lock was LIFTED 2026-09-26; the whole team is being re-selected).
-- Free helper roles: assistant = `opencode/nemotron-3-ultra-free` · researcher = `opencode/nemotron-3.5-lightning-free`.
-- Reviewer/security by risk: L1–L3 reviewer `opencode-go/space-bunny-free` (free, zero-retention) · security
-  `openrouter/nex-agi/nex-n2.5-mini:free` (no Go equivalent); L4/critical → `anthropic/claude-opus-5.5:batch` (paid, per-use approval).
-- Never use a builder model for review; reviewer model ≠ security model (anti-redundancy, MODEL_POLICY.md §). Violation = scorecard penalty.
-- **Every non-urgent PAID task → Batch API** (`:batch` variant, ~40–60% cheaper); free work stays synchronous.
-- **Work is ordered down the chain**: Owner → `advisor` ("ที่ปรึกษาวางแผน", `opencode-go/mimo-v2.6-pro`) → Project Lead → specialist.
+Model policy — do NOT restate it, do NOT copy slugs from this box:
+- Pins (Primary + Backup per role): take them from `docs/product/MODEL_ROSTER.md` § "Per-role staffing".
+- Rules (tiers, retry/failover, anti-redundancy, Batch API, the `opencode-go/<id>` slug rule, the ban list):
+  `docs/product/MODEL_POLICY.md`.
+- **Work is ordered down the chain**: Owner → `advisor` ("ที่ปรึกษาวางแผน") → Project Lead → specialist.
   The advisor cannot edit files; every advisor instruction must be recorded in `docs/warroom/ADVISOR_LOG.md`
   **by the receiver** and audited per `docs/warroom/ADVISOR_MANDATE.md`.
 

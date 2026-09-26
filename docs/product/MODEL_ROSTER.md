@@ -116,35 +116,6 @@ Anti-redundancy rule (MODEL_POLICY §): reviewer/security must use DIFFERENT MOD
 | 8 | **assistant** | `opencode/nemotron-3-ultra-free` | OpenCode Zen | `opencode-go/mimo-v2.6-flash` | OpenCode Go | Free helper; unchanged by T-035. |
 | 9 | **advisor (NEW)** | `opencode/mimo-v2.6-flash-free` | OpenCode Zen | `opencode-go/mimo-v2.6-pro` | OpenCode Go | **CHANGED 2026-09-27 (T-035 free migration):** moved from Go to free Zen. Probe: T-042 confirmed 3× live launches. Former Go primary becomes Backup. |
 
-### Anti-redundancy cross-check (P+B verification — T-014, historical, superseded by the T-035 staffing table above)
-
-| Relationship | Roles checked | Models compared | Status |
-|---|---|---|---|
-| **Anti-redundancy P: reviewer≠builder.P AND ≠builder.B** | reviewer Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
-| **Anti-redundancy B: reviewer≠builder.P AND ≠builder.B** | reviewer Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
-| **Anti-redundancy P: security≠builder.P AND ≠builder.B** | security Primary vs builder models | glm-5.3-flash ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
-| **Anti-redundancy B: security≠builder.P AND ≠builder.B** | security Backup vs builder models | thinkingmachines/inkling ≠ qwen3.7-flash AND ≠ nemotron-3.5-lightning | ✅ PASS |
-| Each Primary ↔ Backup different provider | All 7 rows | see per-row providers | ✅ PASS (all pairs differ) |
-
-### Anti-redundancy proof summary (T-022 update 2026-09-25 — supersedes the T-014 table above)
-
-The T-014 cross-check table above is historical. Current sets after T-020/T-022:
-
-```
-Builder model set   = { z-ai/glm-5.3-flash, nvidia/nemotron-3.5-lightning }   (paid)
-Reviewer model set  = { opencode/space-bunny-free, thinkingmachines/inkling-small:free }
-Security model set  = { nex-agi/nex-n2.5-mini:free, opencode/muse-spark-1.3-contributor-free }
-Assistant model set = { opencode/nemotron-3-ultra-free, opencode/muse-spark-1.3-contributor-free }
-L4 verify (paid)    = { anthropic/claude-opus-5.5 }   (supersedes the earlier GLM L4 entry — see Team update 2026-09-25)
-
-Intersection(builder, reviewer) = ∅
-Intersection(builder, security) = ∅
-Intersection(builder, L4)       = ∅
-Reviewer free model ≠ Security free model (Owner order, T-023)
-```
-
-Reviewer/security never share a model name with builder (Primary or Backup); reviewer and security also differ from each other. L4 (paid) is used only for critical verification. The assistant is a free helper and is never used as the reviewer.
-
 ## Failover order (per `MODEL_POLICY.md`)
 
 ```
