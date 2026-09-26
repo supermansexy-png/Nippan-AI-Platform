@@ -201,6 +201,19 @@ Done when: 1) a reviewed create-room path exists (each meeting gets its own room
 Budget: 1–2 days
 Links: T-034a, T-033 (blocker 2/3), `services/core/app/war_room/transport.py`, `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (the hand-made room that this replaces)
 
+INTAKE T-034b — 2026-09-26 (Project Lead, under the Owner's delegation while he is away; Owner order: the room must be ready to use when he returns)
+Understanding: two things stop the room from being usable without the Project Lead: a new meeting cannot be created without hand-written SQL, and the agenda panel shows a meeting item that nobody can create, edit or close. Owner also wants the Project Lead to accept and trial the room before handing it over.
+Scope, in slices so each can be reviewed on its own: **slice 1** — a reviewed create-room path that works from the command line (parameterised seed script, no new HTTP surface, no auth change); **slice 2** — the in-room path (create a meeting, manage the agenda) as a reviewed server addition with a security review, then the matching UI; **slice 3** — PL acceptance + a trial meeting, then hand over.
+Team: paid builder `openrouter/z-ai/glm-5.3-flash` (server code, Owner-approved for this card) + reviewer `opencode/space-bunny-free` + security reviewer `openrouter/nex-agi/nex-n2.5-mini:free` for slice 2.
+Done when (per slice): slice 1 — the script can create an additional room with a chosen id and title, refuses to reset a non-default room without an explicit force flag, scopes every delete to the preview tenant/application, runs deletes plus inserts in one transaction, and a different model has reviewed it; slice 2 — a meeting can be created and its agenda managed from the room with the owner-only, fail-closed, server-established actor rules, tests + CI green, reviewer and security verdicts recorded; slice 3 — the PL opens a fresh room, drives one real meeting, verifies the durable artifacts and the measured cost, and reports the evidence.
+Decision: ACCEPT — slices as above.
+
+**WORK LOG — T-034b (PL, 2026-09-26)**
+- slice 1 written by the worker (GLM) in `services/core/scripts/seed_war_room_preview.py`: adds `--room-id` (UUID-validated), `--title` and `--force`.
+- reviewer round 1 = ACCEPT-WITH-FINDINGS (F1 the seven deletes keyed only on `room_id` with autocommit and no confirmation could silently destroy a live room; F2 child-row ids were room-independent constants so a second room collided on the primary keys after the room row had committed; F3 an empty `--title` fell back silently).
+- fix round 1 addressed all three; reviewer round 2 = ACCEPT-WITH-FINDINGS (all three closed) with three follow-ups taken: the connection still used `autocommit=True` so a failed insert after successful deletes would leave the room permanently gone; an empty title failed only at the database constraint after the delete; the confirmation line printed the new title rather than the title of the room about to be destroyed.
+- fix round 2 in progress at the time of writing (`t034b-slice1-fix2`); slice 1 is **not** run against the preview database until it passes review, because that database holds the acceptance-evidence room and the live meeting room.
+
 ---
 
 ## REVIEW
