@@ -663,13 +663,46 @@ PL RECOMMENDATION — evidence-based, and it resolves the blocker
   Primary/Backup pair yet; the Zen side is unverified), and the PL cannot create the file itself (the T-043 lock), so an existing writer must.
 - Honest caveat either way: **no free model here has yet been proven to drive the edit tool reliably** — that requires a real round-trip.
 
+REVIEWER — T-044 — `opencode-go/space-bunny-free` (model ≠ the author's `opencode/nemotron-3-ultra-free`) — 2026-09-26
+VERDICT: **ACCEPT-WITH-FINDINGS** (no blockers; 3 should-fix + 3 minor).
+VERIFIED: the diff was exactly the two intended edits on one file, nothing else; `mode: subagent` / `model` / `permission: task: deny`
+intact (so the writer still cannot command other agents); no commit and no push had happened; no secrets exist in the tracked
+`.opencode/**` tree (grep for `sk-`/`Bearer`/`api_key` found nothing, no `.env` in git, `opencode.json` uses `{env:...}` only).
+Also: the reviewer judged this **not** a bypass of T-043 — the AGENTS.md reason is "the author must not be the only checker", and the
+chain still separates author and checker (PL DeepSeek → writer nemotron-free → reviewer space-bunny-free).
+Findings, and what was done:
+- **should-fix 1 — "no commit/push" was text-only.** The global map still allowed `git commit`/`push`/`checkout`/`switch`/`merge`/
+  `rebase` for the assistant, which would have destroyed the review-before-merge guarantee. → **FIXED in round 2**: those commands are
+  now denied in the assistant's own `bash` map, leaving only read-only git (`status`/`diff`/`log`/`show`) for evidence.
+- **should-fix 2 — the evidence line hardcoded this file's own path**, so a future order to edit `opencode.json` would have attached a
+  wrong or empty diff as "evidence". → **FIXED**: it now reads `git diff <ไฟล์ที่ถูกสั่งแก้>` (without `--`, which the permission engine rejects).
+- **should-fix 3 — the `edit` permission was inherited from the global map as "allow everything"** (the whole repo, including
+  `services/**`, `migrations/**`, `.github/**`), far wider than the duty. → **FIXED**: explicit fail-closed allowlist in the assistant's own
+  file (`"*": deny`, then `.opencode/**`, `opencode.json`, `docs/**`, `runs/**`) — and, added by the PL beyond the reviewer's list,
+  **`.opencode/agents/assistant.md: deny`** so the writer cannot widen its own permissions. Consequence: this round was the last time the
+  assistant could edit its own definition; future changes to it must go to the paid builder.
+- **minor — no rule against READING secret files.** The `read` tool denies `.env` by default, but a shell command (`Get-Content .env`)
+  could still pull a secret into a context that may log or train. → **FIXED**: an explicit "ห้ามอ่านไฟล์ secret ผ่านคำสั่ง shell" rule was added.
+- **minor — the description line said broadly "เขียนไฟล์แทน PL"** while the body limits the duty to runtime/config; a small model could
+  over-generalise. → noted, left as-is (the body's scope list is explicit).
+- **minor — the writer's round-1 report had no INTAKE block** (protocol Gate 1). → recorded in `docs/warroom/ai-scorecard.md`; round 2
+  included one.
+
+ROUND-2 EVIDENCE (PL-verified on the file, not taken from the report)
+- frontmatter now: `task: deny` + `edit: {"*":"deny", ".opencode/**":"allow", "opencode.json":"allow", "docs/**":"allow",
+  "runs/**":"allow", ".opencode/agents/assistant.md":"deny"}` + a `bash` map denying 13 state-changing git commands.
+- Line 70 = the corrected evidence line; line 72 = the secret-read prohibition. `git diff --stat` = 38 insertions / 2 deletions on
+  `.opencode/agents/assistant.md` across both rounds; `git status --short` shows only that file plus this card.
+- **The live round-trip the card asked for is proven:** a free model (no paid spend) performed a real, precise write on a runtime
+  config file that the Project Lead itself is locked out of — twice, both times verified by the PL and checked by a different-model reviewer.
+
 ## REVIEW
 
 (none)
 
 ### T-044 — A FREE writer that performs the file writes the Project Lead is no longer allowed to do
 
-Status: READY for INTAKE — Owner order 2026-09-26 in chat ("หาพนักงานฟรีมา 1 คน รับหน้าที่เขียนแทน โดย pl สั่งงาน")
+Status: IN_PROGRESS — **Owner decision 2026-09-26: Option B** ("assistant ใช่ เรามีอยู่แล้ว ใช้ตัวนี้เป็นคนเขียน") — use the existing free `assistant` as the PL's writer; no new role, no new model, no paid spend
 Owner: Project Lead (plan/record) + `model-recruiter` (verify the free model) + the writer + a reviewer on a different model
 Risk: L2 — the writer holds edit rights on `.opencode/**` and `opencode.json` (runtime/config).
 Mitigations: `task: deny` (it cannot command anyone), the PL writes the exact order, a reviewer on a different model checks every
