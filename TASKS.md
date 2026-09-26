@@ -641,9 +641,75 @@ Known consequence (accepted): PowerShell `Remove-Item*` is now denied for the PL
 more; `node -e "fs.rmSync(...)"` remains available for scratch cleanup. All test artifacts were removed — `git status` shows only
 the intended 7 modified files. Box 4 of "Done when" is therefore satisfied by live evidence, not by inference.
 
+HR REPORT — T-044 — `model-recruiter` (`opencode-go/gpt-6-luna`) — 2026-09-26 · status: **PARTIAL**, no files changed
+- Scanned the live provider catalogues: Go/Zen `GET /zen/go/v1/models` → HTTP 200, 40 ids; OpenRouter free slice = 20 models, 17 with tools.
+- **PROBED LIVE:** `openrouter/dots-studio/dots-3-note-preview:free` — $0/$0, 512K ctx, tools + tool_choice + structured outputs, and it
+  answered a probe exactly as instructed · `openrouter/cohere/north-mini-code:free` — $0/$0, 256K ctx, tools + tool_choice, same result.
+- **Rejected:** `opencode/nemotron-3-ultra-free` (would duplicate the `assistant`'s model) · `opencode-go/space-bunny-free` (duplicates the
+  reviewer) · `openrouter/thinkingmachines/inkling-small:free` (403 — agentic-harness only) · `openrouter/nvidia/nemotron-3-nano-omni-…:free`
+  (probe returned the wrong shape).
+- **Could not** probe Zen live from its session permissions → no other Zen free model is claimed LIVE. **Could not** prove real file-editing
+  ability — only that the models preserve the instructed format.
+- Blocked on the roster rule "Primary and Backup must be different providers": both probed candidates are OpenRouter, so HR could not form a
+  valid pair → `NEEDS_OWNER_DECISION` if the Owner wants that rule waived, otherwise a second HR pass must find a live Zen counterpart.
+
+PL RECOMMENDATION — evidence-based, and it resolves the blocker
+- **Option B — reuse the free `assistant`: nothing needs to be built at all.** It is already `mode: subagent`, **free**
+  (`opencode/nemotron-3-ultra-free`), **`task: deny`**, and it already inherits `edit: allow` from the global map. Its own prompt already
+  covers "งานย่อยที่ Project Lead ไม่จำเป็นต้องลงมือเอง". So the free writer the Owner asked for **already exists** — no new hire, no new
+  model, no file change, no paid spend, and no Primary/Backup diversity problem. What is new is only the *habit*: the PL orders `assistant`
+  to perform the config writes, and a reviewer on a different model checks the diff. Prove it with one live round-trip.
+- **Option A — a new dedicated `scribe` agent** — gives cleaner duty separation but inherits the unresolved model question above (no valid
+  Primary/Backup pair yet; the Zen side is unverified), and the PL cannot create the file itself (the T-043 lock), so an existing writer must.
+- Honest caveat either way: **no free model here has yet been proven to drive the edit tool reliably** — that requires a real round-trip.
+
 ## REVIEW
 
 (none)
+
+### T-044 — A FREE writer that performs the file writes the Project Lead is no longer allowed to do
+
+Status: READY for INTAKE — Owner order 2026-09-26 in chat ("หาพนักงานฟรีมา 1 คน รับหน้าที่เขียนแทน โดย pl สั่งงาน")
+Owner: Project Lead (plan/record) + `model-recruiter` (verify the free model) + the writer + a reviewer on a different model
+Risk: L2 — the writer holds edit rights on `.opencode/**` and `opencode.json` (runtime/config).
+Mitigations: `task: deny` (it cannot command anyone), the PL writes the exact order, a reviewer on a different model checks every
+diff, and those files carry only `{env:...}` references — never secret values.
+
+**Why this card exists (the Owner's order, in his words):** the T-043 lock means the Project Lead can no longer write
+`.opencode/**` or `opencode.json` itself, and cannot delete files with PowerShell. So a **free** agent must exist whose whole job
+is to perform those writes exactly as the PL instructs.
+
+Goal: the PL keeps a free "hands" agent it can order, so no config change ever forces a paid builder call, and the PL still never
+writes runtime files itself.
+
+Proposed plan (two options — the Owner picks):
+1. **A — new dedicated free writer (`scribe`)** *(recommended)*: a new agent file with a free model, `mode: subagent`, `edit: allow`,
+   `task: deny`. Duty: "execute the exact file edit the Project Lead orders — no improvising, no widening the scope, no commit, no
+   push". Keeps duties clean (the `assistant` stays a drafting/summarising helper).
+2. **B — reuse the existing `assistant`** (free `opencode/nemotron-3-ultra-free`, already `mode: subagent`, `task: deny`, edit
+   allowed by the global map): zero new files, zero new hire — only its description and prompt are extended to name the duty.
+
+Steps either way: `model-recruiter` verifies the free model is **live** (free Zen models have died before: `big-pickle`,
+`ling-3.0-flash-fin-free`, `mimo-v2.6-flash-free`) and names the best live free substitute if it is dead → Owner approves the pick →
+the writer implements its own agent file (it has edit rights, which also proves the pattern) → a reviewer on a different model
+checks the file and the permissions → one live round-trip: PL orders a real config edit, the writer performs it, the reviewer checks it.
+
+Constraints:
+- **No secrets to a free model.** Free Zen may log or train. `.opencode/**` and `opencode.json` contain `{env:...}` references only,
+  so they are safe to share — but the writer must never be handed the `.env` or any credential.
+- The writer has **no decision power**: it writes what it is told and nothing more. Detection stays in place (reviewer + scorecard).
+- **The chicken-and-egg is real:** the PL cannot create this agent file, so the first implementation of T-044 must itself be performed
+  by an existing writer (the free `assistant`, which already has edit rights, or the paid `builder`).
+
+Done when:
+- [ ] `model-recruiter` reports the free model's live availability + price ($0) and the substitute if dead
+- [ ] the writer's agent definition names the duty and keeps `task: deny`
+- [ ] reviewer on a different model verifies the file and the permission block
+- [ ] live round-trip proven: the PL orders one real config edit → the writer performs it → the reviewer checks the diff
+
+Evidence to capture: the agent-file diff · the HR availability report · the reviewer verdict · the round-trip diff.
+Budget: HR runs on Go (flat monthly) + free models only — **no new paid spend**.
+Links: `.opencode/agents/assistant.md`, `.opencode/agents/worker.md` (`edit: allow`, `task: deny`, headless), `docs/product/FREE_MODEL_FALLBACK_GUIDE.md` (historical reference), card T-043
 
 ## DONE
 
