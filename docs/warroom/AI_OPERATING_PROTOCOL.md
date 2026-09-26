@@ -172,7 +172,7 @@ models trustworthy.
 
 ## Session rules
 
-**Start of every session:** read `AGENTS.md`, this file, `PROJECT_STATE.md`,
+**Start of every session:** read `AGENTS.md`, `PROJECT_BRIEF.th.md`, this file, `PROJECT_STATE.md`,
 `TASKS.md`; confirm which task and role; write the Intake before working.
 
 **End of every session**, even if unfinished: update the task card
