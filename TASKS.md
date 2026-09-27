@@ -160,18 +160,20 @@ Depends on: nothing (foundation). Note: T-075 (n8n workflow stubs) is PARKED —
 
 ### T-079b — Onboarding assistant: conversation / URL / file → fixed-menu config
 
-Status: READY for INTAKE
+Status: **DONE — 2026-09-28** (commit `72a3d1a`; reviewer pass 1 ACCEPTED-WITH-FINDINGS with one HIGH finding, fixed; pass 2 **ACCEPTED**)
 Owner: Project Lead — 2026-09-27 (child of T-079)
 Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model**
 Risk: L2 (processes a prospect's uploaded business data; no real customers yet)
 Goal: the assistant reads what the prospect gives it (plain conversation / a website link / an uploaded menu-price file) and produces **fixed-menu config values** — never a raw prompt built from the customer's words.
 Design source: `docs/product/ONBOARDING_FLOW.md`, `docs/product/CUSTOMER_FACING_RULES.md` §3, `docs/data/LITE_SCHEMA_V1.md` (`bots.business_info`, `tone`, `enabled_tools`, quotas), `docs/product/MCP_TOOLS_V1.md` (`web-fetch`, `file-reader`, `chat-bot-core`)
 Done when (each provable by running):
-- [ ] run against a sample shop (one website URL + one sample menu/price file) and show the produced config rows
-- [ ] asks only for what is still missing; tone comes from the fixed list; output is fixed-menu values only (no raw customer text stored as instructions)
-- [ ] ingestion cost bounds applied (`ONBOARDING_FLOW.md` "Cost controls"): page/file size cap, own-site pages only, no full crawl
-- [ ] honesty rule 2 holds with the prospect (never names the model)
-- [ ] reviewer (different model) verdict recorded
+- [x] run against a sample shop (one website URL + one sample menu/price file) and show the produced config rows
+- [x] asks only for what is still missing; tone comes from the fixed list; output is fixed-menu values only (no raw customer text stored as instructions)
+- [x] ingestion cost bounds applied (`ONBOARDING_FLOW.md` "Cost controls"): page/file size cap, own-site pages only, no full crawl
+- [x] honesty rule 2 holds with the prospect (never names the model)
+- [x] reviewer (different model) verdict recorded
+
+RESULT — 2026-09-28: `services/core/app/onboarding/` (menus/signals/cost_bounds/ingest/config/assistant), 23 tests pass, e2e `run_onboarding_e2e.py` exits 0 with 8/8 checks true and no nulls. The HIGH pass-1 finding (file ingestion was asserted-only, categories hardcoded) was fixed by wiring the real `signals.extract_categories_from_price_file` entry point; pass-2 reviewer proved it empirically by editing a fixture line (`MUTCAT`) and observing the output change. Residual LOW: one nearly-tautological conjunct in `tone_from_fixed_list`.
 Budget: 6h builder + 1h reviewer (builder ≤ $3)
 Links: `docs/product/ONBOARDING_FLOW.md`, `docs/product/CUSTOMER_FACING_RULES.md` §3, T-079a
 Depends on: T-079a (transport for the conversation).
