@@ -6,6 +6,7 @@ offline with stubs (no paid call, no internet required).
 from __future__ import annotations
 
 import html
+import inspect
 import re
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit, parse_qsl
@@ -66,6 +67,16 @@ class WebFetcher:
     def __init__(self, *, site_origin: str, fetch_fn=None, max_pages: int = MAX_PAGES) -> None:
         self._origin = normalize_site_url(site_origin)
         self._fetch = fetch_fn
+        # E: does the wired fetch_fn accept the pinned-address argument?
+        self._fetch_takes_ip = False
+        if fetch_fn is not None:
+            try:
+                params = list(inspect.signature(fetch_fn).parameters.values())
+                self._fetch_takes_ip = any(
+                    p.name == "connect_ip" for p in params[1:]
+                )
+            except (TypeError, ValueError):
+                self._fetch_takes_ip = False
         self._max_pages = max_pages
         self._fetched_count = 0
 
@@ -73,8 +84,15 @@ class WebFetcher:
     def fetched_count(self) -> int:
         return self._fetched_count
 
-    def fetch_page(self, url: str) -> WebPage:
+    def fetch_page(self, url: str, *, connect_ip: str | None = None) -> WebPage:
         """Fetch ONE page on the shop's own domain, size-capped.
+
+        ``connect_ip`` (E, T-079c): the PINNED address returned by
+        ``validate_fetch_url``. A REAL fetch_fn must connect to THIS
+        address and must not do a second DNS lookup (which could return
+        a different, unchecked answer). The dev/test stub fetch_fn
+        ignores it (no network at all) — documented contract, fail-closed
+        by the gate upstream either way.
 
         Raises:
         - ``DomainError``: off-domain link — own-site-only rule.
@@ -87,8 +105,19 @@ class WebFetcher:
             )
         if not same_site(url, self._origin):
             raise DomainError(f"off-domain link rejected: {url!r}")
+        if self._fetch is None:
+            # B2 fail-closed: an absent fetch function is a deliberate,
+            # handled state — a clear error, never a TypeError.
+            raise RuntimeError(
+                "WebFetcher has no fetch_fn bound — ingestion is not "
+                "configured in this deployment"
+            )
         self._fetched_count += 1
-        raw = self._fetch(url)
+        if connect_ip is not None and self._fetch_takes_ip:
+            # E: a real fetch_fn gets the pinned address explicitly
+            raw = self._fetch(url, connect_ip=connect_ip)
+        else:
+            raw = self._fetch(url)
         text = _html_to_text(raw[:MAX_PAGE_BYTES * 6])  # decode-side guard
         return WebPage(url=url, text=text[:MAX_PAGE_BYTES])
 

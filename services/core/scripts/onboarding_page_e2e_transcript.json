@@ -1,0 +1,109 @@
+{
+  "checks": {
+    "pdpa_notice_in_api": true,
+    "typed_answer_accepted": true,
+    "typed_answer_reflected": true,
+    "typed_business_type": true,
+    "typed_business_name": true,
+    "typed_opening_hours": true,
+    "tools_before_ingestion_rejected": true,
+    "website_accepted": true,
+    "website_categories_from_content": true,
+    "file_accepted": true,
+    "file_categories_from_content": true,
+    "file_flag_set": true,
+    "typed_enabled_tools": true,
+    "typed_fallback_contact": true,
+    "view_ok": true,
+    "progress_shows_saved": true,
+    "progress_missing_shrunk": true,
+    "pdpa_in_landing": true,
+    "pdpa_in_session_view": true,
+    "no_prohibited_names": true,
+    "other_scope_404": true,
+    "other_scope_leaks_nothing": true,
+    "other_scope_write_blocked": true,
+    "unmapped_answer_rejected": true,
+    "no_scope_no_escape_refused": true,
+    "website_without_fetcher_clean_503": true,
+    "production_wiring_serves_all_post_routes": true
+  },
+  "steps": {
+    "after_answer": {
+      "identity_verified": false,
+      "identity_notice": "dev escape enabled: tenant identity is UNVERIFIED (X-Onboarding-Scope header is not an authenticate signal)",
+      "session_id": "s-0001-SOiHBcZ5Dv2Fb20IheX9-4fV4kXzGsSV",
+      "tenant_scope_id": "tenant-A",
+      "missing_fields": [
+        "business_type",
+        "business_name",
+        "opening_hours",
+        "menu_categories",
+        "enabled_tools",
+        "fallback_contact"
+      ],
+      "draft": {
+        "tone": "polite",
+        "business_type": null,
+        "business_name": null,
+        "opening_hours": null,
+        "menu_categories": [],
+        "enabled_tools": [],
+        "fallback_contact": null
+      },
+      "done": false,
+      "used_url": false,
+      "used_file": false,
+      "transcript": [
+        {
+          "role": "user",
+          "text": "สุภาพ"
+        },
+        {
+          "role": "assistant",
+          "text": "recorded tone"
+        }
+      ]
+    },
+    "after_website": {
+      "categories": [
+        "กาแฟดำ"
+      ],
+      "derived_from_stub_text": [
+        "กาแฟดำ",
+        "ชานมไข่มุก",
+        "ขนมปังไส้กรอก"
+      ]
+    },
+    "after_files": {
+      "file1_categories": [
+        "เครื่องดื่ม",
+        "ขนมอบ",
+        "ข้าวราดแกง"
+      ],
+      "file1_derived": [
+        "เครื่องดื่ม",
+        "ขนมอบ",
+        "ข้าวราดแกง"
+      ],
+      "file2_categories": [
+        "เย็นตาโฟ",
+        "แกงเขียวหวาน"
+      ],
+      "file2_derived": [
+        "เย็นตาโฟ",
+        "แกงเขียวหวาน"
+      ]
+    },
+    "tools_draft": [
+      "chat-bot-core",
+      "secretary-bot"
+    ],
+    "prohibited_hits": []
+  },
+  "wiring_statuses": [
+    401,
+    401,
+    401
+  ]
+}

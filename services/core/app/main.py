@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from .config_repository import ConfigRepository
 from .db import Database
 from .preview_bootstrap import bootstrap_preview_database
+from .onboarding.page import BodyLimitMiddleware, create_onboarding_router
 from .settings import get_settings
 from .war_room.transport import (
     create_war_room_preview_router,
@@ -40,6 +41,17 @@ if preview_mount_allowed(settings):
             database=database,
         )
     )
+
+
+# T-079c D3: the request-body cap applies at the middleware layer, BEFORE
+# the multipart/JSON parser reads the body (see onboarding/page/body_limit).
+app.add_middleware(BodyLimitMiddleware)
+
+# Customer setup page sessions (T-079c Part 1): mounted fail-closed
+# (Part B, finding B1) — with no server ``tenant_scope_id`` wired, the
+# router refuses to serve onboarding data until the deployment binds a
+# verified scope at wiring time. The dev escape stays OFF here.
+app.include_router(create_onboarding_router())
 
 
 @app.get("/health")
