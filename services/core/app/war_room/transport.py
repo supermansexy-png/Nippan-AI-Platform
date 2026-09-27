@@ -1185,6 +1185,7 @@ def create_war_room_preview_router(
                     admin_dsn=settings.database_url,
                     room_id=new_room_id,
                     title=title,
+                    participants_only=True,
                 ),
             )
         except ImportError as exc:

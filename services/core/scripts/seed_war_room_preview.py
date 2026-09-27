@@ -59,6 +59,7 @@ def seed(
     room_id: UUID | None = None,
     title: str | None = None,
     force: bool = False,
+    participants_only: bool = False,
 ) -> tuple[UUID, UUID, UUID, str]:
     settings = settings or Settings()
     if settings.environment.lower() != "development":
@@ -267,64 +268,65 @@ def seed(
                 ),
             )
 
-        conn.execute(
-            """
-            insert into public.project_room_agenda_items (
-              agenda_item_id, tenant_id, application_id, room_id,
-              sequence, title, objective, status,
-              round_limit, token_budget
-            ) values (
-              %s, %s, %s, %s,
-              1, 'ประชุม #001 — Preview ภาษาไทย',
-              'ทดสอบหน้า War Room, คำสั่งเจ้าของห้อง, การ replay และให้ผู้เข้าร่วม AI สนทนาเป็นภาษาไทยเป็นค่าเริ่มต้น',
-              'OPEN', 2, 6000
+        if not participants_only:
+            conn.execute(
+                """
+                insert into public.project_room_agenda_items (
+                  agenda_item_id, tenant_id, application_id, room_id,
+                  sequence, title, objective, status,
+                  round_limit, token_budget
+                ) values (
+                  %s, %s, %s, %s,
+                  1, 'ประชุม #001 — Preview ภาษาไทย',
+                  'ทดสอบหน้า War Room, คำสั่งเจ้าของห้อง, การ replay และให้ผู้เข้าร่วม AI สนทนาเป็นภาษาไทยเป็นค่าเริ่มต้น',
+                  'OPEN', 2, 6000
+                )
+                """,
+                (agenda_id, tenant_id, application_id, room_id),
             )
-            """,
-            (agenda_id, tenant_id, application_id, room_id),
-        )
-        conn.execute(
-            """
-            insert into public.project_room_findings (
-              finding_id, tenant_id, application_id, room_id,
-              agenda_item_id, raised_by_participant_id,
-              severity, status, summary
-            ) values (
-              %s, %s, %s, %s, %s, %s,
-              'NOTE', 'OPEN',
-              'ห้อง Preview นี้ใช้ตรวจการทำงานและภาษาไทยเป็นค่าเริ่มต้นก่อนเปิดใช้งาน provider traffic จริง'
+            conn.execute(
+                """
+                insert into public.project_room_findings (
+                  finding_id, tenant_id, application_id, room_id,
+                  agenda_item_id, raised_by_participant_id,
+                  severity, status, summary
+                ) values (
+                  %s, %s, %s, %s, %s, %s,
+                  'NOTE', 'OPEN',
+                  'ห้อง Preview นี้ใช้ตรวจการทำงานและภาษาไทยเป็นค่าเริ่มต้นก่อนเปิดใช้งาน provider traffic จริง'
+                )
+                """,
+                (
+                    _stable_uuid("finding", str(room_id)),
+                    tenant_id,
+                    application_id,
+                    room_id,
+                    agenda_id,
+                    owner_participant_id,
+                ),
             )
-            """,
-            (
-                _stable_uuid("finding", str(room_id)),
-                tenant_id,
-                application_id,
-                room_id,
-                agenda_id,
-                owner_participant_id,
-            ),
-        )
-        conn.execute(
-            """
-            insert into public.project_room_decisions (
-              decision_id, tenant_id, application_id, room_id,
-              agenda_item_id, decision_type,
-              proposed_by_participant_id, decision, status
-            ) values (
-              %s, %s, %s, %s, %s,
-              'PROPOSAL', %s,
-              'ใช้ห้องนี้ยืนยันว่า controls ของ Track D และข้อความภาษาไทยทำงานถูกต้องก่อนเริ่มใช้งานจริง',
-              'PROPOSED'
+            conn.execute(
+                """
+                insert into public.project_room_decisions (
+                  decision_id, tenant_id, application_id, room_id,
+                  agenda_item_id, decision_type,
+                  proposed_by_participant_id, decision, status
+                ) values (
+                  %s, %s, %s, %s, %s,
+                  'PROPOSAL', %s,
+                  'ใช้ห้องนี้ยืนยันว่า controls ของ Track D และข้อความภาษาไทยทำงานถูกต้องก่อนเริ่มใช้งานจริง',
+                  'PROPOSED'
+                )
+                """,
+                (
+                    _stable_uuid("decision", str(room_id)),
+                    tenant_id,
+                    application_id,
+                    room_id,
+                    agenda_id,
+                    owner_participant_id,
+                ),
             )
-            """,
-            (
-                _stable_uuid("decision", str(room_id)),
-                tenant_id,
-                application_id,
-                room_id,
-                agenda_id,
-                owner_participant_id,
-            ),
-        )
 
     return tenant_id, application_id, room_id, principal_id
 

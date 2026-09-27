@@ -724,7 +724,9 @@ async def test_room_create_seeds_room_with_stubbed_helper(monkeypatch) -> None:
     settings = _room_create_settings()
     received: dict[str, object] = {}
 
-    def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+    def _fake_seed(
+        *, settings=None, admin_dsn=None, room_id=None, title=None, force=False, participants_only=False
+    ):
         received["room_id"] = room_id
         received["title"] = title
         return (TENANT_ID, APPLICATION_ID, UUID(int=1))
@@ -825,7 +827,9 @@ async def test_room_create_rejects_unknown_extra_field() -> None:
 async def test_room_create_seed_value_error_returns_409_and_operational_error_503(monkeypatch) -> None:
     settings = _room_create_settings()
 
-    def _fake_seed_bad(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+    def _fake_seed_bad(
+        *, settings=None, admin_dsn=None, room_id=None, title=None, force=False, participants_only=False
+    ):
         raise ValueError("seed guard triggered")
 
     from app.war_room import transport
@@ -850,7 +854,9 @@ async def test_room_create_seed_value_error_returns_409_and_operational_error_50
     assert response.json()["detail"] == "war_room_preview_room_create_refused"
 
     # psycopg.OperationalError should map to 503
-    def _fake_seed_db_down(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+    def _fake_seed_db_down(
+        *, settings=None, admin_dsn=None, room_id=None, title=None, force=False, participants_only=False
+    ):
         import psycopg
         raise psycopg.OperationalError("database connection failed")
 
@@ -886,7 +892,9 @@ async def test_room_create_rate_limit_allows_first_ten_then_blocks_11th(monkeypa
 
     seed_called: list[bool] = []
 
-    def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+    def _fake_seed(
+        *, settings=None, admin_dsn=None, room_id=None, title=None, force=False, participants_only=False
+    ):
         seed_called.append(True)
         return (TENANT_ID, APPLICATION_ID, UUID(int=1))
 
@@ -948,7 +956,15 @@ async def test_room_create_rate_limit_resets_after_window(monkeypatch) -> None:
         # Old attempts should be dropped, allowing a new creation.
         seed_called: list[bool] = []
 
-        def _fake_seed(*, settings=None, admin_dsn=None, room_id=None, title=None, force=False):
+        def _fake_seed(
+            *,
+            settings=None,
+            admin_dsn=None,
+            room_id=None,
+            title=None,
+            force=False,
+            participants_only=False,
+        ):
             seed_called.append(True)
             return (TENANT_ID, APPLICATION_ID, UUID(int=1))
 
@@ -1397,4 +1413,50 @@ async def test_agenda_update_database_error_returns_503() -> None:
 
     assert response.status_code == 503
     assert response.json()["detail"] == "agenda_write_failed"
+
+
+@pytest.mark.anyio
+async def test_room_create_passes_participants_only_to_seed(monkeypatch) -> None:
+    """Verify room_create passes participants_only=True into the seed call."""
+    settings = _room_create_settings()
+    received: dict[str, object] = {}
+
+    def _fake_seed(
+        *,
+        settings=None,
+        admin_dsn=None,
+        room_id=None,
+        title=None,
+        force=False,
+        participants_only=False,
+    ):
+        received["participants_only"] = participants_only
+        received["room_id"] = room_id
+        received["title"] = title
+        return (TENANT_ID, APPLICATION_ID, UUID(int=1))
+
+    from app.war_room import transport
+
+    monkeypatch.setattr(transport, "_room_seed_helper", lambda: _fake_seed)
+
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=settings,
+            database=Database(settings),
+        )
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", 43136)),
+        base_url="https://war-room.example.test",
+    ) as client:
+        response = await client.post(
+            "/war-room/rooms",
+            json={"title": "ห้องทดสอบ participants_only"},
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert received["participants_only"] is True
+    assert body["title"] == "ห้องทดสอบ participants_only"
 
