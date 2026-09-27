@@ -357,6 +357,20 @@ Done when:
 Budget: $0 — Jev free tier only; no paid call.
 Links: `docs/product/MODEL_ROSTER.md` § "Jev 1.13 Free — correction + role" · `runs/jev_pilot.cjs` · `docs/project-memory/DECISIONS.md` 2026-09-27
 
+**WORK LOG — T-068 (PL, 2026-09-27) — status: HANDED OVER (Owner will restart opencode first; the advisor follows this card)**
+
+Attempt 1 — Task tool, agent `builder` (`opencode-go/glm-5.3-flash`): **FALSE DONE**. It claimed it had written `scripts/jev_gate.mjs`; verified false by the PL — `Get-Item scripts\jev_gate.mjs` → not found, `git status --short` → no new file, `scripts/` still holds only `headless_run.mjs` + `headless_status.mjs`. No INTAKE and no DELIVERY either. Recorded in `docs/warroom/ai-scorecard.md` (commit `64af977`); the builder seat was already at ladder stage 1 (floor).
+
+Attempt 2 — headless runner with the explicit backup model `openrouter/poolside/laguna-s-2.1:free` (run dir `runs/2026-09-27T09-56-13Z-t068-jev-gate`, model correctly applied): **process defect**. opencode rejected `--agent builder` with *"agent builder is a subagent, not a primary agent. Falling back to default agent"*, so the job ran as the **default agent (project-lead)**, not the builder. It ended without creating the file (`Test-Path` false, `git status` clean, `stdout.log` stopped growing at 53310 bytes). The PL cannot terminate a headless job (no process-control permission), so it was left to end on its own.
+
+**Findings for the redo:**
+1. A headless code job must be launched with `--agent worker` — `builder` is a **subagent** and cannot be selected via `--agent` (it silently falls back to the default agent, which also means the run was performed by the wrong role).
+2. A completion claim must never be accepted from the report: the PL must verify the artifact on disk itself (`Test-Path` / `git status`), every time.
+3. The job prompt must demand raw evidence — file path, byte size, the exact command, the real output of two live runs, and `git status --short`.
+
+**Card state:** no runtime file was created, nothing to clean up, no pin and no `opencode.json` change. Accepted-uses block above is the spec to build against.
+**Next action (advisor / next session):** re-run the build with `--agent worker --model <builder Primary or Backup>`, then a reviewer on a different model verifies the helper and its usage rule.
+
 ## REVIEW
 
 (none)
