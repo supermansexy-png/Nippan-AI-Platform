@@ -38,6 +38,7 @@ Exit: a test bot a real shop could use. Checkpoint: within ~4 weeks of start.
 
 ## Step 2 â€” Tenant #1, watched closely (target: 2 weeks live)
 
+**HARD GATE (Owner order 2026-09-27): the first-customer onboarding card (Step 2) must NOT be opened until card T-004 (legal review of the tenant agreement + privacy notice) has moved to DONE.** T-004 is PARKED on the board (`TASKS.md`) until the Owner engages a lawyer. This gate is not optional and is not waived by schedule pressure.
 - [ ] Onboard tenant #1 with the owner present; tenant uses their own LINE OA
 - [ ] Measure real cost per reply; update `PRICING_V1.md`
 - [ ] Confirm the monthly quota value

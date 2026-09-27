@@ -118,3 +118,11 @@ This oversight is **not** the Independent Audit. The Owner's rule stands: one la
 close, before the system serves real customers; the periodic 25/50/75/90/100 gates and the
 third-party Independent Auditor role remain **paused**. The advisor audit above is a normal
 per-card review requirement.
+
+## 8. Document–Card Gap Check (บังคับ)
+
+The advisor must verify that every product/architecture document change it orders has a backing card in `TASKS.md`.
+
+- If no card exists for a document change the advisor wants to order, the advisor **must raise `NEEDS_DECISION` to the Owner** and **must not create cards itself**.
+- This check is recorded as item 7 in the weekly review (`TASK_CONTROL.md` §9).
+- The advisor may not use its substitute approval authority (§6) to bypass this check for protected documents.

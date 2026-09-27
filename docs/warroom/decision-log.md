@@ -1251,3 +1251,41 @@ Task: MESSAGE_FLOW_V1 (ND resolution) — docs updated and committed as a separa
 chunk ("resolve ND-1 to ND-7"); not pushed. A reviewer on a different model is to
 verify the whole file before Phase 2 (building the real n8n workflows).
 
+## 2026-09-27 — Project Owner — HOLD replaced; pre-HOLD set parked; T-078 parked; front-of-house gaps carded
+
+Context: an Owner stop order ("HOLD") had frozen all cards while the Owner drafted
+the rules/flow. The Owner has now confirmed that the HOLD is **superseded** by the
+later orders (board cleanup / T-004 / LITE_SCHEMA / MESSAGE_FLOW / auto-card) that
+were executed and committed after it.
+
+Decision (Owner, 2026-09-27):
+1. **HOLD is replaced** — work continues under the normal process.
+2. **Pre-HOLD set parked, not closed:** T-032, T-033, T-071…T-076 — do not resume
+   until the Owner orders "เดินต่อ" ("เอาทีละอย่าง").
+3. **T-078 (auto-card mechanism) parked, not closed, and not retried** — three
+   consecutive builder failures with three *different* symptoms (empty output /
+   upstream rate-limit / `reason: length`) are attributed to the **brief being too
+   long/complex**, not to model luck; revisit later with a smaller, split brief.
+4. **Two design-to-build gaps carded:** **T-079** (customer onboarding + config —
+   setup via web-chat, confirmation summary, later-edit path) and **T-080** (admin
+   surface — log-only (ก) vs full admin page (ข); awaiting the Owner's pick).
+
+Reason: the Owner wants front-of-house work prioritised over the parked
+backend/mechanism items, and wants design gaps that were never carded to become
+buildable work before Phase 2 opens.
+
+Task: board update (`TASKS.md`), T-079, T-080. Committed as one board-update chunk;
+not pushed.
+
+## 2026-09-27 — Project Owner — T-080 admin surface = option (ก); T-079 item 3 = option (ก)
+
+Context: T-080 asked whether Phase A needs an admin web page or only the log + alert already designed in `MONITORING.md`. T-079 item 3 asked how a customer changes their business info after go-live.
+
+Decision (Owner, 2026-09-27):
+1. **T-080 = option (ก)** — the database log + the LINE alert exactly as `MONITORING.md` designed it. **No admin web page in Phase A.** Owner reason (verbatim intent): "เฟส A ยังไม่มีลูกค้าจริง พอมี log + แจ้งเตือนพอ สร้างหน้าเว็บแดชบอร์ดเป็น trigger ของ Phase B/C ตามที่ MONITORING.md ระบุไว้แต่แรก". This matches `MONITORING.md` §"Keep it simple (Phase A)" ("No dashboard software… Build a real dashboard only when a trigger below is hit") and its "Growth triggers" (25+ tenants / daily digest >15 minutes / a second person helps). **T-080 closed DONE — nothing new to build.**
+2. **T-079 item 3 = option (ก) talk to a Support agent** — no separate edit form in Phase A. Owner reason: keep the standing principle of not building ahead of a proven need; the target shops (repair shops, older owners) are more comfortable typing a chat than filling a form. If edit requests become frequent, a separate form becomes a **Phase B** card.
+
+Consequence: T-079 is split into child build cards **T-079a…T-079f** — `web-chat` adapter, onboarding assistant, setup page, confirmation + go-live gate, later-edit via Support agent, storefront page. Each is written so its proof is a **real run**, not a claim. **No build starts until the Owner reviews the split.**
+
+Task: T-080 (closed, archived), T-079 (split). Board update; not pushed.
+

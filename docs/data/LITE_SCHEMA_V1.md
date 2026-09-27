@@ -38,7 +38,7 @@ Scope chain: **tenant → bot → channel → end customer → conversation**.
 | `tenant_id` | FK |
 | `bot_type` | chat / secretary / … from `docs/product/CUSTOMER_SEGMENTS.md` |
 | `tone` | fixed-menu value (`docs/product/CUSTOMER_FACING_RULES.md`) |
-| `business_info` | structured fields (hours, prices, policies) — never raw customer-written prompt text |
+| `business_info` | structured fields (hours, prices, policies) — never raw customer-written prompt text. Must include a **fallback contact** (phone / LINE) — the fixed message the bot sends when the reply quota is exhausted points the customer there (ND-2, 2026-09-27) |
 | `enabled_tools` | list of MCP tools this bot may call |
 | `monthly_message_quota` | chat reply quota for this bot (`PRICING_V1.md`) |
 | `monthly_push_quota` | push/reminder cap for this bot — default 200 (`PRICING_V1.md`) |
@@ -88,6 +88,25 @@ Scope chain: **tenant → bot → channel → end customer → conversation**.
 | `model_tokens` | |
 | `estimated_cost_thb` | |
 
+### `processed_events` — platform retry de-duplication (added 2026-09-27, ND-1)
+
+| Column | Notes |
+|---|---|
+| `tenant_id`, `bot_id` | FK — every row carries both (the isolation rule) |
+| `channel_id` | FK — which channel delivered the event |
+| `platform_event_id` | the platform's own event/message id (LINE: `webhookEventId`) |
+| `received_at` | when the adapter accepted it |
+| `created_at` | insertion time; drives TTL cleanup |
+
+- Physical name: `lite_processed_events`.
+- **Unique key:** (`tenant_id`, `bot_id`, `platform_event_id`) — one row per
+  platform event per bot. A repeated delivery is a no-op, so the same message
+  is never answered twice (and never billed twice).
+- **TTL:** rows past a short retention window are removed by the daily cleanup
+  job family (same cadence as `memory_summaries`).
+- **Fail-closed:** if the store cannot be read, the adapter treats the message
+  as a duplicate and drops it.
+
 ## Memory layers mapped to tables
 
 1. **Current conversation** — the last N rows of `conversations` for this
@@ -130,14 +149,15 @@ Status: **ADDED AFTER PHASE A** — the "no database-enforced RLS" statements
 above reflect the original Phase A design; Lite RLS v1 (below) supersedes
 them additively for the `lite_*` tables.
 
-- All 7 `lite_*` tables (`lite_tenants`, `lite_bots`, `lite_channels`,
+- All 8 `lite_*` tables (`lite_tenants`, `lite_bots`, `lite_channels`,
   `lite_end_customers`, `lite_conversations`, `lite_memory_summaries`,
-  `lite_usage_log`) now have both `ENABLE ROW LEVEL SECURITY` and
+  `lite_usage_log`, `lite_processed_events` — the last added 2026-09-27, ND-1)
+  now have both `ENABLE ROW LEVEL SECURITY` and
   `FORCE ROW LEVEL SECURITY`.
 - Policies are `FOR ALL TO nippan_runtime` with both `USING` and
   `WITH CHECK`:
   - `lite_tenants`: `tenant_id = app_private.current_tenant_id()`
-  - the other 6 tables: `tenant_id = app_private.current_tenant_id()
+  - the other 7 tables: `tenant_id = app_private.current_tenant_id()
     AND bot_id = app_private.current_bot_id()`
 - The runtime must set transaction-local scope before touching these
   tables: `SET LOCAL app.tenant_id` and `SET LOCAL app.bot_id`

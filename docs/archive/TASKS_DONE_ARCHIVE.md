@@ -2002,3 +2002,130 @@ Decision: ACCEPT.
 - AGENTS.md section "## ChatGPT Task Handoff" added with 5 governance rules.
 - ADVISOR_LOG entry appended.
 - Reviewer verdict: **ACCEPT** (reviewer `opencode/muse-spark-1.3-contributor-free`, ≠ author `opencode-go/longcat-2.5-preview-free`). Findings (non-blocking): (1) working tree contains other sessions' uncommitted work — when committing, stage only T-069 files; (2) section heading uses `#` (correct for top-level) vs card's `##` — cosmetic; (3) log entry needs timestamp + auditor slug — fixed in ADVISOR_LOG.
+
+### T-034b — War Room server: create-room path + usable agenda (paid builder)
+
+Status: **DONE 2026-09-27** — all slices delivered, reviewed and **deployed to the Render preview** (PR #86, merge `da35d60`, deploy `dep-dasdcartqb8s739lmbmg` live). Evidence below.
+
+**Status update 2026-09-27 (batch order):** slices 1–3 delivered and reviewed; slice 2b code committed (`aa36a81`) and pushed to `origin/dev-workspace`. **DEPLOY = BLOCKED on the Owner** — deploying any slice requires separate Owner approval (batch order: "deploy requires separate Owner approval"). No deploy is performed. Card marked blocked-on-Owner.
+
+**DEPLOY DONE — 2026-09-27 (Owner approved, advisor relayed: "1 อนุมั1ิ" = อนุมัติ):**
+- The two T-034b commits missing on `phase2/postgres-logical-schema` were cherry-picked (runtime files only): `7ef25f4` (slice 1 seed script — without it the deployed create-room route called `seed(room_id=, title=)` on a script that did not accept those kwargs) and `aa36a81` (slice 2b agenda). Local cherry-picks: `6f7dd15` + `00c0b0e`; content verified identical to the dev-workspace commits (EOL-only diff).
+- Direct push to `phase2/postgres-logical-schema` is blocked by repo rules (GH013: PR required + `postgres-regression` status check) — so the Owner-approved merge-on-green path was used: branch `deploy/t-034b-warroom-agenda` → **PR #86** (https://github.com/supermansexy-png/Nippan-AI-Platform/pull/86) → CI **postgres-regression PASS (1m5s)**, remote-auth PASS (28s) → merged as merge commit **`da35d6064ce8eb9c33c831517e825d9b00754335`** (2026-09-27T08:39:06Z).
+- Render deploy **`dep-dasdcartqb8s739lmbmg`** (auto-triggered by the merge push) → status **live** at 2026-09-27T08:40:06Z, serving commit `da35d60`.
+- Live check: `GET https://chetgo.onrender.com/health` → **200** `{"status":"ok","service":"nippan-core","environment":"development"}`; `GET https://chetgo.onrender.com/war-room/` → **403** `{"detail":"war_room_preview_remote_auth_required"}` (the preview auth gate, fail-closed as designed — the rendered page itself is confirmed by the Owner in his browser, the documented limit of every previous preview deploy).
+- No DB migrations, no production system touched, no force push. **Card closed DONE.**
+Owner: Project Lead — 2026-09-26 (Owner order: the agenda panel "ถ้าจะมีไว้ต้องใช้งานได้" and a new meeting must not need hand-edited SQL)
+Role: Developer — **paid builder `z-ai/glm-5.3-flash` (Owner-locked)** + reviewer `opencode/space-bunny-free` + **security reviewer `openrouter/nex-agi/nex-n2.5-mini:free`** (a new write endpoint on the transport is security-relevant)
+Risk: L3 (new write path on the transport: authorization, scope binding, fail-closed behaviour)
+Goal: a meeting can be created and its agenda managed from the room itself, without anyone editing the preview database by hand.
+Done when: 1) a reviewed create-room path exists (each meeting gets its own room, owner-only, server-established actor, fail-closed); 2) the agenda can be created/edited/closed and a message shows which agenda item it belongs to; 3) previous rooms stay reachable as archives; 4) tests + CI green; 5) reviewer **and** security reviewer verdicts recorded; 6) no schema/RLS/grant change and no production system touched.
+Budget: 1–2 days
+Links: T-034a, T-033 (blocker 2/3), `services/core/app/war_room/transport.py`, `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (the hand-made room that this replaces)
+
+INTAKE T-034b — 2026-09-26 (Project Lead, under the Owner's delegation while he is away; Owner order: the room must be ready to use when he returns)
+Understanding: two things stop the room from being usable without the Project Lead: a new meeting cannot be created without hand-written SQL, and the agenda panel shows a meeting item that nobody can create, edit or close. Owner also wants the Project Lead to accept and trial the room before handing it over.
+Scope, in slices so each can be reviewed on its own: **slice 1** — a reviewed create-room path that works from the command line (parameterised seed script, no new HTTP surface, no auth change); **slice 2** — the in-room path (create a meeting, manage the agenda) as a reviewed server addition with a security review, then the matching UI; **slice 3** — PL acceptance + a trial meeting, then hand over.
+Team: paid builder `openrouter/z-ai/glm-5.3-flash` (server code, Owner-approved for this card) + reviewer `opencode/space-bunny-free` + security reviewer `openrouter/nex-agi/nex-n2.5-mini:free` for slice 2.
+Done when (per slice): slice 1 — the script can create an additional room with a chosen id and title, refuses to reset a non-default room without an explicit force flag, scopes every delete to the preview tenant/application, runs deletes plus inserts in one transaction, and a different model has reviewed it; slice 2 — a meeting can be created and its agenda managed from the room with the owner-only, fail-closed, server-established actor rules, tests + CI green, reviewer and security verdicts recorded; slice 3 — the PL opens a fresh room, drives one real meeting, verifies the durable artifacts and the measured cost, and reports the evidence.
+Decision: ACCEPT — slices as above.
+
+**WORK LOG — T-034b (PL, 2026-09-26)**
+- slice 1 written by the worker (GLM) in `services/core/scripts/seed_war_room_preview.py`: adds `--room-id` (UUID-validated), `--title` and `--force`.
+- reviewer round 1 = ACCEPT-WITH-FINDINGS (F1 the seven deletes keyed only on `room_id` with autocommit and no confirmation could silently destroy a live room; F2 child-row ids were room-independent constants so a second room collided on the primary keys after the room row had committed; F3 an empty `--title` fell back silently).
+- fix round 1 addressed all three; reviewer round 2 = ACCEPT-WITH-FINDINGS (all three closed) with three follow-ups taken: the connection still used `autocommit=True` so a failed insert after successful deletes would leave the room permanently gone; an empty title failed only at the database constraint after the delete; the confirmation line printed the new title rather than the title of the room about to be destroyed.
+- fix round 2 in progress at the time of writing (`t034b-slice1-fix2`); slice 1 is **not** run against the preview database until it passes review, because that database holds the acceptance-evidence room and the live meeting room.
+- slice 1 closed and committed: reviewer round 3 confirmed the guard now requires `--force` only for a room that already exists; the hardening (tenant-scoped lookup, row-based guard test) and three tests were added; **full `services/core` suite against an embedded PostgreSQL 16 with all migrations applied = 162 passed, 0 failed**.
+- slice 2a (server route `POST /war-room/rooms`) committed: it reuses the seed helper, authorizes first, refuses with 503 when unconfigured, generates the room id itself, runs the seed on a worker thread, maps refusals to 409 with a static detail and database failures to 503. Code reviewer (different model) = ACCEPT-WITH-FINDINGS; its blocker was a bare `RuntimeError` from three seed guards escaping as a 500, now caught. Live suite after the fix = **169 passed, 0 failed**.
+- slice 2c/2d (UI: `เริ่มประชุมใหม่` control wired to the new route; conversation windowed to 30 events with `ดูข้อความก่อนหน้า`; system log capped at 50 lines) written; UI reviewer = ACCEPT-WITH-FINDINGS with one must-fix (the top bar had four children in a three-column grid) and one should-fix (the reveal handler's scroll anchor), both sent back for fixing.
+- **Security review of slice 2a**: the appointed security model `openrouter/nex-agi/nex-n2.5-mini:free` **no longer resolves** ("Model not found") — a substitute free model (`opencode/nemotron-3-ultra-free`) was used and the substitution is recorded here rather than hidden. Verdict ACCEPT-WITH-FINDINGS: authorization order, scope, fail-closed mapping, injection handling, threading and rollback all pass; **one blocking finding — no rate limit, so an authenticated caller or a leaked dev API key can create unlimited rooms**. A 10-per-hour in-process limiter was added in response, with tests; the deploy waits until it is verified.
+- Environment findings worth keeping: the headless runner truncates large tool output, so jobs must be told to read only small regions — after that instruction `z-ai/glm-5.3-flash` completed its server work (it had stalled twice before on whole-file reads); the `builder` subagent grants no `edit` permission, so code jobs run through the `worker` agent with the builder model; and `openrouter/nvidia/nemotron-3.5-lightning:free` only works with the `openrouter/` prefix.
+
+INTAKE T-034b slice 2b — 2026-09-26 (Project Lead, under Owner delegation; ordered by advisor `opencode-go/mimo-v2.6-pro`, record in `docs/warroom/ADVISOR_LOG.md`)
+Understanding: the room's agenda panel is read-only — an agenda item ("วาระ") can only appear via the seed script. Slice 2b adds the in-room path so a meeting's agenda can be created/edited/closed from the War Room web page, owner-only, fail-closed, with a server-established actor, and messages keep showing which agenda item they belong to.
+Scope: server routes under the existing preview transport (`services/core/app/war_room/transport.py`) + the agenda controls in `services/control-plane-web/war-room/` + tests. No schema/RLS/grant change, no deploy, no production; the pending `SESSION_HANDOFF.md` change is committed as housekeeping.
+Team: builder/worker `opencode-go/glm-5.3-flash` (paid, approved for this card) · reviewer `opencode-go/space-bunny-free` · security on a live free model ≠ author ≠ reviewer (the appointed `openrouter/nex-agi/nex-n2.5-mini:free` no longer resolves — substitute recorded on the card). PL does not write code (T-043).
+Done when: 1) agenda create/edit/close reachable from the room page, owner-only + fail-closed + server-established actor; 2) a message shows which agenda item it belongs to; 3) `services/core` suite green with counts stated; 4) reviewer + security verdicts recorded; 5) no schema/RLS/grant change and no production touched.
+Decision: ACCEPT.
+
+**WORK LOG — T-034b slice 2b (PL, 2026-09-26)** — status: **code complete, reviewed; NOT yet deployed**
+- Received as an advisor work order (`opencode-go/mimo-v2.6-pro`); instruction record written by the PL as the receiver in `docs/warroom/ADVISOR_LOG.md`.
+- Model finding: the assigned builder `opencode-go/glm-5.3-flash` **failed twice with zero output** (`step_finish reason "length"`, reasoning 4096) on this card, and so did `opencode-go/kimi-k3`; **builder was substituted to `opencode-go/mimo-v2.6-flash`** (same OpenCode Go flat-rate pool, no new spend) with small prescriptive briefs — that model completed every slice-2b step. Substitute is recorded here rather than hidden; the failure is in `DEV_ERROR_LOG.md`.
+- Security model: the appointed `openrouter/nex-agi/nex-n2.5-mini:free` still does not resolve (`get-model` → 404, re-checked this session). Substitute used: `opencode/nemotron-3-ultra-free` (Zen free, differs from author and reviewer) — same substitution slice 2a recorded.
+- Server (`services/core/app/war_room/`): added `RoomAgendaCreatePayload` + `RoomAgendaUpdatePayload`, a fail-closed `RoomCommandOwnerCheck` in `auth.py`, and two owner-only routes — `POST /war-room/rooms/{room_id}/agenda` (201; server assigns id + `max(sequence)+1`, status OPEN) and `POST /war-room/rooms/{room_id}/agenda/{agenda_item_id}` (200; partial edit, sets `completed_at` with `COMPLETE`/`CANCELLED`). Actor is server-established, authorization runs before any read/write, every statement is inside `tenant_transaction`, errors map 403/404/422/503 (never a 500). No schema/RLS/grant change.
+- UI (`services/control-plane-web/war-room/`): agenda create form + per-item close/reopen + inline retitle, Thai notices, `credentials: "same-origin"`, no `innerHTML`; the stale asset cache-buster was bumped to `?v=20260926-agenda`.
+- Review round 1 (`opencode-go/space-bunny-free`) = **REJECT** with 2 must-fix: the agenda status domain was wrong (`OPEN/CLOSED` vs the table's `OPEN/RUNNING/NEEDS_OWNER_DECISION/COMPLETE/CANCELLED`, and the completion rule `(status in (COMPLETE,CANCELLED)) = (completed_at is not null)`), plus a test fake that could not catch it. Fix round applied. Review round 2 = **ACCEPT-WITH-FINDINGS, no must-fix** (non-blocking: the UPDATE does not refresh `updated_at`; the fake does not assert the UPDATE's tenant/app/room predicates).
+- Security review (`opencode/nemotron-3-ultra-free`) = **ACCEPT-WITH-FINDINGS** (blocking-0): one non-blocking note — no rate limit on agenda writes (room creation has one); acceptable for the dev preview, required before production. Delta re-check after the fix round = **ACCEPT**.
+- Tests: `cd services/core && python -m pytest -q` → **176 passed, 9 skipped**; the transport file alone **53 passed**. The 9 skips are the PostgreSQL integration tests (they require `NIPPAN_TEST_POSTGRES_ADMIN_DSN`; no Docker/PostgreSQL is available in this environment, so the live-DB suite of previous slices was **not** re-run here — UNKNOWN). The CI workflow `.github/workflows/war-room-remote-auth.yml` only triggers on a pull request into `phase2/postgres-logical-schema`, so no CI ran for this `dev-workspace` push.
+- 2c/2d confirmation (order item): the must-fix (top bar four children in a three-column grid) and the scroll-anchor should-fix are **VERIFIED present** in the committed tree (`services/control-plane-web/war-room/war-room.css:24` now has four columns; the anchor logic is in `war-room.js` commit `ba830ef`, which is an ancestor of `HEAD`).
+- Housekeeping (order item 1): the pending `docs/project-memory/SESSION_HANDOFF.md` rewrite was committed as its own commit (`549b0fd`).
+- **Commit:** slice 2b = `aa36a81`, pushed to `origin/dev-workspace` (8 files: the two war-room modules, the transport tests, the three web assets, `ADVISOR_LOG.md`, `DEV_ERROR_LOG.md`).
+- **Advisor-mandate audit (order requirement):** `opencode-go/kimi-k3`, run `runs/2026-09-26T14-33-23Z-t034b-advisor-audit` → **WITHIN-MANDATE-WITH-FINDINGS**, A1–A5 PASS. Findings recorded: the builder substitution was made without prior approval (disclosed, same pool, no new spend), the security substitute, "CI green" only partially met (the workflow does not trigger on a `dev-workspace` push), and the non-blocking notes above. Verdict written into `ADVISOR_LOG.md`.
+- **Not done / carried:** not deployed (per scope — the rate-limiter deploy note still waits); the live PostgreSQL suite was not re-run (no Docker/PostgreSQL in this environment); the board (`TASKS.md`) and `CURRENT_STATE.md` carry another session's concurrent uncommitted edits (card T-045), so this card's work log is present on disk but **left uncommitted** by the PL to avoid committing that session's work.
+
+**WORK LOG — T-034b slice 3 (PL, 2026-09-26)** — status of this slice: **DELIVERED — in REVIEW; awaiting the Owner**. The acceptance trial was driven by an **agent, not the Owner**.
+- Order: advisor `opencode-go/mimo-v2.6-pro`; Owner intent verbatim `"หาคนไปเทศ warroom แทนพี่"`. Instruction record written by the PL as the receiver in `docs/warroom/ADVISOR_LOG.md` before the work was queued.
+- Execution: headless worker `opencode-go/mimo-v2.6-flash` (OpenCode Go) drove a scripted trial against a **local** stack — the real FastAPI app (`app.main:app`) on `127.0.0.1:8011`, the real routes, the real web assets, and a **throwaway embedded PostgreSQL** with all 9 migrations applied. No deploy, no Supabase/Render/Cloudflare, preview database untouched. **Cost $0.000000** (model turns OFF → 0 provider calls; `usage_events` = 0).
+- Done-when covered (all re-verified by the PL against the raw artifacts): fresh room through the tested create path — `POST /war-room/rooms` → **201**, room `941be907-fb1d-4b62-8088-7b9f80b0ba6a`; agenda **create 201 / edit 200 / close 200** (`completed_at` set) confirmed in the database; meeting lifecycle `PREPARE`→READY, `START`→RUNNING, `ASK_ALL` 200 with a durable owner message linked to the agenda item; the UI page + JS/CSS served **200** and the exact routes the page calls exercised over real HTTP — not unit tests.
+- Evidence: `runs/2026-09-26T15-06-50Z-t034b-slice3/` (`RESULT.md` + the PL verification addendum, `http-transcript.md`, `db-artifacts.txt`, `trial-checks.json`, `server.log`, `cleanup.txt`).
+- Independent evidence review (`opencode-go/space-bunny-free`, ≠ author): `runs/2026-09-26T15-28-53Z-t034b-slice3-review` = **ACCEPT-WITH-FINDINGS**, no blocking. Findings actioned in the addendum: a wrong citation fixed; two discarded rooms from aborted attempts disclosed; the Phase-B skip reason marked UNKNOWN.
+- Advisor-mandate audit (`opencode-go/kimi-k3`, ≠ advisor): `runs/2026-09-26T15-36-11Z-t034b-slice3-advisor-audit` → **WITHIN-MANDATE-WITH-FINDINGS**, A1–A5 all PASS. Verdict written into `ADVISOR_LOG.md`.
+- **Honest limits — not passes:** (1) **no AI participant turns** — the meeting was driven only through its lifecycle and the owner message; a provider call would be required and the order's budget is Go/free-only, so participant turns are evidenced separately by the T-033 pilot on the deployed preview ($0.000149); (2) browser-only behaviour (DOM, clicks, live SSE in a page) = **UNKNOWN** — no browser in this environment; (3) **new portability finding**: `python -m uvicorn app.main:app` cannot serve the DB routes on Windows (psycopg refuses `ProactorEventLoop`); a selector-loop start works (`run_server.py`); (4) a new room is **not empty** — `POST /war-room/rooms` runs the preview seed, so it arrives with 1 agenda item (`ประชุม #001 — Preview ภาษาไทย`), 8 participants, a finding and a decision.
+- **Carried / not done:** the rate-limiter deploy note still waits (no deploy this slice); no commit was made for the trial.
+
+---
+
+> NOTE (Project Lead, 2026-09-26, second session): this card was authored by the Project Lead while the working-tree
+> board was in its broken 33-line state (see `DEV_ERROR_LOG.md`); another session then repaired the board and
+> preserved the card. It was first written as "T-030" — **renumbered T-035** here because the card number T-030
+> belongs to the archived n8n/RLS card. Content is unchanged apart from the number and the intake header.
+
+
+
+
+### T-067 — Google free tier adoption: 2 models (non-sensitive fallback)
+
+Status: DONE 2026-09-27 — closed by Owner order ("067 ปิดได้เลย"); limits declared UNKNOWN
+Owner: model-recruiter (HR) — limits check + seat proposal; Project Lead records/verifies
+Role: model-recruiter (limits + proposal) + builder (pin apply, only after the Owner approves) + reviewer on a **different model**
+Risk: L1–L2 — dev-time roster/model config. No runtime/production/customer/data impact. Standing caveat: the Google **free** tier must never receive repo code, secrets, customer data, or any confidential material.
+Goal: adopt exactly two Google free-tier models as a zero-cost fallback for non-sensitive work, and record the real limits.
+Adopted: `google/gemini-flash-lite-latest` (routine) · `google/gemini-3.8-flash` (higher-quality fallback) — both live-probed HTTP 200, cost $0.
+Stand-ins (probed 200, NOT adopted): `google/gemini-3.1-flash-lite` · `google/gemini-3.5-flash-lite`. Excluded: `google/gemini-2.5-flash-lite` (404, retired) · `google/gemma-4-31b-it` (500 INTERNAL).
+Done when:
+- [x] `MODEL_ROSTER.md` + `DECISIONS.md` + `CURRENT_STATE.md` updated (2026-09-27)
+- [x] limits UNKNOWN — Google does not publish RPM/TPM/RPD for this project; source: docs/product/MODEL_ROSTER.md § "Google free tier" ("Limits: UNKNOWN"; per PROJECT not per key; RPD resets midnight Pacific). Owner could not locate the AI Studio figure and ordered the card closed with UNKNOWN.
+- [x] HR proposes which seats may use the 2 Google models as a free fallback (non-sensitive work only), with the anti-redundancy check
+        - [x] pin approval — RESOLVED as "no pin required" (Owner answered "ก": free-tier models stay backup/task-scoped, never a seat primary). No approval pending.
+        - [x] pin application — N/A: no pin required (see above). No runtime file touched: opencode.json and .opencode/agents/*.md unchanged by this card. Verified by "git status" showing only the 4 doc files.
+Budget: $0 — free-tier probes and free models only; no paid call for this card.
+Links: `docs/product/MODEL_ROSTER.md` § "Google free tier — adopted 2026-09-27" · `docs/project-memory/DECISIONS.md` (2026-09-27 entry) · Google Gemini API Additional Terms § "Unpaid Services"
+Note: this card changes **no** runtime file; model pins require separate Owner approval before any agent config is touched.
+Push: the deferred batch (commits `9c9b2bf`…`a7afacc`) was pushed to `origin/dev-workspace` on 2026-09-27 — branch is up to date with origin.
+
+**HR PROPOSAL (2026-09-27, `model-recruiter`)** — seats HR judged eligible for the two Google free models: **researcher** (`google/gemini-flash-lite-latest`) · **model-recruiter/HR** (`google/gemini-3.8-flash`) · **assistant** (`google/gemini-flash-lite-latest`) · **advisor** (`google/gemini-3.8-flash`). HR judged **NOT** eligible: project-lead, builder, reviewer, security, ops. Preconditions HR listed: verify tool/function calling on both models through opencode (UNVERIFIED); read the real free-tier rate limits from the AI Studio page (UNKNOWN); confirm retention/training terms.
+
+**PL RESERVATION (2026-09-27)** — the assistant and the advisor also read and write our **internal documents** (`MODEL_ROSTER.md`, `TASKS.md`, `ADVISOR_LOG.md`), which are internal business material, so the PL does not treat them as clean seats either. PL position: eligibility is a **task-level rule, not a seat-level one** — the two Google models may be used only for tasks whose entire prompt is public information (e.g. a public catalogue or pricing lookup), and should **not** be pinned as a seat fallback, unless the Owner decides otherwise. **Owner has not decided.** → **UPDATE 2026-09-27: the Owner decided ("ก")** — the free-tier rule covers **external shared-pool free tiers only** (OpenRouter `:free`, Groq, Google). Google free is that class, so the two Google models stay **backup / task-scoped only — never a seat primary**. The PL reservation above therefore stands, and **no pin change is required**. See `docs/project-memory/DECISIONS.md` 2026-09-27.
+
+
+### T-080 — Admin surface: log-only (ก) vs full admin page (ข) — NEEDS_OWNER_DECISION
+
+Status: **DONE 2026-09-27** — Owner chose option (ก) “แค่ log ในฐานข้อมูล + แจ้งเตือน LINE”, no new admin page in Phase A. Recorded in decision-log.md 2026-09-27; T-079 item 3 also decided (ก) Support agent.
+Owner: Project Lead — 2026-09-27 (Owner-raised gap: the admin/observability surface was designed in `MONITORING.md` but never carded as build work)
+Role: Project Lead (plan) + builder + reviewer on a different model
+Risk: L2 (internal operator surface; no customer-facing change)
+Goal: decide and then build the **operator's** view of the system — the thing that turns monitoring events into something a human acts on.
+Options:
+- **(ก) Log-only (as `MONITORING.md` designed it):** events are written to the database and a **LINE alert** is sent for red events; no new web page. Fast, no new surface to secure. **(Owner's stated preference so far.)**
+- **(ข) A full admin page:** the log + an operator dashboard (events, card/quota status, red alerts, per-bot usage) on top of (ก). More work, and it is a new authenticated surface.
+Done when:
+- [ ] the Owner picks (ก) or (ข) — recorded in `docs/warroom/decision-log.md`
+- [ ] the chosen option is split into build cards per Step 0/Step 1 of `STARTUP_PLAYBOOK.md`
+- [ ] if (ข): the admin page has its own auth/isolation card (security review mandatory)
+Budget: planning only until the Owner decides
+Links: `docs/warroom/MONITORING.md`, `docs/warroom/STARTUP_PLAYBOOK.md` Step 0/Step 1, T-071 (the owner alert channel — email first, LINE later), `docs/architecture/MESSAGE_FLOW_V1.md` §8 (monitor-log events)
+
+INTAKE T-080 — pending
+
+---
+

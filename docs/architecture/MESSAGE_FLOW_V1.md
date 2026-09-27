@@ -1,7 +1,7 @@
 # Message flow v1 — from customer message to bot reply
 
-Status: **DRAFT v1.1 — ND-1…ND-7 resolved by the Owner 2026-09-27; awaiting
-different-model review** (2026-09-27)
+Status: **DRAFT v1.2 — ND-1…ND-7 resolved by the Owner 2026-09-27; adapter-boundary
+fixes applied (§0, §1, §7, §9, new §14); awaiting different-model review** (2026-09-27)
 Audience: the implementer (n8n workflows / code). This document describes the
 system to be built — it is an instruction to the runtime, not a record of
 something already running.
@@ -31,8 +31,8 @@ covered in §9.
 | **Core** | Bot logic: context, memory, policy, model call, reply. |
 | **Tool** | An MCP capability from `MCP_TOOLS_V1.md` (`data-access`, `usage-tracker`, `monitor-log`, `line-channel`, `chat-bot-core`, `memory-store`, `handoff-to-owner`, …). |
 | **Scope key** | `tenant_id` + `bot_id`. Both, every query, no exception (`LITE_SCHEMA_V1.md`, PDPA Layer 3). |
-| **reply** | The bot answering a message the customer sent first. Uses LINE's reply token. Delivery is **free and unlimited**; the platform's only cost is the model call. |
-| **push** | The bot starting a message (e.g. a reminder). Counts against `bots.monthly_push_quota` — **platform cap 200/bot/month**, below LINE's own free-plan ceiling. |
+| **reply** (normalized `kind: reply`) | The bot answering a message the customer sent first — channel-neutral. *LINE case: uses the reply token; delivery is free and unlimited, so the only cost is the model call.* |
+| **proactive** (normalized `kind: proactive`; a "push") | The bot starting a message (e.g. a reminder). Counts against `bots.monthly_push_quota` — **platform cap 200/bot/month**. *LINE case: set below LINE's own free-plan ceiling by design.* |
 
 ### Flow overview
 
@@ -76,15 +76,25 @@ Two hard invariants for the whole path:
 
 ## 1. Ingress — channel adapter
 
+> **Boundary rule.** Everything in §1 is the **adapter's** job; the core starts at
+> §2. The core never sees a platform's field names, headers, error codes or
+> delivery rules — only the normalized message produced at S1.5
+> (`INTEGRATIONS.md`: "The core never knows which platform it is talking to").
+> Everything that looks LINE-specific below is an **example**, not a rule of the
+> flow.
+
 **S1.1 — Receive.** The adapter accepts the platform webhook over HTTPS
 (LINE: `POST` to the LINE channel endpoint).
 
 **S1.2 — Verify authenticity (MANDATORY, FIRST, BEFORE PARSING).**
-- LINE: verify `x-line-signature` = `base64(HMAC-SHA256(channel_secret, raw_body))`
-  computed over the **raw request body bytes**, checked **before** the body is
-  parsed as JSON (`adapters/line-oa.md`; `INTEGRATIONS.md` "What every adapter
-  must do" #1).
-- The channel secret always comes from the credential store
+- **General contract:** the adapter verifies the caller is genuine **by its own
+  means, before it parses or trusts anything** (`INTEGRATIONS.md` "What every
+  adapter must do" #1). The mechanism belongs to the adapter.
+- **Example (LINE):** `x-line-signature` =
+  `base64(HMAC-SHA256(channel_secret, raw_body))`, computed over the **raw
+  request body bytes** and checked **before** the body is parsed as JSON
+  (`adapters/line-oa.md`).
+- Credentials always come from the credential store
   (`channels.credential_ref` → n8n credentials), never from the database, never
   from the request.
 - **If verification fails → drop the request. Do not parse it, do not answer, do
@@ -97,15 +107,17 @@ twice. Drop on the platform's event id (`webhookEventId` for LINE; `message_id`
 in the normalized format) (`adapters/line-oa.md`).
 - **Dedup store (ND-1 resolved 2026-09-27):** a small `lite_processed_events`
   table — scoped by `tenant_id` + `bot_id`, keyed by the platform event id, with
-  a short TTL. To be added to `LITE_SCHEMA_V1.md` when the schema card (T-076)
-  runs.
+  a short TTL. Specified in `LITE_SCHEMA_V1.md`; the migration is tracked by
+  **card T-077**.
 - **Fallback:** if the dedup store is unavailable, treat the message as a
   duplicate and drop it (answering twice is worse than answering once) and raise
   an alert.
 
-**S1.4 — Map identity (never guess).** `destination` (bot user id) → the
-`channels` row → `tenant_id` + `bot_id`; `source.userId` →
-`end_customers.external_user_ref`, scoped to that tenant (`adapters/line-oa.md`).
+**S1.4 — Map identity (never guess).** The adapter maps the **platform bot id**
+→ the `channels` row → `tenant_id` + `bot_id`, and the **platform user id** →
+`end_customers.external_user_ref`, scoped to that tenant. *(LINE example:
+`destination` → the channel; `source.userId` → the end customer —
+`adapters/line-oa.md`.)*
 - **If the destination is not mapped to a channel → reject the request. Never
   guess a tenant. STOP.** Log to `monitor-log`.
 
@@ -183,8 +195,9 @@ in §9.
 
 **S4.2 — Check the reply quota.** Platform reply quota =
 `bots.monthly_message_quota` (starting value 600/month — `PRICING_V1.md`;
-confirm after the first real tenants). This bounds **model calls**, not LINE
-delivery (LINE reply delivery is free and unlimited).
+confirm after the first real tenants). This bounds **model calls** — delivery cost
+is the adapter's concern, not this gate's. *(LINE case: reply delivery is free and
+unlimited.)*
 - At **80%** → warn the owner (yellow, `MONITORING.md`).
 - Over quota, no top-up (**ND-2 resolved 2026-09-27**) → the bot sends **one
   fixed message** telling the customer to contact the shop directly, quoting the
@@ -195,11 +208,11 @@ delivery (LINE reply delivery is free and unlimited).
 - This still honours `PRICING_V1.md`: the customer is told where to go rather
   than met with silence, and the model is never silently downgraded.
 - *Requires `bots.business_info` to carry a fallback contact (phone / LINE) —
-  add it when the bot-config schema is finalised (card T-076).*
+  add it when the bot-config schema is finalised (card T-077).*
 
 **S4.3 — Check the push cap (proactive path only).** Cap =
-`bots.monthly_push_quota` (default 200/bot/month, set below LINE's free-plan
-ceiling as a safety margin).
+`bots.monthly_push_quota` (default 200/bot/month). *(LINE case: set below LINE's
+free-plan ceiling as a safety margin.)*
 - At **80%** → warn the owner.
 - At the cap → **pause proactive messages for the rest of the month. Do not
   exceed. STOP** for that proactive message. Reply messages are unaffected.
@@ -220,8 +233,8 @@ token budget. The raw customer request is always retained.
 **S5.2 — Choose the tier by task, not by tenant** (`MODEL_POLICY.md`): routine
 chat (hours, prices, simple Q&A) → cheapest viable; accuracy tasks (bookkeeping,
 calculations) → mid-tier; onboarding → stronger (one-time per customer).
-**Speed matters on LINE** — a smarter-but-slow model is the wrong choice for chat
-replies.
+**Speed matters on chat channels** (LINE especially) — a smarter-but-slow model
+is the wrong choice for chat replies.
 
 **S5.3 — Call with failover** (`MODEL_POLICY.md` "Retry / failover policy"):
 1. Call the **Primary**. On a transient failure (429 / 403-by-availability /
@@ -278,15 +291,17 @@ enforcement of invariant **I2** — policy enforced by code, not by model opinio
 
 ## 7. Send reply + outage path
 
-**S7.1 — Send.** The adapter sends the checked answer.
-- LINE `reply` uses the reply token: **free and unlimited**. Reply tokens are
-  **short-lived** (`adapters/line-oa.md`) — the answer must be produced inside
-  that window.
-- **Fallback if the reply token has expired (ND-5 resolved 2026-09-27):** the
-  answer cannot be sent as a free reply. **Do not auto-convert it to a push**
-  (that would spend the tenant's quota). Log the miss, count it against a
-  reply-quality metric, and set a maximum wait budget per reply so this happens
-  as rarely as possible.
+**S7.1 — Send.** The adapter sends the checked answer through its own channel
+mechanism (`INTEGRATIONS.md`: delivery is the adapter's job).
+- **LINE case — reply token:** a LINE `reply` uses the reply token, which is
+  **short-lived** (`adapters/line-oa.md`); the answer must be produced inside that
+  window. Delivery is free and unlimited.
+- **LINE case — reply token expired (ND-5 resolved 2026-09-27):** the answer
+  cannot be sent as a free reply. **Do not auto-convert it to a proactive
+  message** (that would spend the tenant's quota). Log the miss, count it against
+  a reply-quality metric, and set a maximum wait budget per reply so this happens
+  as rarely as possible. *(A channel with no reply token — e.g. web chat — has no
+  such window; this rule does not apply to it.)*
 - **Fallback if the channel send fails:** retry per the adapter's rule; if it
   keeps failing, alert the owner (not the customer — the customer already has
   nothing to answer).
@@ -320,7 +335,8 @@ alert transport from the Settings page (T-071: Email or LINE).
 
 Logging must not block the customer's reply once it has been sent — but a
 logging failure must raise an alert, because a lost `usage_log` row means the
-quota counter drifts and could push a tenant into LINE's paid tier.
+quota counter drifts and the cap can be exceeded (on LINE, that risks pushing the
+tenant's own account into LINE's paid tier).
 
 **S8.1 — Conversation memory.** Append the user turn and the bot turn to
 `conversations` (scoped by `tenant_id`, `bot_id`, `end_customer_id`).
@@ -362,14 +378,17 @@ n8n for a specific (`tenant_id`, `bot_id`).
 `usage-tracker` **before** building or sending anything.
 - At 80% → warn the owner.
 - At the cap → **pause for the rest of the month. STOP.** Never exceed — this
-  protects the tenant's own LINE free tier (`PRICING_V1.md`).
+  protects the tenant's own quota (`PRICING_V1.md`; on LINE, it keeps the tenant
+  inside LINE's free tier).
 
 **S9.3 — Compose + check.** Compose the proactive message; it still passes §6
 (honesty/scope). It may not name a model, claim to be human, or leave the
 tenant's lane.
 
-**S9.4 — Send (push).** Send via the LINE push API (or web chat). This counts
-against LINE's plan quota and the platform cap.
+**S9.4 — Send (proactive).** The adapter sends the proactive message through its
+own channel mechanism. *(LINE case: the push API — this counts against LINE's
+plan quota **and** the platform cap above. A channel with no such platform
+quota, e.g. web chat, counts only against the platform cap.)*
 
 **S9.5 — Log.** Increment `push_count` + `model_tokens` + `estimated_cost_thb`
 in `usage_log`; append any created conversation turn to `conversations`.
@@ -384,7 +403,7 @@ free reply, only the proactive reminder is a push.
 
 | # | Condition | Action |
 |---|---|---|
-| 1 | LINE signature verification fails | Drop, do not parse, do not answer. **STOP.** |
+| 1 | Adapter authenticity check fails (LINE: signature) | Drop, do not parse, do not answer. **STOP.** |
 | 2 | Destination not mapped to a tenant/channel | Reject, never guess a tenant. **STOP.** |
 | 3 | `bots.status` ≠ active | Do not answer. **STOP.** |
 | 4 | Scope keys (`tenant_id` + `bot_id`) cannot be established | Fail-closed; no query, no answer. **STOP.** |
@@ -425,7 +444,7 @@ runtime behaviour of the system).
 
 | ID | Decision |
 |---|---|
-| **ND-1** | De-duplication uses a new `lite_processed_events` table (scoped by `tenant_id` + `bot_id`, keyed by the platform event id, short TTL), added to `LITE_SCHEMA_V1.md` when T-076 runs. If the store is unavailable → drop the message (fail-closed). |
+| **ND-1** | De-duplication uses a new `lite_processed_events` table (scoped by `tenant_id` + `bot_id`, keyed by the platform event id, short TTL), specified in `LITE_SCHEMA_V1.md`; the migration is tracked by card **T-077**. If the store is unavailable → drop the message (fail-closed). |
 | **ND-2** | Over the reply quota with no top-up → the bot sends **one fixed message** pointing the customer to the shop's direct fallback contact (from `bots.business_info`), then stops answering — no model calls until top-up or a new month. Sent once, not repeated. |
 | **ND-3** | The pre-send check is a **deterministic filter only** (keyword/pattern: model-name denylist, human-claim patterns, "unsure → handoff"). No second model call at this stage; an upgrade is reconsidered later with a price approval. |
 | **ND-4** | The PDPA first-contact notice is **attached to the first answer** — one message, one reply. |
@@ -454,3 +473,34 @@ is listed in §12 as NEEDS_DECISION rather than being invented here.
 | `conversations` + `usage_log` (separate reply/push counts) | `LITE_SCHEMA_V1.md` |
 | Tool contracts | `MCP_TOOLS_V1.md` |
 | Adapter/tool failure, risk, idempotency | `FOUNDATION_V1.md` §13, §14, §16; `INTEGRATIONS.md` |
+
+---
+
+## 14. Adding a new channel — what changes, what must not
+
+This is the working test of the adapter boundary (`INTEGRATIONS.md`): a new
+channel must cost **one new adapter**, not a change to the core flow.
+
+**Must NOT change when a new channel is added** (these are channel-neutral):
+
+| Section | Why it is channel-neutral |
+|---|---|
+| §2 Scope + context load | reads the database, not the channel |
+| §3 PDPA first-contact notice | driven by `end_customers`, not the channel |
+| §4 Quota / policy gate | reads `bots`, not the channel |
+| §5 Model call | model policy, not channel mechanics |
+| §6 Pre-send answer check | honesty/scope rules are channel-independent |
+| §8 Logging | writes `conversations` / `usage_log`, channel-neutral |
+
+**May change (adapter surface only):**
+
+| Section | What changes |
+|---|---|
+| §1 Ingress (S1.1–S1.5) | a new adapter: its own endpoint, its own authenticity check, identity mapping, event id, normalization |
+| §7 Send reply / §9 proactive send | the adapter's own send mechanism (S9 uses the same adapter) |
+| §0 vocabulary notes / §11 tool–table map | optionally, the new channel's economics as a *note*, and one adapter row |
+
+**Test — adding `web_chat` (planned in Step 3):** it should touch only **§1 and
+§7/§9** (the adapter surface) — **core sections §2–§8 stay unchanged**. If a
+change is needed anywhere else, platform detail has leaked into the core, and
+that leak is the bug (not the new channel).
