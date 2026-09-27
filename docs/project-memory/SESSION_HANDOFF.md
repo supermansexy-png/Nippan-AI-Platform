@@ -34,5 +34,5 @@ Read `docs/project-memory/SESSION_HANDOFF.md`, then hand T-068 to the **advisor*
 - **T-032** — force-push block บน `dev-workspace` (repo setting): แนะนำให้ Owner เปิดใน GitHub UI (process rule มีอยู่แล้ว; นี่คือ repo-level belt-and-braces)
 - **T-050** — roadmap draft (`ROADMAP_STUDY_DRAFT_2026-09-26.md`) รอ Owner พิจารณา (DRAFT — NOT APPROVED)
 - **restart opencode** — pin ใหม่ (project-lead ฯลฯ) จะมีผลหลังเปิดแชทใหม่ (resumed session ยังใช้โมเดลเก่า)
-- **n8n publish** — `n8n_publish_workflow` = false; workflow ที่แก้แล้วจะยังรัน query เก่าจนกว่าจะ publish
+- **n8n publish** — ✅ RESOLVED 2026-09-27: execution test proved the edited (new) query already runs on manual execution; publish is moot. Workflow `eohtRWY8YEvEuS7n` stays inactive.
 - **OpenRouter credit** — ~$0.64 คงเหลือ; งานเสียเงินต้องขอ Owner ก่อน
