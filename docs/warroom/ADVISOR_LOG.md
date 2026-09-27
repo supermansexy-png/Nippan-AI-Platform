@@ -398,6 +398,18 @@ that references the old one.
 - owner_intent_verbatim: "ครับสั่งงานไปเลย แล้วพอมีงานต่อไปเราก็ลองใช้ดูเลย เลือกงานที่ยากและต้องการความเร็ว ตัวนี้เราฟรีตลอด" + "เริ่ม"
 
 ### T-073 — 2026-09-27 — Fix T-073 status + create Issue + log advisor instruction
+
+### HOLD — 2026-09-27 — Owner orders STOP WORK (HOLD) while drafting rules/flow
+- owner_intent_verbatim: "ให้หยุดงานชั่วตราวกำลังร่างกฎและโฟว์การทำงานอยู่ ให้ผมทำเสร็จก่อน เดียวบอกให้ทำต่อ"
+- order (as understood by the receiver): immediate full stop — no new INTAKE, no Issue claim, no branch/PR creation, no merge, no builder/ops/reviewer dispatch, no code commits. Working tree must be clean on `dev-workspace` (commit docs only if needed). Write HOLD status to SESSION_HANDOFF.md with: card statuses at stop point (T-071 PR #92 / T-072 branch+intake / T-073 Issue #91 awaiting start / T-074–T-076 Issues #93–#95 awaiting Owner trigger ChatGPT), resume point (Owner says "เดินต่อ" → PL reads handoff → model-recruiter checks readiness → Owner approves → dispatch per INTAKE/DELIVERY), and explicit rule that NO ONE works until Owner orders. Append this record to ADVISOR_LOG.md. Commit both docs on `dev-workspace`. No push to protected branches, no force push, no production touch, no L4, no paid audit.
+- receiver: project-lead `opencode/nemotron-3-ultra-free`
+- scope_in: this HOLD record; SESSION_HANDOFF.md update; ADVISOR_LOG.md this entry; commit of both docs on `dev-workspace`
+- scope_out: no code change; no runtime/production/deploy/DB/credential; no new INTAKE/Issue/branch/PR/merge; no builder/ops/reviewer call; no paid call; no L4; no force push
+- prohibitions: must not start any new work; must not touch production `Ai-bot-Nippan`; must not force push; must not exceed board cap; must not claim work done without evidence
+- auditor: `opencode-go/space-bunny-free` (differs from advisor `opencode-go/mimo-v2.6-pro`) — will verify on resume
+- verdict: pending (HOLD — to be re-verified when Owner says resume)
+- evidence: SESSION_HANDOFF.md (this HOLD entry) · this ADVISOR_LOG.md entry · `git status` clean on `dev-workspace` · commit SHA of the two docs
+- notes: written by the receiver of the instruction, not the advisor (`ADVISOR_MANDATE.md` §4). This is a full STOP — all cards frozen at current status. Resume point defined above.
 - owner_intent_verbatim: "งานจาก Owner ผ่าน advisor — อ่านการ์ด T-073 ใน TASKS.md ก่อนเริ่ม
 Owner ไม่ได้สั่งโดยตรง แต่เราต้องแก้ข้อผิดพลาดก่อนหน้า: ในงานก่อนเราตั้งสถานะ T-073 เป็น IN_PROGRESS โดยพลั้งมือ แต่การ์ดนี้ยังไม่มีวิธีตรวจสอบที่ชัดเจน ควรอยู่ในสถานะ READY for INTAKE เพื่อให้ PL สร้าง Issue และเริ่มงานออกแบบวิธี
 ทำ 2 ขั้น:
