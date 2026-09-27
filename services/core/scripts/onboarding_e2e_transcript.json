@@ -1,0 +1,89 @@
+{
+  "steps": [
+    {
+      "step": "config_row",
+      "value": {
+        "tone": "polite",
+        "business_type": "cafe",
+        "business_name": "ร้านสมชาย คาเฟ่",
+        "opening_hours": {
+          "open": "08:00",
+          "close": "20:00"
+        },
+        "menu_categories": [
+          "เครื่องดื่ม",
+          "ขนมอบ",
+          "ข้าวราดแกง"
+        ],
+        "enabled_tools": [
+          "chat-bot-core",
+          "secretary-bot"
+        ],
+        "fallback_contact": "โทร 081-234-5678",
+        "monthly_message_quota": 300,
+        "monthly_push_quota": 200
+      }
+    },
+    {
+      "step": "missing_after_fill",
+      "value": []
+    },
+    {
+      "step": "ingest_summary",
+      "value": {
+        "fetched_pages": 2,
+        "offdomain_rejected": true,
+        "file_name": "price_list.csv",
+        "categories_from_file": [
+          "เครื่องดื่ม",
+          "ขนมอบ",
+          "ข้าวราดแกง"
+        ]
+      }
+    },
+    {
+      "step": "checks",
+      "value": {
+        "pages_within_budget": true,
+        "offdomain_link_rejected": true,
+        "file_read": true,
+        "menu_categories_from_file": true,
+        "tone_from_fixed_list": true,
+        "tools_from_fixed_menu": true,
+        "config_has_no_free_text_prompt": true,
+        "missing_fields_empty": true
+      }
+    }
+  ],
+  "checks": {
+    "pages_within_budget": true,
+    "offdomain_link_rejected": true,
+    "file_read": true,
+    "menu_categories_from_file": true,
+    "tone_from_fixed_list": true,
+    "tools_from_fixed_menu": true,
+    "config_has_no_free_text_prompt": true,
+    "missing_fields_empty": true
+  },
+  "config_row": {
+    "tone": "polite",
+    "business_type": "cafe",
+    "business_name": "ร้านสมชาย คาเฟ่",
+    "opening_hours": {
+      "open": "08:00",
+      "close": "20:00"
+    },
+    "menu_categories": [
+      "เครื่องดื่ม",
+      "ขนมอบ",
+      "ข้าวราดแกง"
+    ],
+    "enabled_tools": [
+      "chat-bot-core",
+      "secretary-bot"
+    ],
+    "fallback_contact": "โทร 081-234-5678",
+    "monthly_message_quota": 300,
+    "monthly_push_quota": 200
+  }
+}
