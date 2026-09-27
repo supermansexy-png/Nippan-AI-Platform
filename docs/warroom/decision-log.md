@@ -1289,3 +1289,15 @@ Consequence: T-079 is split into child build cards **T-079a…T-079f** — `web-
 
 Task: T-080 (closed, archived), T-079 (split). Board update; not pushed.
 
+## 2026-09-27 — Project Owner — Temporary headless builder model = `opencode-go/mimo-v2.6-flash`
+
+Context: the headless runner (`scripts/headless_run.mjs`) passes **no** reasoning/token options — it only sends `run --format json --agent <agent> --model <model> --auto <prompt>`. Three builder models failed inside it with the **same** signature — `reason:"length"`, `output:0`, `reasoning:4096`: `opencode-go/glm-5.3-flash`, `opencode-go/kimi-k3`, `opencode-go/deepseek-v4.1-flash`. A control test on `opencode-go/mimo-v2.6-flash` through the same runner and agent returned real output (`reason:"stop"`, text `CONTROL_OK`). Conclusion: the failure is model behaviour against opencode's default reasoning budget, **not** the brief length and **not** the runner script.
+
+Decision (Owner, 2026-09-27): until `opencode.json` carries a proper reasoning/token bound, **every headless builder job uses `opencode-go/mimo-v2.6-flash` as the temporary default** — replacing `glm-5.3-flash` / `deepseek-v4.1-flash` / `kimi-k3` for headless work only. The roster's builder seat pin is unchanged for other (non-headless) paths.
+
+Also ordered (to be written once `TASKS.md` is free of the other session's edits): (1) a formal diagnose card recording the control test, root cause and short/long-term fixes; (2) a separate **L2** card to fix `opencode.json` permanently (non-urgent, when the queue frees); (3) close T-051, T-070 and the T-079 parent.
+
+Evidence: `runs/2026-09-27T15-56-41Z-diag-control-mimo` (reason `stop`) vs `runs/2026-09-27T15-47-22Z-t079a-web-chat-adapter` (reason `length`, output 0, reasoning 4096).
+
+Task: T-079a (retry on the temporary model). Not pushed.
+
