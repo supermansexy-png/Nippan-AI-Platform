@@ -160,6 +160,27 @@
     "n8n_update_folder": false,
     "n8n_move_workflows_to_folder": false
   },
+  "provider": {
+    "opencode-go": {
+      "models": {
+        "glm-5.3-flash": {
+          "options": {
+            "reasoningEffort": "low"
+          }
+        },
+        "kimi-k3": {
+          "options": {
+            "reasoningEffort": "low"
+          }
+        },
+        "deepseek-v4.1-flash": {
+          "options": {
+            "reasoningEffort": "low"
+          }
+        }
+      }
+    }
+  },
   "mcp": {
     "openrouter": {
       "type": "remote",
