@@ -163,6 +163,8 @@ One line each, VERIFIED (from the provider's own page) unless marked otherwise:
 - Dead / not applicable: GitHub Models retired 2026-07-30; Hyperbolic and Nebius are GPU clouds only; SambaNova requires a card and is expensive (DeepSeek $3/$4.50); Chutes has no free tier; Vercel AI Gateway is a router, not a provider.
 none of these is adopted; every one still needs a live probe plus a retention check before it may touch repo code or confidential data.
 
+> **Free-tier policy (Owner directive 2026-09-27):** free models are **backup-only and task-scoped**, never a standing primary. The scope — *all* free models vs *external shared-pool* free only (OpenRouter `:free`, Groq, Google) — is **pending the Owner's clarification**; see `docs/project-memory/DECISIONS.md` 2026-09-27. The T-065 table below still has **7 of 9 primaries on free models**, so **do not change the table until that is resolved**.
+
 ## Per-role staffing — T-065 re-staff (2026-09-27) — **AUTHORITATIVE: 3 tiers per role**
 
 Owner-approved 2026-09-27 (card T-065). Every seat now has **Primary + Backup 1 + Backup 2** (Owner order: models here die often).

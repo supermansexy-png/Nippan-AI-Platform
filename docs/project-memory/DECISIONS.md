@@ -75,3 +75,18 @@ Caveats:
 - Slug form: `google/<model-id>` (no provider entry needed in opencode.json).
 
 Status: Recorded in MODEL_ROSTER.md and CURRENT_STATE.md. Seat pinning still requires HR check + Owner approval.
+
+## 2026-09-27 — Free-tier models: backup only, task-scoped (Owner directive)
+
+Decision (Owner, 2026-09-27, verbatim): "ของฟรี เค้านิ่งยังไม่โอเค ใช้ได้แปบๆเดียวก็หลุด ให้อยุ่สำรอง ใช้เฉพาะงาน"
+
+Intent: free models are not reliable enough to be a standing primary; they belong in the **backup** tier and should be used only for specific, scoped tasks.
+
+Supporting evidence: `qwen/qwen3.8-27b:free` returned upstream `429` twice within minutes on 2026-09-27; the Groq free tier is capped at 8,000 TPM (parked); earlier free endpoints (`jev-1.13-free`, `deepseek-v4-flash-free`, `mimo-v2.5-free`) failed the T-020 test.
+
+**OPEN CONFLICT — nothing is changed until the Owner clarifies the scope:**
+- The authoritative T-065 per-role table has FREE models as **Primary** for **7 of 9 seats** (project-lead, reviewer, ops, researcher, model-recruiter, assistant, advisor). Applying this directive to *all* free models means re-staffing those seats onto paid models — which raises cost, the opposite of our current direction.
+- Free models in use fall into two classes: **(a) OpenCode-hosted free** — Zen `*-free`, plus Go `longcat-2.5-preview-free` and `space-bunny-free`; hosted on OpenCode's own infrastructure, inside the paid $10/mo Go subscription / Zen account, and 7 free models passed the T-065 hard suite. **(b) External shared-pool free** — OpenRouter `:free`, Groq free, Google free; these are the ones that actually dropped today.
+- If the directive applies only to (b), **today's table already complies**: no external `:free` model holds a Primary slot — they sit in Backup tiers only.
+
+Status: recorded. **No pin was changed.** Awaiting the Owner's one-line clarification (all free, or external shared-pool free only).
