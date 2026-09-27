@@ -96,7 +96,54 @@ Added after the first 35-id recording (8): `kimi-k2.5`, `glm-5`, `qwen3.5-plus`,
 | งานที่แตะข้อมูลอ่อนไหว | `opencode-go/mimo-v2.6-pro` หรือ `opencode-go/space-bunny-free` | retention 0 วัน |
 | ตัดออกจากรายการ | `grok-4.7`, `deepseek-v4-pro` | Grok แพงเกินไป + log 30 วัน; deepseek-v4-pro intelligence 30.4 ต่ำสุดในกลุ่ม |
 
-## Per-role staffing (T-014 re-staffed — ตารางข้างล่างคือสถานะจริง 2026-09-26)
+## แหล่งสรรหาเพิ่ม: Google และ Groq (T-064, 2026-09-27)
+
+VERIFIED 2026-09-27 (card T-064) — ทดสอบจริงผ่าน opencode:
+
+- **`google` — provider ใช้ได้จริง.** live probe: `google/gemini-3.5-flash-lite` → `PROBE OK`.
+  opencode **ไม่ต้องมี `provider` entry** (provider ที่ authed แล้วถูกเปิดให้อัตโนมัติ) · catalogue (`models.dev`)
+  มี 39 โมเดล
+  - **ติดเพดานราคา:** โมเดลเดียวที่อยู่ในเพดาน `MODEL_POLICY.md` ($0.25/$1.00) คือ
+    `google/gemini-2.5-flash-lite` ($0.10/$0.40) — แต่ **Google แจ้งตรง ๆ ว่าโมเดลนี้ตกรุ่นสำหรับบัญชีใหม่**
+    (`no longer available to new users`) จึงใช้ไม่ได้. ตัวที่บัญชีนี้ใช้ได้จริงถูกสุดคือ
+    `google/gemini-3.1-flash-lite` $0.25/**$1.50** (output เกินเพดาน 1.5 เท่า); ที่เหลือ
+    `google/gemini-3.5-flash-lite` / `google/gemini-2.5-flash` = $0.30/$2.50, ตัวใหญ่ $0.75/$3.75
+  - `google/gemma-4-31b-it` และ `google/gemma-4-26b-a4b-it` มี `tool_call` แต่ catalogue
+    **ไม่มีข้อมูลราคา (UNKNOWN — อาจฟรี)**
+  - → **ยังไม่แต่งตั้งตำแหน่งใด** จน Owner ตัดสินเรื่องเพดานราคา
+- **`groq` — PARKED (Owner สั่ง "ปิด", 2026-09-27).** คีย์ถูกต้อง — Groq ตอบกลับโดยระบุ org จริง
+  (`org_01m3esvje0e1eveqtdfb3r2fev`) — แต่บัญชีอยู่ขั้นฟรี `on_demand` จำกัด **8,000 tokens/นาที**
+  ขณะที่คำขอเดียวของ opencode ≈ **36,900 tokens** (เกิน ~4.6 เท่า) ทุกคำขอจึงล้มด้วย
+  `Request too large … Upgrade to Dev Tier`. บัญชีนี้มีเฉพาะ GPT OSS 120B/20B · Qwen 3.8 27B ·
+  Safety GPT OSS 20B (**ไม่มี Llama เลย**). จะใช้ได้เมื่อ Owner อัปเกรด Dev Tier เท่านั้น — ยังไม่ทำ
+
+## Per-role staffing — T-065 re-staff (2026-09-27) — **AUTHORITATIVE: 3 tiers per role**
+
+Owner-approved 2026-09-27 (card T-065). Every seat now has **Primary + Backup 1 + Backup 2** (Owner order: models here die often).
+Every row below was **fired live** on 2026-09-27 — none of it is catalogue-only. Cost is the measured per-call cost from the round-1 probe (`runs/*t065-*`).
+
+| # | Role | Primary | Backup 1 | Backup 2 | Measured cost per call | Why |
+|---|---|---|---|---|---|---|
+| 1 | **project-lead** | `opencode-go/longcat-2.5-preview-free` | `opencode/nemotron-3-ultra-free` | `openrouter/deepseek/deepseek-v4.1-flash` | $0 / $0 / $0.00057–0.00162 | Owner order 2026-09-27: free **and** faster than the Go `mimo-v2.6-pro` (12,977 ms). Free, 1M-token context = satisfies "long context". Backup 1 is the proven ex-primary because `longcat` is still a *preview* with one sample. |
+| 2 | **builder** | `opencode-go/glm-5.3-flash` | `openrouter/poolside/laguna-s-2.1:free` | `opencode-go/kimi-k3` | $0.00694 / $0 / $0.1333 | Builder must follow spec exactly. `kimi-k3` is the best coder (76.2) but ~19× the cost and quota-limited → kept as the escalation tier, not the front line. |
+| 3 | **reviewer L1–L3** | `opencode/muse-spark-1.3-contributor-free` | `openrouter/nvidia/nemotron-3.5-lightning:free` | `opencode-go/space-bunny-free` | $0 / $0 / $0 | Reviewer must run real tests, not trust the author. RISK: `muse-spark-*` trains on prompts → no secrets. Backup 2 is the only stated zero-retention free seat. |
+| 4 | **security L1–L3** | `openrouter/deepseek/deepseek-v4.1-flash` | `opencode-go/qwen3.8-flash` | `openrouter/qwen/qwen3.8-flash` | $0.00057–0.00162 / $0.00705 / $0.00705 | Owner order: the OpenRouter deepseek goes to roles that are **important but context-light** — security reviews a diff, not a whole corpus. |
+| 5 | **ops** | `opencode/mimo-v2.6-flash-free` | `opencode-go/mimo-v2.6-flash` | `openrouter/nvidia/nemotron-3.5-lightning:free` | $0 / $0.00664 / $0 | Ops needs fast + cheap + repeatable, not deep. Re-measured 2026-09-27: the Primary is normally 0.7–0.9 s (one 34 s outlier on a cold start — see caveat below). |
+| 6 | **researcher** | `opencode-go/longcat-2.5-preview-free` | `openrouter/nvidia/nemotron-3.5-lightning:free` | `openrouter/deepseek/deepseek-v4.1-flash` | $0 / $0 / $0.00057–0.00162 | Researcher must verify and admit ignorance, not dress up an answer. |
+| 7 | **model-recruiter (HR)** | `opencode/nemotron-3-ultra-free` | `opencode-go/space-bunny-free` | `openrouter/nvidia/nemotron-3.5-lightning:free` | $0 / $0 / $0 | HR must check facts, never assume "it probably still exists". All three tiers are free. |
+| 8 | **assistant** | `opencode/nemotron-3-ultra-free` | `opencode-go/mimo-v2.6-flash` | `openrouter/openrouter/free` | $0 / $0.00664 / $0 | Helper seat. Backup 2 is the Free Models Router — **nested slug required**; it picks a different model per call, which is fine for throwaway helper work only. |
+| 9 | **advisor** | `opencode/mimo-v2.6-flash-free` | `openrouter/deepseek/deepseek-v4.1-flash` | `opencode-go/mimo-v2.6-pro` | $0 / $0.00057–0.00162 / $0.02093 | Advisor is called rarely but must think deeply about direction; the expensive deep seat sits at tier 3 where it is only reached if both free/cheap tiers fail. |
+
+**Anti-redundancy (T-023) — PASS:** reviewer and security share no model with builder's Primary or Backup.
+`builder = {glm-5.3-flash, laguna-s-2.1:free, kimi-k3}` · `reviewer = {muse-spark-1.3-contributor-free, nemotron-3.5-lightning:free, space-bunny-free}` · `security = {deepseek-v4.1-flash(OR), qwen3.8-flash, qwen3.8-flash(OR)}` → all pairwise intersections with builder = ∅.
+
+**Latency caveat (disclosed):** durations below come from live runs but with **one sample each**, and the short-prompt runs are naturally faster than the 3-line runs — so treat the numbers as indicative, not a benchmark. Free-seat medians measured 2026-09-27: `nemotron-3-ultra-free` 0.68 s · `mimo-v2.6-flash-free` 0.72–0.85 s · `longcat-2.5-preview-free` 1.2–2.1 s · `space-bunny-free` 4.1 s · `nemotron-3.5-lightning:free` (OR) 4.1 s · `inkling-small:free` 4.8 s · `muse-spark-1.3-contributor-free` 7.9 s.
+
+**Do NOT use:** `opencode/nemotron-3.5-lightning-free` (dead endpoint — was pinned to ops/researcher and used as `small_model`) · `opencode-go/ox-alpha-free` (listed free but fails live, 2/2) · `opencode/big-pickle` · `opencode/ling-3.0-flash-fin-free` · `opencode/muse-spark-1.2-contributor-free` · `opencode/deepseek-v4-flash-free` · `openrouter/nex-agi/*` · `qwen/qwen3.7-flash` (BANNED) · all `groq/*` (parked: free tier 8k TPM < 36.9k/request).
+
+**Slug traps (learned the hard way):** `openrouter/free` fails with an opaque server error at all four attempts; the router must be referenced as **`openrouter/openrouter/free`** (the id already contains its provider) — and that form passed 2/2. Always re-check the slug form before declaring a model broken.
+
+## Per-role staffing (T-014 re-staffed — ตารางข้างล่างคือสถานะจริง 2026-09-26) — **SUPERSEDED by the T-065 table above**
 
 Each role has Primary + Backup from a different provider.
 

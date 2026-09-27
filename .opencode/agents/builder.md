@@ -1,7 +1,7 @@
 ﻿---
 description: Developer (dev-time) ลงมือเขียนและแก้ code, tests และ implementation ตามการ์ดงานที่ Project Lead มอบหมาย ตาม AI_OPERATING_PROTOCOL
 mode: subagent
-model: openrouter/poolside/laguna-s-2.1:free
+model: opencode-go/glm-5.3-flash
 permission:
   task: deny
 ---
