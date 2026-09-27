@@ -327,6 +327,11 @@ Done when:
 Budget: $0 — free-tier probes and free models only; no paid call for this card.
 Links: `docs/product/MODEL_ROSTER.md` § "Google free tier — adopted 2026-09-27" · `docs/project-memory/DECISIONS.md` (2026-09-27 entry) · Google Gemini API Additional Terms § "Unpaid Services"
 Note: this card changes **no** runtime file; model pins require separate Owner approval before any agent config is touched.
+Push deferred by Owner 2026-09-27 ("รอทีเดียว"): the recording commit `9c9b2bf` (4 files) stays **local** until the HR seat proposal + Owner pin approval are ready — push the whole batch together. This line remains uncommitted on purpose and will ride with that batch.
+
+**HR PROPOSAL (2026-09-27, `model-recruiter`)** — seats HR judged eligible for the two Google free models: **researcher** (`google/gemini-flash-lite-latest`) · **model-recruiter/HR** (`google/gemini-3.8-flash`) · **assistant** (`google/gemini-flash-lite-latest`) · **advisor** (`google/gemini-3.8-flash`). HR judged **NOT** eligible: project-lead, builder, reviewer, security, ops. Preconditions HR listed: verify tool/function calling on both models through opencode (UNVERIFIED); read the real free-tier rate limits from the AI Studio page (UNKNOWN); confirm retention/training terms.
+
+**PL RESERVATION (2026-09-27)** — the assistant and the advisor also read and write our **internal documents** (`MODEL_ROSTER.md`, `TASKS.md`, `ADVISOR_LOG.md`), which are internal business material, so the PL does not treat them as clean seats either. PL position: eligibility is a **task-level rule, not a seat-level one** — the two Google models may be used only for tasks whose entire prompt is public information (e.g. a public catalogue or pricing lookup), and should **not** be pinned as a seat fallback, unless the Owner decides otherwise. **Owner has not decided.**
 
 ## REVIEW
 

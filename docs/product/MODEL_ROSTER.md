@@ -143,6 +143,26 @@ VERIFIED 2026-09-27 (card T-064) — ทดสอบจริงผ่าน ope
 
 **Seat PINNING:** Still requires HR (`model-recruiter`) check + Owner approval — NOT done yet.
 
+### Jev 1.13 Free — correction + role (2026-09-27)
+
+- `opencode/jev-1.13-free` is NOT a chat model. It is a "System One" structured-decision model from TypeSafe AI: you send a `state` plus typed questions and it returns values + probabilities. Question types: `noul` (yes/no), `choice` (multiple choice with criteria), `score` (rubric).
+- Endpoint: `https://opencode.ai/zen/v1/systemone` (not chat/completions). Zen only — it is not in the OpenCode Go list.
+- Live probes today returned HTTP 200, cost $0. Examples: routing question answered `hr` (p 0.61); "does this change touch tenant isolation" 0.97; "does this delivery need Owner approval" 0.89; risk tier escalated an auth-touching change from L2 to L3 (confidence 0.99). It was also WRONG once: asked who should apply a runtime-config change, it answered "assistant" (0.70) when policy requires builder + different-model review.
+- CORRECTION: the earlier roster note that `jev-1.13-free` "failed the T-020 test" judged it as a chat model — the wrong tool for that test, not a defective model.
+- It cannot be used as a seat (it produces no text). Candidate use: a cheap pre-screen/gate signal only; never the deciding authority where a written rule applies. Free is limited-time; the paid twin `opencode/jev-1.13` is $0.042 input / free output.
+- Evidence: `runs/jev_probe.cjs` (gitignored scratch harness).
+
+### Provider scan 2026-09-27 — candidates only, NOT adopted
+
+One line each, VERIFIED (from the provider's own page) unless marked otherwise:
+- NVIDIA NIM (build.nvidia.com): free inference listed for kimi-k3, deepseek-v4-pro-0813, nemotron-3.5-lightning; function calling; NVIDIA API Trial Terms — do not submit confidential data; free-tier rate limits UNVERIFIED.
+- DeepInfra: DeepSeek-V4-Flash-0731 at $0.06/$0.18; no free tier (top-up required); retention UNVERIFIED.
+- Z.ai (GLM): GLM-4.7-Flash free with function calling; GLM-5.3-Flash $0.15/$0.50; a Coding Plan at $18/month exists; consumer privacy policy permits training; free-tier rate limits UNVERIFIED.
+- Cerebras: $5 trial credit, 30 days, card required; very high throughput (~3,000 tok/s) on gpt-oss-120b / qwen-3.8-27b; no permanent free tier.
+- Mistral: free plan gives $10/month API credit; card required; retention page not reachable (UNVERIFIED).
+- Dead / not applicable: GitHub Models retired 2026-07-30; Hyperbolic and Nebius are GPU clouds only; SambaNova requires a card and is expensive (DeepSeek $3/$4.50); Chutes has no free tier; Vercel AI Gateway is a router, not a provider.
+none of these is adopted; every one still needs a live probe plus a retention check before it may touch repo code or confidential data.
+
 ## Per-role staffing — T-065 re-staff (2026-09-27) — **AUTHORITATIVE: 3 tiers per role**
 
 Owner-approved 2026-09-27 (card T-065). Every seat now has **Primary + Backup 1 + Backup 2** (Owner order: models here die often).
