@@ -1,7 +1,9 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-27 (session 9 — T-065 re-staff + T-051 seed + T-066 fix)
+Last updated: 2026-09-27 (session 10 — Owner 8-step instruction: T-071 rework, T-072 MCP, 3 new structure cards, Owner queue, tool survey, ChatGPT Issues)
 Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
+
+**สถานะโครงการ: ยังไม่มีผู้เช่า ไม่มีผู้ใช้ ระบบยังไม่เปิด (pre-G1) — ฐานข้อมูล Supabase เป็นของทดสอบ ไม่มีข้อมูลลูกค้าจริง งานทดสอบ/backup/restore ทำบนฐานจริงได้โดยตรง ไม่ต้องกันข้อมูลผู้เช่า (ที่ยังไม่มี) แต่ยังห้ามแตะระบบ production เก่า Ai-bot-Nippan**
 
 > **One home per fact (card T-058):** model pins live **only** in
 > `docs/product/MODEL_ROSTER.md` · what to do next lives **only** in
@@ -11,13 +13,34 @@ Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
 > history (completed work is in `docs/archive/TASKS_DONE_ARCHIVE.md` and
 > `docs/warroom/decision-log.md`).
 
-## Session 9 state (2026-09-27) — T-065 re-staff + T-051 seed + T-066 fix
+## Session 10 state (2026-09-27) — Owner instruction via advisor (8 steps executed)
 
-- **Model roster (T-065):** all 9 dev roles re-staffed per the T-065 table (`MODEL_ROSTER.md` § "Per-role staffing"); runtime pins written to `.opencode/agents/*.md` + `opencode.json` (uncommitted). Post-restart live verification: **8/9 seats VERIFIED** (reviewer/ops/security/builder/researcher/advisor/assistant/model-recruiter); **project-lead NOT confirmed** — a resumed session keeps its own model; a brand-new session is required. Hard role-specific suite (7 free models, hidden bug + negative control): **all 7 found the bug, none hallucinated** — runs `runs/*t065-hard*`.
-- **T-051 finding 2:** participants-only seed implemented in `services/core/**` (working tree, uncommitted by design); reviewer check in flight.
-- **T-066:** two stale security pins in agent prompts fixed to the T-065 roster.
-- **Open board:** T-032 (git dispatch, 2 answers recorded), T-033 (War Room pilot), T-034b (committed — **deploy blocked on Owner**), T-035/T-038 (closing), T-050 (roadmap draft awaiting Owner), T-051, T-065, T-066. **T-067 CLOSED 2026-09-27** (Google free adoption — 2 models; limits UNKNOWN).
-- **Google free tier:** key linked + verified in opencode (provider `google`, type=api, FREE tier); 2 models adopted — `google/gemini-flash-lite-latest` and `google/gemini-3.8-flash` — for **non-sensitive use only**.
+**Owner verbatim:** "แจ้งเตือนให้ทำเป็นหน้าให้กรอกได้ ให้เลือกกรอกทางเมล์ หรือทางไลน์ ผมจะกรอกเองเมือเปิดใช้งาน ตอนนี้ให้เขียนรอไว้ เรามี mcp ของ supabase ใช้ทางนั้นได้เลย และไม่เห็นจ่ายงานให้ chatgpt ให้เพิ่มงานที่ต้องเขียนโค๊ด งานที่ต้องวางเวิกโฟรใน n8n งานที่ต้องวางระบบฐานข้อมูล ให้ตรงกับดีไซต์ของโปรเจ๊ดที่ออกแบบมา อันไหนต้องเอาข้อมูลผม ยังไม่ต้องเอา ให้ไปจัดการวางโครงสร้างทั้งหมดให้เป็นรูปร่างก่อน ไม่งั้นมาติดอยู่ตรงนี้ ไม่มีเครื่องมืออะไรให้แจ้งที่เดียว ไม่ใช่ทำไปแจ้งไป ให้ลองสำรวจเครื่องมือทั้งหมดของเรา เรามีครบ และให้ ที่ปรึกาษาคุมงานโดยละเอียดทุกขั้นตอน ตรวจทานรอบสุดท้้ายกับ pl เมือผ่านแล้วให้อนุมัติได้เลย งานจะได้เดินต่อเนื่อง"
+
+### 8 Steps executed:
+1. **T-071 REWORK** — Settings page with Email|LINE selector, pluggable transports (EmailTransport, LineTransport stubs), config JSONB nullable fail-closed, SMTP credential blocker CANCELLED, PR #92 adjusted on branch `t-071-alert-channel`
+2. **T-072 UPDATED** — Backup/restore proof via Supabase MCP (not pg_dump/CLI) to separate schema `t072_restore`
+3. **3 New cards created**: T-074 (Code stream), T-075 (n8n workflow stubs), T-076 (DB schema/migrations) — each references design source files, Goal = "วางโครงสร้างให้เป็นรูปร่างก่อน", no Owner data/credentials needed
+4. **OWNER_ACTION_QUEUE.md** created at `docs/warroom/OWNER_ACTION_QUEUE.md` — single queue for all Owner-wait items (5 OPEN, 8 DONE)
+5. **Tool survey completed** — All tools enabled: Supabase MCP, n8n MCP, Render MCP, OpenRouter MCP, GitHub CLI, OpenCode Go pool (43 models). nippan-gateway = disabled (intentional)
+6. **GitHub Issues for ChatGPT**: #93 (T-074), #94 (T-075), #95 (T-076) — all `ai:ready` label, queued for external assistant per two-lane Git channel
+7. **Reviewer assignments** per T-065 roster: T-071/T-072/T-074/T-075 reviewer = `opencode/muse-spark-1.3-contributor-free` (Primary); T-076 security = `openrouter/deepseek/deepseek-v4.1-flash` (Primary). Advisor final review with PL then advisor approves merge
+8. **ADVISOR_LOG.md** entry appended with full Owner verbatim, receiver=project-lead, auditor=space-bunny-free, verdict=pending
+
+### Board state:
+- **T-071** — IN_PROGRESS (rework started on PR #92, branch `t-071-alert-channel`)
+- **T-072** — IN_PROGRESS (awaiting Supabase project ref, Supabase MCP ready)
+- **T-073** — READY for INTAKE (awaiting Owner approval to start design)
+- **T-074** — READY for INTAKE (Issue #93 ai:ready)
+- **T-075** — READY for INTAKE (Issue #94 ai:ready)
+- **T-076** — READY for INTAKE (Issue #95 ai:ready)
+- **T-032** — pilot A DONE, pilot B pending (external assistant)
+- **T-033** — War Room pilot ready for next round
+- **T-050** — roadmap draft awaiting Owner review (DRAFT — NOT APPROVED)
+
+### Model roster (T-065): all 9 dev roles re-staffed per the T-065 table (`MODEL_ROSTER.md` § "Per-role staffing"); runtime pins written to `.opencode/agents/*.md` + `opencode.json` (uncommitted). Post-restart live verification: **8/9 seats VERIFIED** (reviewer/ops/security/builder/researcher/advisor/assistant/model-recruiter); **project-lead NOT confirmed** — a resumed session keeps its own model; a brand-new session is required.
+
+### Google free tier: key linked + verified in opencode (provider `google`, type=api, FREE tier); 2 models adopted — `google/gemini-flash-lite-latest` and `google/gemini-3.8-flash` — for **non-sensitive use only**.
 
 ## Provider & model pins — single source, not copied here
 

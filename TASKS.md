@@ -382,6 +382,256 @@ Estimate: 30 minutes.
 Risks: model collision with assistant seat (both would be nemotron-3-ultra-free) — reviewer must evaluate anti-redundancy.
 Decision: ACCEPT.
 
+---
+ 
+### T-071 — P0.1 หน้าตั้งค่าช่องทางแจ้งเตือนเจ้าของ (Settings page: Owner เลือก Email|LINE, กรอกค่าเองตอนเปิดใช้งานจริง)
+
+Status: IN_PROGRESS — Owner redefined 2026-09-27; **SMTP credential blocker CANCELLED** (Owner: "เขียนโครงไว้รอ ไม่ต้องเอา credential จริง")
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + builder (implementation) + reviewer L1–L3 on a different model + ops (CI/hosting evidence)
+Risk: L2 (new settings UI + pluggable transport; no production/customer data; no schema change)
+Goal: **หน้า Settings ในระบบ (settings page)** ให้ Owner เลือกช่องทางแจ้งเตือนได้ **Email หรือ LINE** แล้ว Owner จะกรอกค่าเองเมื่อเปิดใช้งานจริง — **ตอนนี้เขียนโครงสร้างไว้รอ (stub)** ไม่ต้องใช้ credential จริง
+- UI: หน้า Settings แท็บ "แจ้งเตือน" — dropdown เลือกช่องทาง (email | line) + ฟิลด์กรอกค่า config ต่อช่องทาง (ยังว่างได้)
+- Transport: แยกต่อช่องทาง (pluggable) — `EmailTransport` (SMTP), `LineTransport` (LINE Notify / Messaging API) — ใช้ interface เดียว `AlertTransport`
+- Fail-closed: ยังไม่ตั้งค่า ⇒ transport disabled (log-only), ไม่บล็อก flow หลัก
+- PR #92 เดิมปรับตามนิยามใหม่ (branch เดิม `t-071-alert-channel`) — ห้ามเปิด PR ซ้อน
+Done when:
+- [ ] Settings page UI: tab "แจ้งเตือน" + dropdown email|line + config fields per channel (read/write config to `settings.alert_channels` JSONB)
+- [ ] Pluggable transport layer: `AlertTransport` protocol + `EmailTransport` + `LineTransport` (stub implementations, no real send yet)
+- [ ] Config persistence: `settings.py` adds `alert_channels` (JSONB, nullable) + validation; unset ⇒ disabled (fail-closed)
+- [ ] Wiring: War Room `AlertingEventSink` uses selected transport(s) from config; critical events only (TURN_FAILED, BUDGET_HARD_STOP, SCHEDULER_HALTED w/ breach)
+- [ ] CI green + unit tests (fake transports, no network)
+- [ ] Reviewer (different model) checks diff + evidence; verdict recorded
+- [ ] No schema/RLS/grant change; no production system touched; no secret in git
+Budget: 4 hours builder + 1 hour reviewer (free models preferred; cap per card: builder ≤ $2 via OpenCode Go flat pool; reviewer free)
+Links: roadmap §7 (P0.1), §8 (P0.2); T-030 evidence (RLS), T-034b (War Room transport), PR #92 (existing branch)
+
+INTAKE T-071 — 2026-09-27 (Project Lead) — ACCEPT
+Owner decisions recorded (verbatim): "แจ้งเตือนให้ทำเป็นหน้าให้กรอกได้ ให้เลือกกรอกทางเมล์ หรือทางไลน์ ผมจะกรอกเองเมือเปิดใช้งาน ตอนนี้ให้เขียนรอไว้" + "ไม่เห็นจ่ายงานให้ chatgpt" + "ยกเลิก blocker เรื่อง SMTP credential"
+Understanding: Owner redefines T-071 as a **settings page** where Owner chooses Email or LINE, fills in values when going live. **Now: write the structure (stub) — no real credentials needed**. Cancel SMTP credential blocker. Adjust PR #92 on existing branch.
+Scope: Settings UI + pluggable transport stubs + config persistence (JSONB, nullable) + fail-closed wiring + unit tests. PR #92 on branch `t-071-alert-channel` updated.
+Needs: None — Owner will provide credentials later when enabling.
+Missing: None (SMTP credential blocker removed).
+Plan: (1) builder adjusts PR #92: replace SMTP-only code with Settings UI + pluggable transport stubs; (2) CI + unit tests; (3) different-model review; (4) DELIVERY.
+Estimate: within budget.
+Risks: alert fatigue (mitigate: severity levels + only critical fires); config validation (fail-closed on invalid).
+Decision: IN_PROGRESS — ready to execute on existing branch.
+
+INTAKE T-071 (builder) — 2026-09-27 — opencode-go/glm-5.3-flash — Issue #90 claimed, branch `t-071-alert-channel` from `dev-workspace`
+Understanding: Settings page with Email|LINE selector, pluggable transports (EmailTransport, LineTransport stubs), config in `settings.alert_channels` JSONB, fail-closed when unset. Adjust existing PR #92.
+Code survey: `services/core/app/settings.py` (add alert_channels JSONB), `services/core/app/war_room/alert.py` (protocol + stubs), `services/control-plane-web/` (settings page UI), `services/core/app/war_room/transport.py` (wire AlertingEventSink to use selected transports).
+Plan: (1) settings.py: add alert_channels JSONB + validation; (2) alert.py: AlertTransport protocol + EmailTransport/LineTransport stubs; (3) transport.py: wire AlertingEventSink to read config + dispatch; (4) control-plane-web: Settings page tab "แจ้งเตือน" with dropdown + fields; (5) unit tests (fake transports); (6) PR #92 update → CI → reviewer opencode/muse-spark-1.3-contributor-free.
+Estimate: within budget (≤$2 Go pool).
+Risks: config validation; transport stubs must not raise.
+
+DELIVERY T-071 — 2026-09-27 — builder opencode-go/glm-5.3-flash — **IN_PROGRESS (rework started, PR #92 being adjusted)**
+Status: Implementation rework in progress on branch `t-071-alert-channel`.
+Evidence to collect:
+- Settings UI page (control-plane-web) with email|line selector + config fields
+- Pluggable transport protocol + stubs in alert.py
+- Config persistence in settings.py (JSONB, nullable, fail-closed)
+- Unit tests: fake transports, critical event filtering, disabled-when-unset
+- CI green on PR #92
+- Reviewer verdict (opencode/muse-spark-1.3-contributor-free)
+Still to do: (1) Complete rework on PR #92; (2) CI green; (3) Reviewer verdict; (4) Merge + card close.
+ 
+---
+ 
+### T-072 — P0.2 พิสูจน์ backup/restore กับ Supabase จริง (dump→restore ผ่าน 1 รอบบนฐานจริง)
+
+Status: IN_PROGRESS — Owner approved 2026-09-27; restore target = **separate database (schema/project)**
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/verify) + ops (execution + evidence) + reviewer L1–L3 on a different model
+Risk: L2 (DB operation on real Supabase project; no customer data exists; pre-G1)
+Goal: prove a full backup→restore round-trip works on the real Supabase project `xzxwakvsbdzkdybijbzs` (the Phase A lite schema `lite_*` tables). Dump the schema + data, restore to a separate database (or same project with a different schema), verify row counts + FK integrity + RLS policies survive. No tenant data to protect (pre-G1 — standing fact in SESSION_HANDOFF.md + CURRENT_STATE.md).
+Done when:
+- [ ] Dump command + output captured (pg_dump or Supabase CLI) — schema + data
+- [ ] Restore to a clean target (separate Supabase project or new schema in same project) — command + output captured
+- [ ] Verification: row counts match per table, FK constraints intact, RLS policies present and FORCE RLS on restored tables, `nippan_runtime` role + policies re-applied
+- [ ] Reviewer (different model) checks evidence + commands; verdict recorded
+- [ ] No production system touched; no secret in git; commands documented for repeatability
+Budget: 2 hours ops + 1 hour reviewer (free models; cap per card: ops ≤ $1 via OpenCode Go flat pool; reviewer free)
+Links: roadmap §7 (P0.1), §8 (P0.2); CURRENT_STATE.md § "Phase A Database — Lite Schema V1"; Supabase backup/restore docs; T-030 RLS evidence
+
+INTAKE T-072 — 2026-09-27 (Project Lead) — ACCEPT
+Owner decisions recorded (verbatim): "1 อนุมัติ" + "อีเมล์ก่อน พอเปิดจริงจะเพิ่มแจ้งทางไลน์ด้วย" + "ฐานแยก"
+Understanding: Owner approved the plan. Restore target = **separate database/schema** (not the same live schema). No tenant data protection needed (standing fact).
+Scope: one complete dump→restore→verify round trip on the real project to a separate target. No tenant data protection needed (standing fact).
+### T-072 — P0.2 พิสูจน์ backup/restore กับ Supabase จริงผ่าน **Supabase MCP** (dump→restore→verify บนฐานแยก)
+
+Status: IN_PROGRESS — Owner approved 2026-09-27; **restore target = separate database/schema** (Owner: "ฐานแยก"); **Supabase MCP enabled** — ไม่รอ pg_dump/psql/CLI/Docker
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/verify) + ops (execution + evidence via Supabase MCP) + reviewer L1–L3 on a different model
+Risk: L2 (DB operation on real Supabase project; no customer data exists; pre-G1)
+Goal: prove a full backup→restore round-trip works on the real Supabase project `xzxwakvsbdzkdybijbzs` (Phase A lite schema `lite_*` tables) using **Supabase MCP** (`supabase_execute_sql`, `supabase_apply_migration`, `supabase_list_tables`). Dump schema + data via SQL, restore to a **separate schema** (`t072_restore`) in the same project, verify row counts + FK integrity + RLS policies survive + `nippan_runtime` role + policies re-applied. No tenant data to protect (pre-G1 — standing fact).
+Done when:
+- [ ] Dump via Supabase MCP: `supabase_execute_sql` to generate `pg_dump`-equivalent SQL (schema + data for `lite_*`) — output captured
+- [ ] Restore via Supabase MCP: create schema `t072_restore`, apply dumped SQL — command + output captured
+- [ ] Verification via Supabase MCP: row counts match per table, FK constraints intact, RLS ENABLE+FORCE on restored tables, `nippan_runtime` role + policies re-applied
+- [ ] Reviewer (different model) checks evidence + commands; verdict recorded
+- [ ] No production system touched; no secret in git; commands documented for repeatability
+Budget: 2 hours ops + 1 hour reviewer (free models; cap per card: ops ≤ $1 via OpenCode Go flat pool; reviewer free)
+Links: roadmap §7 (P0.1), §8 (P0.2); CURRENT_STATE.md § "Phase A Database — Lite Schema V1"; Supabase MCP tools; T-030 RLS evidence
+
+INTAKE T-072 — 2026-09-27 (Project Lead) — ACCEPT
+Owner decisions recorded (verbatim): "1 อนุมัติ" + "อีเมล์ก่อน พอเปิดจริงจะเพิ่มแจ้งทางไลน์ด้วย" + "ฐานแยก"
+Understanding: Owner approved the plan. Restore target = **separate schema** (`t072_restore` in same project). **Supabase MCP is the execution channel** — no pg_dump/psql/CLI/Docker needed. No tenant data protection needed (standing fact).
+Scope: one complete dump→restore→verify round trip via Supabase MCP to separate schema. No tenant data protection needed.
+Needs: Owner approved; ops executes via Supabase MCP, captures all commands/outputs; reviewer checks.
+Missing: None — Supabase MCP enabled and ready.
+Plan: (1) ops runs dump (SQL via `supabase_execute_sql`) → restore (create schema + `supabase_execute_sql`) → verify (row counts, FK, RLS FORCE, policies, role), captures all; (2) reviewer checks evidence; (3) DELIVERY.
+Estimate: within budget.
+Risks: Supabase MCP DDL limits (UNVERIFIED — test first); schema name collision (mitigate: unique `t072_restore`); policy function `app_private.current_tenant_id()` must be recreated.
+Decision: IN_PROGRESS — ready to execute via Supabase MCP.
+
+INTAKE — T-072 — opencode/mimo-v2.6-flash-free (ops) — 2026-09-27
+Understanding: รัน dump→restore→verify ครบ 1 รอบผ่าน **Supabase MCP** บนโปรเจกต์ `xzxwakvsbdzkdybijbzs` ตาราง `lite_*` 7 ตาราง — dump schema+data เป็น SQL, restore ลง schema ใหม่ `t072_restore`, verify row counts/FK/RLS FORCE/policies/`nippan_runtime` role/grants — เก็บ command + output ทั้งหมดให้ reviewer คนละโมเดลตรวจ
+Done when: (1) dump SQL via `supabase_execute_sql` + output; (2) restore schema `t072_restore` + apply SQL + output; (3) verify row counts/FK/RLS FORCE/policies/role; (4) reviewer ต่างโมเดลตรวจ evidence แล้วบันทึก verdict; (5) ไม่แตะ production, ไม่มี secret ใน git, สั่งซ้ำได้
+Needs: Supabase MCP (enabled), project ref 20-char, reviewer `opencode/muse-spark-1.3-contributor-free`
+Missing: **project ref 20-char สำหรับ Supabase MCP** — ต้องหาจาก environment/repo config
+Plan: (0) หา project ref; (1) dump DDL+data `lite_*` + policy/grant/role ผ่าน `supabase_execute_sql`; (2) `CREATE SCHEMA t072_restore` + restore SQL; (3) verify queries; (4) evidence + reviewer ต่างโมเดล; (5) DELIVERY
+Estimate: ภายใน budget (ops ≤ $1)
+Risks: `supabase_execute_sql` อาจจำกัด DDL (UNVERIFIED); policy function ต้องสร้างใหม่ใน schema เป้าหมาย
+Decision: **ACCEPT** — ใช้ Supabase MCP ทั้งหมด ตามคำสั่ง Owner
+
+---
+
+### T-073 — กลไกตรวจคำสั่ง Owner ผ่านที่ปรึกษา (advisor) ก่อน PL เริ่มงาน — จุดตรวจอยู่ที่ช่วง "ที่ปรึกษา → PL"
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order verbatim: "ไม่ใช่จาก โอเนอร์ไป pl ต้อง จากโอเนอ ไปที่ปรึกษา ----- ตรวจสอบคำสั่ง ---- ไป pl ให้ตรวจสอบช่วง ที่ปรึกาาไป pl")
+Role: Project Lead (design/verify) + reviewer L1–L3 on a different model + security (governance boundary check)
+Risk: L1–L2 (dev-time governance mechanism; no runtime/production/customer data impact)
+Goal: a **reusable, practical mechanism** that catches when the advisor adds/modifies/extends the Owner's verbatim instruction before it reaches the PL — not a theoretical document but a checklist + gate that runs on every work order.
+Done when:
+- [ ] (ก) Advisor **must attach** `owner_intent_verbatim` on every work order (already required by `ADVISOR_MANDATE.md` §4) — codified as a hard gate
+- [ ] (ข) PL as receiver **compares** the received `owner_intent_verbatim` against the actual Owner utterance in the decision log / chat record **before starting any work** — if not traceable → STOP (NEEDS_DECISION)
+- [ ] (ค) Reviewer on a **different model** audits **every item in the work order** and flags any item that cannot trace back to the verbatim or an approved card/document as **OVER-REACH**
+- [ ] (ง) Statistics captured in `ai-scorecard.md`: count of advisor-added/over-reach items per work order, model, and date — for trend visibility
+- [ ] Mechanism documented in `docs/warroom/ADVISOR_CHECK_GATE.md` (or similar) with a runnable checklist the PL uses on every receipt
+- [ ] Different-model reviewer verifies the mechanism design + checklist completeness; verdict recorded
+Budget: 2 hours PL + 1 hour reviewer (free models; no paid calls)
+Links: `docs/warroom/ADVISOR_MANDATE.md` §4–§5, `docs/warroom/ADVISOR_LOG.md`, `docs/warroom/decision-log.md`, `docs/warroom/ai-scorecard.md`, T-038/T-048/T-050 entries showing real over-reach cases
+
+INTAKE T-073 — pending
+Understanding: Owner wants a practical, reusable gate at the "advisor → PL" handoff that catches any advisor embellishment/extension of the Owner's actual words. Not theory — a checklist the PL runs every time.
+Scope: design the gate, codify the 4 checks (ก–ง), produce a runnable checklist doc, reviewer verifies.
+Needs: PL designs; reviewer (different model) checks; document the mechanism.
+Missing: None — Owner decision is clear.
+Plan: (1) PL writes the checklist/mechanism doc; (2) reviewer on different model verifies design; (3) record in ai-scorecard format; (4) DELIVERY.
+Estimate: within budget.
+Risks: over-engineering (mitigate: keep checklist to ≤ 10 actionable items); reviewer model availability (use roster backups).
+Decision: READY for INTAKE — awaiting Issue creation and Owner approval to start design.
+
+---
+
+### T-074 — Code Stream: โครงสร้าง codebase ตามดีไซน์โครงการ (Code stream — structure first)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + builder (implementation) + reviewer L1–L3 on a different model
+Risk: L2 (code structure changes; no production/customer data)
+Goal: **วางโครงสร้าง codebase ให้เป็นรูปร่างก่อน** ตามดีไซน์โครงการ — **ยังไม่ต้องเอา/ไม่ต้องรอข้อมูลหรือ credential ของ Owner**
+Design source files (ต้นทาง):
+- `docs/future/architecture/FOUNDATION_V1.md` — Foundation architecture (tenancy, identity, data contracts)
+- `docs/future/architecture/NIPPAN_MCP_HUB_FOUNDATION.md` — MCP Hub architecture
+- `docs/product/MODEL_POLICY.md` — Model policy & routing rules
+- `docs/product/CUSTOMER_FACING_RULES.md` — Customer-facing rules (no hardcoded model names in runtime)
+- `docs/warroom/STARTUP_PLAYBOOK.md` — Step 0–3 implementation sequence
+Scope: Create/adjust directory structure, module boundaries, config loading, interface definitions, and stub implementations per the design docs. No business logic, no real credentials, no external API calls. Pure structural scaffolding.
+Done when:
+- [ ] Directory/module structure matches `FOUNDATION_V1.md` tenancy/identity/data contract layers
+- [ ] Config system loads from `settings.py` with fail-closed defaults (no hardcoded secrets)
+- [ ] Interface definitions (Protocols/ABCs) for: transport, auth, model gateway, event sink, alert transport
+- [ ] Stub implementations for each interface (return NOT_IMPLEMENTED or fail-closed)
+- [ ] CI green + unit tests for structure (imports, type checks, interface compliance)
+- [ ] Reviewer (different model) checks diff + evidence; verdict recorded
+- [ ] No schema/RLS/grant change; no production system touched; no secret in git
+Budget: 6 hours builder + 1 hour reviewer (cap: builder ≤ $3 via OpenCode Go flat pool; reviewer free)
+Links: Design sources above; `services/core/app/` (existing structure to align)
+
+INTAKE T-074 — pending
+Understanding: Create the structural scaffolding of the codebase per project design docs. No real implementation, no credentials, no Owner data — just structure first.
+Scope: Directory layout, module boundaries, config, interfaces, stubs. Pure structural work.
+Needs: Design docs (listed above); builder; reviewer (different model).
+Missing: None — all design docs exist in repo.
+Plan: (1) builder creates/adjusts structure per design docs; (2) CI + type checks + interface compliance tests; (3) reviewer checks; (4) DELIVERY.
+Estimate: within budget.
+Risks: over-engineering (mitigate: stubs only, no logic); alignment with existing code (mitigate: builder surveys first).
+Decision: READY for INTAKE.
+
+---
+
+### T-075 — n8n Workflow: วาง workflow ตามดีไซน์โครงการผ่าน n8n MCP (n8n workflow — structure first)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + ops (n8n MCP execution) + reviewer L1–L3 on a different model
+Risk: L2 (n8n workflow structure; no production deployment; no customer data)
+Goal: **วาง workflow n8n ให้เป็นรูปร่างก่อน** ตามดีไซน์โครงการ — **ยังไม่ต้องเอา/ไม่ต้องรอข้อมูลหรือ credential ของ Owner**
+Design source files (ต้นทาง):
+- `docs/future/architecture/NIPPAN_MCP_HUB_FOUNDATION.md` — MCP Hub workflow patterns
+- `docs/product/MCP_TOOLS_V1.md` — MCP tool definitions & contracts
+- `docs/product/INTEGRATIONS.md` — Integration points (LINE, Email, Supabase, Render)
+- `docs/warroom/STARTUP_PLAYBOOK.md` — Step 1–3 n8n workflow requirements
+- `docs/proposals/WAR_ROOM_V1_IMPLEMENTATION_PLAN.md` — War Room n8n integration
+Scope: Create n8n workflow JSON/files via n8n MCP (`n8n_create_workflow_from_code`, `n8n_update_workflow`) for: alert webhook receiver, LINE webhook handler, Supabase sync, Render deploy trigger, War Room event forwarder. Workflows are **structural stubs** — nodes wired, credentials referenced via n8n credential references (not real values), no active triggers. Stored in repo under `n8n/workflows/` for version control.
+Done when:
+- [ ] 5 workflow stubs created via n8n MCP: alert-webhook, line-webhook, supabase-sync, render-deploy, warroom-forwarder
+- [ ] Each workflow: nodes wired, credential refs (placeholders), no hardcoded secrets, disabled by default
+- [ ] Workflow files committed to `n8n/workflows/` (version controlled)
+- [ ] CI validates workflow JSON syntax + n8n MCP `validate_workflow` passes
+- [ ] Reviewer (different model) checks structure + evidence; verdict recorded
+- [ ] No production n8n deployment; no real credentials; no customer data
+Budget: 4 hours ops + 1 hour reviewer (cap: ops ≤ $2 via OpenCode Go flat pool; reviewer free)
+Links: Design sources above; n8n MCP tools (enabled per tool survey)
+
+INTAKE T-075 — pending
+Understanding: Create structural n8n workflow stubs per design docs via n8n MCP. No real credentials, no production deploy — structure first.
+Scope: 5 workflow stubs with proper node wiring, credential references, disabled state. Committed to repo.
+Needs: n8n MCP (verified enabled); design docs; ops; reviewer (different model).
+Missing: None — n8n MCP enabled, design docs exist.
+Plan: (1) ops creates workflows via n8n MCP; (2) validate + commit to repo; (3) CI + reviewer checks; (4) DELIVERY.
+Estimate: within budget.
+Risks: n8n MCP rate limits (UNVERIFIED); credential ref format (mitigate: use n8n standard pattern).
+Decision: READY for INTAKE.
+
+---
+
+### T-076 — Database System: Schema/migrations ตามดีไซน์โครงการ (Database — structure first)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + builder (migrations via Supabase MCP) + reviewer L1–L3 on a different model + security (RLS/tenant isolation review)
+Risk: L2 (schema changes on real Supabase via MCP; no customer data; pre-G1)
+Goal: **วาง schema + migrations ให้เป็นรูปร่างก่อน** ตามดีไซน์โครงการ — **ยังไม่ต้องเอา/ไม่ต้องรอข้อมูลหรือ credential ของ Owner**
+Design source files (ต้นทาง):
+- `docs/future/architecture/FOUNDATION_V1.md` — Data contracts, tenancy, RLS policies
+- `docs/proposals/WAR_ROOM_V1_SCHEMA_RLS_DESIGN.md` — War Room schema + RLS design
+- `docs/product/CUSTOMER_FACING_RULES.md` — Data handling rules
+- `docs/warroom/STARTUP_PLAYBOOK.md` — Step 0 database requirements
+- `docs/product/PRICING_V1.md` — Pricing/quota tables
+Scope: Create migration files via Supabase MCP (`supabase_apply_migration`) for: tenancy tables, identity tables, data contracts, War Room tables (rooms, agenda, participants, findings, decisions), pricing/quota tables, audit/log tables. Migrations are **structural** — tables, indexes, FK, RLS policies (FORCE RLS), roles/grants. No seed data, no real credentials, no production apply until Owner approves. Migration files committed to `migrations/` for version control.
+Done when:
+- [ ] Migration files created for all design-specified tables (via `supabase_apply_migration` on dev schema)
+- [ ] Each migration: tables + indexes + FK + RLS ENABLE+FORCE + policies + role grants
+- [ ] Migration files committed to `migrations/` (version controlled, ordered)
+- [ ] Supabase MCP `supabase_list_tables` + `supabase_execute_sql` verification on dev schema
+- [ ] Reviewer (different model) + security (RLS/tenant) check structure + evidence; verdicts recorded
+- [ ] No production apply; no real credentials; no customer data
+Budget: 4 hours builder + 1 hour reviewer + 1 hour security (cap: builder ≤ $2 Go pool; reviewer/security free)
+Links: Design sources above; Supabase MCP (enabled per tool survey); T-072 (backup/restore proof on same project)
+
+INTAKE T-076 — pending
+Understanding: Create structural schema/migrations per design docs via Supabase MCP. No seed data, no production apply, no Owner credentials — structure first.
+Scope: Full migration set for tenancy, identity, data contracts, War Room, pricing, audit. RLS FORCE throughout.
+Needs: Supabase MCP (enabled); design docs; builder; reviewer + security (different models).
+Missing: None — Supabase MCP enabled, design docs exist.
+Plan: (1) builder creates migrations via Supabase MCP on dev schema; (2) verify via MCP; (3) commit migration files; (4) reviewer + security check; (5) DELIVERY.
+Estimate: within budget.
+Risks: Supabase MCP DDL limits (UNVERIFIED — T-072 will test first); RLS policy complexity (mitigate: security review per migration).
+Decision: READY for INTAKE.
+
 ## REVIEW
 
 (none)

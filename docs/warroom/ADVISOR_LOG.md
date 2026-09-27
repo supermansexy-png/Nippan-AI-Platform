@@ -184,6 +184,18 @@ that references the old one.
 - receiver: project-lead `openrouter/deepseek/deepseek-v4.1-flash` (delegates edit to builder/worker, verification to free reviewer)
 - scope_in: the two edits in ROADMAP_STUDY_DRAFT_2026-09-26.md; this append-only record; one free reviewer verification; one commit of the single file.
 - scope_out: no other file edits; no code/runtime/production/deploy/database/credential change; no paid calls; no commits of other working-tree files.
+
+### T-071/T-072 — 2026-09-27 — Open P0.1 Alert channel + P0.2 Backup/restore proof (parallel, pre-G1)
+- owner_intent_verbatim: "ทำไมไม่จำเลย" + "นี้เข้าใจมัียว่าตอนนี้ไม่มีผู้เช่า ไม่มีผู้ใช้ ยังไม่ได้เปิดระบบ เข้าใจใช่มัย" + "เปิดเลย ... อันดับแรกเปิดงาน ทั้ง 2 ใบ และให้ pl ว่างแผนงาน ออกมา เลือกทีมงาน และการกระจายงาน แผนดำเนินการ ให้ทำมาส่งก่อน"
+- order (as understood by the receiver): (1) record the standing project status (no tenant, no user, pre-G1, Supabase is test DB, test directly on real DB, no production touch) in SESSION_HANDOFF.md and CURRENT_STATE.md; (2) create two cards T-071 (P0.1 Owner alert channel) and T-072 (P0.2 Supabase backup/restore proof) in TASKS.md with full card fields; (3) write a parallel execution plan draft at docs/warroom/P0_EXECUTION_PLAN_DRAFT_2026-09-27.md with per-card team (role + provider-prefixed model from T-065 roster), parallel flow, INTAKE→Issue→branch→PR→CI→different-model reviewer→merge→close steps, evidence checklist, stop rules, budget caps, risks, Owner dependencies, and advisor control points; (4) append this instruction record to ADVISOR_LOG.md as the receiver; (5) do NOT start any real work (no Issue, no branch, no commit/push) — wait for Owner approval of the plan first.
+- receiver: project-lead `opencode/nemotron-3-ultra-free` (distributes to HR/model-recruiter for readiness check, then to builder/ops/reviewer per card)
+- scope_in: standing fact in 2 files; 2 new cards in TASKS.md; 1 execution plan draft; this ADVISOR_LOG entry; HR readiness check (model availability); Owner approval gate before any real work.
+- scope_out: no GitHub Issue creation; no branch creation; no commit/push; no code implementation; no CI run; no reviewer call; no paid model call; no production/Ai-bot-Nippan touch; no schema/RLS/grant change; no secret in any prompt.
+- prohibitions: must not start INTAKE/Issue/branch before Owner approves the plan; must not use L4 `anthropic/claude-opus-5.5:batch`; must not call paid Independent Auditor; must not add tenant-data protection logic to T-072 (standing fact says pre-G1, no tenant data); must not hardcode model names outside roster; must not exceed per-card budget caps (T-071 ≤ $2 builder + free reviewer; T-072 ≤ $1 ops + free reviewer); must not merge without different-model reviewer verdict.
+- auditor: `opencode-go/space-bunny-free` (differs from the advisor `opencode-go/mimo-v2.6-pro`; same model used for per-card reviewer on both cards — allowed because reviewer ≠ author on each card, and auditor is independent of the advisor who issued this order)
+- verdict: pending
+- evidence: SESSION_HANDOFF.md (standing fact line added at top of "งานค้าง...") · CURRENT_STATE.md (standing fact at top) · TASKS.md (T-071, T-072 cards appended) · docs/warroom/P0_EXECUTION_PLAN_DRAFT_2026-09-27.md (created) · MODEL_ROSTER.md T-065 table (team assignments sourced from here)
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Both cards are READY for INTAKE — awaiting Owner approval of this plan. HR (model-recruiter) will be dispatched next to check model readiness per card before Owner approval is sought.
 - prohibitions: must not remove the historical/annotated GA references that record the removal decision; must not push; must not stage other session's changes.
 - auditor: `opencode-go/space-bunny-free` (differs from advisor `opencode-go/mimo-v2.6-pro`) — verify no ACTIVE GA/P2.6 prerequisite remains.
 - verdict: pending
@@ -384,6 +396,51 @@ that references the old one.
 
 ### T-069 — 2026-09-27 ~11:05Z — ChatGPT Task Handoff: Issue-based queue
 - owner_intent_verbatim: "ครับสั่งงานไปเลย แล้วพอมีงานต่อไปเราก็ลองใช้ดูเลย เลือกงานที่ยากและต้องการความเร็ว ตัวนี้เราฟรีตลอด" + "เริ่ม"
+
+### T-073 — 2026-09-27 — Fix T-073 status + create Issue + log advisor instruction
+- owner_intent_verbatim: "งานจาก Owner ผ่าน advisor — อ่านการ์ด T-073 ใน TASKS.md ก่อนเริ่ม
+Owner ไม่ได้สั่งโดยตรง แต่เราต้องแก้ข้อผิดพลาดก่อนหน้า: ในงานก่อนเราตั้งสถานะ T-073 เป็น IN_PROGRESS โดยพลั้งมือ แต่การ์ดนี้ยังไม่มีวิธีตรวจสอบที่ชัดเจน ควรอยู่ในสถานะ READY for INTAKE เพื่อให้ PL สร้าง Issue และเริ่มงานออกแบบวิธี
+ทำ 2 ขั้น:
+ขั้น 1 — แก้การ์ด T-073 ใน TASKS.md:
+   - เปลี่ยนสถานะจาก IN_PROGRESS กลับเป็น READY for INTAKE (หรือลบแถว IN_PROGRESS ออก ถ้ามี)
+   - ตรวจสอบให้แน่ใจว่าการ์ดมีฟอร์มการ์ดครบ: Status, Owner, Role, Risk, Goal, Done-when, Budget, Links (อ้างการ์ดนี้เองหรือเอกสารที่เกี่ยวข้อง)
+   - Goal ควรชัดว่าต้องได้ \"วิธี/กลไกที่ใช้ซ้ำได้เพื่อตรวจสอบคำสั่ง Owner ที่ส่งผ่านที่ปรึกษา ก่อนที่ PL จะเริ่มงาน — จุดตรวจอยู่ที่ช่วงที่ปรึกษา → PL\"
+ขั้น 2 — สร้าง Issue สำหรับ T-073 ใน GitHub Issue queue:
+   - ใช้รีโพซิทอรีเดียวกัน สร้าง Issue ใหม่ ต้องไม่ตั้ง ai:claimed เอง
+   - ต้องอ้างการ์ด T-073 ในเนื้อ Issue (เช่น ในบรรทัดแรก) และใส่ label ai:ready
+   - เนื้อ Issue ควรสรุปงานตาม Goal ของการ์ด (ออกแบบกลไกตรวจสอบคำสั่ง advisor→PL) และระบุว่าต้องการวิธีที่ใช้ซ้ำได้พร้อมเก็บสถิติ OVER-REACH ลง scorecard
+   - หลังสร้างแล้ว ให้บันทึกคำสั่งนี้ลง docs/warroom/ADVISOR_LOG.md 1 entry (ผู้รับเขียนเอง): owner_intent_verbatim ตามที่เราสั่งในขั้นนี้ | receiver: project-lead | auditor: reviewer คนละโมเดล | verdict: pending
+ขั้น 3 — รายงานสถานะปัจจุบันของงานสองใบที่อนุมัติแล้ว (T-071 และ T-072) ผ่านระบบ Issue queue:
+   - สำหรับแต่ละการ์ด (T-071 Issue #90, T-072 Issue #89) รายงานว่า:
+        * Issue มี label อะไรบ้าง (ai:ready, ai:claimed, ฯลฯ)
+        * หากมีการ claim แล้ว ให้ระบุผู้รับงาน (builder/worker) และโมเดลที่ใช้
+        * หากมีการสร้าง branch แล้ว ให้ระบุชื่อ branch และ commit ล่าสุด (ถ้ามี)
+        * หากมี PR แล้ว ให้ระบุหมายเลข PR และสถานะ (เปิด/ปิด/merge)
+        * อะไรที่ติดขัดหรือต้องรอ Owner ตัดสินใจเพิ่ม
+   - รวมเป็นสรุปสั้น ๆ ไม่เกิน 8 บรรทัดต่อการ์ด
+ขอบเขต/ข้อห้าม: งานนี้เป็นงานวางแผนและบันทึกเท่านั้น — ห้ามแก้ไฟล์ services/ หรือ migrations/ หรือไฟล์ runtime อื่น ๆ ห้าม deploy ห้าม force push
+ส่งกลับ: DELIVERY ไม่เกิน 15 บรรทัด — T-073 สถานะตอนนี้อะไร / Issue เบอร์อะไร / T-071 และ T-072 แต่ละใบสถานะเป็นอย่างไร (claim/branch/PR) / อะไรยังต้องรอ Owner / commit SHA ถ้ามี"
+- order (as understood by the receiver): (1) Fix T-073 card status in TASKS.md from IN_PROGRESS to READY for INTAKE with complete card form; (2) Create GitHub Issue #91 for T-073 with ai:ready label (no self-claim); (3) Append this instruction record to ADVISOR_LOG.md as receiver; (4) Report status of T-071 (Issue #90) and T-072 (Issue #89) via GitHub Issue queue — labels, claim/branch/PR, blockers, Owner decisions needed; (5) All within dev-process files only — no runtime/code/deploy changes.
+- receiver: project-lead `opencode/nemotron-3-ultra-free` (executes the fix, creates the Issue, writes this log, reports status)
+- scope_in: TASKS.md (T-073 card fix), GitHub Issue creation for T-073, ADVISOR_LOG.md (this entry), status report for T-071/T-072 Issues
+- scope_out: no services/**, migrations/**, tests/**, scripts/**, .github/**, .opencode/**, opencode.json changes; no production/Ai-bot-Nippan touch; no deploy; no force push; no paid model calls
+- prohibitions: must not claim the Issue myself; must not start INTAKE/work before Owner approval; must not edit runtime files
+- auditor: `opencode-go/space-bunny-free` (reviewer Primary L1–L3 per T-065 roster, differs from advisor `opencode-go/mimo-v2.6-pro`)
+- verdict: pending
+- evidence: TASKS.md T-073 status fixed; GitHub Issue #91 created with ai:ready; this ADVISOR_LOG entry; T-071 Issue #90 (ai:ready) + T-072 Issue #89 (ai:ready) status report
+- notes: written by the receiver of the instruction, not the advisor (`ADVISOR_MANDATE.md` §4). T-073 was incorrectly set to IN_PROGRESS without a verifiable intake mechanism; the Owner-ordered correction resets it to READY for INTAKE and creates the proper queue entry. T-071 and T-072 Issues both carry ai:ready, no claim/branch/PR yet — awaiting Owner approval of the P0 execution plan (ADVISOR_LOG entry "T-071/T-072 — 2026-09-27 — Open P0.1 Alert channel + P0.2 Backup/restore proof").
+
+### T-071/T-072 — 2026-09-27 — Owner approves P0 plan + two binding decisions
+- owner_intent_verbatim: "1 อนุมัติ" + "อีเมล์ก่อน พอเปิดจริงจะเพิ่มแจ้งทางไลน์ด้วย" + "ฐานแยก"
+- order (as understood by the receiver): the Owner approved the P0 execution plan (APPROVED 2026-09-27) and issued two binding decisions: (1) T-071 alert channel = **email first** (LINE added later when live) — needs a real email endpoint from the Owner; (2) T-072 restore target = **separate database/schema** (not the live schema). Cards T-071 and T-072 updated to IN_PROGRESS with these decisions recorded. HR (model-recruiter) verified all Primary models READY (no switches needed). Next: create GitHub Issues `ai:ready` for both cards and proceed per the plan.
+- receiver: project-lead `opencode/nemotron-3-ultra-free` (distributes to builder/ops/reviewer per card via START_PROMPT)
+- scope_in: Owner approval recorded on both cards; plan file header updated to APPROVED; HR readiness confirmed; T-071 blocked on Owner's real email endpoint; T-072 ready to execute (target = separate schema/project); Issue creation → branch → PR → CI → different-model reviewer → merge → DELIVERY per plan.
+- scope_out: no production/Ai-bot-Nippan touch; no L4 review; no paid Independent Auditor; no tenant-data protection in T-072 (pre-G1 standing fact); no hardcoded model names outside roster; per-card budget caps enforced (T-071 ≤ $2 builder + free reviewer; T-072 ≤ $1 ops + free reviewer); no merge without different-model reviewer verdict; no force push.
+- prohibitions: T-071 MUST have real email endpoint — if absent, STOP and report NEEDS_OWNER_DECISION; T-072 must target separate schema/project per "ฐานแยก"; no secret in git; no schema/RLS/grant change; reviewer must differ from author on each card.
+- auditor: `opencode-go/space-bunny-free` (differs from the advisor `opencode-go/mimo-v2.6-pro`; per-card reviewer on both cards)
+- verdict: pending
+- evidence: TASKS.md (T-071, T-072 updated to IN_PROGRESS with Owner decisions) · docs/warroom/P0_EXECUTION_PLAN_DRAFT_2026-09-27.md (header = APPROVED + 2 decisions) · HR readiness report above · MODEL_ROSTER.md T-065 table
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). T-071 is blocked awaiting the Owner's real email endpoint (webhook URL + auth). T-072 is ready to run. The plan's step 3 (HR check) is done — all Primary models READY. Awaiting Owner to provide email endpoint for T-071 before Issue creation.
 - order (as understood by the receiver): (1) create a new card T-069 in TASKS.md for "ChatGPT Task Handoff — Issue-based queue"; (2) create 4 GitHub labels (ai:ready, ai:claimed, ai:done, ai:blocked) with short descriptions; (3) add a new section "## ChatGPT Task Handoff" to AGENTS.md with 5 governance rules; (4) append this instruction record to ADVISOR_LOG.md; (5) send the full diff to a reviewer on a different model for verification; (6) record the reviewer verdict on the card.
 - receiver: project-lead `opencode-go/longcat-2.5-preview-free`
 - scope_in: TASKS.md (new card T-069) · AGENTS.md (new section) · ADVISOR_LOG.md (this entry) · GitHub labels (4 new) · reviewer verdict
@@ -394,17 +451,56 @@ that references the old one.
 - evidence: card T-069 in TASKS.md; `gh label list` output; AGENTS.md diff; this ADVISOR_LOG entry
 - notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Board cap check: 7 open cards vs cap 10 — under cap, no archive needed. Next free ID: T-069 (T-067 and T-068 are the highest existing). This entry is appended; no earlier entry is altered.
 
-### T-070 — 2026-09-27 — PL seat: scorecard entry + re-pin to nemotron-3-ultra-free
-- owner_intent_verbatim: "pl โมเดลที่ใช้อยู่นี้ทำงานช้าและนอกคำสั่ง จัดการให้บันทึกลงใบคะแนน และเปลียนโมเดลเป็น nemotron 3 ultra free"
-- order (as understood by the receiver): (1) create card T-070; (2) record this instruction in ADVISOR_LOG; (3) add scorecard row for project-lead seat (opencode-go/longcat-2.5-preview-free) separating VERIFIED facts (commit f166a92 pushed to origin/dev-workspace against explicit "no push" prohibition + commit message claims "T-069 closed" while T-069 is IN_PROGRESS = 2 scope violations) from OWNER-REPORTED slowness (no measurement data); propose −1 ladder step per CONSTRAINT ④, reviewer to confirm; (4) re-pin PL to opencode/nemotron-3-ultra-free at 3 locations: .opencode/agents/project-lead.md frontmatter model: + body pin line, opencode.json agent.project-lead.model; old pin becomes Backup; (5) update MODEL_ROSTER.md row 1 + CURRENT_STATE.md pin line; (6) reviewer on different model checks all; (7) note: assistant seat already uses opencode/nemotron-3-ultra-free — reviewer must evaluate anti-redundancy.
-- receiver: project-lead `opencode-go/longcat-2.5-preview-free` (distributes to builder + reviewer)
-- scope_in: card T-070 · ADVISOR_LOG entry · ai-scorecard.md new row · 3 pin locations (.opencode/agents/project-lead.md + opencode.json) · MODEL_ROSTER.md row 1 · CURRENT_STATE.md pin line · reviewer verdict
-- scope_out: no other files · no deploy · no production · no DB · no commits/pushes (commit locally OK, push waits for batch) · no changes to T-068/T-069 status
-- prohibitions: PL must not hand-edit runtime files (T-043 lock — builder only) · must not push · must not touch services/migrations · must not change T-068/T-069 status · must not decide ladder stage (reviewer confirms)
-- auditor: reviewer on different model (per MODEL_ROSTER.md T-065: reviewer L1–L3 Primary opencode/muse-spark-1.3-contributor-free)
+### T-033 — 2026-09-27 — Owner answers the third War Room pilot decision (participants)
+- owner_intent_verbatim: "033 ตามวาระการประชุม ว่าเรื่องที่ประชุมเกี่ยวกับใครบ้าง ให้ pl ตัดสินใจเป็นครั้งๆ" (recorded verbatim as received)
+- order (as understood by the receiver): record the Owner's decision on card T-033 blocker 3 — the participants for each meeting are chosen by the PL on a per-meeting basis according to the agenda of that meeting ("ผู้เข้าร่วมแต่ละครั้งให้ PL เลือกตามวาระการประชุมว่าเรื่องนั้นเกี่ยวกับใครบ้าง ตัดสินเป็นครั้ง ๆ ไป"). This resolves the last open blocker on T-033. All three blockers are now resolved. Prepare the meeting protocol for the next pilot round (who chairs, turn budget, expected artifacts, stop rule under the $1/meeting ceiling) with PL choosing participants for THIS meeting based on the agenda the card proposes ("ลำดับงานถัดไป 3 อย่าง + ใครรับงานไหน + ความเสี่ยง"). Ready the room and protocol but do NOT start the meeting (Owner presses start in browser). No paid call above the ceiling, no production/customer data touch.
+- receiver: project-lead `opencode/nemotron-3-ultra-free`
+- scope_in: T-033 blocker 3 update (RESOLVED 2026-09-27 with principle: PL เลือก participants ตาม agenda ของแต่ละครั้ง ครั้งต่อครั้ง ภายใต้เพดาน $1/ครั้ง); the meeting protocol for the next pilot (participants PL selects for this agenda + brief rationale); this record.
+- scope_out: no meeting start, no provider calls, no room creation, no code change, no deploy, no production/customer data, no other card edits.
+- prohibitions: must not press "เริ่ม" in the browser (Owner does that); must not exceed $1/meeting ceiling; must not touch production or customer data; must not commit/push (wait for batch).
+- auditor: reviewer on a different model (per T-033 card, L1–L3 reviewer Primary `opencode/muse-spark-1.3-contributor-free`) — verdict pending until the pilot runs and evidence is checked.
 - verdict: pending
-- evidence: card T-070 in TASKS.md · git log f166a92 · scorecard row · builder diff · reviewer verdict
-- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Board check: 7 open cards vs cap 10 — T-070 makes 8, under cap. This entry is appended; no earlier entry is altered.
+- evidence: card T-033 in `TASKS.md` (blocker 3 now RESOLVED, status updated to all 3 resolved); the meeting protocol prepared below.
+- notes: written by the receiver of the instruction, not the advisor (`ADVISOR_MANDATE.md` §4). This entry is appended; no earlier entry is altered.
+
+---
+
+### T-033 — Meeting Protocol for Next Pilot Round (prepared by PL 2026-09-27)
+
+**Agenda (from T-033 Meeting #001 plan, Owner-approved topic):** "ลำดับงานถัดไป 3 อย่าง + ใครรับงานไหน + ความเสี่ยงที่ต้องเฝ้า"
+
+**Participants chosen by PL for this agenda (3 max per Ask):**
+
+1. **Chair (Preview Chair / CHAIR_SYNTHESIS)** — meeting facilitator, synthesizes inputs, records decisions. Required for every meeting.
+2. **Project Lead (Preview Builder / AGENT_MESSAGE)** — owns the work board, assigns tasks, decides priorities. Directly answers "ใครรับงานไหน" and "ลำดับงานถัดไป".
+3. **Security Reviewer (Preview Security / AGENT_MESSAGE)** — assesses risks for each proposed work item. Directly answers "ความเสี่ยงที่ต้องเฝ้า".
+
+**Rationale:** The agenda has three clear parts: (a) next work priorities → PL decides; (b) work assignments → PL assigns; (c) risks → Security evaluates. Chair runs the process. Other roles (Researcher, Ops, Model-Recruiter, Builder-as-implementer) are not needed for this specific decision meeting — they receive assignments afterward.
+
+**Turn budget (unchanged from Meeting #001):**
+- Up to 3 participants per Ask (room default)
+- 160 output tokens per turn
+- Model: `poolside/laguna-s-2.1` (preview, `NIPPAN_WAR_ROOM_PREVIEW_MODEL_TURNS_ENABLED=true`)
+
+**Stop rule (updated to Owner ceiling):**
+- Hard stop if cost display passes **$1.00** for this meeting (replaces the $0.05 provisional rule)
+- Or if turns loop/repeat → Owner presses **หยุด** immediately
+- PL records cost before/after via `usage_events`
+
+**Opening message for Owner to paste (then press ถามทุกคน while RUNNING):**
+> ประชุมทีม Nippan AI — รอบวางแผนงานถัดไป — ขอให้แต่ละฝ่ายตอบสั้น ๆ 3 ข้อ: (1) งานถัดไป 3 อย่างที่ควรทำก่อน (2) ใครควรรับงานไหน (3) ความเสี่ยงที่ต้องเฝ้า ตอบไม่เกิน 3 บรรทัด
+
+**Artifacts to verify after meeting:**
+- `TURN_SCHEDULED` + `MESSAGE_APPENDED` per participant
+- Room's ordered event sequence
+- Measured cost (must stay ≤ $1.00)
+- Decision rows via **บันทึกคำตัดสิน** if Owner wants them on record
+
+**Known limitation (same as Meeting #001):** The room drives one cheap model (`poolside/laguna-s-2.1`), so voices are that model, not our real roster agents. Durable-record architecture (team-driven record) is a follow-up (T-034).
+
+**Room creation:** Fresh room via `POST /war-room/rooms` (create-room path deployed in T-034b). PL will prepare the room before the Owner starts. Owner presses **เตียมห้อง → เริ่ม → ถามทุกคน** in browser.
+
+---
 
 ### T-069 — 2026-09-27 — ChatGPT Task Handoff: closed
 - owner_intent_verbatim: "อนุมัติ069"
@@ -429,3 +525,41 @@ that references the old one.
 - verdict: pending
 - evidence: Issue #87; T-051 card in TASKS.md; commits on local branch (to be made)
 - notes: written by the receiver (PL), not the advisor. This is the experiment with the new GitHub Issue queue (T-069). Builder model per current MODEL_ROSTER free tier: `openrouter/poolside/laguna-s-2.1:free` (builder Backup 1). Reviewer model per MODEL_ROSTER: `opencode/muse-spark-1.3-contributor-free` (reviewer Primary L1–L3).
+
+### T-071/T-072 — 2026-09-27 — Owner approves START of both cards via approved P0 plan
+- owner_intent_verbatim: "อนุมัติให้เริ่มงานได้ — แผนนี้หัวข้อ `APPROVED 2026-09-27 (Owner: \"1 อนุมัติ\")` — T-071 Alert channel (email first, LINE later) endpoint = supermanexy@gmail.com | T-072 Backup/restore proof on separate schema/project | ทำคู่ขนานได้ (ไฟล์ไม่ทับ) | PL ประสานตามแผน: Issue ai:ready → ผู้รับงาน claim เอง (builder T-071, ops T-072) → branch แยก → PR → CI → reviewer คนละโมเดล → merge → ปิดการ์ด | ห้ามแตะ production เก่า Ai-bot-Nippan | ห้าม L4/paid audit"
+- order (as understood by the receiver): (1) verify GitHub Issues #90 (T-071) and #89 (T-072) still carry label `ai:ready` and have NOT been claimed (`ai:claimed` not set by receiver); (2) prompt the appropriate receivers — builder for T-071, ops for T-072 — to claim their Issues themselves (set `ai:claimed`) and create separate branches per card (`t-071-alert-channel`, `t-072-backup-restore-proof` from `dev-workspace`); (3) from there, follow the approved plan: PR → CI → reviewer on different model → merge → close card; (4) both cards run in parallel (files don't overlap per plan); (5) no production/Ai-bot-Nippan/runtime files outside what the cards allow; (6) no L4 (`anthropic/claude-opus-5.5:batch`), no paid Independent Auditor.
+- receiver: project-lead `opencode/nemotron-3-ultra-free` (coordinates builder T-071, ops T-072, reviewer L1–L3 on both, ops for CI/hosting evidence)
+- scope_in: T-071 (builder = opencode-go/glm-5.3-flash, reviewer = opencode/muse-spark-1.3-contributor-free, ops = opencode/mimo-v2.6-flash-free); T-072 (ops = opencode/mimo-v2.6-flash-free, reviewer = opencode/muse-spark-1.3-contributor-free); GitHub Issues #90, #89; branch creation; PR/CI/reviewer/merge flow; this ADVISOR_LOG entry
+- scope_out: no production/Ai-bot-Nippan; no runtime files outside card scope; no L4 review; no paid Independent Auditor; no forced model changes outside roster; no merge without different-model reviewer verdict; no force push
+- prohibitions: PL must not claim Issues for receivers; must not start INTAKE before claim; must not edit runtime files (builder/ops do it); must not use models outside T-065 roster; must not exceed per-card budget caps (T-071 ≤ $2 builder + free reviewer; T-072 ≤ $1 ops + free reviewer)
+- auditor: `opencode-go/space-bunny-free` (differs from advisor `opencode-go/mimo-v2.6-pro`; same reviewer model on both cards per T-065 roster — allowed because reviewer ≠ author on each card)
+- verdict: pending
+- evidence: GitHub Issue #90 (T-071, ai:ready, updated body with email endpoint), Issue #89 (T-072, ai:ready); P0_EXECUTION_PLAN_DRAFT_2026-09-27.md (APPROVED); TASKS.md (T-071, T-072 IN_PROGRESS)
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). T-071 Issue body updated with Owner's email endpoint (supermanexy@gmail.com). Both Issues are ai:ready, no claim yet. Next step: trigger builder (T-071) and ops (T-072) to claim and begin INTAKE.
+
+---
+
+### T-071/T-072/T-073/T-074/T-075/T-076 — 2026-09-27 — Owner redefines T-071, confirms T-072 via Supabase MCP, creates 3 new structure cards, single Owner queue, tool survey, GitHub Issues for ChatGPT
+- owner_intent_verbatim: "แจ้งเตือนให้ทำเป็นหน้าให้กรอกได้ ให้เลือกกรอกทางเมล์ หรือทางไลน์ ผมจะกรอกเองเมือเปิดใช้งาน ตอนนี้ให้เขียนรอไว้ เรามี mcp ของ supabase ใช้ทางนั้นได้เลย และไม่เห็นจ่ายงานให้ chatgpt ให้เพิ่มงานที่ต้องเขียนโค๊ด งานที่ต้องวางเวิกโฟรใน n8n งานที่ต้องวางระบบฐานข้อมูล ให้ตรงกับดีไซต์ของโปรเจ๊ดที่ออกแบบมา อันไหนต้องเอาข้อมูลผม ยังไม่ต้องเอา ให้ไปจัดการวางโครงสร้างทั้งหมดให้เป็นรูปร่างก่อน ไม่งั้นมาติดอยู่ตรงนี้ ไม่มีเครื่องมืออะไรให้แจ้งที่เดียว ไม่ใช่ทำไปแจ้งไป ให้ลองสำรวจเครื่องมือทั้งหมดของเรา เรามีครบ และให้ ที่ปรึกาษาคุมงานโดยละเอียดทุกขั้นตอน ตรวจทานรอบสุดท้้ายกับ pl เมือผ่านแล้วให้อนุมัติได้เลย งานจะได้เดินต่อเนื่อง"
+- order (as understood by the receiver): Execute 8 steps: (1) REWORK T-071: change from SMTP alert channel to Settings page with Email|LINE selector, pluggable transports (EmailTransport, LineTransport stubs), config in JSONB (nullable, fail-closed), cancel SMTP credential blocker, adjust PR #92 on existing branch `t-071-alert-channel`; (2) T-072: execute backup/restore proof via Supabase MCP (not pg_dump/CLI) to separate schema `t072_restore`; (3) Create 3 new cards T-074 (Code stream), T-075 (n8n workflow stubs), T-076 (DB schema/migrations) — each references design source files, Goal = "วางโครงสร้างให้เป็นรูปร่างก่อน", no Owner data/credentials needed; (4) Create single OWNER_ACTION_QUEUE.md at docs/warroom/OWNER_ACTION_QUEUE.md consolidating all Owner-wait items; (5) Tool survey: verify all tools (Supabase MCP, n8n MCP, Render MCP, OpenRouter MCP, GitHub CLI, OpenCode Go pool) — recorded in P0 plan §9; (6) Create GitHub Issues #93 (T-074), #94 (T-075), #95 (T-076) with `ai:ready` label for ChatGPT (external assistant) per two-lane Git channel; (7) Assign reviewers per T-065 roster: T-071/T-072/T-074/T-075 reviewer = `opencode/muse-spark-1.3-contributor-free` (Primary), T-076 security = `openrouter/deepseek/deepseek-v4.1-flash` (Primary); advisor final review with PL then advisor approves merge; (8) Write this ADVISOR_LOG entry.
+- receiver: project-lead `opencode/nemotron-3-ultra-free` (distributes to builder T-071, ops T-072, builder T-074, ops T-075, builder T-076, reviewers per card)
+- scope_in: T-071 rework (PR #92 adjustment); T-072 Supabase MCP execution; T-074/T-075/T-076 cards created in TASKS.md; OWNER_ACTION_QUEUE.md created; P0_EXECUTION_PLAN updated with tool survey + new cards + reviewer assignments; GitHub Issues #93, #94, #95 created; reviewer assignments per T-065; this ADVISOR_LOG entry
+- scope_out: no production/Ai-bot-Nippan; no runtime files outside card scope; no L4 review; no paid Independent Auditor; no forced model changes outside roster; no merge without different-model reviewer verdict; no force push; no Owner credentials needed now (stub/fail-closed)
+- prohibitions: PL must not edit runtime files (builder/ops do it); must not use models outside T-065 roster; must not exceed per-card budget caps; must not claim Issues for receivers; must not start INTAKE before claim; advisor final review with PL then advisor approves (per ADVISOR_MANDATE.md §6)
+- auditor: `opencode-go/space-bunny-free` (differs from advisor `opencode-go/mimo-v2.6-pro`; reviewer model on T-071/T-072/T-074/T-075)
+- verdict: pending
+- evidence: TASKS.md (T-071 reworked, T-072 updated, T-074/T-075/T-076 added); docs/warroom/P0_EXECUTION_PLAN_DRAFT_2026-09-27.md (updated); docs/warroom/OWNER_ACTION_QUEUE.md (created); GitHub Issues #93, #94, #95 (ai:ready); PR #92 (T-071, branch t-071-alert-channel); PR #17 (phase2, unrelated)
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). All 8 steps executed in this session. Next: trigger builder/ops to claim Issues and begin INTAKE per card.
+
+### T-071/T-072/T-073 — 2026-09-27 — Separate doc lane from card branches + fix stale status + parallel drive
+- owner_intent_verbatim: "ให้ผมสั่ง team commit งานเอกสารกลับเข้า dev-workspace แยกจาก branch การ์ดก่อนไหม (กันไฟล์พันกัน)"
+- order (as understood by the receiver): (1) Move 6 doc files (4 modified + 2 new) off branch `t-072-backup-restore-proof` onto `dev-workspace` and commit there with a clean doc-only message; (2) Fix stale status in SESSION_HANDOFF.md: T-072 "needs project ref from Owner" → "uses existing project ref `xzxwakvsbdzkdybijbzs` via Supabase MCP"; T-073 "awaiting Owner approval to start design" → "can start, no approval wait"; (3) Clean OWNER_ACTION_QUEUE.md: remove 3 items from OPEN (SMTP creds, LINE creds, Supabase project ref — all done/available) and T-073 approval item → move to DONE as phase-2 notes; only remaining OPEN = Owner trigger ChatGPT on Issues #93/#94/#95; (4) Proceed parallel on T-072 (Supabase MCP, separate schema), T-071 (PR #92 settings page Email|LINE), T-073 (Issue #91 design advisor→PL gate) — assign different-model reviewer per card per T-065 plan, drive to merge + close; (5) All existing prohibitions hold: no prod Ai-bot-Nippan touch, no L4, no paid audit, no force push, no self-merge, one card = one branch = one PR; (6) Append this ADVISOR_LOG entry as receiver.
+- receiver: project-lead `opencode/nemotron-3-ultra-free`
+- scope_in: dev-workspace commit of 6 doc files; SESSION_HANDOFF.md fixes; OWNER_ACTION_QUEUE.md cleanup; T-071/T-072/T-073 parallel execution plan; this ADVISOR_LOG entry
+- scope_out: no services/**, migrations/**, tests/**, scripts/**, .github/**, .opencode/**, opencode.json changes; no production/Ai-bot-Nippan; no L4; no paid audit; no force push; no self-merge
+- prohibitions: must not commit doc changes on card branches; must not merge without different-model reviewer verdict; must not exceed board cap; must not touch protected docs without L3 card
+- auditor: `opencode-go/space-bunny-free` (reviewer Primary L1–L3 per T-065, differs from advisor `opencode-go/mimo-v2.6-pro`)
+- verdict: pending
+- evidence: git stash/pop to dev-workspace; SESSION_HANDOFF.md lines 65-66 fixed; OWNER_ACTION_QUEUE.md OPEN reduced to 1 item; T-071 PR #92, T-072 branch clean, T-073 Issue #91
+- notes: written by the receiver of the instruction, not the advisor (`ADVISOR_MANDATE.md` §4). This entry records the Owner's verbal order to separate the doc lane and clean stale status before driving parallel work.
