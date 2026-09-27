@@ -27,7 +27,7 @@ Completed work: docs/archive/TASKS_DONE_ARCHIVE.md
 
 ### T-032 — Dispatch work over Git (issue → branch → draft PR → CI → review → merge)
 
-Status: READY for INTAKE — needs the Owner's decision on repo settings + the external side's settings (see Blockers)
+Status: IN_PROGRESS — **pilot A DONE 2026-09-27** (Issue #88, external assistant `GPT-5.6 Sol`, PL-verified); pilot B (write) remains. Repo settings resolved; external-side values still OPEN.
 Owner: Project Lead — 2026-09-25
 Role: PL (dispatch + verify) + external assistant (author, on `codex/*` branches) + reviewer on a different model + Owner (approval)
 Risk: L3 (external party writes into our repository)
@@ -41,7 +41,7 @@ Links: `TASKS.md` (cards = source of truth), GitHub Issues (queue), `.github/wor
 **Blockers / open questions**
 1. Repo settings: **RESOLVED 2026-09-27** — `phase2/postgres-logical-schema` is protected by repository ruleset "Phase 2 required CI" (id 23846449: `deletion` + `non_fast_forward` + `required_status_checks` + `pull_request`; ruleset, NOT classic branch protection — the classic endpoint returns 404). `dev-workspace` force-push block **DONE**: ruleset "protect-dev-workspace" (id 24070054, rule `non_fast_forward`, enforcement=active) created via API 2026-09-27; verified `GET /rules/branches/dev-workspace` → `non_fast_forward`. No PR requirement added to `dev-workspace`.
 2. External side settings: **OPEN** — Owner has not yet confirmed the four values (Draft PR = ON · auto-merge = **OFF** · branch prefix `codex/` · no force-push).
-3. **Trigger = the Owner (RESOLVED 2026-09-25)** — "พี่เอง": the Owner starts each round; the assistant does not auto-start from a queue. Pilot A therefore tests only whether it can *find* queued work **once started**.
+3. **Trigger — UPDATED 2026-09-27 (Owner, standing rule — see `docs/warroom/decision-log.md` 2026-09-27 "the Git work channel now runs two lanes"):** the channel now runs **two lanes**. **Urgent** work = the PL tells the Owner, the Owner tells the external assistant directly (Owner is the trigger — the original 2026-09-25 rule survives for this lane only). **Non-urgent** work = the PL opens a GitHub Issue with label `ai:ready` and a complete body (Task/Role/Risk/Scope/Done-when/Stop rules) and leaves it queued; the **external assistant polls hourly and pulls work by itself**, no message needed. Either lane: the PL verifies label transitions + INTAKE/DELIVERY comments + raw evidence before anything is reported done. This **supersedes** the old flat rule "the assistant does not auto-start from a queue", which held for pilot A only.
 4. **Review (RESOLVED 2026-09-25)** — three layers: (a) **CI runs automatically on the PR** = machine evidence, no human needed; (b) a reviewer on a **different model** than the author reads the diff and writes a verdict comment; (c) the **PL** checks scope/evidence and records the verdict on the card. **Approval/merge: the Owner when present — or the PL on the Owner's behalf when the Owner is away** (deploy preview and architecture changes always need the Owner).
 
 **Review checklist for the assistant's PRs (7 points)** — 1) in scope vs the card? 2) only the expected files touched? 3) tests added / CI green? 4) **no secrets, tokens, DSNs or customer data anywhere in the diff?** 5) evidence attached (CI run + what was run and what was expected)? 6) claims match the diff (no "done" without proof)? 7) author ≠ checker confirmed.
@@ -61,13 +61,21 @@ Decision: ACCEPT (Owner chose the Git channel 2026-09-25).
 **Answer 1 — branch protection on `dev-workspace` (verified 2026-09-27: currently NOT protected, gh api = 404):**
 Decision: do NOT enable full PR-required protection. Rationale: (a) the dev team commits directly to `dev-workspace` daily — requiring PRs would stall the dev workflow; (b) the external assistant is already constrained by this card's hard rules (codex/* branches only, never pushes directly to `dev-workspace`, never force-push, never merges its own PR, different-model review) — this is the "equivalent rule" that done-when item 2 allows; (c) force-push is the highest-risk operation — recommend the Owner enable force-push blocking only (repo setting, reversible) as belt-and-braces. Status: process rule ACTIVE; repo-level force-push block = **DONE 2026-09-27** (ruleset id 24070054, `non_fast_forward`, verified active on the branch; see blocker 1).
 
-**Answer 2 — the four Codex-side values:** the project's required values are confirmed: Draft PR = ON · auto-merge = OFF · branch prefix `codex/` · no force-push — these match the card's hard rules exactly. The external side's ACTUAL current settings cannot be verified from this environment (they live on the Owner's Codex setup) = **UNKNOWN** until the Owner confirms on the Codex side or pilot A verifies them. Recommendation: proceed; pilot B's PR will demonstrate the branch prefix + draft state.
+**Answer 2 — the four Codex-side values:** the project's required values are confirmed: Draft PR = ON · auto-merge = OFF · branch prefix `codex/` · never force-push — these match the card's hard rules exactly. The external side's ACTUAL current settings cannot be verified from this environment (they live on the Owner's Codex setup) = **UNKNOWN** until the Owner confirms on the Codex side or pilot B's PR demonstrates the branch prefix + draft state.
+
+**WORK LOG — T-032 PILOT A (DONE 2026-09-27) — evidence independently re-verified by the PL, not accepted from the report**
+- Queue: Issue #88 (`T-032 Pilot A: External assistant finds queued work (read-only)`), label `ai:ready`.
+- External assistant: `GPT-5.6 Sol`. Sequence of comments on #88 (read from GitHub by the PL): **INTAKE 12:52:38Z → pilot-A verification 12:53:31Z → DELIVERY 12:54:03Z**. Final label = `ai:done` (transitions `ai:ready → ai:claimed → ai:done` all present).
+- What it verified: (a) found Issue #88 as the eligible `ai:ready` item; (b) read the T-032 card from `dev-workspace:TASKS.md` lines 28–96, status `READY for INTAKE`; (c) ruleset `24070054` = `protect-dev-workspace`, `target=branch`, `enforcement=active`, `rules=[non_fast_forward]`, `bypass_actors=[]`; (d) scope respected — no code, no branch, no PR, no push, no secret access.
+- **PL independent check** (`gh api repos/.../rulesets/24070054`): identical object — name/target/enforcement/rules/bypass_actors all match. The assistant's sole `[UNKNOWN]` (its connector rejected `/rules/branches/dev-workspace` with HTTP 400) is a **connector limitation on its side**, not a repo fault: the PL read the ruleset object directly with no error.
+- Done-when coverage: items 1 (settings confirmed on our side) and 4 (**pilot A: the assistant finds queued work by itself**) are met. Item 2 = force-push block DONE (blocker 1). External-side values (blocker 2) = still UNKNOWN pending pilot B's PR.
+- **Not done**: pilot B (write) — one real change landing as a draft PR with CI evidence + a different-model reviewer; done-when items 3, 5, 6, 7 remain.
 
 ---
 
 ### T-033 — War Room in real use: the AI team's meeting room
 
-Status: IN_PROGRESS — Owner answered 2 of 3 open decisions 2026-09-27 (fresh room per meeting = yes; Owner pays, ceiling $1/meeting). "ใครเข้าร่วม" (participants) still open-on-Owner.
+Status: IN_PROGRESS — Owner answered 3 of 3 open decisions 2026-09-27 (fresh room per meeting = yes; Owner pays, ceiling $1/meeting; participants = PL decides per meeting agenda). All blockers resolved — ready for next pilot round.
 Owner: Project Lead — 2026-09-26 (Owner order: "ทดลองใช้ห้องวอร์รูปจริง ๆ เพราะหลังจากนี้เราต้องเอา AI เข้าไปประชุมและวางงาน แจกงาน รายงานผล พร้อมอภิปรายปัญหางานกัน")
 Role: Owner (chair) + PL (facilitate, record, verify) + AI participants + reviewer on a different model
 Risk: L3 (the room drives billable provider turns and holds the team's working record; no tenant/customer data involved)
@@ -82,7 +90,7 @@ Links: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (acceptance + the t
    login and the room loaded in his browser. No new Cloudflare setup needed. Evidence:
    `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` §"Cloudflare Access configuration — discovered by read-only probe".
 2. ~~**A fresh room per meeting.**~~ **RESOLVED 2026-09-27 — Owner answer: "ใช้ใหม่" (a fresh room per meeting = YES).** Delivered by T-034b: the reviewed create-room path (`POST /war-room/rooms`, slice 2a) plus the seed-script slice 1 (`--room-id`/`--title`/`--force`, tenant-scoped, transactional) are being deployed to the preview with the agenda work (deploy in progress, see T-034b). The old options (a)/(b)/(c) below are superseded.
-3. **Who joins, and who pays.** **PARTIALLY RESOLVED 2026-09-27 — Owner answers: bearer = Owner ("พี่จ่าย"); cost ceiling = $1 per meeting ("ไม่เกิน 1 เหรียญต่อครั้ง").** The ceiling replaces the provisional $0.05 stop rule in the meeting plan above. **STILL OPEN: "ใครเข้าร่วม"** — which participants join the room (the architecture choice (a) room-driven turns / (b) team-driven record / (c) no provider calls) is unanswered; the pilot does not start until the Owner picks. Credit ≈ **$1.60** as of 2026-09-27.
+3. **Who joins, and who pays.** **RESOLVED 2026-09-27 — Owner answers: bearer = Owner ("พี่จ่าย"); cost ceiling = $1 per meeting ("ไม่เกิน 1 เหรียญต่อครั้ง").** The ceiling replaces the provisional $0.05 stop rule in the meeting plan above. **STILL OPEN: "ใครเข้าร่วม"** — **RESOLVED 2026-09-27 — Owner decision (verbatim): "033 ตามวาระการประชุม ว่าเรื่องที่ประชุมเกี่ยวกับใครบ้าง ให้ pl ตัดสินใจเป็นครั้งๆ" — คือผู้เข้าร่วมแต่ละครั้งให้ PL เลือกตามวาระการประชุมว่าเรื่องนั้นเกี่ยวกับใครบ้าง ตัดสินเป็นครั้ง ๆ ไป** — หลักการที่บันทึก: PL เลือก participants ตาม agenda ของแต่ละครั้ง ครั้งต่อครั้ง ภายใต้เพดาน $1/ครั้งที่ Owner ตั้งไว้แล้ว. Credit ≈ **$1.60** as of 2026-09-27.
 
 INTAKE T-033 — 2026-09-26 (Project Lead)
 Understanding: the Owner wants the War Room used as the team's real working room: AIs attend, work is planned and assigned, results are reported, problems are debated — the meeting itself must become the durable record, not a chat.

@@ -1179,3 +1179,38 @@ The edits touch **two protected documents** (`TASK_CONTROL.md`, `AI_OPERATING_PR
 
 **Authority**: Owner delegated the 4 pending decisions to the PL on 2026-09-27 ("ให้ pl อนุมัติแทนได้เลย ตามความเหมาะสม"); this is delegated item (b). Card T-053 closed DONE.
 
+---
+
+## 2026-09-27 — Owner decision — the Git work channel now runs two lanes (urgent = Owner-triggered · non-urgent = hourly poll)
+
+**Context**: T-032 pilot A (Issue #88) verified end to end that an external assistant
+(`GPT-5.6 Sol`) can find queued work over Git by itself, claim it, verify it, and report
+back — without a bridge. The Owner then set the **standing workflow** for using that channel.
+
+**Decision (new standing rule)**:
+1. **Urgent work** — the PL tells the Owner; the Owner tells the external assistant directly
+   (the Owner is the trigger). Card-level rule of T-032 blocker 3 ("trigger = Owner") still
+   applies to this lane.
+2. **Non-urgent work** — the PL opens a GitHub Issue with label `ai:ready` and a complete body
+   (Task / Role / Risk / Scope / Done-when / Stop rules) and leaves it queued. The external
+   assistant **polls hourly and pulls work by itself**; nobody has to message it.
+3. **Either lane** — the PL goes in and verifies the result (label transitions
+   `ai:ready → ai:claimed → ai:done`, the INTAKE/DELIVERY comments, and the raw evidence) before
+   anything is reported as done.
+
+**Supersedes**: T-032 blocker 3 as written ("the assistant does not auto-start from a queue") —
+that held for pilot A only. The hourly-poll lane is now the approved mechanism for non-urgent
+work; the Owner-trigger rule survives for urgent work only.
+
+**Evidence for the channel working**: Issue #88 — INTAKE (12:52 UTC), pilot-A verification
+comment (12:53), DELIVERY (12:54); label ended at `ai:done`; independently re-verified by the PL
+via `gh api` that ruleset `24070054` (`protect-dev-workspace`, `active`, `non_fast_forward`,
+`bypass_actors=[]`) matches the card. The assistant's one `[UNKNOWN]`
+(`/rules/branches/dev-workspace` rejected by its connector, HTTP 400) is a connector limit on
+its side, not a repo fault — the PL read the ruleset object directly with no error.
+
+**Status of T-032**: pilot A DONE (this entry is its record). **Pilot B (write:
+one real PR with CI + a different-model review) remains open.**
+
+**Task**: T-032 (pilot A)
+
