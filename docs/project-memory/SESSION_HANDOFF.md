@@ -18,10 +18,9 @@
 
 ## งานค้างที่ยังไม่ปิด — บ้านเดียว
 
-- **T-034b** — War Room deploy: งาน commit แล้ว (`aa36a81`) **deploy รอ Owner อนุมัติ** (batch order: deploy ต้องได้รับอนุมั1ิแยก)
+- **T-033** — War Room pilot: ปิดแล้ว 2 ข้อ (fresh room ครั้งละห้อง = ใช่ · Owner จ่าย เพดาน $1/ครั้ง) — **เหลือ "ใครเข้าร่วม" รอ Owner ตัดสิน** (สถานะบนการ์ด: IN_PROGRESS)
 - **T-032** — force-push block บน `dev-workspace` (repo setting): แนะนำให้ Owner เปิดใน GitHub UI (process rule มีอยู่แล้ว; นี่คือ repo-level belt-and-braces)
 - **T-050** — roadmap draft (`ROADMAP_STUDY_DRAFT_2026-09-26.md`) รอ Owner พิจารณา (DRAFT — NOT APPROVED)
-- **T-033** — War Room pilot: รอ Owner ตัดสิน 3 ข้อ (fresh room / ใครเข้าร่วม+ใครจ่าย / cost ceiling)
 - **restart opencode** — pin ใหม่ (project-lead ฯลฯ) จะมีผลหลังเปิดแชทใหม่ (resumed session ยังใช้โมเดลเก่า)
 - **n8n publish** — `n8n_publish_workflow` = false; workflow ที่แก้แล้วจะยังรัน query เก่าจนกว่าจะ publish
 - **OpenRouter credit** — ~$0.64 คงเหลือ; งานเสียเงินต้องขอ Owner ก่อน

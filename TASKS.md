@@ -124,11 +124,16 @@ Decision: NEEDS_DECISION — blocked on the Owner's three answers above. No AI i
 
 ### T-034b — War Room server: create-room path + usable agenda (paid builder)
 
-Status: BLOCKED behind T-034a — start only after the Owner has used the improved screen.
+Status: **DONE 2026-09-27** — all slices delivered, reviewed and **deployed to the Render preview** (PR #86, merge `da35d60`, deploy `dep-dasdcartqb8s739lmbmg` live). Evidence below.
 
 **Status update 2026-09-27 (batch order):** slices 1–3 delivered and reviewed; slice 2b code committed (`aa36a81`) and pushed to `origin/dev-workspace`. **DEPLOY = BLOCKED on the Owner** — deploying any slice requires separate Owner approval (batch order: "deploy requires separate Owner approval"). No deploy is performed. Card marked blocked-on-Owner.
 
-**DEPLOY IN PROGRESS — 2026-09-27 (Owner approved, advisor relayed: "1 อนุมั1ิ" = อนุมัติ):** cherry-picking the two T-034b commits missing on `phase2/postgres-logical-schema` (`7ef25f4` slice 1 seed script + `aa36a81` slice 2b agenda, runtime files only) → push (no force) → trigger the Render preview deploy → live-check the URL. Evidence to be recorded on completion; card closes DONE with the deploy evidence.
+**DEPLOY DONE — 2026-09-27 (Owner approved, advisor relayed: "1 อนุมั1ิ" = อนุมัติ):**
+- The two T-034b commits missing on `phase2/postgres-logical-schema` were cherry-picked (runtime files only): `7ef25f4` (slice 1 seed script — without it the deployed create-room route called `seed(room_id=, title=)` on a script that did not accept those kwargs) and `aa36a81` (slice 2b agenda). Local cherry-picks: `6f7dd15` + `00c0b0e`; content verified identical to the dev-workspace commits (EOL-only diff).
+- Direct push to `phase2/postgres-logical-schema` is blocked by repo rules (GH013: PR required + `postgres-regression` status check) — so the Owner-approved merge-on-green path was used: branch `deploy/t-034b-warroom-agenda` → **PR #86** (https://github.com/supermansexy-png/Nippan-AI-Platform/pull/86) → CI **postgres-regression PASS (1m5s)**, remote-auth PASS (28s) → merged as merge commit **`da35d6064ce8eb9c33c831517e825d9b00754335`** (2026-09-27T08:39:06Z).
+- Render deploy **`dep-dasdcartqb8s739lmbmg`** (auto-triggered by the merge push) → status **live** at 2026-09-27T08:40:06Z, serving commit `da35d60`.
+- Live check: `GET https://chetgo.onrender.com/health` → **200** `{"status":"ok","service":"nippan-core","environment":"development"}`; `GET https://chetgo.onrender.com/war-room/` → **403** `{"detail":"war_room_preview_remote_auth_required"}` (the preview auth gate, fail-closed as designed — the rendered page itself is confirmed by the Owner in his browser, the documented limit of every previous preview deploy).
+- No DB migrations, no production system touched, no force push. **Card closed DONE.**
 Owner: Project Lead — 2026-09-26 (Owner order: the agenda panel "ถ้าจะมีไว้ต้องใช้งานได้" and a new meeting must not need hand-edited SQL)
 Role: Developer — **paid builder `z-ai/glm-5.3-flash` (Owner-locked)** + reviewer `opencode/space-bunny-free` + **security reviewer `openrouter/nex-agi/nex-n2.5-mini:free`** (a new write endpoint on the transport is security-relevant)
 Risk: L3 (new write path on the transport: authorization, scope binding, fail-closed behaviour)
