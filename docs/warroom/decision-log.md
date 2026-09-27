@@ -1277,3 +1277,15 @@ buildable work before Phase 2 opens.
 Task: board update (`TASKS.md`), T-079, T-080. Committed as one board-update chunk;
 not pushed.
 
+## 2026-09-27 — Project Owner — T-080 admin surface = option (ก); T-079 item 3 = option (ก)
+
+Context: T-080 asked whether Phase A needs an admin web page or only the log + alert already designed in `MONITORING.md`. T-079 item 3 asked how a customer changes their business info after go-live.
+
+Decision (Owner, 2026-09-27):
+1. **T-080 = option (ก)** — the database log + the LINE alert exactly as `MONITORING.md` designed it. **No admin web page in Phase A.** Owner reason (verbatim intent): "เฟส A ยังไม่มีลูกค้าจริง พอมี log + แจ้งเตือนพอ สร้างหน้าเว็บแดชบอร์ดเป็น trigger ของ Phase B/C ตามที่ MONITORING.md ระบุไว้แต่แรก". This matches `MONITORING.md` §"Keep it simple (Phase A)" ("No dashboard software… Build a real dashboard only when a trigger below is hit") and its "Growth triggers" (25+ tenants / daily digest >15 minutes / a second person helps). **T-080 closed DONE — nothing new to build.**
+2. **T-079 item 3 = option (ก) talk to a Support agent** — no separate edit form in Phase A. Owner reason: keep the standing principle of not building ahead of a proven need; the target shops (repair shops, older owners) are more comfortable typing a chat than filling a form. If edit requests become frequent, a separate form becomes a **Phase B** card.
+
+Consequence: T-079 is split into child build cards **T-079a…T-079f** — `web-chat` adapter, onboarding assistant, setup page, confirmation + go-live gate, later-edit via Support agent, storefront page. Each is written so its proof is a **real run**, not a claim. **No build starts until the Owner reviews the split.**
+
+Task: T-080 (closed, archived), T-079 (split). Board update; not pushed.
+

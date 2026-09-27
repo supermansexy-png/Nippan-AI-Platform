@@ -2107,3 +2107,25 @@ Push: the deferred batch (commits `9c9b2bf`…`a7afacc`) was pushed to `origin/d
 
 **PL RESERVATION (2026-09-27)** — the assistant and the advisor also read and write our **internal documents** (`MODEL_ROSTER.md`, `TASKS.md`, `ADVISOR_LOG.md`), which are internal business material, so the PL does not treat them as clean seats either. PL position: eligibility is a **task-level rule, not a seat-level one** — the two Google models may be used only for tasks whose entire prompt is public information (e.g. a public catalogue or pricing lookup), and should **not** be pinned as a seat fallback, unless the Owner decides otherwise. **Owner has not decided.** → **UPDATE 2026-09-27: the Owner decided ("ก")** — the free-tier rule covers **external shared-pool free tiers only** (OpenRouter `:free`, Groq, Google). Google free is that class, so the two Google models stay **backup / task-scoped only — never a seat primary**. The PL reservation above therefore stands, and **no pin change is required**. See `docs/project-memory/DECISIONS.md` 2026-09-27.
 
+
+### T-080 — Admin surface: log-only (ก) vs full admin page (ข) — NEEDS_OWNER_DECISION
+
+Status: **DONE 2026-09-27** — Owner chose option (ก) “แค่ log ในฐานข้อมูล + แจ้งเตือน LINE”, no new admin page in Phase A. Recorded in decision-log.md 2026-09-27; T-079 item 3 also decided (ก) Support agent.
+Owner: Project Lead — 2026-09-27 (Owner-raised gap: the admin/observability surface was designed in `MONITORING.md` but never carded as build work)
+Role: Project Lead (plan) + builder + reviewer on a different model
+Risk: L2 (internal operator surface; no customer-facing change)
+Goal: decide and then build the **operator's** view of the system — the thing that turns monitoring events into something a human acts on.
+Options:
+- **(ก) Log-only (as `MONITORING.md` designed it):** events are written to the database and a **LINE alert** is sent for red events; no new web page. Fast, no new surface to secure. **(Owner's stated preference so far.)**
+- **(ข) A full admin page:** the log + an operator dashboard (events, card/quota status, red alerts, per-bot usage) on top of (ก). More work, and it is a new authenticated surface.
+Done when:
+- [ ] the Owner picks (ก) or (ข) — recorded in `docs/warroom/decision-log.md`
+- [ ] the chosen option is split into build cards per Step 0/Step 1 of `STARTUP_PLAYBOOK.md`
+- [ ] if (ข): the admin page has its own auth/isolation card (security review mandatory)
+Budget: planning only until the Owner decides
+Links: `docs/warroom/MONITORING.md`, `docs/warroom/STARTUP_PLAYBOOK.md` Step 0/Step 1, T-071 (the owner alert channel — email first, LINE later), `docs/architecture/MESSAGE_FLOW_V1.md` §8 (monitor-log events)
+
+INTAKE T-080 — pending
+
+---
+

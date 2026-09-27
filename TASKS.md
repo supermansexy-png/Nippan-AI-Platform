@@ -587,7 +587,7 @@ INTAKE T-004 — pending (PARKED; no AI work is started)
 
 ### T-079 — Front-of-house: customer onboarding + config (setup via web-chat, confirmation summary, later-edit path)
 
-Status: READY for INTAKE
+Status: IN_PROGRESS — split into the child cards **T-079a…T-079f** below; **awaiting the Owner's review before any build starts**
 Owner: Project Lead — 2026-09-27 (Owner order: "แตก ONBOARDING_FLOW.md + STOREFRONT.md เป็นงานสร้างจริง")
 Role: Project Lead (plan/split) + builder (web UI + transport) + reviewer L1–L3 on a **different model** + security (customer-facing data path + PDPA notice)
 Risk: L2–L3 (first customer-facing surface that processes a customer's uploaded business data; no tenant data exists yet — pre-G1)
@@ -596,10 +596,10 @@ Design sources: `docs/product/ONBOARDING_FLOW.md` · `docs/product/STOREFRONT.md
 Build items (the card must split these into their own build cards with estimates):
 1. **Setup page** — a visitor talks to the Onboarding assistant over `web-chat`; supports the three input kinds in `ONBOARDING_FLOW.md` (plain conversation / website link via `web-fetch` / uploaded file via `file-reader`).
 2. **Confirmation summary** — before go-live, show the extracted **fixed-menu** config + a short sample conversation for the customer to confirm or adjust (ONBOARDING_FLOW steps 4–5).
-3. **Later-edit path** — how a customer changes their business info after go-live. **Not designed anywhere yet.** Two options to decide: (ก) talk to a Support agent, or (ข) a separate form/panel. → **NEEDS_OWNER_DECISION before build.**
+3. **Later-edit path** — how a customer changes their business info after go-live. **DECIDED 2026-09-27 (Owner): option (ก) — talk to a Support agent.** No separate form in Phase A: build nothing ahead of a proven need (small shops / older owners are more comfortable typing a chat than filling a form); if edit requests later become frequent, a separate form becomes a Phase B card. → child card **T-079e**.
 Done when:
 - [ ] the three build items are split into child build cards with estimates and dependencies
-- [ ] the later-edit path (ก/ข) is decided by the Owner and written into the child card
+- [x] the later-edit path is decided by the Owner: **(ก) Support agent** (2026-09-27) — written into child card T-079e
 - [ ] reviewer on a different model checks the split is complete against both design docs
 - [ ] **no implementation** starts inside this card (this card only produces the build cards)
 Budget: planning/split only (no build spend)
@@ -609,24 +609,121 @@ INTAKE T-079 — pending
 
 ---
 
-### T-080 — Admin surface: log-only (ก) vs full admin page (ข) — NEEDS_OWNER_DECISION
+> **T-080 (DONE 2026-09-27)** is archived in `docs/archive/TASKS_DONE_ARCHIVE.md`. One-line result: Phase A uses the log + LINE alert already designed in `MONITORING.md`; **no admin web page in Phase A** — a real dashboard stays a Phase B/C trigger (25+ tenants / digest >15 min / a second person).
 
-Status: NEEDS_DECISION — waiting for the Owner to choose (ก) or (ข)
-Owner: Project Lead — 2026-09-27 (Owner-raised gap: the admin/observability surface was designed in `MONITORING.md` but never carded as build work)
-Role: Project Lead (plan) + builder + reviewer on a different model
-Risk: L2 (internal operator surface; no customer-facing change)
-Goal: decide and then build the **operator's** view of the system — the thing that turns monitoring events into something a human acts on.
-Options:
-- **(ก) Log-only (as `MONITORING.md` designed it):** events are written to the database and a **LINE alert** is sent for red events; no new web page. Fast, no new surface to secure. **(Owner's stated preference so far.)**
-- **(ข) A full admin page:** the log + an operator dashboard (events, card/quota status, red alerts, per-bot usage) on top of (ก). More work, and it is a new authenticated surface.
-Done when:
-- [ ] the Owner picks (ก) or (ข) — recorded in `docs/warroom/decision-log.md`
-- [ ] the chosen option is split into build cards per Step 0/Step 1 of `STARTUP_PLAYBOOK.md`
-- [ ] if (ข): the admin page has its own auth/isolation card (security review mandatory)
-Budget: planning only until the Owner decides
-Links: `docs/warroom/MONITORING.md`, `docs/warroom/STARTUP_PLAYBOOK.md` Step 0/Step 1, T-071 (the owner alert channel — email first, LINE later), `docs/architecture/MESSAGE_FLOW_V1.md` §8 (monitor-log events)
+### T-079a — `web-chat` channel adapter (front-of-house foundation)
 
-INTAKE T-080 — pending
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (child of T-079)
+Role: Project Lead (plan) + builder (adapter + tests) + reviewer L1–L3 on a **different model**
+Risk: L2 (new customer-facing channel; pre-G1, no customer data yet)
+Goal: a visitor's message sent from a web page reaches the core and a reply comes back — the channel that the storefront demo, the onboarding assistant and the Support agent all run on. No LINE dependency anywhere in it.
+Design source: `docs/product/INTEGRATIONS.md` (channel-adapter contract + normalized inbound/outbound), `docs/product/adapters/line-oa.md` (the pattern to follow), `docs/product/MCP_TOOLS_V1.md` (`web-chat-channel`, Step 3), `docs/architecture/MESSAGE_FLOW_V1.md` §1/§7/§14
+Done when (each provable by running):
+- [ ] adapter does the 4 adapter duties per `INTEGRATIONS.md` (authenticity, identity mapping, normalize, de-dup) and reports usage/errors to `usage-tracker` / `monitor-log`
+- [ ] inbound/outbound use the normalized format exactly (`tenant_id, bot_id, channel_id, end_customer_ref, message_id, content[], reply_handle`) — no platform field name leaks into the core
+- [ ] runnable proof: a local end-to-end run — post a message as a web visitor → the core answers → the reply returns; transcript saved
+- [ ] scope enforced: a request that cannot be mapped to `tenant_id` + `bot_id` is rejected (never guessed)
+- [ ] reviewer (different model) verdict recorded
+Budget: 4h builder + 1h reviewer (Go pool / free; builder ≤ $2)
+Links: `docs/product/INTEGRATIONS.md`, `docs/product/MCP_TOOLS_V1.md`, `docs/architecture/MESSAGE_FLOW_V1.md` §14, `docs/product/adapters/line-oa.md`
+Depends on: nothing (foundation). Note: T-075 (n8n workflow stubs) is PARKED — this card does not wait for it.
+
+---
+
+### T-079b — Onboarding assistant: conversation / URL / file → fixed-menu config
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (child of T-079)
+Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model**
+Risk: L2 (processes a prospect's uploaded business data; no real customers yet)
+Goal: the assistant reads what the prospect gives it (plain conversation / a website link / an uploaded menu-price file) and produces **fixed-menu config values** — never a raw prompt built from the customer's words.
+Design source: `docs/product/ONBOARDING_FLOW.md`, `docs/product/CUSTOMER_FACING_RULES.md` §3, `docs/data/LITE_SCHEMA_V1.md` (`bots.business_info`, `tone`, `enabled_tools`, quotas), `docs/product/MCP_TOOLS_V1.md` (`web-fetch`, `file-reader`, `chat-bot-core`)
+Done when (each provable by running):
+- [ ] run against a sample shop (one website URL + one sample menu/price file) and show the produced config rows
+- [ ] asks only for what is still missing; tone comes from the fixed list; output is fixed-menu values only (no raw customer text stored as instructions)
+- [ ] ingestion cost bounds applied (`ONBOARDING_FLOW.md` "Cost controls"): page/file size cap, own-site pages only, no full crawl
+- [ ] honesty rule 2 holds with the prospect (never names the model)
+- [ ] reviewer (different model) verdict recorded
+Budget: 6h builder + 1h reviewer (builder ≤ $3)
+Links: `docs/product/ONBOARDING_FLOW.md`, `docs/product/CUSTOMER_FACING_RULES.md` §3, T-079a
+Depends on: T-079a (transport for the conversation).
+
+---
+
+### T-079c — Customer setup page (chat with the Onboarding assistant over web-chat)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (child of T-079)
+Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model** + security (customer-facing surface)
+Risk: L2 (customer-facing UI; no payments, no tenant data yet)
+Goal: a real page where a prospect onboards by chatting — accepts the three input kinds (conversation / website link / uploaded file) and shows progress.
+Design source: `docs/product/ONBOARDING_FLOW.md`, `docs/product/STOREFRONT.md` item 5 ("Set up my bot"), `docs/product/CUSTOMER_FACING_RULES.md`
+Done when (provable by running):
+- [ ] open the page locally and complete an onboarding conversation end to end; transcript + saved run artifacts
+- [ ] all three input kinds work on the page (typed answer, URL, file upload)
+- [ ] the page never shows a model/vendor name and shows the short PDPA notice where it collects anything
+- [ ] reviewer (different model) + security verdict recorded
+Budget: 6h builder + 1h reviewer + 1h security
+Links: `docs/product/ONBOARDING_FLOW.md`, `docs/product/STOREFRONT.md`, T-079a, T-079b
+Depends on: T-079a, T-079b.
+
+---
+
+### T-079d — Confirmation summary + go-live gate
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (child of T-079)
+Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model**
+Risk: L2 (the gate that decides when a bot becomes active — fail-closed matters)
+Goal: before the bot goes live, show the extracted **fixed-menu** config + a short sample conversation ("your bot will say things like…"); the customer confirms or asks for changes; **only on confirmation does the bot become active**.
+Design source: `docs/product/ONBOARDING_FLOW.md` steps 4–5, `docs/product/CUSTOMER_FACING_RULES.md` §3, `docs/data/LITE_SCHEMA_V1.md` (`bots.status`)
+Done when (provable by running):
+- [ ] run through onboarding → the summary renders the extracted config + a sample conversation
+- [ ] if the customer edits or declines, the config changes and the bot **does not** go live (fail-closed)
+- [ ] on confirm, `bots.status` flips to active and the config rows are persisted — shown in the run
+- [ ] reviewer (different model) verdict recorded
+Budget: 4h builder + 1h reviewer
+Links: `docs/product/ONBOARDING_FLOW.md`, `docs/data/LITE_SCHEMA_V1.md`, T-079c
+Depends on: T-079c.
+
+---
+
+### T-079e — Later-edit path via Support agent (Owner decided (ก))
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (child of T-079; Owner decision 2026-09-27: option (ก))
+Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model**
+Risk: L2 (a live tenant's own config changes; fixed menus only)
+Goal: an existing customer asks in chat to change their business info; the Support agent (`ROLES.md`) applies the change **within fixed menus only**, and flags anything that could raise cost to Cost Guard first.
+Design source: `docs/warroom/ROLES.md` (Support agent), `docs/product/CUSTOMER_FACING_RULES.md` §3, `docs/data/LITE_SCHEMA_V1.md` (`bots`)
+Done when (provable by running):
+- [ ] a chat change request updates the config row and the change is logged — shown in the run
+- [ ] only fixed-menu fields can change; an attempt to set free-form instructions is refused
+- [ ] a change that could raise cost (e.g. quota) is flagged to Cost Guard, not applied silently
+- [ ] reviewer (different model) verdict recorded
+Budget: 4h builder + 1h reviewer
+Links: `docs/warroom/ROLES.md`, `docs/product/CUSTOMER_FACING_RULES.md` §3, T-079b
+Depends on: T-079b.
+
+---
+
+### T-079f — Storefront page (public, one page: headline, live demo, price, one button)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (child of T-079; `STOREFRONT.md`, playbook Step 3)
+Role: Project Lead (plan) + builder + reviewer on a **different model**
+Risk: L1–L2 (public marketing page + live demo bot; the demo must have its own daily cap)
+Goal: a prospect understands the offer in under a minute and tries a real bot before paying.
+Design source: `docs/product/STOREFRONT.md`
+Done when (provable by running):
+- [ ] the one page runs locally with all 6 sections of `STOREFRONT.md` (headline, live demo, what it does, price 299, one button, small print)
+- [ ] the live demo bot answers over `web-chat` on the cheapest tier with a working daily cap — shown by a run that hits the cap and stops
+- [ ] no model name anywhere on the page; the demo shows the same consent notice as tenant bots
+- [ ] reviewer (different model) verdict recorded
+Budget: 4h builder + 1h reviewer
+Links: `docs/product/STOREFRONT.md`, T-079a
+Depends on: T-079a.
 
 ---
 
