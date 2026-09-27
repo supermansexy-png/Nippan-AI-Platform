@@ -20,7 +20,11 @@ import time
 
 import psycopg
 
-from .auth import DatabaseRoomCommandAuthorizer, DatabaseRoomReadAuthorizer
+from .auth import (
+    DatabaseRoomCommandAuthorizer,
+    DatabaseRoomReadAuthorizer,
+    RoomCommandOwnerCheck,
+)
 from .budget import PostgresRoomTurnGuard
 from .contracts import (
     AgendaPolicy,
@@ -147,6 +151,106 @@ class RoomCreatePayload(BaseModel):
             raise ValueError("title must not be empty or whitespace only")
         if len(stripped) > 255:
             raise ValueError("title must be at most 255 characters")
+        return value
+
+
+class RoomAgendaCreatePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    objective: str
+    round_limit: int = 2
+    token_budget: int = 6000
+
+    @field_validator("title")
+    @classmethod
+    def _validate_title(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("title must not be empty or whitespace only")
+        if len(stripped) > 255:
+            raise ValueError("title must be at most 255 characters")
+        return value
+
+    @field_validator("objective")
+    @classmethod
+    def _validate_objective(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("objective must not be empty or whitespace only")
+        return value
+
+    @field_validator("round_limit")
+    @classmethod
+    def _validate_round_limit(cls, value: int) -> int:
+        if value < 1 or value > 2:
+            raise ValueError("round_limit must be between 1 and 2")
+        return value
+
+    @field_validator("token_budget")
+    @classmethod
+    def _validate_token_budget(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("token_budget must be positive")
+        return value
+
+
+class RoomAgendaUpdatePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = None
+    objective: str | None = None
+    status: str | None = None
+    round_limit: int | None = None
+    token_budget: int | None = None
+
+    @field_validator("title")
+    @classmethod
+    def _validate_title(cls, value):
+        if value is None:
+            return value
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("title must not be empty or whitespace only")
+        if len(stripped) > 255:
+            raise ValueError("title must be at most 255 characters")
+        return value
+
+    @field_validator("objective")
+    @classmethod
+    def _validate_objective(cls, value):
+        if value is None:
+            return value
+        if not value.strip():
+            raise ValueError("objective must not be empty or whitespace only")
+        return value
+
+    @field_validator("status")
+    @classmethod
+    def _validate_status(cls, value):
+        if value is None:
+            return value
+        if value not in (
+            "OPEN",
+            "RUNNING",
+            "NEEDS_OWNER_DECISION",
+            "COMPLETE",
+            "CANCELLED",
+        ):
+            raise ValueError("status must be a valid agenda status")
+        return value
+
+    @field_validator("round_limit")
+    @classmethod
+    def _validate_round_limit(cls, value):
+        if value is not None and (value < 1 or value > 2):
+            raise ValueError("round_limit must be between 1 and 2")
+        return value
+
+    @field_validator("token_budget")
+    @classmethod
+    def _validate_token_budget(cls, value):
+        if value is not None and value < 1:
+            raise ValueError("token_budget must be positive")
         return value
 
 
@@ -1100,5 +1204,242 @@ def create_war_room_preview_router(
             ) from exc
 
         return {"room_id": str(new_room_id), "title": title}
+
+    @router.post("/war-room/rooms/{room_id}/agenda", status_code=201)
+    async def agenda_create(
+        room_id: UUID,
+        payload: RoomAgendaCreatePayload,
+        request: Request,
+    ):
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
+        actor = trusted_preview_actor(settings)
+        authorize = RoomCommandOwnerCheck(database)
+        if not await authorize.is_owner(actor=actor, room_id=room_id):
+            raise HTTPException(status_code=403, detail="agenda_write_forbidden")
+
+        try:
+            async with database.tenant_transaction(
+                tenant_id=actor.tenant_id,
+                application_id=actor.application_id,
+                request_id=uuid4(),
+            ) as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        select 1
+                        from public.project_rooms
+                        where tenant_id = %s
+                          and application_id = %s
+                          and room_id = %s
+                        """,
+                        (actor.tenant_id, actor.application_id, room_id),
+                    )
+                    room_row = await cur.fetchone()
+                    if room_row is None:
+                        raise HTTPException(
+                            status_code=404,
+                            detail="room_not_found",
+                        )
+
+                    await cur.execute(
+                        """
+                        select coalesce(max(sequence), 0)
+                        from public.project_room_agenda_items
+                        where tenant_id = %s
+                          and application_id = %s
+                          and room_id = %s
+                        """,
+                        (actor.tenant_id, actor.application_id, room_id),
+                    )
+                    sequence_row = await cur.fetchone()
+                    next_sequence = (int(sequence_row[0]) if sequence_row else 0) + 1
+
+                    agenda_item_id = uuid4()
+                    await cur.execute(
+                        """
+                        insert into public.project_room_agenda_items (
+                            agenda_item_id, tenant_id, application_id, room_id,
+                            sequence, title, objective, status, round_limit,
+                            token_budget
+                        ) values (%s, %s, %s, %s, %s, %s, %s, 'OPEN', %s, %s)
+                        """,
+                        (
+                            agenda_item_id,
+                            actor.tenant_id,
+                            actor.application_id,
+                            room_id,
+                            next_sequence,
+                            payload.title,
+                            payload.objective,
+                            payload.round_limit,
+                            payload.token_budget,
+                        ),
+                    )
+        except HTTPException:
+            raise
+        except psycopg.Error as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="agenda_write_failed",
+            ) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="agenda_write_failed",
+            ) from exc
+
+        return {
+            "agenda_item_id": str(agenda_item_id),
+            "sequence": next_sequence,
+            "title": payload.title,
+            "objective": payload.objective,
+            "status": "OPEN",
+            "round_limit": payload.round_limit,
+            "token_budget": payload.token_budget,
+        }
+
+    @router.post(
+        "/war-room/rooms/{room_id}/agenda/{agenda_item_id}",
+        status_code=200,
+    )
+    async def agenda_update(
+        room_id: UUID,
+        agenda_item_id: UUID,
+        payload: RoomAgendaUpdatePayload,
+        request: Request,
+    ) -> dict:
+        await _authorize_preview_request(
+            request,
+            settings,
+            remote_access_verifier,
+        )
+        actor = trusted_preview_actor(settings)
+        authorize = RoomCommandOwnerCheck(database)
+        if not await authorize.is_owner(actor=actor, room_id=room_id):
+            raise HTTPException(status_code=403, detail="agenda_write_forbidden")
+
+        supplied = {
+            column: value
+            for column, value in (
+                ("title", payload.title),
+                ("objective", payload.objective),
+                ("status", payload.status),
+                ("round_limit", payload.round_limit),
+                ("token_budget", payload.token_budget),
+            )
+            if value is not None
+        }
+        if not supplied:
+            raise HTTPException(status_code=422, detail="agenda_update_empty")
+
+        if payload.status is not None:
+            if payload.status in ("COMPLETE", "CANCELLED"):
+                supplied["completed_at"] = datetime.now(UTC)
+            else:
+                supplied["completed_at"] = None
+
+        row: tuple | None = None
+        try:
+            async with database.tenant_transaction(
+                tenant_id=actor.tenant_id,
+                application_id=actor.application_id,
+                request_id=uuid4(),
+            ) as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        select agenda_item_id
+                        from public.project_room_agenda_items
+                        where tenant_id = %s
+                          and application_id = %s
+                          and room_id = %s
+                          and agenda_item_id = %s
+                        for update
+                        """,
+                        (
+                            actor.tenant_id,
+                            actor.application_id,
+                            room_id,
+                            agenda_item_id,
+                        ),
+                    )
+                    existing = await cur.fetchone()
+                    if existing is None:
+                        raise HTTPException(
+                            status_code=404,
+                            detail="agenda_item_not_found",
+                        )
+
+                    assignments = ", ".join(
+                        f"{column} = %s" for column in supplied
+                    )
+                    await cur.execute(
+                        f"""
+                        update public.project_room_agenda_items
+                        set {assignments}
+                        where tenant_id = %s
+                          and application_id = %s
+                          and room_id = %s
+                          and agenda_item_id = %s
+                        """,
+                        (
+                            *supplied.values(),
+                            actor.tenant_id,
+                            actor.application_id,
+                            room_id,
+                            agenda_item_id,
+                        ),
+                    )
+
+                    await cur.execute(
+                        """
+                        select agenda_item_id, sequence, title, objective,
+                               status, round_limit, token_budget
+                        from public.project_room_agenda_items
+                        where tenant_id = %s
+                          and application_id = %s
+                          and room_id = %s
+                          and agenda_item_id = %s
+                        """,
+                        (
+                            actor.tenant_id,
+                            actor.application_id,
+                            room_id,
+                            agenda_item_id,
+                        ),
+                    )
+                    row = await cur.fetchone()
+        except HTTPException:
+            raise
+        except psycopg.Error as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="agenda_write_failed",
+            ) from exc
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="agenda_write_failed",
+            ) from exc
+
+        if row is None:
+            raise HTTPException(
+                status_code=503,
+                detail="agenda_write_failed",
+            )
+
+        return {
+            "agenda_item_id": str(row[0]),
+            "sequence": row[1],
+            "title": row[2],
+            "objective": row[3],
+            "status": row[4],
+            "round_limit": row[5],
+            "token_budget": row[6],
+        }
 
     return router

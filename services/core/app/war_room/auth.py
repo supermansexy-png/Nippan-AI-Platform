@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from app.db import Database
 
 from .interfaces import (
@@ -62,6 +64,58 @@ class DatabaseRoomCommandAuthorizer:
 
         return bool(row and row[0])
 
+
+
+class RoomCommandOwnerCheck:
+    """Fail-closed OWNER check for one room path parameter.
+
+    Same participant-table query shape as ``DatabaseRoomCommandAuthorizer``,
+    scoped by the trusted actor's tenant/application plus the path room id.
+    Any unexpected failure denies access.
+    """
+
+    def __init__(self, database: Database) -> None:
+        self._database = database
+
+    async def is_owner(
+        self,
+        *,
+        actor: TrustedActorContext,
+        room_id: UUID,
+    ) -> bool:
+        try:
+            async with self._database.tenant_transaction(
+                tenant_id=actor.tenant_id,
+                application_id=actor.application_id,
+            ) as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        select exists (
+                            select 1
+                            from public.project_room_participants
+                            where tenant_id = %s
+                              and application_id = %s
+                              and room_id = %s
+                              and principal_type = %s
+                              and principal_id = %s
+                              and role = 'OWNER'
+                              and active
+                        )
+                        """,
+                        (
+                            actor.tenant_id,
+                            actor.application_id,
+                            room_id,
+                            actor.principal_type.value,
+                            actor.principal_id,
+                        ),
+                    )
+                    row = await cur.fetchone()
+        except Exception:
+            return False
+
+        return bool(row and row[0])
 
 
 class DatabaseRoomReadAuthorizer:

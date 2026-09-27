@@ -965,3 +965,436 @@ async def test_room_create_rate_limit_resets_after_window(monkeypatch) -> None:
         assert response.status_code == 201
         assert len(seed_called) == 1
 
+
+# ---- T-034b slice 2b: agenda create route ----
+
+
+class _FakeAgendaDatabase:
+    """In-memory stand-in for `Database`: no PostgreSQL, records SQL."""
+
+    def __init__(
+        self,
+        *,
+        owner_present: bool = True,
+        room_exists: bool = True,
+        max_sequence: int = 0,
+        insert_error: Exception | None = None,
+        agenda_exists: bool = True,
+        update_error: Exception | None = None,
+    ) -> None:
+        self.owner_present = owner_present
+        self.room_exists = room_exists
+        self.max_sequence = max_sequence
+        self.insert_error = insert_error
+        self.agenda_exists = agenda_exists
+        self.update_error = update_error
+        self.statements: list[str] = []
+        self.insert_params: tuple | None = None
+        self.update_params: tuple | None = None
+        self._row: tuple | None = None
+        self.stored_row: tuple = (
+            AGENDA_ID,
+            1,
+            "วาระเดิม",
+            "เป้าหมายเดิม",
+            "OPEN",
+            2,
+            6000,
+            None,  # completed_at
+        )
+
+    def tenant_transaction(self, **_kwargs):
+        return _FakeAgendaTransaction(self)
+
+
+class _FakeAgendaTransaction:
+    def __init__(self, database: _FakeAgendaDatabase) -> None:
+        self._database = database
+
+    async def __aenter__(self):
+        return _FakeAgendaConnection(self._database)
+
+    async def __aexit__(self, *_exc_info):
+        return False
+
+
+class _FakeAgendaConnection:
+    def __init__(self, database: _FakeAgendaDatabase) -> None:
+        self._database = database
+
+    def cursor(self):
+        return _FakeAgendaCursor(self._database)
+
+
+class _FakeAgendaCursor:
+    def __init__(self, database: _FakeAgendaDatabase) -> None:
+        self._database = database
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_exc_info):
+        return False
+
+    async def execute(self, sql, params=None) -> None:
+        text = " ".join(str(sql).split()).lower()
+        db = self._database
+        db.statements.append(text)
+        if "select exists" in text:
+            db._row = (db.owner_present,)
+        elif "for update" in text:
+            bound_item = params[-1] if params else None
+            if db.agenda_exists and bound_item == AGENDA_ID:
+                db._row = (db.stored_row[0],)
+            else:
+                db._row = None
+        elif "select agenda_item_id, sequence" in text:
+            db._row = db.stored_row
+        elif "from public.project_rooms" in text:
+            db._row = (1,) if db.room_exists else None
+        elif "coalesce(max(sequence)" in text:
+            db._row = (db.max_sequence,)
+        elif "insert into public.project_room_agenda_items" in text:
+            db.insert_params = params
+            if db.insert_error is not None:
+                raise db.insert_error
+        elif text.startswith("update public.project_room_agenda_items set"):
+            if db.update_error is not None:
+                raise db.update_error
+            db.update_params = params
+            set_clause = text.split(" set ", 1)[1].split(" where ", 1)[0]
+            columns = [
+                part.split("=")[0].strip() for part in set_clause.split(",")
+            ]
+            index_by_column = {
+                "title": 2,
+                "objective": 3,
+                "status": 4,
+                "round_limit": 5,
+                "token_budget": 6,
+                "completed_at": 7,
+            }
+            row = list(db.stored_row)
+            for column, value in zip(columns, params[: len(columns)]):
+                row[index_by_column[column]] = value
+            if row[4] in ("COMPLETE", "CANCELLED"):
+                if row[7] is None:
+                    raise RuntimeError("status requires completed_at")
+            elif row[7] is not None:
+                raise RuntimeError("completed_at requires COMPLETE or CANCELLED")
+            if row[4] not in (
+                "OPEN",
+                "RUNNING",
+                "NEEDS_OWNER_DECISION",
+                "COMPLETE",
+                "CANCELLED",
+            ):
+                raise RuntimeError("status outside the agenda domain")
+            db.stored_row = tuple(row)
+
+    async def fetchone(self):
+        return self._database._row
+
+
+def _agenda_app(database) -> FastAPI:
+    app = FastAPI()
+    app.include_router(
+        create_war_room_preview_router(
+            settings=_room_create_settings(),
+            database=database,
+        )
+    )
+    return app
+
+
+def _agenda_client(app: FastAPI, port: int) -> AsyncClient:
+    return AsyncClient(
+        transport=ASGITransport(app=app, client=("127.0.0.1", port)),
+        base_url="https://war-room.example.test",
+    )
+
+
+@pytest.mark.anyio
+async def test_agenda_create_returns_201_with_sequence_one() -> None:
+    db = _FakeAgendaDatabase(owner_present=True, room_exists=True)
+
+    async with _agenda_client(_agenda_app(db), 43140) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda",
+            json={"title": "วาระทดสอบ", "objective": "ทดสอบระบบ"},
+        )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert UUID(body["agenda_item_id"]) is not None
+    assert body["sequence"] == 1
+    assert body["title"] == "วาระทดสอบ"
+    assert body["objective"] == "ทดสอบระบบ"
+    assert body["status"] == "OPEN"
+    assert body["round_limit"] == 2
+    assert body["token_budget"] == 6000
+    assert db.insert_params is not None
+    assert str(ROOM_ID) in {str(part) for part in db.insert_params}
+
+
+@pytest.mark.anyio
+async def test_agenda_create_forbidden_when_owner_check_fails() -> None:
+    db = _FakeAgendaDatabase(owner_present=False)
+
+    async with _agenda_client(_agenda_app(db), 43141) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda",
+            json={"title": "วาระทดสอบ", "objective": "ทดสอบระบบ"},
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "agenda_write_forbidden"
+    assert db.insert_params is None
+    assert not any("insert into" in statement for statement in db.statements)
+
+
+@pytest.mark.anyio
+async def test_agenda_create_rejects_invalid_payload_before_database() -> None:
+    class _ExplodingDatabase:
+        def __getattr__(self, name):
+            raise AssertionError("database must not be touched on invalid payload")
+
+    app = _agenda_app(_ExplodingDatabase())
+    bad_payloads = [
+        {"title": "", "objective": "เป้าหมาย"},
+        {"title": "   ", "objective": "เป้าหมาย"},
+        {"title": "x" * 256, "objective": "เป้าหมาย"},
+        {"title": "วาระ", "objective": "   "},
+    ]
+
+    for payload in bad_payloads:
+        async with _agenda_client(app, 43142) as client:
+            response = await client.post(
+                f"/war-room/rooms/{ROOM_ID}/agenda",
+                json=payload,
+            )
+        assert response.status_code == 422, payload
+
+
+@pytest.mark.anyio
+async def test_agenda_create_missing_room_returns_404() -> None:
+    db = _FakeAgendaDatabase(owner_present=True, room_exists=False)
+
+    async with _agenda_client(_agenda_app(db), 43143) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda",
+            json={"title": "วาระทดสอบ", "objective": "ทดสอบระบบ"},
+        )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "room_not_found"
+    assert db.insert_params is None
+
+
+@pytest.mark.anyio
+async def test_agenda_create_database_error_returns_503() -> None:
+    import psycopg
+
+    db = _FakeAgendaDatabase(
+        owner_present=True,
+        room_exists=True,
+        insert_error=psycopg.OperationalError("database connection failed"),
+    )
+
+    async with _agenda_client(_agenda_app(db), 43144) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda",
+            json={"title": "วาระทดสอบ", "objective": "ทดสอบระบบ"},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "agenda_write_failed"
+
+
+# ---- T-034b slice 2b: agenda edit/close route ----
+
+
+@pytest.mark.anyio
+async def test_agenda_update_owner_can_close_status() -> None:
+    db = _FakeAgendaDatabase(owner_present=True)
+
+    async with _agenda_client(_agenda_app(db), 43150) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "COMPLETE"},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["agenda_item_id"] == str(AGENDA_ID)
+    assert body["status"] == "COMPLETE"
+    assert body["title"] == "วาระเดิม"
+    assert db.update_params is not None
+    assert "COMPLETE" in db.update_params
+
+
+@pytest.mark.anyio
+async def test_agenda_update_owner_can_reopen_after_close() -> None:
+    db = _FakeAgendaDatabase(owner_present=True)
+
+    async with _agenda_client(_agenda_app(db), 43157) as client:
+        close = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "COMPLETE"},
+        )
+        reopen = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "OPEN"},
+        )
+
+    assert close.status_code == 200
+    assert close.json()["status"] == "COMPLETE"
+    assert reopen.status_code == 200
+    assert reopen.json()["status"] == "OPEN"
+    assert db.stored_row[4] == "OPEN"
+    assert db.stored_row[7] is None
+
+
+@pytest.mark.anyio
+async def test_agenda_update_rejects_closed_status_before_database() -> None:
+    class _ExplodingDatabase:
+        def __getattr__(self, name):
+            raise AssertionError("database must not be touched on invalid status")
+
+    async with _agenda_client(_agenda_app(_ExplodingDatabase()), 43158) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "CLOSED"},
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.anyio
+async def test_agenda_update_out_of_scope_item_returns_404() -> None:
+    db = _FakeAgendaDatabase(owner_present=True)
+    other_uuid = "99999999-9999-4999-8999-999999999999"
+    assert other_uuid != str(AGENDA_ID)
+
+    async with _agenda_client(_agenda_app(db), 43159) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{other_uuid}",
+            json={"status": "COMPLETE"},
+        )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "agenda_item_not_found"
+    assert db.update_params is None
+    assert not any(
+        statement.startswith("update public.project_room_agenda_items")
+        for statement in db.statements
+    )
+
+
+@pytest.mark.anyio
+async def test_agenda_update_owner_can_change_title() -> None:
+    db = _FakeAgendaDatabase(owner_present=True)
+
+    async with _agenda_client(_agenda_app(db), 43151) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"title": "วาระใหม่"},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == "วาระใหม่"
+    assert body["status"] == "OPEN"
+    assert db.update_params is not None
+    assert "วาระใหม่" in db.update_params
+
+
+@pytest.mark.anyio
+async def test_agenda_update_missing_item_returns_404() -> None:
+    db = _FakeAgendaDatabase(owner_present=True, agenda_exists=False)
+
+    async with _agenda_client(_agenda_app(db), 43152) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "COMPLETE"},
+        )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "agenda_item_not_found"
+    assert db.update_params is None
+    assert not any(
+        statement.startswith("update public.project_room_agenda_items")
+        for statement in db.statements
+    )
+
+
+@pytest.mark.anyio
+async def test_agenda_update_forbidden_when_owner_check_fails() -> None:
+    db = _FakeAgendaDatabase(owner_present=False)
+
+    async with _agenda_client(_agenda_app(db), 43153) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "COMPLETE"},
+        )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "agenda_write_forbidden"
+    assert db.update_params is None
+    assert not any(
+        statement.startswith("update public.project_room_agenda_items")
+        for statement in db.statements
+    )
+
+
+@pytest.mark.anyio
+async def test_agenda_update_rejects_invalid_payload() -> None:
+    class _ExplodingDatabase:
+        def __getattr__(self, name):
+            raise AssertionError("database must not be touched on invalid payload")
+
+    app = _agenda_app(_ExplodingDatabase())
+
+    async with _agenda_client(app, 43154) as client:
+        bad_status = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "IN_PROGRESS"},
+        )
+
+    assert bad_status.status_code == 422
+
+    # empty payload passes model validation but the route refuses it
+    # after the owner check and before any write.
+    db = _FakeAgendaDatabase(owner_present=True)
+    async with _agenda_client(_agenda_app(db), 43155) as client:
+        empty = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={},
+        )
+    assert empty.status_code == 422
+    assert empty.json()["detail"] == "agenda_update_empty"
+    assert db.update_params is None
+    assert not any(
+        statement.startswith("update public.project_room_agenda_items")
+        for statement in db.statements
+    )
+
+
+@pytest.mark.anyio
+async def test_agenda_update_database_error_returns_503() -> None:
+    import psycopg
+
+    db = _FakeAgendaDatabase(
+        owner_present=True,
+        update_error=psycopg.OperationalError("database connection failed"),
+    )
+
+    async with _agenda_client(_agenda_app(db), 43156) as client:
+        response = await client.post(
+            f"/war-room/rooms/{ROOM_ID}/agenda/{AGENDA_ID}",
+            json={"status": "COMPLETE"},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "agenda_write_failed"
+
