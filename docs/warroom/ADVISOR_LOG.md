@@ -303,3 +303,27 @@ that references the old one.
 - WORKING_POLICY L3 card: not needed — T-060 already fixed Rule 1
 - commits: `aa64a98` (T-051) · `6f03015` (T-066) · `ab29571` (T-065) · board+docs commit (this entry)
 - notes: verdicts appended by the receiver (PL), not the advisor; the original "pending" line is left untouched per append-only rule
+
+### T-034b — 2026-09-27 — Owner approves the War Room agenda deploy to the Render preview
+- owner_intent_verbatim: "1 อนุมั1ิ" (recorded verbatim as received; read by the receiver as "อนุมัติ" — approve)
+- order (as understood by the receiver): deploy the finished T-034b War Room agenda work to the Render preview. Concretely: checkout `phase2/postgres-logical-schema` (the branch the preview service runs), cherry-pick the T-034b commits from `dev-workspace` (prefer cherry-pick of the specific commits, not a merge, so unrelated board/docs commits are not pulled), push to origin with NO force, return to `dev-workspace`, then trigger the Render deploy for the War Room preview service only. Live-check the preview URL afterwards (HTTP status + proof the new code is served), then close the card with the deploy evidence.
+- receiver: project-lead `opencode-go/longcat-2.5-preview-free`
+- scope_in: the T-034b runtime commits on `dev-workspace` (`7ef25f4` slice 1 seed script + `aa36a81` slice 2b agenda — the two commits whose content is missing on `phase2/postgres-logical-schema`); the branch push; the Render preview deploy trigger; the live URL check; the T-034b card close-out with evidence.
+- scope_out: production `Ai-bot-Nippan` (never touched); no DB migrations; no force push; no unrelated board/docs commits; no new cards; no paid calls.
+- prohibitions: no force push · no production system · no DB migration/reset · no secrets in prompts or logs · PL does not hand-edit runtime files (the cherry-pick carries the builder's already-reviewed code as-is).
+- auditor: pending (per-card advisor audit A1–A5 to be run by a model ≠ `opencode-go/mimo-v2.6-pro` before the card closes)
+- verdict: pending
+- evidence: card T-034b in `TASKS.md`; `git log dev-workspace` (T-034b commit chain: `7ef25f4`, `cfcae9f`, `ba830ef`, `d746046`, `7631561`, `2efe2ac`, `aa36a81`); content check `git diff --ignore-cr-at-eol 243c322 aa36a81^` (phase2 runtime files identical to the agenda commit's parent except the seed script); Render service `chetgo` (`srv-dajprr5g1s2s73bnoed0`, branch `phase2/postgres-logical-schema`, URL `https://chetgo.onrender.com`).
+- notes: written by the receiver of the instruction, not the advisor (`ADVISOR_MANDATE.md` §4). The verbatim string is reproduced exactly as the advisor relayed it, including the apparent typo; the receiver's reading ("อนุมัติ") is stated in the order field, not substituted into the verbatim field. This entry is appended; no earlier entry is altered.
+
+### T-033 — 2026-09-27 — Owner answers two of the three open War Room pilot decisions
+- owner_intent_verbatim: "ใช้ใหม่ พี่จ่าย เพดาล ไม่เกิน 1 เหรียญต่อครั้ง" (recorded verbatim as received; "เพดาล" read as "เพดาน" — ceiling)
+- order (as understood by the receiver): record the Owner's answers on card T-033 — (1) a fresh room per meeting: **yes** ("ใช้ใหม่"); (2) who pays: **the Owner** ("พี่จ่าย"), with a cost ceiling of **$1 per meeting** ("ไม่เกิน 1 เหรียญต่อครั้ง"); (3) "ใครเข้าร่วม" (which participants join the room): **still open**, no answer given — the card keeps this item open-on-Owner.
+- receiver: project-lead `opencode-go/longcat-2.5-preview-free`
+- scope_in: the two recorded answers on card T-033; the still-open participants question; this record.
+- scope_out: no pilot run, no provider calls, no room creation, no code change, no other card edits.
+- prohibitions: must not record an answer the Owner did not give; must not start the pilot before the participants question is answered or the Owner says go.
+- auditor: not required (recording of an Owner answer, not a card closure)
+- verdict: pending
+- evidence: card T-033 in `TASKS.md` (blockers 2 and 3 updated with the recorded answers; participants item marked still-open-on-Owner).
+- notes: written by the receiver of the instruction, not the advisor (`ADVISOR_MANDATE.md` §4). The ceiling replaces the earlier provisional $0.05 stop rule in the meeting plan; the meeting plan's stop rule is updated to $1 when the pilot is scheduled. This entry is appended; no earlier entry is altered.

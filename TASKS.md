@@ -67,7 +67,7 @@ Decision: do NOT enable full PR-required protection. Rationale: (a) the dev team
 
 ### T-033 — War Room in real use: the AI team's meeting room
 
-Status: READY for INTAKE — blocked on the Owner's decisions (access, fresh room, who joins and who pays). No work starts until those are answered.
+Status: IN_PROGRESS — Owner answered 2 of 3 open decisions 2026-09-27 (fresh room per meeting = yes; Owner pays, ceiling $1/meeting). "ใครเข้าร่วม" (participants) still open-on-Owner.
 Owner: Project Lead — 2026-09-26 (Owner order: "ทดลองใช้ห้องวอร์รูปจริง ๆ เพราะหลังจากนี้เราต้องเอา AI เข้าไปประชุมและวางงาน แจกงาน รายงานผล พร้อมอภิปรายปัญหางานกัน")
 Role: Owner (chair) + PL (facilitate, record, verify) + AI participants + reviewer on a different model
 Risk: L3 (the room drives billable provider turns and holds the team's working record; no tenant/customer data involved)
@@ -81,12 +81,8 @@ Links: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (acceptance + the t
    (team `https://1011.cloudflareaccess.com`, AUD read from the login redirect); the Owner completed the Access one-time-PIN
    login and the room loaded in his browser. No new Cloudflare setup needed. Evidence:
    `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` §"Cloudflare Access configuration — discovered by read-only probe".
-2. **A fresh room per meeting.** The seeded room is terminal `STOPPED`, the state machine permits no exit, and there is no create-room endpoint. Options: (a) add a reviewed create-room/seed path (code change → builder + reviewer); (b) reset the preview room to `DRAFT` before the pilot (one recorded data operation on the isolated preview DB) so the full lifecycle can be driven live; (c) leave it and accept that the first meeting happens on a fresh seed later.
-3. **Who joins, and who pays.** Two architectures, and the choice decides the whole pilot:
-   (a) **room-driven turns** — enable bounded turns on ONE preview model (`poolside/laguna-s-2.1` by default) so the room itself produces the AI turns. Cheap (the measured 2026-09-23 session cost $0.00027), but the voices are that single model, **not** our real roster agents;
-   (b) **team-driven record** — our real AI team (the dev-time agents per `MODEL_ROSTER.md`) does the work and the room is the durable record of the meeting (plan, assignments, reports, problems). Matches the Owner's stated intent, needs a reviewed posting path for non-owner participants;
-   (c) no provider calls at all — participants post without room-driven turns.
-   Credit ≈ **$1.60**; any paid pilot needs a hard per-meeting ceiling approved by the Owner.
+2. ~~**A fresh room per meeting.**~~ **RESOLVED 2026-09-27 — Owner answer: "ใช้ใหม่" (a fresh room per meeting = YES).** Delivered by T-034b: the reviewed create-room path (`POST /war-room/rooms`, slice 2a) plus the seed-script slice 1 (`--room-id`/`--title`/`--force`, tenant-scoped, transactional) are being deployed to the preview with the agenda work (deploy in progress, see T-034b). The old options (a)/(b)/(c) below are superseded.
+3. **Who joins, and who pays.** **PARTIALLY RESOLVED 2026-09-27 — Owner answers: bearer = Owner ("พี่จ่าย"); cost ceiling = $1 per meeting ("ไม่เกิน 1 เหรียญต่อครั้ง").** The ceiling replaces the provisional $0.05 stop rule in the meeting plan above. **STILL OPEN: "ใครเข้าร่วม"** — which participants join the room (the architecture choice (a) room-driven turns / (b) team-driven record / (c) no provider calls) is unanswered; the pilot does not start until the Owner picks. Credit ≈ **$1.60** as of 2026-09-27.
 
 INTAKE T-033 — 2026-09-26 (Project Lead)
 Understanding: the Owner wants the War Room used as the team's real working room: AIs attend, work is planned and assigned, results are reported, problems are debated — the meeting itself must become the durable record, not a chat.
@@ -131,6 +127,8 @@ Decision: NEEDS_DECISION — blocked on the Owner's three answers above. No AI i
 Status: BLOCKED behind T-034a — start only after the Owner has used the improved screen.
 
 **Status update 2026-09-27 (batch order):** slices 1–3 delivered and reviewed; slice 2b code committed (`aa36a81`) and pushed to `origin/dev-workspace`. **DEPLOY = BLOCKED on the Owner** — deploying any slice requires separate Owner approval (batch order: "deploy requires separate Owner approval"). No deploy is performed. Card marked blocked-on-Owner.
+
+**DEPLOY IN PROGRESS — 2026-09-27 (Owner approved, advisor relayed: "1 อนุมั1ิ" = อนุมัติ):** cherry-picking the two T-034b commits missing on `phase2/postgres-logical-schema` (`7ef25f4` slice 1 seed script + `aa36a81` slice 2b agenda, runtime files only) → push (no force) → trigger the Render preview deploy → live-check the URL. Evidence to be recorded on completion; card closes DONE with the deploy evidence.
 Owner: Project Lead — 2026-09-26 (Owner order: the agenda panel "ถ้าจะมีไว้ต้องใช้งานได้" and a new meeting must not need hand-edited SQL)
 Role: Developer — **paid builder `z-ai/glm-5.3-flash` (Owner-locked)** + reviewer `opencode/space-bunny-free` + **security reviewer `openrouter/nex-agi/nex-n2.5-mini:free`** (a new write endpoint on the transport is security-relevant)
 Risk: L3 (new write path on the transport: authorization, scope binding, fail-closed behaviour)
