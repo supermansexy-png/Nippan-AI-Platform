@@ -513,6 +513,26 @@ Estimate: within budget.
 Risks: Supabase MCP DDL limits (UNVERIFIED — T-072 will test first); RLS policy complexity (mitigate: security review per migration).
 Decision: READY for INTAKE.
 
+### T-004 — Legal review: tenant agreement + end-customer privacy notice (PARKED — hard gate for Step 2)
+
+Status: **PARKED** — cut from the dev-time plan by the Owner on 2026-09-25 ("อันนี้ต้องตัดออก เพราะตอนนี้อยู่ในช่วงทำระบบ งานนี้ไม่เกี่ยวข้องเลย"); **reopened as a tracked card 2026-09-27** so it lives on the board, not only in git history
+Owner: Project Owner — must engage a lawyer / PDPA compliance advisor (this is **not** an AI seat)
+Role: legal — an external human professional
+Risk: L3 (the tenant agreement and the privacy notice are what customers actually agree to)
+Goal: the tenant agreement and the end-customer privacy notice have been reviewed by a lawyer before the platform serves any real customer
+Done when:
+- [ ] Tenant agreement reviewed by a lawyer — the data-controller (tenant) / data-processor (platform) split is stated per `PDPA_COMPLIANCE.md` Layer 1, and the bot-is-an-assistant / owner-is-responsible wording per `BUSINESS_OPERATIONS.md` §2
+- [ ] End-customer privacy notice wording reviewed (the short notice the bot shows on first contact, `PDPA_COMPLIANCE.md` Layer 1)
+- [ ] The reviewed texts (or a reference to them) are recorded with the reviewer's identity and date
+- [ ] No AI closes this card on its own — it closes only on a real legal review
+Budget: one-off legal fee (the Owner sets the amount). No AI/model spend.
+Links: `docs/security/PDPA_COMPLIANCE.md`, `docs/product/BUSINESS_OPERATIONS.md` §2–§3, `docs/product/ONBOARDING_FLOW.md`, `docs/warroom/STARTUP_PLAYBOOK.md` (hard gate in Step 2), `docs/warroom/decision-log.md` 2026-09-25 ("Legal work (T-004) cut from the dev-time plan")
+Note: opening the first-customer onboarding card (Step 2) is blocked until this card is DONE — see the hard gate in `STARTUP_PLAYBOOK.md`.
+
+INTAKE T-004 — pending (PARKED; no AI work is started)
+
+---
+
 ## REVIEW
 
 (none)
