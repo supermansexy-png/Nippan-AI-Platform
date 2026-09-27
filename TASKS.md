@@ -140,18 +140,18 @@ INTAKE T-004 — pending (PARKED; no AI work is started)
 
 ### T-079a — `web-chat` channel adapter (front-of-house foundation)
 
-Status: READY for INTAKE
+Status: **DONE — 2026-09-28** (commits `24c85ba` + `6d5f220`; reviewer ACCEPTED-WITH-FINDINGS, both findings fixed and re-verified)
 Owner: Project Lead — 2026-09-27 (child of T-079)
 Role: Project Lead (plan) + builder (adapter + tests) + reviewer L1–L3 on a **different model**
 Risk: L2 (new customer-facing channel; pre-G1, no customer data yet)
 Goal: a visitor's message sent from a web page reaches the core and a reply comes back — the channel that the storefront demo, the onboarding assistant and the Support agent all run on. No LINE dependency anywhere in it.
 Design source: `docs/product/INTEGRATIONS.md` (channel-adapter contract + normalized inbound/outbound), `docs/product/adapters/line-oa.md` (the pattern to follow), `docs/product/MCP_TOOLS_V1.md` (`web-chat-channel`, Step 3), `docs/architecture/MESSAGE_FLOW_V1.md` §1/§7/§14
 Done when (each provable by running):
-- [ ] adapter does the 4 adapter duties per `INTEGRATIONS.md` (authenticity, identity mapping, normalize, de-dup) and reports usage/errors to `usage-tracker` / `monitor-log`
-- [ ] inbound/outbound use the normalized format exactly (`tenant_id, bot_id, channel_id, end_customer_ref, message_id, content[], reply_handle`) — no platform field name leaks into the core
-- [ ] runnable proof: a local end-to-end run — post a message as a web visitor → the core answers → the reply returns; transcript saved
-- [ ] scope enforced: a request that cannot be mapped to `tenant_id` + `bot_id` is rejected (never guessed)
-- [ ] reviewer (different model) verdict recorded
+- [x] adapter does the 4 adapter duties per `INTEGRATIONS.md` (authenticity, identity mapping, normalize, de-dup) and reports usage/errors to `usage-tracker` / `monitor-log`
+- [x] inbound/outbound use the normalized format exactly (`tenant_id, bot_id, channel_id, end_customer_ref, message_id, content[], reply_handle`) — no platform field name leaks into the core
+- [x] runnable proof: a local end-to-end run — post a message as a web visitor → the core answers → the reply returns; transcript saved
+- [x] scope enforced: a request that cannot be mapped to `tenant_id` + `bot_id` is rejected (never guessed)
+- [x] reviewer (different model) verdict recorded
 Budget: 4h builder + 1h reviewer (Go pool / free; builder ≤ $2)
 Links: `docs/product/INTEGRATIONS.md`, `docs/product/MCP_TOOLS_V1.md`, `docs/architecture/MESSAGE_FLOW_V1.md` §14, `docs/product/adapters/line-oa.md`
 Depends on: nothing (foundation). Note: T-075 (n8n workflow stubs) is PARKED — this card does not wait for it.
@@ -260,7 +260,7 @@ Depends on: T-079a.
 
 ### T-083 — Bound/disable model reasoning for headless jobs (`opencode.json`) — L2
 
-Status: READY for INTAKE (non-urgent — do it when the queue frees)
+Status: **DONE — 2026-09-28** (commit `6d5f220`; proven on a real T-079a-sized job ending `reason:"stop"` with `reasoning:0`; reviewer ACCEPTED-WITH-FINDINGS, 0 findings against the config)
 Owner: Project Lead — 2026-09-27 (Owner order; long-term fix from T-082)
 Role: Project Lead (plan) + builder (edit `opencode.json` and/or add a runner flag) + reviewer L1–L3 on a **different model**
 Risk: L2 (dev-time agent/model config change)
@@ -269,15 +269,21 @@ Mechanism (VERIFIED from the opencode docs, 2026-09-27 — do not guess):
 `opencode.json` → `provider.<providerId>.models.<modelId>.options` accepts `reasoningEffort` (e.g. `"low"` / `"minimal"` / `"none"`), and the same file supports **variants** (`models.<id>.variants.<name>` with the same option keys). Provider ids here are `opencode-go` / `opencode` / `openrouter`. Agent-level config overrides the global model options.
 Design source: T-082 finding; opencode docs `/docs/models` ("Configure models", "Variants"); `opencode.json`; `scripts/headless_run.mjs`
 Done when:
-- [ ] a reasoning cap (or off-switch) is applied for the failing models via `provider.<id>.models.<model>.options` (or a variant passed by the runner)
-- [ ] **proof must use a test job whose length and complexity are close to the real T-079a** — not a trivial one-liner — and it must end with `reason:"stop"` and real output (**`reason:"length"` = fail, even if some text was produced**)
-- [ ] if the cap still fails on a T-079a-sized job, apply the fallback **immediately without asking**: (a) split T-079a into smaller sub-jobs that are short enough, and/or (b) cut unnecessary reference files/context out of the brief
-- [ ] the temporary rule (headless default = `opencode-go/mimo-v2.6-flash`) is reverted or kept deliberately, and that choice is recorded in the decision-log
-- [ ] reviewer (different model) verdict recorded
+- [x] a reasoning cap (or off-switch) is applied for the failing models via `provider.<id>.models.<model>.options` (or a variant passed by the runner)
+- [x] **proof must use a test job whose length and complexity are close to the real T-079a** — not a trivial one-liner — and it must end with `reason:"stop"` and real output (**`reason:"length"` = fail, even if some text was produced**)
+- [x] if the cap still fails on a T-079a-sized job, apply the fallback **immediately without asking**: (a) split T-079a into smaller sub-jobs that are short enough, and/or (b) cut unnecessary reference files/context out of the brief
+- [x] the temporary rule (headless default = `opencode-go/mimo-v2.6-flash`) is reverted or kept deliberately, and that choice is recorded in the decision-log
+- [x] reviewer (different model) verdict recorded
+
+RESULT — VERIFIED 2026-09-28:
+- `opencode.json` got `provider.opencode-go.models.{glm-5.3-flash,kimi-k3,deepseek-v4.1-flash}.options.reasoningEffort = "low"` (21 lines, valid JSON, no other key touched).
+- Proof job `runs/2026-09-27T16-27-03Z-t079a-cap-proof-glm` ran the **real T-079a brief** on `opencode-go/glm-5.3-flash` and ended `reason:"stop"` (was `reason:"length"`, `output:0`, `reasoning:4096`) with `reasoning:0`, `output:856`, 10 real files, 15 tests passing, e2e PASS. Fallback (split/shorten) therefore **not needed**.
+- Reviewer `opencode/muse-spark-1.3-contributor-free` re-ran the tests and e2e independently: 15 passed / PASS; confirmed the `opencode.json` diff touches no other key.
+- Temporary rule: **reverted** — headless builder default is back to the roster Primary `opencode-go/glm-5.3-flash`, which now works.
 Budget: 2h builder + 1h reviewer + the cost of the verification jobs (Go pool / free)
 Links: T-082, `scripts/headless_run.mjs`, `opencode.json`, `docs/warroom/decision-log.md` 2026-09-27, T-079a (the real task this must unblock)
 
-INTAKE T-083 — pending
+INTAKE T-083 — closed 2026-09-28 (see RESULT above)
 
 ---
 
