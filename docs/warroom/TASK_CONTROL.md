@@ -187,6 +187,7 @@ changes the behavior of every AI that reads them next.
 5. Autonomy ladder: any role ready to move up — or needing to move down?
    Update `ai-scorecard.md` (false DONE claims first).
 6. Decision Log: anything decided this week but not written down?
+7. Document–Card Gap Check: any product/architecture doc update without a backing card is flagged as `NEEDS_DECISION` to the Owner — the advisor must not create cards to close the gap
 
 Why: small drift is cheap to fix weekly and expensive to fix monthly.
 
