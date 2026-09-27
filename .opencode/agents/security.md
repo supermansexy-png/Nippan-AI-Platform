@@ -1,7 +1,7 @@
 ﻿---
 description: Security (dev-time) ตรวจ authentication authorization secrets tenant/bot isolation attack surface และ security boundary แบบ read-only
 mode: subagent
-model: opencode-go/kimi-k3
+model: openrouter/deepseek/deepseek-v4.1-flash
 permission:
   edit: deny
   task: deny
@@ -50,7 +50,7 @@ INTAKE ≤ 8 บรรทัด, รายงาน ≤ 15 บรรทัด; f
 
 ## Model & cost policy (T-020–T-023)
 
-- security L1–L3 → `opencode-go/kimi-k3` (Backup `openrouter/qwen/qwen3.8-flash`; ต้องต่างจาก reviewer); **L4/ความแม่นสูง → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
+- security L1–L3 → Primary `openrouter/deepseek/deepseek-v4.1-flash`, Backup `opencode-go/qwen3.8-flash`, Backup2 `openrouter/qwen/qwen3.8-flash` (ต้องต่างจาก reviewer); **L4/ความแม่นสูง → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected, Batch API only)**
 - ห้ามใช้โมเดล builder (โมเดลปัจจุบันดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing) หรือซ้ำ reviewer (anti-redundancy)
 - **งานเสียเงินที่ไม่รีบ → ส่ง Batch (`:batch`) เสมอ**; งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว

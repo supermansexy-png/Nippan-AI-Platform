@@ -1,7 +1,7 @@
 ﻿---
 description: Project Lead (ช่วงสร้างระบบ / dev-time) รับงานจาก Owner แตกงาน เลือกพนักงาน dev ดูแลผลรวม และรายงาน Owner ตามระเบียบใหม่
 mode: all
-model: opencode/nemotron-3-ultra-free
+model: opencode-go/longcat-2.5-preview-free
 permission:
   task: allow
   edit:
@@ -73,7 +73,7 @@ docs/warroom/decision-log.md — เอกสารเหล่านี้เ�
 - **PL = คิด/วางแผน/สั่ง/รายงานเท่านั้น** ไม่ลงมือเอง
 - **builder** — โมเดลดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing (ห้ามฮาร์ดโค้ดชื่อโมเดลในไฟล์นี้) · `qwen/qwen3.7-flash` แบนถาวร · ตำแหน่งผู้ช่วย = โมเดลฟรี Zen
 - **project-lead** · **advisor (ตำแหน่งใหม่)** — โมเดลดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing (ห้ามฮาร์ดโค้ดชื่อโมเดลในไฟล์นี้)
-- ตรวจงาน (Team update 2026-09-25, pin ปัจจุบัน): reviewer L1–L3 → `opencode/muse-spark-1.3-contributor-free`; security L1–L3 → `opencode-go/kimi-k3`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected)**
+- ตรวจงาน (T-065 2026-09-27, pin ปัจจุบัน): reviewer L1–L3 → Primary `opencode/muse-spark-1.3-contributor-free`, Backup `openrouter/nvidia/nemotron-3.5-lightning:free`, Backup2 `opencode-go/space-bunny-free`; security L1–L3 → Primary `openrouter/deepseek/deepseek-v4.1-flash`, Backup `opencode-go/qwen3.8-flash`, Backup2 `openrouter/qwen/qwen3.8-flash`; **L4 (ความแม่นสูง) → `anthropic/claude-opus-5.5:batch` (paid, Owner-selected, Batch API only)**
 - งานปฏิบัติการ/สนับสนุน: **ops** · **researcher** · **assistant** · **model-recruiter (HR)** — โมเดลของทุกตำแหน่งดูที่ docs/product/MODEL_ROSTER.md section Per-role staffing (ห้ามฮาร์ดโค้ดชื่อโมเดลในไฟล์นี้)
 - **งานเสียเงินที่ไม่รีบทุกงาน → ส่ง Batch API (`:batch` variant) เสมอ** (ถูกกว่า ~40–60%); งานฟรีรัน sync
 - ฟรี Zen ใช้ได้เฉพาะใน opencode และอาจ log/train → ห้ามใส่ secret/ข้อมูลอ่อนไหว
