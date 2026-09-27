@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import os
 import sys
+import uuid as uuid_module
 from uuid import UUID, NAMESPACE_URL, uuid5
 
 import psycopg
@@ -12,9 +14,8 @@ from app.settings import Settings
 DEFAULT_TENANT_ID = UUID("c1111111-1111-4111-8111-111111111111")
 DEFAULT_APPLICATION_ID = UUID("c2222222-2222-4222-8222-222222222222")
 DEFAULT_ROOM_ID = UUID("c3333333-3333-4333-8333-333333333333")
-DEFAULT_AGENDA_ID = UUID("c4444444-4444-4444-8444-444444444444")
-DEFAULT_OWNER_PARTICIPANT_ID = UUID("c5555555-5555-4555-8555-555555555555")
 DEFAULT_OWNER_PRINCIPAL_ID = "preview-owner"
+DEFAULT_ROOM_TITLE = "Nippan AI War Room — Preview ภาษาไทย"
 
 AGENT_ROLES = (
     ("CHAIR", "ประธาน Preview", "chair"),
@@ -55,6 +56,9 @@ def seed(
     *,
     settings: Settings | None = None,
     admin_dsn: str | None = None,
+    room_id: UUID | None = None,
+    title: str | None = None,
+    force: bool = False,
 ) -> tuple[UUID, UUID, UUID, str]:
     settings = settings or Settings()
     if settings.environment.lower() != "development":
@@ -66,42 +70,82 @@ def seed(
 
     admin_dsn = admin_dsn or _required_admin_dsn()
     tenant_id, application_id, principal_id = _preview_scope(settings)
-    room_id = DEFAULT_ROOM_ID
-    agenda_id = DEFAULT_AGENDA_ID
-    owner_participant_id = DEFAULT_OWNER_PARTICIPANT_ID
+    room_id = room_id or DEFAULT_ROOM_ID
+    room_title = DEFAULT_ROOM_TITLE if title is None else title
+    if not room_title or not room_title.strip():
+        raise ValueError("room_title must not be empty or whitespace only")
+    agenda_id = _stable_uuid("agenda-item", str(room_id))
+    owner_participant_id = _stable_uuid("owner-participant", str(room_id))
 
     tenant_slug = f"war-room-preview-{tenant_id.hex[:8]}"
     application_slug = f"war-room-preview-{application_id.hex[:8]}"
 
-    with psycopg.connect(admin_dsn, autocommit=True) as conn:
-        # Reset only the deterministic local preview room.
+    with psycopg.connect(admin_dsn) as conn:
+        # Look up existing title before deciding on --force
+        row = conn.execute(
+            "select title from public.project_rooms where room_id = %s and tenant_id = %s and application_id = %s",
+            (room_id, tenant_id, application_id),
+        ).fetchone()
+        existing_title = row[0] if row else None
+        if room_id != DEFAULT_ROOM_ID and row is not None and not force:
+            raise RuntimeError(
+                f"refusing to reset room {room_id}: not the default preview room; "
+                "pass --force to allow deleting its rows"
+            )
+        print(f"preview seed target: room_id={room_id} title={room_title!r}" + (f" (existing title: {existing_title!r})" if existing_title else ""))
+        # Deletes run in one transaction; the context manager rolls back on error
+        # existing rows for the target room, scoped to the preview tenant and
+        # application. Without --force only the deterministic default preview
+        # room may be targeted; a live room is therefore not touched by
+        # accident, but a forced run on a non-default room is destructive.
         conn.execute(
-            "delete from public.project_room_action_items where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_room_action_items
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
         conn.execute(
-            "delete from public.project_room_findings where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_room_findings
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
         conn.execute(
-            "delete from public.project_room_decisions where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_room_decisions
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
         conn.execute(
-            "delete from public.project_room_messages where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_room_messages
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
         conn.execute(
-            "delete from public.project_room_agenda_items where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_room_agenda_items
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
         conn.execute(
-            "delete from public.project_room_participants where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_room_participants
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
         conn.execute(
-            "delete from public.project_rooms where room_id = %s",
-            (room_id,),
+            """
+            delete from public.project_rooms
+            where room_id = %s and tenant_id = %s and application_id = %s
+            """,
+            (room_id, tenant_id, application_id),
         )
 
         conn.execute(
@@ -166,12 +210,12 @@ def seed(
               mode, state, created_by_principal_id,
               token_budget, cost_budget, cost_currency
             ) values (
-              %s, %s, %s, 'local-preview', 'Nippan AI War Room — Preview ภาษาไทย',
+              %s, %s, %s, 'local-preview', %s,
               'FORMAL_MEETING', 'DRAFT', %s,
               12000, 5.00, 'USD'
             )
             """,
-            (room_id, tenant_id, application_id, principal_id),
+            (room_id, tenant_id, application_id, room_title, principal_id),
         )
         conn.execute(
             """
@@ -195,7 +239,7 @@ def seed(
         )
 
         for agent_id, role, display_name, slug in agent_rows:
-            participant_id = _stable_uuid("participant", role)
+            participant_id = _stable_uuid("participant", f"{room_id}:{role}")
             conn.execute(
                 """
                 insert into public.project_room_participants (
@@ -251,7 +295,7 @@ def seed(
             )
             """,
             (
-                _stable_uuid("finding", "local-preview"),
+                _stable_uuid("finding", str(room_id)),
                 tenant_id,
                 application_id,
                 room_id,
@@ -273,7 +317,7 @@ def seed(
             )
             """,
             (
-                _stable_uuid("decision", "local-preview"),
+                _stable_uuid("decision", str(room_id)),
                 tenant_id,
                 application_id,
                 room_id,
@@ -286,8 +330,38 @@ def seed(
 
 
 def main() -> int:
+    # The preview title and failure details contain Thai text; keep stdout and
+    # stderr UTF-8 so non-Windows-default consoles do not crash the report.
+    for stream in (sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+    parser = argparse.ArgumentParser(
+        description="Seed the War Room local preview (development only)."
+    )
+    parser.add_argument(
+        "--room-id",
+        type=uuid_module.UUID,
+        default=None,
+        help="Custom room UUID (defaults to the deterministic preview room id).",
+    )
+    parser.add_argument(
+        "--title",
+        default=None,
+        help="Custom room title (defaults to the standard preview title).",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Allow resetting a custom --room-id other than the default "
+            "preview room (deletes that room's rows)."
+        ),
+    )
+    args = parser.parse_args()
     try:
-        tenant_id, application_id, room_id, principal_id = seed()
+        tenant_id, application_id, room_id, principal_id = seed(
+            room_id=args.room_id, title=args.title, force=args.force
+        )
     except Exception as exc:
         print(f"seed failed: {exc}", file=sys.stderr)
         return 1
