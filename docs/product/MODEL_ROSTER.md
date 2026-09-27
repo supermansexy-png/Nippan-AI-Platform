@@ -151,6 +151,8 @@ VERIFIED 2026-09-27 (card T-064) — ทดสอบจริงผ่าน ope
 - CORRECTION: the earlier roster note that `jev-1.13-free` "failed the T-020 test" judged it as a chat model — the wrong tool for that test, not a defective model.
 - It cannot be used as a seat (it produces no text). Candidate use: a cheap pre-screen/gate signal only; never the deciding authority where a written rule applies. Free is limited-time; the paid twin `opencode/jev-1.13` is $0.042 input / free output.
 - Evidence: `runs/jev_probe.cjs` (gitignored scratch harness).
+- **PILOT RESULT 2026-09-27** (5 real-shaped cases scored against our own rules): review-tier **5/5** correct · Owner-approval-needed **5/5** · auth/tenant flag **4/5** (one over-flag on a CI-change case — conservative, not dangerous) · **dangerous under-classification 0/5**. Harness: `runs/jev_pilot.cjs` (gitignored).
+- **STATUS: adopted as a screening TOOL** (Owner order 2026-09-27, "ถ้าใช้ได้ เอามาเป็นเครื่องมือ"). Terms: it supplies a **signal only**, is never the deciding authority where a written rule applies, and is never the sole gate for an L3. No agent pin — it cannot be a seat. Wiring is card T-068. Limits disclosed: n=5 with one sample per case; probabilities saturate at 1.0 on familiar shapes; the free tier is limited-time.
 
 ### Provider scan 2026-09-27 — candidates only, NOT adopted
 

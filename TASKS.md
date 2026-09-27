@@ -333,6 +333,23 @@ Push deferred by Owner 2026-09-27 ("รอทีเดียว"): the recording
 
 **PL RESERVATION (2026-09-27)** — the assistant and the advisor also read and write our **internal documents** (`MODEL_ROSTER.md`, `TASKS.md`, `ADVISOR_LOG.md`), which are internal business material, so the PL does not treat them as clean seats either. PL position: eligibility is a **task-level rule, not a seat-level one** — the two Google models may be used only for tasks whose entire prompt is public information (e.g. a public catalogue or pricing lookup), and should **not** be pinned as a seat fallback, unless the Owner decides otherwise. **Owner has not decided.** → **UPDATE 2026-09-27: the Owner decided ("ก")** — the free-tier rule covers **external shared-pool free tiers only** (OpenRouter `:free`, Groq, Google). Google free is that class, so the two Google models stay **backup / task-scoped only — never a seat primary**. The PL reservation above therefore stands, and **no pin change is required**. See `docs/project-memory/DECISIONS.md` 2026-09-27.
 
+### T-068 — Jev 1.13 Free: wire the screening tool (decision gates)
+
+Status: OPEN — created 2026-09-27 from the Owner order "ถ้าใช้ได้ เอามาเป็นเครื่องมือ" after the pilot passed
+Owner: builder (implementation) · Project Lead (plan/record/verify) · reviewer on a **different model**
+Role: builder writes the helper; the PL does not write the code; the reviewer verifies
+Risk: L2 — dev-time tooling only. No production/customer/data impact. Hard rule: the tool is called with a short situation text and must never receive secrets, customer data or repo code.
+Goal: a small documented helper that puts the three recognised gates to Jev and prints the result as a **signal** for the deciding role.
+Evidence for the pilot: `runs/jev_pilot.cjs` — review-tier 5/5 · Owner-approval 5/5 · auth/tenant flag 4/5 · dangerous under-classification 0/5 (n=5, one sample per case).
+Done when:
+- [ ] a documented helper under the repo's dev tooling calls `https://opencode.ai/zen/v1/systemone` with model `opencode/jev-1.13-free`, exposing the three gates (review tier / Owner-approval-needed / auth-tenant flag)
+- [ ] the usage rule is documented with the helper: signal only · never the deciding authority where a written rule applies · never the sole gate for an L3 · input must contain no secrets/customer data/repo code
+- [ ] non-200 (429 / unavailable) fails **toward the human**: no signal is produced and the deciding role proceeds as today — never "assume L1"
+- [ ] reviewer on a different model checks both the helper and the usage rule
+- [ ] no agent pin and no `opencode.json` change in this card
+Budget: $0 — Jev free tier only; no paid call.
+Links: `docs/product/MODEL_ROSTER.md` § "Jev 1.13 Free — correction + role" · `runs/jev_pilot.cjs` · `docs/project-memory/DECISIONS.md` 2026-09-27
+
 ## REVIEW
 
 (none)

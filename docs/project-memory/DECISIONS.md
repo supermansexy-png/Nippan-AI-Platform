@@ -94,3 +94,17 @@ Status: recorded. **No pin was changed.**
 **RESOLVED (Owner, 2026-09-27 — answered "ก"):** the rule covers **external shared-pool free tiers only** — OpenRouter `:free`, Groq free, Google free. **OpenCode-hosted free models** (Zen `*-free`, Go `longcat-2.5-preview-free`, `space-bunny-free`) are **not** covered: they run on OpenCode's own infrastructure inside the paid $10/mo Go subscription / Zen account, so they may stay in Primary slots.
 
 **Compliance check (VERIFIED 2026-09-27):** no external `:free` model holds a Primary slot — checked both in the T-065 table and in the live `opencode.json` agent pins. External free models appear only in Backup tiers, which is exactly where this directive puts them. **No pin change is required.** The two adopted Google models are class (b), so they are **backup / task-scoped only — never a seat primary**.
+
+## 2026-09-27 — Jev 1.13 Free adopted as a screening tool (not a seat)
+
+Decision (Owner, 2026-09-27): "ก ทดสอบเลย ถ้าใช้ได้ เอามาเป็นเครื่องมือ" — run the pilot; if it works, adopt it as a tool.
+
+Pilot result (5 real-shaped cases scored against our own L1/L2/L3 and Owner-approval rules): review-tier **5/5** · Owner-approval-needed **5/5** · auth/tenant flag **4/5** (one over-flag on a CI change — conservative) · **dangerous under-classification 0/5**. Harness `runs/jev_pilot.cjs` (gitignored).
+
+Terms of adoption:
+- It supplies a **signal only** — never the deciding authority where a written rule applies, and never the sole gate for an L3.
+- It is a **tool, not a seat**: it emits no text, so no agent pin exists or will be created for it.
+- Runtime class is OpenCode Zen hosted free — **not** an external shared-pool free tier, so the 2026-09-27 free-tier directive does not restrict it. It is not listed among Zen's training exceptions; the free tier is limited-time; the paid twin `opencode/jev-1.13` is $0.042/M input, free output.
+- Producing any automation around it is a **separate card (T-068)** that must pass builder + a different-model review.
+
+Status: adopted as a tool; **no agent pin changed, no config touched**.
