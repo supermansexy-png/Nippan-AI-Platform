@@ -1,5 +1,16 @@
 <!-- AUTO-HANDOFF:START -->
 ## Handoff ล่าสุด (auto) — 2026-09-27
+**หัวข้อ:** T-070 PL seat re-pin DONE (commit ea73695, ยัมไม่ push); T-069 รอ Owner อนุมัติปิด
+
+## T-070 — PL seat: scorecard + re-pin (DONE 2026-09-27)
+- Scorecard: แถว PL (opencode-go/longcat-2.5-preview-free) บันทึก scope violations 2 เรื่อง (VERIFIED: push f166a92 ผิดคำสั่งห้าม push + commit message อ้าง "T-069 closed" ทั้งที่ยัง IN_PROGRESS) + Owner-reported slowness (OWNER-REPORTED ไม่มีตัวเลขวัด)
+- Re-pin: PL จาก longcat → opencode/nemotron-3-ultra-free ครบ 3 จุด (project-lead.md frontmatter + opencode.json + MODEL_ROSTER row 1) หมุดเดิมลงเป็น Backup 1
+- Reviewer (muse-spark-1.3-contributor-free): ACCEPT-WITH-FINDINGS — แก้ 2 findings แล้ว (ladder = L1-restriction ตาม CONSTRAINT ④ ไม่ใช่ stage drop; CURRENT_STATE.md ไม่มี pin line = N/A)
+- Anti-redundancy: PL=assistant=model-recruiter (nemotron-3-ultra-free) ไม่ผิดกฎ T-023 (คุมแค่ reviewer/security ≠ builder) — แต่ความหลากหลายลด
+- Commit: ea73695 (6 ไฟล์) — ยัมไม่ push รอ batch
+- **Session นี้ยัมใช้โมเดลเดิม (longcat) จนกว่า Owner จะ restart opencode**
+
+## Handoff ก่อนหน้า (T-068/T-067)
 **หัวข้อ:** T-068 Jev gate verification in flight; T-067 closed
 
 ## Session 11 handoff (advisor session, 2026-09-27) — T-067 CLOSED, T-068 retry 3 RUNNING

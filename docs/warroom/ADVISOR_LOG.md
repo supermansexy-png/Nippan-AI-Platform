@@ -417,3 +417,15 @@ that references the old one.
 - verdict: WITHIN-MANDATE — original reviewer `opencode/muse-spark-1.3-contributor-free` ACCEPT recorded; no new review required
 - evidence: TASKS.md (T-069 removed) · TASKS_DONE_ARCHIVE.md (T-069 appended with DONE status) · ADVISOR_LOG.md (this entry)
 - notes: written by the receiver, not the advisor. Original review was `opencode/muse-spark-1.3-contributor-free` ACCEPT (different model from author `opencode-go/longcat-2.5-preview-free`). No new work added since ACCEPT, so no re-review. Commit staged locally; push deferred per Owner batching habit.
+
+### T-051 — 2026-09-27 — Implement participants-only seed mode for War Room create path (Owner picked option 2)
+- owner_intent_verbatim: "อยากให้ลองใช้ระบบโยนงานให้ chatgpt ช่วย หางานมาทำสักงาน" + เดิม "พอมีงานต่อไปเราก็ลองใช้ดูเลย เลือกงานที่ยากและต้องการความเร็ว" — งานที่เลือกคือ T-051 finding 2 (participants-only seed, Owner picked option 2 แล้ว)
+- order (as understood by the receiver): create GitHub Issue for T-051 with ai:ready label; record this instruction; change label to ai:claimed when builder starts; dispatch builder/worker on a free model to implement participants-only seed mode in the create path (transport.py room_create → _room_seed_helper; seed_war_room_preview.py) so new rooms get 8 participants + 0 agenda / 0 findings / 0 decisions while preview bootstrap keeps full fixtures; reviewer on a different free model checks the diff; verify on local throwaway stack (create one room, check DB rows, delete); no auth/actor/tenant/schema/RLS/grant/production/deploy changes; free models only, no paid calls; commit locally, no push.
+- receiver: project-lead `opencode/nemotron-3-ultra-free` (distributes to builder/worker and reviewer)
+- scope_in: T-051 card (finding 2 only — finding 1 is separate); Issue #87; transport.py room_create + seed helper; seed_war_room_preview.py; local throwaway verification; free builder + free reviewer; this record.
+- scope_out: finding 1 (Windows start doc); auth/actor/tenant; schema/RLS/grant; production; deploy; preview DB; any paid call; push.
+- prohibitions: production · deploy · architecture · pricing/PDPA/protected docs · secrets · force-push · destructive DB · diff touching auth/actor/tenant · push to remote · paid models.
+- auditor: `opencode-go/kimi-k3` (advisor-mandate A1–A5, must differ from the advisor model; substitution pre-authorized if fails twice: any live Go/free model ≠ advisor ≠ author ≠ reviewer)
+- verdict: pending
+- evidence: Issue #87; T-051 card in TASKS.md; commits on local branch (to be made)
+- notes: written by the receiver (PL), not the advisor. This is the experiment with the new GitHub Issue queue (T-069). Builder model per current MODEL_ROSTER free tier: `openrouter/poolside/laguna-s-2.1:free` (builder Backup 1). Reviewer model per MODEL_ROSTER: `opencode/muse-spark-1.3-contributor-free` (reviewer Primary L1–L3).
