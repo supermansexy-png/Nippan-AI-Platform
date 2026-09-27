@@ -146,7 +146,7 @@
     "n8n_update_workflow": true,
     "n8n_archive_workflow": false,
     "n8n_restore_workflow_version": false,
-    "n8n_publish_workflow": false,
+    "n8n_publish_workflow": true,
     "n8n_unpublish_workflow": false,
     "n8n_execute_workflow": true,
     "n8n_test_workflow": false,
