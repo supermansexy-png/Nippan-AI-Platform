@@ -89,4 +89,8 @@ Supporting evidence: `qwen/qwen3.8-27b:free` returned upstream `429` twice withi
 - Free models in use fall into two classes: **(a) OpenCode-hosted free** — Zen `*-free`, plus Go `longcat-2.5-preview-free` and `space-bunny-free`; hosted on OpenCode's own infrastructure, inside the paid $10/mo Go subscription / Zen account, and 7 free models passed the T-065 hard suite. **(b) External shared-pool free** — OpenRouter `:free`, Groq free, Google free; these are the ones that actually dropped today.
 - If the directive applies only to (b), **today's table already complies**: no external `:free` model holds a Primary slot — they sit in Backup tiers only.
 
-Status: recorded. **No pin was changed.** Awaiting the Owner's one-line clarification (all free, or external shared-pool free only).
+Status: recorded. **No pin was changed.**
+
+**RESOLVED (Owner, 2026-09-27 — answered "ก"):** the rule covers **external shared-pool free tiers only** — OpenRouter `:free`, Groq free, Google free. **OpenCode-hosted free models** (Zen `*-free`, Go `longcat-2.5-preview-free`, `space-bunny-free`) are **not** covered: they run on OpenCode's own infrastructure inside the paid $10/mo Go subscription / Zen account, so they may stay in Primary slots.
+
+**Compliance check (VERIFIED 2026-09-27):** no external `:free` model holds a Primary slot — checked both in the T-065 table and in the live `opencode.json` agent pins. External free models appear only in Backup tiers, which is exactly where this directive puts them. **No pin change is required.** The two adopted Google models are class (b), so they are **backup / task-scoped only — never a seat primary**.
