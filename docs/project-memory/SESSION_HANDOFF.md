@@ -25,4 +25,3 @@
 - **restart opencode** — pin ใหม่ (project-lead ฯลฯ) จะมีผลหลังเปิดแชทใหม่ (resumed session ยังใช้โมเดลเก่า)
 - **n8n publish** — `n8n_publish_workflow` = false; workflow ที่แก้แล้วจะยังรัน query เก่าจนกว่าจะ publish
 - **OpenRouter credit** — ~$0.64 คงเหลือ; งานเสียเงินต้องขอ Owner ก่อน
-- **T-065 board move** — การ์ดยังอยู่บนบอร์ด (mark DONE) รอย้ายออกในรอบถัดไป (archive entry เขียนแล้ว)
