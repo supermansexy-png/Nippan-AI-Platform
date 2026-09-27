@@ -182,17 +182,21 @@ Depends on: T-079a (transport for the conversation).
 
 ### T-079c — Customer setup page (chat with the Onboarding assistant over web-chat)
 
-Status: READY for INTAKE
+Status: **DONE — 2026-09-28** (commit `f176410`; reviewer ACCEPTED-WITH-FINDINGS; security ACCEPTED-WITH-FINDINGS after 2 HIGH findings closed, final MED test-hygiene fixed) — **one item still open: the PDPA notice wording is NEEDS_OWNER_DECISION**
 Owner: Project Lead — 2026-09-27 (child of T-079)
 Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model** + security (customer-facing surface)
 Risk: L2 (customer-facing UI; no payments, no tenant data yet)
 Goal: a real page where a prospect onboards by chatting — accepts the three input kinds (conversation / website link / uploaded file) and shows progress.
 Design source: `docs/product/ONBOARDING_FLOW.md`, `docs/product/STOREFRONT.md` item 5 ("Set up my bot"), `docs/product/CUSTOMER_FACING_RULES.md`
 Done when (provable by running):
-- [ ] open the page locally and complete an onboarding conversation end to end; transcript + saved run artifacts
-- [ ] all three input kinds work on the page (typed answer, URL, file upload)
-- [ ] the page never shows a model/vendor name and shows the short PDPA notice where it collects anything
-- [ ] reviewer (different model) + security verdict recorded
+- [x] open the page locally and complete an onboarding conversation end to end; transcript + saved run artifacts
+- [x] all three input kinds work on the page (typed answer, URL, file upload)
+- [x] the page never shows a model/vendor name and shows the short PDPA notice where it collects anything
+- [x] reviewer (different model) + security verdict recorded
+
+RESULT — 2026-09-28: built in 3 parts after the first attempt died on `reason:"length"`. 294 tests pass, 9 skipped; e2e `run_onboarding_page_e2e.py` = 27 checks, all true, exit 0, driving the real app in-process. Security found 2 HIGH + 3 MEDIUM, all now closed: (1) tenant scope was a client header with no identity — now server-wired at mount, fail-closed with no scope, a gated dev escape that reports `UNVERIFIED`; (2) SSRF — 19/19 bypass attempts now rejected before any fetch (decimal/hex/octal/short IP forms, `metadata.google.internal`, private/loopback/link-local), fail-closed when resolution fails or returns empty/mixed, address pinning, redirect guard wired, and the own-site check no longer compares the submitted URL against itself; (3) `/website` with no fetcher is a clean 503, not a 500; (4) filenames sanitised; (5) body capped cumulatively (a chunked 1,000,001-byte body is cut at 999,424 and answered 413), store bounded with TTL.
+
+**OPEN — NEEDS_OWNER_DECISION:** the short PDPA notice shown on the page is **newly drafted wording**, because `docs/security/PDPA_COMPLIANCE.md` defines the requirement but no exact sentence to copy. Customer-facing legal text is not the Project Lead's to invent. Options: (ก) the Owner supplies the exact wording; (ข) the Owner approves the current draft after reading it; (ค) a legal pass is added before any real customer uses the page. Until then the page is dev-time only.
 Budget: 6h builder + 1h reviewer + 1h security
 Links: `docs/product/ONBOARDING_FLOW.md`, `docs/product/STOREFRONT.md`, T-079a, T-079b
 Depends on: T-079a, T-079b.
