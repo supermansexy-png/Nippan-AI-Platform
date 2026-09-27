@@ -249,6 +249,8 @@ INTAKE T-079 — pending
 
 > **T-080 (DONE 2026-09-27)** is archived in `docs/archive/TASKS_DONE_ARCHIVE.md`. One-line result: Phase A uses the log + LINE alert already designed in `MONITORING.md`; **no admin web page in Phase A** — a real dashboard stays a Phase B/C trigger (25+ tenants / digest >15 min / a second person).
 
+---
+
 ### T-079a — `web-chat` channel adapter (front-of-house foundation)
 
 Status: READY for INTAKE
@@ -362,6 +364,35 @@ Done when (provable by running):
 Budget: 4h builder + 1h reviewer
 Links: `docs/product/STOREFRONT.md`, T-079a
 Depends on: T-079a.
+
+---
+
+### T-081 — Add "Document–Card Gap Check" to ADVISOR_MANDATE.md §8 and TASK_CONTROL.md §9 (L3)
+
+Status: **IN_PROGRESS**
+Owner: Project Lead — 2026-09-27 (Owner order in this chat)
+Role: Project Lead (plan/verify) + builder (doc edits) + reviewer L1–L3 on a **different model** + security (no secret/auth touch, but protected-doc gate)
+Risk: **L3** — both `ADVISOR_MANDATE.md` and `TASK_CONTROL.md` are **protected documents** (`TASK_CONTROL.md` §8)
+Goal: add the Owner's mandated cross-check rule so the advisor must verify every product/architecture doc change has a backing card — if no card exists, the advisor must raise `NEEDS_DECISION` to the Owner and **must not create cards itself**; this check also becomes item 7 in the weekly review (`TASK_CONTROL.md` §9)
+Done when:
+- [ ] `ADVISOR_MANDATE.md` has a new **§8 "Document–Card Gap Check"** with the exact rule (no card → NEEDS_DECISION to Owner, advisor forbidden from creating cards, recorded in weekly review)
+- [ ] `TASK_CONTROL.md` §9 gains a 7th item: "Document–Card Gap Check: any product/architecture doc update without a backing card is flagged as `NEEDS_DECISION` to the Owner — the advisor must not create cards to close the gap"
+- [ ] reviewer on a **different model** gives verdict `WITHIN-MANDATE` (covers both edits together)
+- [ ] Owner approves merge
+Budget: ≤ 1 hour
+Links: Owner order in this chat + `docs/warroom/ADVISOR_MANDATE.md` + `docs/warroom/TASK_CONTROL.md`
+
+**Prohibited:** do not edit either protected document until Owner approves and reviewer gives verdict.
+
+**INTAKE T-081 — 2026-09-27 (Project Lead) — ACCEPT**
+Understanding: Owner ordered via advisor to add a mandatory "Document–Card Gap Check" to two protected documents. The advisor must verify every product/architecture doc change has a backing card; if no card exists, the advisor raises `NEEDS_DECISION` to the Owner and must not create cards itself. This check also becomes item 7 in the weekly review (§9).
+Scope: two protected-doc edits only — ADVISOR_MANDATE.md (new §8) and TASK_CONTROL.md (§9 item 7). No other files. Owner approval already given in this chat. L3 requires reviewer on a different model + security gate.
+Needs: builder (doc edits), reviewer L1–L3 (different model, verdict WITHIN-MANDATE), security (protected-doc gate). GitHub Issue `ai:ready` created. Branch `t-081-doc-card-gap-check`.
+Missing: nothing blocking.
+Plan: (1) create Issue + branch; (2) builder edits both files per exact Owner wording; (3) PR → CI → reviewer verdict WITHIN-MANDATE; (4) Owner approve merge; (5) PL merges in dev-time; (6) DELIVERY.
+Builder: `opencode-go/glm-5.3-flash` (Primary per MODEL_ROSTER.md T-065). Reviewer: `opencode/muse-spark-1.3-contributor-free` (Primary L1–L3, different from builder). Security: `openrouter/deepseek/deepseek-v4.1-flash` (Primary L1–L3).
+Estimate: ≤ 1 hour. Budget stop: 2h.
+Decision: ACCEPT. Status → IN_PROGRESS.
 
 ---
 
