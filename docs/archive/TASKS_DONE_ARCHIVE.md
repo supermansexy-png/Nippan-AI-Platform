@@ -1839,3 +1839,94 @@ Owner requirements faithfully recorded: **add `INDEX.md` as the first tier-1 fil
 Delivered: `AGENTS.md` § "Session Start" (the diff was shown to the Owner verbatim) + `docs/project-memory/INDEX.md` mirroring the same order, so the map now contains itself.
 Verification: a second fresh-process probe on the same model, same read-only instruction, task = fix one typo in README.md → **6 files** opened (SESSION_HANDOFF, README the target file, INDEX, CURRENT_STATE, PROJECT_BRIEF.th, DECISIONS) = tier 1 plus the task's own file. **13 → 6, target 6–7 met.** The seven that disappeared are exactly the tier-3/4 set probe #1 had opened ahead of time.
 Side finding (recorded, not fixed): `README.md:77-78` still points at the retired `PROJECT_STATE.md` — became known-not-fixing item 6.
+
+### T-064 — Add Google and Groq as model providers for the dev team
+
+Status: DONE 2026-09-27 (archived from the board; full card body preserved in git history). Owner approved the plan in-session ("อนุมัติ"), then ordered Groq parked ("ปิด"). **Nothing was committed for this card** — the board pointer and the `MODEL_ROSTER` edit sit uncommitted in the working tree.
+Owner: Project Lead — Owner order 2026-09-27 ("เพิ่ม Google และ Groq พี่ใส่คีย์แล้ว" → "เพิ่มเลยเดี๋ยวค่อยให้ hr จัดการต่อ"). Risk: L1 — dev-time opencode config only; reversible; no runtime/customer/production/data impact.
+Writers: `builder` (`openrouter/poolside/laguna-s-2.1:free`) for the probe files; the final cleanup (deleting them) was done by the free `assistant` because the builder hit an upstream rate-limit twice. Reviewer: `openrouter/nvidia/nemotron-3.5-lightning:free` (different model from the writer).
+
+Result (VERIFIED):
+- **Keys** — the opencode auth store holds `google` and `groq` (alongside `openrouter`, `opencode`, `opencode-go`, `anthropic`). The store was never read out, printed or committed.
+- **Provider identity** — `https://models.dev/api.json` (the catalogue opencode reads, 223 providers) contains provider keys `google` (39 models) and `groq` (16). opencode exposes an authed provider automatically, so **no `opencode.json` provider entry was needed** and `opencode.json` was never touched.
+- **Google — PASS.** The probe agent pinned to `google/gemini-3.5-flash-lite` returned `PROBE OK`. Round 1 first failed with `models/gemini-2.5-flash-lite is no longer available to new users … use models/gemini-3.5-flash-lite` — which itself proved the key reaches Google, since the error is account-specific.
+- **Groq — key VALID, account capped.** `probe-groq` produced no reply; the opencode log shows Groq answering `AI_APICallError: Request too large for model 'openai/gpt-oss-120b' in organization 'org_01m3esvje0e1eveqtdfb3r2fev' service tier 'on_demand' on tokens per minute (TPM): Limit 8000, Requested ~36,900 … Upgrade to Dev Tier`. The free tier allows **8,000 tokens/minute** while one opencode request is **~36,900** (~4.6× over) → unusable without a paid upgrade. The Owner's Groq console list (GPT OSS 120B / 20B · Qwen 3.8 27B · Safety GPT OSS 20B — **no Llama**) explains why both Llama probes answered "does not exist or you do not have access".
+- **Cost correction (recorded because the card itself first got this wrong):** the card initially claimed cheap in-cap Google models exist, citing `google/gemini-2.5-flash-lite` ($0.10/$0.40) — but that is exactly the model Google retired for new accounts. **No currently-usable Gemini model fits `MODEL_POLICY.md`'s $0.25/$1.00 cap**; the cheapest live one is `google/gemini-3.1-flash-lite` at $0.25/$1.50. `google/gemma-4-31b-it` and `google/gemma-4-26b-a4b-it` are tool-capable but carry **no cost data (UNKNOWN — possibly free)**. The older roster note ("Google exceeds the cost policy") is therefore broadly correct.
+- **opencode does not hot-reload config — VERIFIED:** after a probe file was rewritten, re-invoking it still returned the *old* model's error, and a newly created probe answered `Unknown agent type: probe-groq2 is not a valid agent type`. Two Owner restarts were required; the passing proof ran on the second.
+- Cleanup: the three temporary probe agents were deleted by the free `assistant` (PL-verified: `.opencode/agents/` back to exactly its 10 role files). They were untracked, so no history trace remains.
+
+REVIEW — `openrouter/nvidia/nemotron-3.5-lightning:free` = **ACCEPT-WITH-FINDINGS**, no blocker. Independently re-checked: nothing committed or pushed · the probe files' `model:` lines · `opencode.json` untouched · the Groq log numbers quoted accurately rather than paraphrased · the Google cost claim reproducing against live `models.dev` · the new `MODEL_ROSTER` section matching the evidence. One overclaim found: "returned exactly `PROBE OK …`" is not re-derivable from the log (the log proves the stream ran error-free, not the reply text) — the exact string **was** observed directly by the PL as the Task tool's return value, so it is true at PL-observation level. It also flagged that the working tree carries out-of-scope files from other cards, which must never be swept into a T-064 commit.
+
+OPEN FOLLOW-UP (Owner, then HR):
+- **Blocker before any Google appointment:** no usable Gemini model sits inside the $0.25/$1.00 cap, so staffing Google needs an explicit Owner cost exception (the same shape as the L4 exception) or a policy change. Candidates to screen: `google/gemini-3.1-flash-lite` ($0.25/$1.50) · `google/gemini-3.5-flash-lite` and `google/gemini-2.5-flash` ($0.30/$2.50) · `google/gemma-4-31b-it` / `google/gemma-4-26b-a4b-it` (price UNKNOWN).
+- **Groq: do not staff** — parked by the Owner 2026-09-27.
+- **Builder-pin fragility (for HR):** the builder's free pin `openrouter/poolside/laguna-s-2.1:free` returned an empty result on this card's first run and was upstream rate-limited twice afterwards — worth re-evaluating against its Backup `opencode-go/glm-5.3-flash`.
+
+Links: `opencode.json`, `.opencode/agents/`, `docs/product/MODEL_ROSTER.md`, `docs/product/MODEL_POLICY.md`, `https://models.dev/api.json`
+
+---
+
+### T-007 — War Room D-01: roster + ordered message surface (acceptance)
+Status: **DONE — 2026-09-26** (D-01 accepted by the Owner, option ก; Issues #35 and #30 CLOSED).
+Parked 2026-09-25 (blocked: remote owner access not enabled) → unblocked, re-verified and accepted 2026-09-26. **Formally closed 2026-09-27 (batch order): moved from PARKED to DONE archive; Issues #35/#30 re-verified CLOSED via gh.**
+Owner: Project Lead (mimo-v2.6-flash-free) — 2026-09-24
+Role: Developer
+Risk: L2
+Goal: authenticated owner loads /war-room with roster + ordered SSE messages; acceptance evidence for D-01
+Done when: D-01 acceptance checklist in Issue #35 all met; Issue #30 D-01 checked with evidence
+Budget: 1–2 working days
+Links: Issue #35, Issue #30, services/control-plane-web/war-room/
+
+INTAKE — T-007 — Project Lead — 2026-09-24
+Understanding: D-01 acceptance requires verifying 6 checklist items against deployed preview + codebase.
+Decision: ACCEPT
+
+DELIVERY — T-007 — Project Lead — 2026-09-24
+Status claimed: PARTIAL (item 1 remote access blocked by current loopback_only; resolves in T-010)
+Checklist results:
+- [x] Snapshot returns deterministic room + roster → VERIFIED (PR#65+PR#68, transport.py L519-542)
+- [x] Ordered SSE replay → VERIFIED (transport.py L544-623, sequence-based)
+- [x] Reconnect preserves order w/o browser state → VERIFIED (server authoritative sequence, DB cursor)
+- [x] Unauthenticated fails closed → VERIFIED (_authorize_preview_request raises 403; loopback_only default)
+- [x] Remote owner loads /war-room/ → VERIFIED 2026-09-26 (remote-authenticated `GET /war-room/` = 200 over the dev-API-key path on the deployed preview; 403 fail-closed without the header)
+- [~] Source head recorded → PARTIAL (git HEAD 73672d7; deployed e672a77) — superseded 2026-09-26: deployed revision recorded from the Render API as deploy `dep-dar37iflk1mc73d2ss50` / commit `0b94f67776f3cafcd0fb8ed13c66c2f49b40e3b7`
+Next: none — D-01 accepted with findings (evidence + carried findings: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` §"D-01 acceptance run" and §"ACCEPTANCE DECISION").
+
+---
+
+### T-035 — Re-staff the dev team on OpenCode Go (paid primary, free as backup)
+
+Status: DONE 2026-09-27 (batch order) — superseded by T-065 as the active roster card; all done-when met with per-role evidence attached. Full card body preserved in git history.
+Owner: Project Lead — 2026-09-26/2026-09-27 (Owner orders: free models first, then Go)
+Delivered (VERIFIED): HR re-staff proposals (runs `2026-09-26T09-21-40Z-go-restaff`, `…-v2`, `…-v3` — the first two failed on agent-fallback/truncation defects recorded in `DEV_ERROR_LOG.md`); reviewer seat swapped to `opencode/muse-spark-1.3-contributor-free` (probe + 2-line diff + different-model diff-check ACCEPT, `runs/2026-09-26T21-27-28Z-t035-reviewer-diff-check`); the free-model migration of 6 seats (commit `e6330a1`).
+Close-out 2026-09-27 (batch order): per-role evidence attached — 15 live probe calls (`runs/*t065-p*`) + 7-model hard role-specific suite (all found the hidden bug, none hallucinated, `runs/*t065-hard*`); evidence review `openrouter/thinkingmachines/inkling-small:free` = **ACCEPT-WITH-FINDINGS** (`runs/2026-09-27T00-32-59Z-t065-evidence-review`); anti-redundancy PASS; Owner approval via the 2026-09-26 free-model order + 2026-09-27 T-065 order.
+
+---
+
+### T-038 — Advisor mandate + governance rule repair after the OpenCode Go re-staffing
+
+Status: DONE 2026-09-27 (batch order) — all done-when met. Full card body preserved in git history.
+Owner: Project Lead — 2026-09-26 (Owner instruction)
+Delivered (VERIFIED): `.opencode/agents/advisor.md` mandate (`task: allow`, `edit: deny`); `docs/warroom/ADVISOR_MANDATE.md` (powers, limits, instruction record, per-card A1–A5 audit); `docs/warroom/ADVISOR_LOG.md` (append-only, written by the receiver); advisor skills (T-040); `AGENTS.md` order chain; `START_PROMPT.md` Go provider rule; independent audit `opencode-go/kimi-k3` = **WITHIN-MANDATE-WITH-FINDINGS**; protected docs updated on L3 card T-039 with decision-log entries.
+Close-out 2026-09-27 (batch order): `CURRENT_STATE.md` refreshed (session 9 block); T-034a already archived; conflict-scan items 3–6 remain OPEN on the board but are tracked as known residuals (T-059/T-061 fixed the agent-prompt pins; the rest are doc-level and carried in the conflict scan).
+
+---
+
+### T-065 — Role-attribute staffing criteria + OpenRouter Free Models Router + full re-staff
+
+Status: DONE 2026-09-27 (batch order) — hard suite passed, evidence reviewed, pins live. Full card body preserved in git history.
+Owner: Project Lead — 2026-09-27 (Owner order: per-role attributes, free router, HR re-staff)
+Delivered (VERIFIED): per-role attribute table + role-specific test rules in `MODEL_POLICY.md`; Free Models Router rule (nested slug `openrouter/openrouter/free`, VERIFIED 2/2); HR proposal Primary+Backup1+Backup2 for 9 roles; dead pin `opencode/nemotron-3.5-lightning-free` replaced; runtime pins written by assistant (PL-verified by read-back); post-restart live verification **8/9 seats VERIFIED** (project-lead needs a new session — a resumed session keeps its own model).
+Hard role-specific suite 2026-09-27 (free models only): 7 models × (hidden bug + negative control + unknowable fine + false repo premise) — **all 7 found the real bug with the correct fix, none hallucinated** (`runs/2026-09-27T00-23-29Z-t065-hard*`).
+Evidence review `openrouter/thinkingmachines/inkling-small:free` = **ACCEPT-WITH-FINDINGS** (`runs/2026-09-27T00-32-59Z-t065-evidence-review`).
+Carried: project-lead pin needs a brand-new session to confirm; OpenRouter credit ≈ $0.64 (no new paid spend).
+
+---
+
+### T-066 — Two stale security model pins in agent prompts (runtime files)
+
+Status: DONE 2026-09-27 (batch order). Full card body preserved in git history.
+Owner: Project Lead — 2026-09-27 (Owner batch order: "new card + writer for wrong model refs")
+Delivered (VERIFIED): `.opencode/agents/project-lead.md:76` and `.opencode/agents/security.md:53` updated from the stale `opencode-go/kimi-k3` security pin to the T-065 roster (Primary `openrouter/deepseek/deepseek-v4.1-flash`, Backups `opencode-go/qwen3.8-flash` + `openrouter/qwen/qwen3.8-flash`); reviewer + L4 parts unchanged.
+Review: `opencode-go/space-bunny-free` (≠ writer `opencode/nemotron-3-ultra-free`), run `runs/2026-09-27T00-30-17Z-t066-fix-review` = **PASS** — both lines byte-for-byte match the roster; slugs provider-prefixed; anti-redundancy holds.
+Note: the SESSION_HANDOFF item's builder-slug claim was already closed by T-059/T-061 (grep = 0 wrong builder refs); the real residual was the security pin.

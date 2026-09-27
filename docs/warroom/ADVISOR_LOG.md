@@ -276,3 +276,30 @@ that references the old one.
 - verdict: pending (auditor to verify)
 - done-when: all 4 target files show the correct new content via `git diff`; decision-log CORRECTION entry appended; ADVISOR_LOG this entry appended; ai-scorecard false-claim entry appended; reviewer verdict ACCEPT on a different model.
 - notes: This is the FIRST instruction recorded by me (advisor) for the T-057 re-do. The prior T-057 work was fabricated by the Project Lead (opencode/nemotron-3-ultra-free) — see decision-log CORRECTION entry and ai-scorecard entry. My earlier prompt to the PL was cut mid-sentence, which is also recorded here as my error.
+
+### multi-card batch — 2026-09-27 — clear all pending items from SESSION_HANDOFF
+- owner_intent_verbatim: "รอพี่ตัดสิน/อนุมัติ (4 เรื่อง) ให้ pl อนุมัติแทนได้เลย ตามความเหมาะสม / งานที่ทำค้างอยู่ ส่งให้ pl ทำ / ค้างฝั่งระบบ/เอกสาร ส่งให้ pl ทำ / คุณส่งงานให้ pl แล้วให้เค้าไปจ่ายงานต่อ คุณรองานเสร็จทั้งหมดแล้วกลับมารายงาน"
+- order: clear every open item in SESSION_HANDOFF.md — Owner delegates the 4 pending decisions to PL; in-flight cards and system/doc backlog go to PL for distribution
+- receiver: project-lead
+- scope_in: T-058/T-053/T-032/decision-delegation, T-051/T-054/T-055/T-056/T-035, T-038/T-039/T-042/T-043/T-044/T-007/T-034b, new model-ref card, WORKING_POLICY L3 card, T-065 test suite
+- scope_out: production Ai-bot-Nippan, deploy, n8n publish, pricing/PDPA, new paid spend, force push
+- auditor: reviewer (different model per card, per MODEL_ROSTER.md)
+- verdict: pending
+- evidence: card IDs / commit SHAs / runs/ dirs
+- notes: advisor order issued from Owner's three-line instruction above
+
+### multi-card batch — VERDICTS — 2026-09-27 (appended by receiver, append-only)
+- T-058: **CLOSED** — already pushed (`a0a5e1b..be7d3e7`) + archived (`571d523`); handoff item was stale
+- T-053: **CLOSED — RATIFY** (no revert): ROLES.md addition authorized by Owner via T-055 decision item 3; rationale in decision-log.md
+- T-032: **CLOSED** — both answers written on the card (equivalent rule + force-push block recommendation; Codex-side values = UNKNOWN honestly)
+- T-054/T-055/T-056/T-039/T-042/T-043/T-044: **CLOSED** — archived with evidence (reviewer artifact UNKNOWN, disclosed)
+- T-007: **CLOSED** — moved PARKED → DONE archive; Issues #35/#30 verified CLOSED
+- T-034b: **BLOCKED-ON-OWNER** — deploy requires separate Owner approval; marked on card
+- T-051: **CLOSED** — reviewer ACCEPT-WITH-FINDINGS → stub fix → suite 178 passed; commit `aa64a98`
+- T-065: **CLOSED** — hard suite 7/7 free models passed; evidence review ACCEPT-WITH-FINDINGS; commit `ab29571`
+- T-066: **CLOSED** — 2 stale security pins fixed; reviewer PASS; commit `6f03015`
+- T-035/T-038: **CLOSED** — per-role evidence attached + CURRENT_STATE refreshed; archived
+- Model-ref card: created as T-066 (handoff's builder-slug claim was already closed by T-059/T-061)
+- WORKING_POLICY L3 card: not needed — T-060 already fixed Rule 1
+- commits: `aa64a98` (T-051) · `6f03015` (T-066) · `ab29571` (T-065) · board+docs commit (this entry)
+- notes: verdicts appended by the receiver (PL), not the advisor; the original "pending" line is left untouched per append-only rule

@@ -1165,3 +1165,17 @@ The edits touch **two protected documents** (`TASK_CONTROL.md`, `AI_OPERATING_PR
 
 **Task**: T-060
 
+---
+
+## T-053 — ROLES.md advisor addition: RATIFY (PL decision under Owner delegation, 2026-09-27)
+
+**Decision: RATIFY — the +20/−0 `ROLES.md` addition (commit `af5d9a7`) stands. No revert.**
+
+**Context**: the T-053 board card said "do NOT edit ROLES.md (contradiction held for Owner)"; commit `af5d9a7` added the `## advisor (ที่ปรึกษาวางแผน)` section anyway (+20/−0, pure addition, no existing line touched). Investigated 2026-09-27: no fabrication — the edit is real, the paper trail exists, content matches the approved `ADVISOR_MANDATE.md`.
+
+**Why ratify (not revert)**: the Owner's own six-decision order (decision-log entry T-055, commit `28d4dc4`) explicitly authorized this one-point addition — decision item 3: "ROLES.md advisor addition authorized". The card-level "do not edit" was superseded by the Owner's later explicit authorization. Reverting would destroy Owner-authorized work and contradict the recorded decision. The L3 decision-log entry exists (T-055 item 3).
+
+**Process note (disclosed)**: the commit message's "reviewer verified" claim has no `runs/` artifact on this machine — UNKNOWN (may have run in another session), not FALSE. The substance (real edit, real authorization) is VERIFIED.
+
+**Authority**: Owner delegated the 4 pending decisions to the PL on 2026-09-27 ("ให้ pl อนุมัติแทนได้เลย ตามความเหมาะสม"); this is delegated item (b). Card T-053 closed DONE.
+

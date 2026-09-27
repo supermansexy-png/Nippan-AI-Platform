@@ -56,6 +56,13 @@ Estimate: 1 day total.
 Risks: an external party writing into the repo (mitigated by branch rules + review + no secrets); auto-merge must stay off; `dev-workspace` is currently unprotected.
 Decision: ACCEPT (Owner chose the Git channel 2026-09-25).
 
+**OWNER DELEGATION + PL ANSWERS (2026-09-27)** — Owner delegated the 2 pending answers to the PL ("ให้ pl อนุมัติแทนได้เลย ตามความเหมาะสม").
+
+**Answer 1 — branch protection on `dev-workspace` (verified 2026-09-27: currently NOT protected, gh api = 404):**
+Decision: do NOT enable full PR-required protection. Rationale: (a) the dev team commits directly to `dev-workspace` daily — requiring PRs would stall the dev workflow; (b) the external assistant is already constrained by this card's hard rules (codex/* branches only, never pushes directly to `dev-workspace`, never force-push, never merges its own PR, different-model review) — this is the "equivalent rule" that done-when item 2 allows; (c) force-push is the highest-risk operation — recommend the Owner enable force-push blocking only (repo setting, reversible) as belt-and-braces. Status: process rule ACTIVE; repo-level force-push block = recommended to Owner (one setting change).
+
+**Answer 2 — the four Codex-side values:** the project's required values are confirmed: Draft PR = ON · auto-merge = OFF · branch prefix `codex/` · no force-push — these match the card's hard rules exactly. The external side's ACTUAL current settings cannot be verified from this environment (they live on the Owner's Codex setup) = **UNKNOWN** until the Owner confirms on the Codex side or pilot A verifies them. Recommendation: proceed; pilot B's PR will demonstrate the branch prefix + draft state.
+
 ---
 
 ### T-033 — War Room in real use: the AI team's meeting room
@@ -122,6 +129,8 @@ Decision: NEEDS_DECISION — blocked on the Owner's three answers above. No AI i
 ### T-034b — War Room server: create-room path + usable agenda (paid builder)
 
 Status: BLOCKED behind T-034a — start only after the Owner has used the improved screen.
+
+**Status update 2026-09-27 (batch order):** slices 1–3 delivered and reviewed; slice 2b code committed (`aa36a81`) and pushed to `origin/dev-workspace`. **DEPLOY = BLOCKED on the Owner** — deploying any slice requires separate Owner approval (batch order: "deploy requires separate Owner approval"). No deploy is performed. Card marked blocked-on-Owner.
 Owner: Project Lead — 2026-09-26 (Owner order: the agenda panel "ถ้าจะมีไว้ต้องใช้งานได้" and a new meeting must not need hand-edited SQL)
 Role: Developer — **paid builder `z-ai/glm-5.3-flash` (Owner-locked)** + reviewer `opencode/space-bunny-free` + **security reviewer `openrouter/nex-agi/nex-n2.5-mini:free`** (a new write endpoint on the transport is security-relevant)
 Risk: L3 (new write path on the transport: authorization, scope binding, fail-closed behaviour)
@@ -187,136 +196,7 @@ Decision: ACCEPT.
 > preserved the card. It was first written as "T-030" — **renumbered T-035** here because the card number T-030
 > belongs to the archived n8n/RLS card. Content is unchanged apart from the number and the intake header.
 
-### T-035 — Re-staff the dev team on OpenCode Go (paid primary, free as backup)
-Status: IN_PROGRESS (HR re-study queued 2026-09-26 as run `2026-09-26T09-27-58Z-go-restaff-v2`; Owner asked for it in chat)
-Owner: Project Lead (plan/record) + Model Recruiter (proposal)
-Role: Project Lead + model-recruiter
-Risk: L2 — dev-process model routing + cost policy; `MODEL_ROSTER.md` rewrite needs Owner approval
-Goal: every dev role is staffed by the best-suited model available in the OpenCode Go
-subscription (paid, flat $10/mo with per-model caps); free models drop to backup/fallback
-instead of being primary.
-Done when:
-- HR delivers a role×model proposal built on Go availability + price/limit + privacy + capability
-  evidence, with each claim marked VERIFIED / INFERRED / UNKNOWN and a `needs-owner-decision` list
-- Owner approves the mapping (all of it, or a subset)
-- `opencode.json` + `MODEL_ROSTER.md` updated to the approved mapping; free models kept as backup
-- one headless job per migrated role runs end-to-end on the Go provider, evidence under `runs/`
-- `SESSION_HANDOFF.md` refreshed and a `decision-log.md` entry written
-Budget: HR study = one headless job; implementation = one working session
-Links: `docs/product/MODEL_ROSTER.md`, `opencode.json`, `scripts/headless_run.mjs`, `https://opencode.ai/docs/go/`
 
-**Owner directive 2026-09-26 (verbatim intent):** now that we pay for this package, the team must
-stop using free models as primary — HR must find the model that best suits each job.
-
-**Owner directive 2026-09-26 (second — supersedes the builder lock):** re-select the WHOLE team; the
-new stronger models are already included in the paid monthly package; prefer better coders and
-better coordinating agents; HR selects from published reviews/benchmarks only — **no testing**; HR
-proposes, and the Owner discusses the report **before** any appointment is approved. → the builder
-lock to GLM-5.3-Flash is **lifted**.
-
-**HR run log (T-035):**
-- run `2026-09-26T09-21-40Z-go-restaff` — **FAILED, 0 output.** `--agent model-recruiter` is a
-  subagent, so the CLI silently fell back to `project-lead` (see `DEV_ERROR_LOG.md`), and the model
-  then hit its reasoning-length cap (`step_finish reason "length"`, reasoning 4096, output 0). The
-  only artefact is its INTAKE below. Cost ≈ $0.006 of Go usage. Superseded.
-- run `2026-09-26T09-27-58Z-go-restaff-v2` — agent `worker` (primary agent, no fallback), model
-  `opencode-go/mimo-v2.6-pro`; brief = full re-selection of all 9 roles, benchmark/review-based, no
-  testing, proposal only (no appointment). **Result: NEEDS_DECISION — the brief reached the worker truncated
-  (~600 chars) so it refused to guess.** Cost ≈ $0.028. Defect recorded in `DEV_ERROR_LOG.md`.
-- run `2026-09-26T09-31-09Z-go-restaff-v3` — same agent/model; prompt reduced to a 190-char pointer and the
-  full brief moved to `runs/briefs/t035-hr-restaff.md` (repo-local, gitignored). This is the authoritative
-  run for the T-035 proposal.
-- Already in the tree as input: `docs/product/MODEL_POLICY.md` § "OpenCode Go — approved provider"
-  — an uncommitted draft authored by another session. Handed to HR as **input**, not as a decision.
-
-Verified facts 2026-09-26 (PL, evidence class VERIFIED unless noted):
-- Provider `opencode-go` is authenticated in this workspace (`auth.json` entry, type `api`) and
-  serves inference: `GET /zen/go/v1/models` → HTTP 200, 35 model ids; `glm-5.3-flash` and
-  `space-bunny-free` chat completions → HTTP 200 with `served_model` echoed.
-- Go catalogue ids returned: deepseek-v4-flash, deepseek-v4-flash-vision-exp, deepseek-flash,
-  deepseek-v4.1-flash, deepseek-v4-pro, glm-5.1, glm-5.2, glm-5.3, grok-4.6, grok-4.7,
-  muse-spark-1.2-contributor, muse-spark-1.3-contributor, glm-5.3-flash, omen-alpha, gpt-5.6-luna,
-  gpt-6-luna, hy3, hy4-preview, kimi-k2.6, kimi-k2.7-code, kimi-k3, mimo-v2.5, mimo-v2.6-flash,
-  mimo-v2.5-pro, mimo-v2.6-pro, minimax-m2.5, minimax-m2.7, minimax-m3, space-bunny-free,
-  longcat-2.0, qwen3.6-plus, qwen3.7-max, qwen3.8-max, qwen3.8-flash, qwen3.7-plus
-- Cost context: OpenRouter balance ≈ **$1.19** left ($45 credits, $43.81 used, checked 2026-09-26);
-  PL, builder and HR currently route through OpenRouter → cliff risk.
-- Privacy (from the Go doc): most models no-training / 0-day retention; **Muse Spark 1.2 & 1.3
-  Contributor train on prompts+outputs and are NOT ZDR**; Grok 4.7/4.6 and GPT Luna keep 30-day
-  abuse-monitoring logs.
-- Constraint carried over: builder is Owner-locked to GLM-5.3-Flash (2026-09-25) — HR may propose a
-  change only as an explicit owner-decision item. Reviewer model ≠ builder model; reviewer model ≠
-  security model. No training/non-ZDR model as primary where repo code or config is handled.
-- Drift found: `opencode.json` default + `small_model` = `opencode/ling-3.0-flash-fin-free`
-  (a model previously recorded unusable/banned for PL+HR) — fix alongside the mapping.
-- Policy nuance to record on approval: `DEV_WORKING_GUIDE.md` says "OpenCode Zen = FREE MODELS
-  ONLY"; OpenCode Go is a separate Owner-purchased subscription, not a per-call paid Zen model.
-
-INTAKE — T-035 — `opencode-go/gpt-6-luna` — 2026-09-26
-Understanding: I will have HR evaluate suitable OpenCode Go models per dev role using verified availability, limits/cost, privacy, capability and probe evidence, then implement only the mapping the Owner approves. Free models may remain as backups; no customer/runtime routing is in scope.
-Done when: (1) evidenced role×model proposal with VERIFIED/INFERRED/UNKNOWN + owner decisions; (2) Owner approves mapping; (3) approved `opencode.json` + `MODEL_ROSTER.md` mapping, free backups retained; (4) one end-to-end Go headless job per migrated role, evidence in `runs/`; (5) refreshed handoff + decision-log entry.
-Needs: HR (`opencode/nemotron-3-ultra-free`, temporary roster assignment) and Go provider access; later, Owner's mapping approval, builder, independent reviewer, and per-role headless evidence.
-Missing: fresh per-candidate limits/privacy/capability/readiness evidence and Owner-approved role mapping; `opencode.json`/roster changes and per-role end-to-end runs are not yet authorized by an approved mapping.
-Plan: L2 — 1) HR runs one bounded readiness/recruitment job; 2) report proposal and wait for Owner mapping approval; 3) after approval, delegate only approved config changes; 4) validate, run one headless check per migrated role, obtain different-model review, then record handoff/decision evidence.
-Estimate: HR study = one headless job; approved implementation = one working session; within card budget.
-Risks: routing/config drift, Go shared usage buckets and privacy restrictions; current repo has unrelated uncommitted changes that must remain untouched. No secrets/customer data go to free models.
-Decision: ACCEPT
-
-**WORK LOG — T-035 reviewer swap (PL, 2026-09-27)** — Owner order: reviewer too slow, switch to muse-spark-1.3 free.
-- Probe: headless worker on `opencode/muse-spark-1.3-contributor-free` → PROBE-OK + correct self-id, ~2s, clean stop (`runs/2026-09-26T21-25-34Z-t035-reviewer-probe`).
-- Writer `assistant`: `reviewer.md` exactly 2 lines (frontmatter model + L1–L3 policy line, with Zen no-secrets note); follow-up 1 line in `project-lead.md:75` (stale pin mirror). No commit/push by writer.
-- Roster mirrored by PL: `MODEL_ROSTER.md` row 3 (Primary muse-spark-1.3, Backup ex-primary nemotron-3.5-lightning:free) + security anti-redundancy note + team table; cache-bug revert path recorded.
-- Check (different model `opencode/space-bunny-free`, headless `runs/2026-09-26T21-27-28Z-t035-reviewer-diff-check`): **ACCEPT** — 2-line diff exact, slug prefixed, anti-redundancy PASS (≠ builder laguna-s, ≠ security space-bunny). Non-blocking notes: reviewer.md:57 builder ref stale (pre-existing, out of scope); project-lead.md:75 fixed in follow-up.
-- RISK disclosed: `muse-spark-*` pins failed 2026-09-26 via dead cached id in `opencode.global.dat` (ops/researcher) — if the reviewer agent fails to open after restart, revert to Backup. Takes effect after Owner restarts opencode.
-
-### T-038 — Advisor mandate + governance rule repair after the OpenCode Go re-staffing
-
-Status: IN_PROGRESS (Owner instruction 2026-09-26 in chat)
-Owner: Project Lead (documents) + builder/worker (agent files); Owner approved the mandate in chat
-Role: Project Lead (plan/record) + builder (agent config) + reviewer (independent audit)
-Risk: L2 for the agent files; **L3 for any change to a protected doc** (`AI_OPERATING_PROTOCOL.md`,
-`TASK_CONTROL.md`) — those need a reviewer on a different model + a `decision-log.md` entry
-
-Goal: the Owner-facing `advisor` ("ที่ปรึกษาวางแผน") exists with its full mandate, and the project's
-rule set no longer contradicts the new model/provider/role reality.
-
-Owner instruction (intent): the advisor may command every agent, translates the Owner's words into
-rigorous AI work orders and issues them to the PL (who distributes); it may approve/commit while the
-Owner is away; it may NOT edit files and may NOT order work outside the working protocol. An
-oversight system must exist that detects out-of-mandate orders and rule violations. The rules must be
-improved and checked for contradictions after the wholesale model/role change.
-Record: `docs/warroom/ADVISOR_LOG.md` T-038 (written by the receiver).
-
-Done when:
-- [x] `.opencode/agents/advisor.md` carries the final mandate (`task: allow`, git commit/push allowed, `edit: deny`)
-- [x] `docs/warroom/ADVISOR_MANDATE.md` defines powers, limits, the instruction record and the per-card audit
-- [x] `docs/warroom/ADVISOR_LOG.md` created; record is written **by the receiver**, not the advisor
-- [x] advisor agent skills created (T-040): `.opencode/skills/advisor-work-order/SKILL.md` (bounded work
-      order + the record format) and `.opencode/skills/advisor-mandate-audit/SKILL.md` (the A1–A5 audit
-      with the three verdict values) — discovered by opencode from `.opencode/skills/<name>/SKILL.md`
-- [x] `AGENTS.md` recognises the advisor in the order chain `Owner → advisor → Project Lead → specialist`
-- [x] `docs/warroom/START_PROMPT.md` no longer assigns dead/old models and carries the Go provider rule
-- [x] independent audit of this card's advisor instructions, run on a model ≠ `opencode-go/mimo-v2.6-pro`
-      → `opencode-go/kimi-k3`, verdict **WITHIN-MANDATE-WITH-FINDINGS** (recorded in `ADVISOR_LOG.md`)
-- [x] protected docs updated on the separate L3 card T-039 with a Decision Log entry —
-      `AI_OPERATING_PROTOCOL.md` + `TASK_CONTROL.md` (both) · `ROLES.md` deliberately untouched
-      (it describes the runtime role ecosystem, not the dev-time team)
-- [ ] `docs/project-memory/CURRENT_STATE.md` refreshed; board housekeeping (T-034a is DONE → archive)
-
-Conflict scan (2026-09-26, PL, grep-based — see the findings reported to the Owner):
-1. `docs/warroom/START_PROMPT.md` still assigned `z-ai/glm-5.3-flash` as an Owner-locked builder, plus
-   `opencode/nemotron-3-ultra-free` / `opencode/big-pickle` for review tiers → **FIXED** in this card.
-2. `AGENTS.md` slug rule listed only `openrouter/` and `opencode/` → **FIXED** (added `opencode-go/`).
-3. `.opencode/agents/project-lead.md` slug line lacks `opencode-go/` and does not name the advisor upstream → **OPEN**.
-4. `docs/warroom/DEV_WORKING_GUIDE.md` still says "OpenCode Zen = FREE MODELS ONLY" with no Go primary → **OPEN**.
-5. `docs/product/FREE_MODEL_FALLBACK_GUIDE.md` still lists dead models as current pins → **OPEN**.
-6. `docs/project-memory/CURRENT_STATE.md` still lists the pre-Go models/roles → **OPEN**.
-7. No doc previously described the advisor role or any oversight for it → **FIXED** by ADVISOR_MANDATE + AGENTS.md.
-
-Budget: dev-time doc work + free/Go-model headless jobs only; no new paid spend.
-
-Links: `docs/warroom/ADVISOR_MANDATE.md`, `docs/warroom/ADVISOR_LOG.md`, `.opencode/agents/advisor.md`,
-`docs/product/MODEL_ROSTER.md`, `docs/warroom/decision-log.md`
 
 ### T-050 — Whole-project study: convene an existing-role committee and return a detailed draft roadmap
 
@@ -423,6 +303,152 @@ No code change made pending the Owner's pick (order: report when it is a product
 Plan (advisor order): implement a "participants-only" seed mode in the create path (`transport.py room_create` → the shared seed helper in `scripts/seed_war_room_preview.py`) so a new room keeps 8 participants and gets 0 agenda / 0 findings / 0 decisions, while the bootstrap preview room keeps its full fixtures unchanged. Minimal diff; written by builder/worker on `opencode/nemotron-3.5-lightning-free`, reviewed by a different model `openrouter/thinkingmachines/inkling-small:free`. Tests: 8 participants + 0/0/0 for a new room, full fixtures for the preview bootstrap; run the `services/core` suite and state exact counts; verify once on the local throwaway stack (create one room, check DB rows, delete the throwaway DB). Security re-review only if the diff touches auth/actor/tenant. Expected spend 0 (free models only).
 
 ---
+
+> **T-064 (DONE 2026-09-27)** is archived in `docs/archive/TASKS_DONE_ARCHIVE.md`. One-line result: the **Google** provider works end to end (live call proven); **Groq** was wired correctly and its key is valid, but the free tier caps it, so the Owner parked it ("ปิด"). **Open follow-up (Owner):** a cost exception for Google (no usable Gemini model fits `MODEL_POLICY`'s $0.25/$1.00 cap), then HR staffing. No commit was made for this card.
+
+---
+
+### T-065 — Role-attribute staffing criteria + OpenRouter Free Models Router + full re-staff
+
+Status: IN_PROGRESS — Owner order 2026-09-27 (criteria table + "ให้ hr คัดสรรใหม่")
+Owner: Project Lead — 2026-09-27 (Owner order: use `openrouter/free` for OpenRouter free models; HR re-selects every role against the new per-role attribute table; test a new model against **that role's** attributes, not "does it answer")
+Role: Project Lead (write the criteria into `MODEL_POLICY.md`) + model-recruiter (HR: re-staff + role-specific probes) + assistant/builder (runtime pin writes) + reviewer on a **different model**
+Risk: L2 — dev-time roster + agent pins only; no runtime/customer/production impact
+Goal: every dev role has a model chosen against **that role's own required attributes** (not speed in general), the OpenRouter free slot uses the auto-router `openrouter/free`, and the dead pins are replaced.
+Done when:
+- [x] the per-role attribute table + role-specific test rules are in `docs/product/MODEL_POLICY.md` — **DONE 2026-09-27 by PL**
+- [x] `openrouter/free` ("Free Models Router") is stated as the default for OpenRouter free usage, with the caveat that it **picks a different model each time** — **DONE 2026-09-27 by PL**; VERIFIED from the catalogue: $0/$0 · context 200,000 · supports `tools`, `tool_choice`, `structured_outputs`, `reasoning_effort`
+- [ ] HR proposes Primary + Backup for all 9 roles, each justified by that role's attributes and each backed by a **role-specific test** (not a generic "it answered")
+- [ ] the dead pin `opencode/nemotron-3.5-lightning-free` — current pin for **ops** and **researcher**, and the `small_model` in `opencode.json` — is replaced. VERIFIED dead 2026-09-27: `Not Found: Cannot find any route matching [POST] https://opencode.ai/zen/v1/chat/completions` (while `opencode/nemotron-3-ultra-free` answered the same minute)
+- [ ] anti-redundancy holds: reviewer/security ≠ builder Primary **and** ≠ builder Backup; every Primary/Backup pair on different providers
+- [ ] privacy re-check per role — models that train on prompts (`muse-spark-*`) or keep abuse logs (`grok-*`, `gpt-*-luna`) are excluded from secrets-bearing seats
+- [ ] Owner approves the appointments; runtime pins written by assistant/builder (**never** the PL); Owner restarts opencode; the new pins confirmed live
+- [ ] reviewer on a different model checks the roster + evidence
+- [ ] a decision-log entry for every swap
+Budget: HR free; probes are small. **Groq is parked** (free tier unusable, T-064) and Google still needs the T-064 cost decision. Guard the OpenRouter credit (~$0.64) — prefer Zen / Go / `openrouter/free` seats.
+
+**OWNER CONDITIONS UPDATE (2026-09-27, second order) — supersedes the budget note above:**
+- **OpenCode Go = $10/month WITH a limit** → usable only a short time per day. Go must therefore **not** carry the high-volume seats; look for and test the **free models inside Go** (`opencode-go/space-bunny-free`, `opencode-go/longcat-2.5-preview-free`) before spending Go quota.
+- **OpenCode Zen** = free AI models (the free tier).
+- **OpenRouter** = top up $5 at a time (paid) **and** the free tier (`openrouter/free`).
+- **Google** = free key.
+- **HR must re-check by actually firing live calls — NOT by reading the web or the catalogue.** Availability, price and behaviour must each come from a live call.
+- **Backups: up to 2 per role** (Primary + Backup 1 + Backup 2) instead of 1 today, because models here die often.
+- **Probe mechanism decided:** the headless runner takes `--model` per job (`node scripts/headless_run.mjs --agent worker --model <slug> --label <tag> --prompt "<task>"`), so a live call needs **no agent file and no opencode restart**. The PL queues them; `runs/` is gitignored so results are summarised back onto this card.
+
+**PROBE ROUND 1 — LIVE, 2026-09-27 (PL queued 15 headless jobs; every row below is a real call, not catalogue data).**
+Test prompt (identical for all): 3 lines — L1 echo the exact model id; L2 the exact 2027 EU AI Act Art 99(7) fine for Nippan, or exactly `I DO NOT KNOW` if no public data; L3 name the one line in a Python snippet that silently swallows an error (`except Exception: pass`).
+
+| # | Model | Live result | Cost reported |
+|---|---|---|---|
+| p01 | `opencode-go/space-bunny-free` | PASS — all 3 correct | $0 |
+| p02 | `opencode-go/longcat-2.5-preview-free` | PASS — all 3 correct | $0 |
+| p03 | **`openrouter/free`** | **FAIL — `UnknownError: Unexpected server error. Check server logs for details. ref err_74eea8fb`** | — |
+| p04 | `opencode/nemotron-3-ultra-free` | PASS — all 3 correct | $0 |
+| p05 | `opencode/muse-spark-1.3-contributor-free` | PASS — all 3 correct | $0 |
+| p06 | `google/gemini-3.5-flash-lite` | PASS — all 3 correct | **$0.014141** |
+| p07 | `opencode-go/mimo-v2.6-flash` | PASS — all 3 correct | $0.00663642 |
+| p08 | `opencode-go/deepseek-v4.1-flash` | PASS — all 3 correct, clearest bug explanation | $0.00721485 |
+| p09 | `opencode-go/glm-5.3-flash` | PASS — all 3 correct, most thorough | $0.00693745 |
+| p10 | `opencode-go/mimo-v2.6-pro` | PASS (weakest bug answer — just `pass`) | $0.020930895 |
+| p11 | `opencode-go/kimi-k3` | PASS (bug line truncated) — **most expensive by far** | **$0.1332999** |
+| p12 | `openrouter/nvidia/nemotron-3.5-lightning:free` | PASS — all 3 correct | $0 |
+| p13 | `openrouter/thinkingmachines/inkling-small:free` | PASS — correct, self-flagged its L2 as UNVERIFIED | $0 |
+| p14 | `opencode/mimo-v2.6-flash-free` | PASS — all 3 correct | $0 |
+| p15 | `openrouter/qwen/qwen3.8-flash` | PASS — all 3 correct | $0.00705468 |
+
+Findings from this round (VERIFIED):
+- **14 of 15 answered correctly. Nothing hallucinated the fine — every model that answered said exactly `I DO NOT KNOW`, so no seat fails the honesty check at this level.**
+- **`openrouter/free` FAILED with the opaque `Unexpected server error`.** Its slug is correct (canonical `openrouter/free` from the live catalogue), so this is **not** a naming error — but the AGENTS.md rule says re-check the format before blaming the model, and that has been done. **Status: UNKNOWN — it must be retried before it is adopted anywhere**, because the Owner's instruction was to use this router.
+- **Real per-call cost measured** (note: every call carries the worker agent's ~40–47k-token system prompt, so cost is prompt-dominated, not task-dominated): free seats `$0` · Go `glm-5.3-flash` $0.0069 · `deepseek-v4.1-flash` $0.0072 · `mimo-v2.6-flash` $0.0066 · `qwen3.8-flash` $0.0071 · `google/gemini-3.5-flash-lite` $0.0141 · `mimo-v2.6-pro` $0.0209 · **`kimi-k3` $0.1333 — ~19× the cheap Go seats, so reserve it for real security/review work only.**
+- **This round could NOT discriminate roles:** every model found the same obvious `except Exception: pass`. A harder, role-specific round (hidden bug + negative control for security/reviewer) is still required before pinning — exactly as `MODEL_POLICY.md` now demands.
+- `runs/t065-collect.mjs` + the 15 `runs/*t065-p*` dirs hold the raw transcripts (gitignored).
+
+**ROUTER SLUG RESOLVED — VERIFIED 2026-09-27 (this is the AGENTS.md naming trap, again).**
+`openrouter/free` failed **4/4** with the opaque `Unexpected server error`. The AGENTS.md rule says re-check the slug format before blaming the model — done, and it was the answer: the router's real id already contains its provider (`openrouter/free`), so adding opencode's provider prefix makes it **`openrouter/openrouter/free`**. That nested form **passed 2/2 with cost $0**. `MODEL_POLICY.md` has been corrected to the nested slug, and the lesson is recorded there. **The Owner's requested router is therefore usable** — it just is not referenced the way it looks.
+
+**HR PROPOSAL — round 2 (Primary + Backup 1 + Backup 2), pending Owner approval.** Reviewer `eventual`; per-call cost from round 1. Full table: project-lead `opencode/nemotron-3-ultra-free` / `opencode-go/space-bunny-free` / `openrouter/thinkingmachines/inkling-small:free` — builder `opencode-go/glm-5.3-flash` / `opencode-go/deepseek-v4.1-flash` / `openrouter/qwen/qwen3.8-flash` — reviewer `opencode-go/mimo-v2.6-pro` / `opencode/nemotron-3-ultra-free` / `opencode-go/space-bunny-free` — security `opencode-go/kimi-k3` / `openrouter/nvidia/nemotron-3.5-lightning:free` / `opencode-go/longcat-2.5-preview-free` — ops `opencode-go/mimo-v2.6-flash` / `opencode/mimo-v2.6-flash-free` / `openrouter/thinkingmachines/inkling-small:free` — HR `opencode/nemotron-3-ultra-free` / `opencode-go/space-bunny-free` / `openrouter/thinkingmachines/inkling-small:free` — researcher `opencode-go/deepseek-v4.1-flash` / `opencode/mimo-v2.6-flash-free` / `google/gemini-3.5-flash-lite` — assistant and advisor rows were cut off in HR's report and must be re-requested.
+- **PL flag on the proposal (must be resolved before pinning):** HR made **Go the Primary for 6 of 9 roles** (builder, reviewer, security, ops, researcher, advisor). The Owner's condition is that **Go is $10/month WITH a daily limit**, so leaning that hard on Go is in tension with it, and `kimi-k3` at $0.1333/call is ~19× a cheap Go seat. **Recommendation: free seats carry the high-frequency roles; Go carries only the seats that genuinely need the capability (builder, security).**
+- **Anti-redundancy check (PL):** reviewer/security share no model with builder's Primary or Backup — PASS. Free $0 seats and Go-quota seats are now listed separately.
+
+**SPEED MEASUREMENT — LIVE, 2026-09-27** (wall-clock ms per call, extracted from the run transcripts' event timestamps; `runs/t065-speed.mjs`). **Caveat: ONE sample per model**, so treat as indicative, not a benchmark. Same prompt and same ~40–52k-token system prompt for every row.
+
+| Model | Duration | Cost |
+|---|---|---|
+| `google/gemini-3.5-flash-lite` | 983 ms | $0.014141 |
+| `openrouter/deepseek/deepseek-v4.1-flash` | 1,805 ms | $0.001623385 |
+| **`opencode-go/longcat-2.5-preview-free`** | **2,076 ms** | **$0 — fastest free** |
+| `opencode-go/deepseek-v4.1-flash` | 2,863 ms | $0.00721485 |
+| `opencode-go/mimo-v2.6-flash` | 2,948 ms | $0.00663642 |
+| **`opencode/nemotron-3-ultra-free`** | **3,828 ms** | **$0** |
+| `opencode-go/space-bunny-free` | 4,090 ms | $0 |
+| `openrouter/nvidia/nemotron-3.5-lightning:free` | 4,090 ms | $0 |
+| `openrouter/qwen/qwen3.8-flash` | 4,263 ms | $0.00705468 |
+| `openrouter/thinkingmachines/inkling-small:free` | 4,820 ms | $0 |
+| `opencode/muse-spark-1.3-contributor-free` | 7,903 ms | $0 |
+| `opencode-go/kimi-k3` | 9,510 ms | $0.1332999 |
+| `opencode-go/glm-5.3-flash` | 12,261 ms | $0.00693745 |
+| `opencode-go/mimo-v2.6-pro` | 12,977 ms | $0.020930895 |
+| `opencode/mimo-v2.6-flash-free` | 34,496 ms | $0 — **slowest of all** |
+
+- **`openrouter/deepseek/deepseek-v4.1-flash` also VERIFIED live 2026-09-27** (2 calls): correct 3-line answer, and cost **$0.00057 / $0.00162 per call — cheaper than the Go variant's $0.0072**, matching the Owner's reason for preferring OpenRouter.
+- **Owner decision 2026-09-27:** project-lead Primary must be **free and a bit faster** — so the Go `mimo-v2.6-pro` (12,977 ms) is rejected for that seat.
+
+**GO FREE-MODEL AUDIT — 2026-09-27 (Owner asked "does Go have free models?").** Checked the `opencode-go` catalogue (`models.dev`, 42 models) and cross-checked by live fire:
+| Go free model | Catalogue | Live result |
+|---|---|---|
+| `opencode-go/space-bunny-free` | $0/$0 · ctx 1,048,576 · tools ✓ | **PASS** — $0, 4,090 ms, zero-retention |
+| `opencode-go/longcat-2.5-preview-free` | $0/$0 · ctx 1,000,000 · tools ✓ | **PASS** — $0, **2,076 ms = fastest free of all** |
+| `opencode-go/ox-alpha-free` | $0/$0 · ctx 1,000,000 · tools ✓ | **FAIL live, 2/2 attempts** — `Unexpected server error` (slug form re-checked; not the nested-slug trap this time). **Not usable.** |
+
+- Note: `ox-alpha-free` is **not** in the roster's older 43-id Go list — it is new, and it does not answer. The roster's Go id list should be refreshed from the live catalogue at some point.
+- Correction to an earlier PL caveat: `longcat-2.5-preview-free` is **1,000,000-token context**, not small — so it does satisfy project-lead's "long context" attribute on paper, though it is still a *preview* model with only one live sample.
+
+**PINS WRITTEN — 2026-09-27 (not yet live; needs the Owner's restart).**
+- `docs/product/MODEL_ROSTER.md` gained the authoritative **T-065 table (Primary + Backup 1 + Backup 2 for all 9 roles)**; the old T-014 table is marked SUPERSEDED.
+- Runtime written by the **assistant** (the PL did not touch runtime files), then **PL-verified by read-back, not by trusting the report**:
+  - `opencode.json`: `small_model` changed from the dead `opencode/nemotron-3.5-lightning-free` → `opencode/nemotron-3-ultra-free`; the `agent` block now carries all 9 pins (3 changed, 3 added, 3 already correct).
+  - `.opencode/agents/*.md` frontmatter `model:` correct in all 9 (builder `opencode-go/glm-5.3-flash` · ops `opencode/mimo-v2.6-flash-free` · project-lead `opencode-go/longcat-2.5-preview-free` · researcher `opencode-go/longcat-2.5-preview-free` · security `openrouter/deepseek/deepseek-v4.1-flash`; advisor/assistant/model-recruiter/reviewer already matched). `worker.md` untouched.
+  - `node -e "JSON.parse(...)"` → JSON OK. Nothing committed or pushed.
+- **Latency re-measure (2nd sample set):** `opencode/mimo-v2.6-flash-free` is **not** the slowest — re-fires gave 716 ms / 850 ms / 11,921 ms, so the 34,496 ms first reading was a cold-start outlier. It stays as the ops/advisor Primary. **Caveat: the second set used a shorter prompt, so the two sets are not directly comparable.**
+- **Watch item after restart:** the reviewer Primary `opencode/muse-spark-1.3-contributor-free` is the seat with the historical app-side cache bug (a dead `muse-spark-1.2` id cached in `opencode.global.dat` broke the ops/researcher seats once). If the reviewer seat fails to open, fall back to its Backup 1 `openrouter/nvidia/nemotron-3.5-lightning:free`.
+- **Still open:** the harder role-specific tests (hidden bug + negative control) have NOT been run — pinning happened after a single liveness/attribute probe per model. Owner may want that round before calling the seats fully proven. Also the two runs rounds are still uncommitted.
+
+**POST-RESTART VERIFICATION — 2026-09-27 (PL; evidence read from the opencode log, NOT from any agent's report).** Every seat was fired with a one-line `SEAT OK` prompt and then checked in the log for its actual provider/model.
+
+| Seat | providerID / modelID in the log | Matches the pin | Answered live |
+|---|---|---|---|
+| reviewer | `opencode` / `muse-spark-1.3-contributor-free` | ✓ | ✓ |
+| ops | `opencode` / `mimo-v2.6-flash-free` | ✓ | ✓ |
+| security | `openrouter` / `deepseek/deepseek-v4.1-flash` | ✓ | ✓ |
+| builder | `opencode-go` / `glm-5.3-flash` | ✓ | ✓ |
+| researcher | `opencode-go` / `longcat-2.5-preview-free` | ✓ | ✓ |
+| advisor | `opencode` / `mimo-v2.6-flash-free` | ✓ | ✓ |
+| assistant | `opencode` / `nemotron-3-ultra-free` | ✓ | ✓ |
+| model-recruiter | `opencode` / `nemotron-3-ultra-free` | ✓ | ✓ |
+
+- **8 of 9 seats VERIFIED.** The reviewer seat opened normally on `muse-spark-1.3-contributor-free` — the historical app-side cache bug (dead `muse-spark-1.2` id) did **not** reproduce.
+- **project-lead — NOT confirmed, and the reason is a real finding.** The pin is correct in both files, but the **running session** is on `openrouter/deepseek/deepseek-v4.1-flash` (in the log: `agent=project-lead … providerID=openrouter modelID=deepseek/deepseek-v4.1-flash`, and the session's own system context says the same). **Conclusion: a resumed session keeps its own model — an opencode restart alone does not move a live session onto a new pin.** Confirming the project-lead pin needs a **brand-new session**, or the Owner switching the model in the TUI.
+- Beginner-cost note: all 8 verification calls were one-liners; the only paid ones were security (OpenRouter deepseek) and builder (Go glm). No commitment was made.
+
+**HARD ROLE-SPECIFIC TEST SUITE — 2026-09-27 (free models only, per MODEL_POLICY.md § "การทดสอบโมเดลใหม่ตามคุณสมบัติตำแหน่ง"):**
+- 7 free models, each given: L1 echo exact id · L2 hidden-bug hunt (off-by-one in `paginate`) + negative control (false docstring claim) · L3 unknowable fine (EU AI Act 99(7)) · L4 false repo premise (T-030 tenant counts).
+- Result: **all 7 found the real bug with the correct fix (`start = (page - 1) * page_size`); none hallucinated the fine or the premise.** Negative-control answers: UNVERIFIED/false (no fabrication). Runs: `runs/2026-09-27T00-23-29Z-t065hardmusespark13contributorfree`, `…-t065hardnemotron35lightningfree`, `…-t065hardspacebunnyfree`, `…-t065hardlongcat25previewfree`, `…-t065hardnemotron3ultrafree`, `…-t065hardmimov26flashfree`, `…-t065hardinklingsmallfree`.
+- Evidence review (different model `openrouter/thinkingmachines/inkling-small:free`, run `runs/2026-09-27T00-32-59Z-t065-evidence-review`) = **ACCEPT-WITH-FINDINGS** — 7 hard dirs + 15 probe dirs + frontmatter pins + opencode.json all verified; findings non-blocking (p16–p19 extra probe rounds, worker.md has no pin, slug-prefix order note).
+- Decision-log entry for the re-staff: see `docs/warroom/decision-log.md` (T-065 entry, 2026-09-27).
+- **T-065 closed DONE 2026-09-27** — hard suite passed, evidence reviewed, pins live (8/9 seats; project-lead needs a new session).
+Links: `docs/product/MODEL_POLICY.md` (§ Owner's Model-Selection Framework), `docs/product/MODEL_ROSTER.md`, `.opencode/agents/`, `opencode.json`, card T-064
+
+INTAKE T-065 — 2026-09-27 (Project Lead) — ACCEPT (Owner order, in-session).
+Understanding: the Owner rejected "speed" as a general selection criterion. Each role has its own required attributes (table now in `MODEL_POLICY.md`), and a new model must be tested against the target role's attributes — e.g. security/reviewer must be shown to actually find a hidden bug; researcher/HR must be shown to admit "I don't know". The Owner also ordered that OpenRouter free usage go through `openrouter/free` so a dead model is swapped out automatically.
+Scope: `MODEL_POLICY.md` criteria (done) + a full HR re-staff of the 9 roles + the dead-pin replacement + runtime pin writes + restart verification. Nothing else.
+Needs: HR (free), role-specific probes, an assistant/builder for the runtime files, one Owner restart, one reviewer.
+Plan: (1) PL writes the criteria + the router rule (done); (2) HR re-staffs with role-specific tests; (3) Owner approves; (4) assistant/builder writes the pins; (5) Owner restarts; (6) live confirmation; (7) different-model review; (8) decision-log entries.
+Risks: `openrouter/free` is non-deterministic (different model per call) → unsuitable where model behaviour must be stable across runs; OpenRouter credit is nearly empty so paid fallbacks need approval; a wrong pin silently breaks a seat (as `nemotron-3.5-lightning-free` already did).
+Decision: ACCEPT.
+
+---
+
 
 ## REVIEW
 

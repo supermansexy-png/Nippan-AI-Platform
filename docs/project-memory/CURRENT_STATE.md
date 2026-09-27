@@ -1,6 +1,6 @@
 # Nippan AI Platform — Current State
 
-Last updated: 2026-09-27 (session 8 — doc cleanup, card T-058)
+Last updated: 2026-09-27 (session 9 — T-065 re-staff + T-051 seed + T-066 fix)
 Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
 
 > **One home per fact (card T-058):** model pins live **only** in
@@ -10,6 +10,13 @@ Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
 > This file records what is actually built / shared today — not designs, and not
 > history (completed work is in `docs/archive/TASKS_DONE_ARCHIVE.md` and
 > `docs/warroom/decision-log.md`).
+
+## Session 9 state (2026-09-27) — T-065 re-staff + T-051 seed + T-066 fix
+
+- **Model roster (T-065):** all 9 dev roles re-staffed per the T-065 table (`MODEL_ROSTER.md` § "Per-role staffing"); runtime pins written to `.opencode/agents/*.md` + `opencode.json` (uncommitted). Post-restart live verification: **8/9 seats VERIFIED** (reviewer/ops/security/builder/researcher/advisor/assistant/model-recruiter); **project-lead NOT confirmed** — a resumed session keeps its own model; a brand-new session is required. Hard role-specific suite (7 free models, hidden bug + negative control): **all 7 found the bug, none hallucinated** — runs `runs/*t065-hard*`.
+- **T-051 finding 2:** participants-only seed implemented in `services/core/**` (working tree, uncommitted by design); reviewer check in flight.
+- **T-066:** two stale security pins in agent prompts fixed to the T-065 roster.
+- **Open board:** T-032 (git dispatch, 2 answers recorded), T-033 (War Room pilot), T-034b (committed — **deploy blocked on Owner**), T-035/T-038 (closing), T-050 (roadmap draft awaiting Owner), T-051, T-065, T-066.
 
 ## Provider & model pins — single source, not copied here
 

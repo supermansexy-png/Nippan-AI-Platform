@@ -77,34 +77,6 @@ PL NOTE — 2026-09-25 (dev-time, no Docker; Owner-delegated): advanced the loca
 
 ---
 
-### T-007 — War Room D-01: roster + ordered message surface (acceptance)
-Status: **DONE — 2026-09-26** (D-01 accepted by the Owner, option ก; Issues #35 and #30 CLOSED).
-Parked 2026-09-25 (blocked: remote owner access not enabled) → unblocked, re-verified and accepted 2026-09-26.
-Owner: Project Lead (mimo-v2.6-flash-free) — 2026-09-24
-Role: Developer
-Risk: L2
-Goal: authenticated owner loads /war-room with roster + ordered SSE messages; acceptance evidence for D-01
-Done when: D-01 acceptance checklist in Issue #35 all met; Issue #30 D-01 checked with evidence
-Budget: 1–2 working days
-Links: Issue #35, Issue #30, services/control-plane-web/war-room/
-
-INTAKE — T-007 — Project Lead — 2026-09-24
-Understanding: D-01 acceptance requires verifying 6 checklist items against deployed preview + codebase.
-Decision: ACCEPT
-
-DELIVERY — T-007 — Project Lead — 2026-09-24
-Status claimed: PARTIAL (item 1 remote access blocked by current loopback_only; resolves in T-010)
-Checklist results:
-- [x] Snapshot returns deterministic room + roster → VERIFIED (PR#65+PR#68, transport.py L519-542)
-- [x] Ordered SSE replay → VERIFIED (transport.py L544-623, sequence-based)
-- [x] Reconnect preserves order w/o browser state → VERIFIED (server authoritative sequence, DB cursor)
-- [x] Unauthenticated fails closed → VERIFIED (_authorize_preview_request raises 403; loopback_only default)
-- [x] Remote owner loads /war-room/ → VERIFIED 2026-09-26 (remote-authenticated `GET /war-room/` = 200 over the dev-API-key path on the deployed preview; 403 fail-closed without the header)
-- [~] Source head recorded → PARTIAL (git HEAD 73672d7; deployed e672a77) — superseded 2026-09-26: deployed revision recorded from the Render API as deploy `dep-dar37iflk1mc73d2ss50` / commit `0b94f67776f3cafcd0fb8ed13c66c2f49b40e3b7`
-Next: none — D-01 accepted with findings (evidence + carried findings: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` §"D-01 acceptance run" and §"ACCEPTANCE DECISION").
-
----
-
 ### T-BRIDGE-01 — Bridge Watcher v1 (external-session watcher)
 
 Status: **DROPPED — 2026-09-25 (Owner: "2 ลบ")** (was PARKED/UNVERIFIED)
