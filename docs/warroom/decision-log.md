@@ -1214,3 +1214,40 @@ one real PR with CI + a different-model review) remains open.**
 
 **Task**: T-032 (pilot A)
 
+## 2026-09-27 — Project Owner / Project Lead — MESSAGE_FLOW_V1: ND-1…ND-7 resolved (message flow rules)
+
+Context: `docs/architecture/MESSAGE_FLOW_V1.md` (v1.0) documented the end-customer
+message path and marked 7 points where the existing sources were silent
+(NEEDS_DECISION) rather than guessing. These decisions govern real runtime
+behaviour of the customer-facing path (quota, outage, answer checks).
+
+Decision (Owner, 2026-09-27):
+- **ND-1** — de-dup store = new `lite_processed_events` (scoped `tenant_id` +
+  `bot_id`, keyed by the platform event id, short TTL), to be added to
+  `LITE_SCHEMA_V1.md` via card T-076.
+- **ND-2** — over the reply quota with no top-up: one fixed message pointing the
+  customer to the shop's direct fallback contact (from `bots.business_info`), then
+  stop answering — no model calls until top-up or a new month; sent once, not
+  repeated.
+- **ND-3** — pre-send check = **deterministic filter only** (no second model
+  call); upgrade to a checker model only if it proves too weak in real use, with a
+  price approval at that time.
+- **ND-4** — PDPA first-contact notice attached to the first answer (one message).
+- **ND-5** — expired LINE reply token: no auto-push; log the miss and set a max
+  wait budget per reply.
+- **ND-6** — failed signature: non-2xx without a retry storm, log every
+  occurrence.
+- **ND-7** — total n8n outage: a free external uptime monitor (e.g. UptimeRobot)
+  pings n8n every 1–5 min and alerts the owner after more than 15 min on the
+  owner's alert channel, entirely outside n8n. No automatic customer fallback
+  during a total n8n outage in Phase A — accepted limitation recorded in
+  `BUSINESS_OPERATIONS.md` §1.
+
+Reason: the Owner chose the lightest workable Phase A option (no complex watchdog;
+no per-message checker model) because the platform has no real customers yet, while
+keeping the fail-closed guarantees (scope, honesty, quota caps).
+
+Task: MESSAGE_FLOW_V1 (ND resolution) — docs updated and committed as a separate
+chunk ("resolve ND-1 to ND-7"); not pushed. A reviewer on a different model is to
+verify the whole file before Phase 2 (building the real n8n workflows).
+

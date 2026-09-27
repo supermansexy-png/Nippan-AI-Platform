@@ -18,6 +18,17 @@ protects the tenant's reputation, which is what they are paying for.
 Also: keep at least one alternative model per tier in the routing policy,
 so a single provider outage switches models instead of stopping service.
 
+**Phase A accepted limitation (Owner decision 2026-09-27):** the fallback above
+covers a **model-provider** outage — n8n is still running and can send it. If
+**n8n itself is down**, no code inside n8n can send either the customer fallback
+or the owner alert. Phase A therefore accepts, explicitly, that during a total
+n8n outage **the customer gets no message at all**; the guarantee we do keep is
+that the **owner is alerted as fast as possible**, via a free external uptime
+monitor (e.g. UptimeRobot) that pings n8n every 1–5 minutes and alerts the owner
+after more than 15 minutes, entirely outside n8n. An automatic customer fallback
+for a total outage needs separate, more complex infrastructure and is deferred.
+See `docs/architecture/MESSAGE_FLOW_V1.md` §7.2 / ND-7.
+
 ## 2. Wrong answers
 
 Rule: bots answer prices, stock and policies only from the tenant's own
