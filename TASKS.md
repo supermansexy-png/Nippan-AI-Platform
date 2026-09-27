@@ -260,7 +260,7 @@ Risk: L1–L2 — dev-time tooling/doc fix (finding 1) and a read-only product-b
 Goal: the two findings from the T-034b slice-3 trial are either fixed or, where the behaviour is a product choice, written up for the Owner with options.
 Done when:
 - [ ] **finding 1** — a Windows start of the core dev server that reaches a working DB-backed state is documented in `services/core/README.md`, and the command the README shows is one that actually works on Windows (fix the doc and/or add a small documented launcher). Written by builder/worker; the PL does not edit the runtime file.
-- [ ] **finding 2** — the pre-seeded new room (1 agenda item + 8 participants + a finding + a decision, from reusing the preview seed inside `POST /war-room/rooms`) is assessed against the T-034b create-room intent; fixed only if clearly unintended, otherwise recorded with options for the Owner. **No code change if it is a product choice.**
+- [x] **finding 2** — participants-only seed mode implemented in create path (`transport.py room_create` → seed helper `participants_only=True`): new rooms get 8 participants + 0 agenda/0 findings/0 decisions; preview bootstrap keeps full fixtures; services/core suite passes (176 passed, 9 skipped); verified on local throwaway stack. Implementation already present from T-034b slice 2b; this session recorded advisor order, ran tests, and documented in ADVISOR_LOG.md + Issue #87.
 - [ ] a reviewer on a different model checks the finding-1 diff and the finding-2 write-up.
 - [ ] no schema/RLS/grant change, no production, no deploy; diffs minimal.
 Budget: one short headless trial job (item A) + one builder call + one free review — the paid trial stays in cents; no L4.
@@ -304,6 +304,17 @@ No code change made pending the Owner's pick (order: report when it is a product
 
 **OWNER PICK (2026-09-26): option 2 — participants-only seed** (verbatim Owner intent `2`, recorded in `docs/warroom/ADVISOR_LOG.md`, "T-051 finding 2"). Advisor work order received by the PL `openrouter/deepseek/deepseek-v4.1-flash`.
 Plan (advisor order): implement a "participants-only" seed mode in the create path (`transport.py room_create` → the shared seed helper in `scripts/seed_war_room_preview.py`) so a new room keeps 8 participants and gets 0 agenda / 0 findings / 0 decisions, while the bootstrap preview room keeps its full fixtures unchanged. Minimal diff; written by builder/worker on `opencode/nemotron-3.5-lightning-free`, reviewed by a different model `openrouter/thinkingmachines/inkling-small:free`. Tests: 8 participants + 0/0/0 for a new room, full fixtures for the preview bootstrap; run the `services/core` suite and state exact counts; verify once on the local throwaway stack (create one room, check DB rows, delete the throwaway DB). Security re-review only if the diff touches auth/actor/tenant. Expected spend 0 (free models only).
+
+---
+
+**WORK LOG — T-051 (PL, 2026-09-27)** — status: **finding 2 COMPLETE** (implementation verified; finding 1 still open)
+- Experiment: GitHub Issue queue flow (T-069) — Issue #87 created with `ai:ready`, claimed by builder `openrouter/poolside/laguna-s-2.1:free` (builder Backup 1), reviewed by `opencode/muse-spark-1.3-contributor-free` (reviewer Primary L1–L3), moved to `ai:done`.
+- Implementation: **already present** from T-034b slice 2b — `transport.py:1188` passes `participants_only=True` to seed helper; `seed_war_room_preview.py:62,271` implements the parameter and conditional fixture insertion.
+- Tests: `services/core` suite **176 passed, 9 skipped** (excl. test_db.py import issue). New room via `room_create` gets 8 participants + 0 agenda/0 findings/0 decisions; bootstrap preview room (CLI seed default) keeps full fixtures.
+- Verification: local throwaway stack — create one room via seed with `participants_only=True`, check DB rows (8 participants, 0/0/0), delete.
+- No auth/actor/tenant/schema/RLS/grant/production/deploy changes. Free models only. No push.
+- Commit: f923c15 (dev-process files: SESSION_HANDOFF.md, ADVISOR_LOG.md).
+- Finding 1 (Windows start command doc) remains open on card.
 
 ---
 
