@@ -45,10 +45,13 @@ python -m pip install -e ".[test]"
 python dev_server.py
 ```
 
-`dev_server.py` is a local dev launcher. On Windows only, it swaps uvicorn's
-loop factory to a selector loop, because psycopg's async pool cannot run on the
-ProactorEventLoop uvicorn would otherwise use there; everywhere else it is a
-thin `--host`/`--port` CLI wrapper around `uvicorn.run("app.main:app")`.
+> ⚠️ **Do NOT run `uvicorn app.main:app` directly on Windows.**
+> On Windows, uvicorn ≥ 0.36 creates a `ProactorEventLoop` by default.
+> Psycopg's async pool **refuses to run on ProactorEventLoop** — every
+> DB-backed route will hang indefinitely.
+> `dev_server.py` patches the uvicorn loop factory to use
+> `asyncio.SelectorEventLoop` on `win32` only; on Linux/containers it is a
+> thin `--host`/`--port` wrapper around `uvicorn.run("app.main:app")`.
 
 
 ## War Room guarded-turn database capacity
