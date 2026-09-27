@@ -19,6 +19,8 @@ Completed work: docs/archive/TASKS_DONE_ARCHIVE.md
 - Blocked / superseded cards live in `docs/archive/TASKS_PARKED.md`.
 - Inside the cap, WIP is governed by `TASK_CONTROL.md` section 5 (max **10** IN_PROGRESS, 5 REVIEW — IN_PROGRESS raised from 3 by Owner order 2026-09-26, card T-046).
 
+> **PARKED by Owner order 2026-09-27 (do not resume until the Owner orders "เดินต่อ"):** the pre-HOLD set — **T-032, T-033, T-071, T-072, T-073, T-074, T-075, T-076** — plus **T-078** (auto-card mechanism). The Owner's later order ("HOLD is replaced") lifted the freeze for new front-of-house work, but explicitly parked these under "เอาทีละอย่าง". Their cards and their INTAKE/DELIVERY records are kept as-is (nothing is closed). Board-count note: these parked cards still sit on the board, so the open-card count is above the 10-cap — flagged to the Owner for a decision on how to trim.
+
 ---
 
 > T-030 (DONE 2026-09-26) is archived in `docs/archive/TASKS_DONE_ARCHIVE.md`.
@@ -513,6 +515,35 @@ Estimate: within budget.
 Risks: Supabase MCP DDL limits (UNVERIFIED — T-072 will test first); RLS policy complexity (mitigate: security review per migration).
 Decision: READY for INTAKE.
 
+### T-078 — Auto-card signal mechanism: extend `monitor-log` to open task cards on 4 conditions (card-opening ONLY)
+
+Status: **PARKED** — Owner order 2026-09-27: park, do not retry, do not change model. Reason recorded: three consecutive builder failures with three *different* symptoms (Primary `opencode-go/glm-5.3-flash` = empty output; Backup1 `openrouter/poolside/laguna-s-2.1:free` = upstream rate-limit; Backup2 `opencode-go/kimi-k3` = `reason: length`) point at the **task brief being too long/complex for the model**, not model luck. Revisit later with a smaller, split brief. Not closed.
+Owner: Project Lead — 2026-09-27 (Owner order via this session; design source `docs/architecture/MESSAGE_FLOW_V1.md` + Track A → War Room linkage)
+Role: Project Lead (plan/verify) + builder (extend `services/dev/tools/monitor_log.py`) + reviewer L1–L3 on a **different model**
+Risk: L2 (extends an existing dev tool; writes to `TASKS.md`; **no** runtime/customer/production impact)
+Goal: `monitor-log` can **open a new task card** in `TASKS.md` when one of four conditions is observed — and can do **nothing else**. It is a signal into the normal queue, never an actor.
+Triggers (thresholds in the card, changeable by config):
+1. the same role's model fails **≥ 3 consecutive times** → open a card to **Model Scout**: "ตรวจสอบ/เสนอสลับโมเดลตำแหน่ง X"
+2. the bot cannot answer / hands off to the owner on the **same subject ≥ 3 times** → open a card to **Marketing**: "คำถามซ้ำที่ตอบไม่ได้: [content] — เจอ N ครั้ง"
+3. one shop is **near/over quota for several consecutive months** → open a card to **Cost Guard**: "ตรวจสอบการใช้งานร้าน X"
+4. a **red event unhandled for > 30 minutes** → open a card to **Project Lead** at status **NEEDS_DECISION**
+**Hard safety rule (the core of this card):** the mechanism may ONLY open a card. It must **never** swap a model, change config, send a customer message, deploy, or take any other action. Every opened card enters the normal process (INTAKE → accept/decline → do → review) exactly like a human-opened card.
+Done when:
+- [ ] the four triggers are implemented with explicit, configurable thresholds
+- [ ] opening a card appends a well-formed card block to `TASKS.md` (unique next `T-0XX` id, `Status: READY`, `Owner:` = the addressed role, `Risk:`, `Goal:`, the evidence that triggered it)
+- [ ] **idempotent:** one ongoing condition opens exactly one card (dedup key per trigger+subject); re-observation does not create duplicates
+- [ ] no code path in the mechanism performs any action other than writing the card (verified by reviewer reading the diff)
+- [ ] simulation test with **fake events** proves each of the 4 triggers opens exactly one correct card (and the dedup holds); test artifact recorded
+- [ ] reviewer on a **different model** checks the diff + the simulation evidence; verdict recorded
+- [ ] no runtime/customer/production file touched; no secret in git
+Budget: 3h builder + 1h reviewer (OpenCode Go pool / free; builder ≤ $2)
+Links: `services/dev/tools/monitor_log.py` (T-003), `docs/product/MCP_TOOLS_V1.md` (`monitor-log`), `docs/warroom/ROLES.md` (Model Scout, Marketing, Cost Guard, Project Lead), `docs/warroom/MONITORING.md`, `docs/warroom/TASK_CONTROL.md` (board cap — see note)
+Note (cap interaction): auto-opened cards count against the board's 10-open-card cap. The mechanism only signals; **triaging the board stays with the PL.** Flagged to the Owner as a follow-up decision.
+
+INTAKE T-078 — pending
+
+---
+
 ### T-077 — Lite schema change: `lite_processed_events` + `bots.business_info` fallback contact (protected doc — L3)
 
 Status: READY for INTAKE
@@ -551,6 +582,51 @@ Links: `docs/security/PDPA_COMPLIANCE.md`, `docs/product/BUSINESS_OPERATIONS.md`
 Note: opening the first-customer onboarding card (Step 2) is blocked until this card is DONE — see the hard gate in `STARTUP_PLAYBOOK.md`.
 
 INTAKE T-004 — pending (PARKED; no AI work is started)
+
+---
+
+### T-079 — Front-of-house: customer onboarding + config (setup via web-chat, confirmation summary, later-edit path)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order: "แตก ONBOARDING_FLOW.md + STOREFRONT.md เป็นงานสร้างจริง")
+Role: Project Lead (plan/split) + builder (web UI + transport) + reviewer L1–L3 on a **different model** + security (customer-facing data path + PDPA notice)
+Risk: L2–L3 (first customer-facing surface that processes a customer's uploaded business data; no tenant data exists yet — pre-G1)
+Goal: the two design docs become **buildable work**, not just prose — a real page where a prospective customer onboards by talking to the assistant over the `web-chat` channel, approves a short confirmation summary before the bot goes live, and has a defined path to change their business info later.
+Design sources: `docs/product/ONBOARDING_FLOW.md` · `docs/product/STOREFRONT.md` · `docs/product/CUSTOMER_FACING_RULES.md` §3 ("summary for the customer to confirm"; fixed menus only) · `docs/product/INTEGRATIONS.md` (web-chat adapter) · `docs/product/MCP_TOOLS_V1.md` (`web-chat-channel`, `web-fetch`, `file-reader`)
+Build items (the card must split these into their own build cards with estimates):
+1. **Setup page** — a visitor talks to the Onboarding assistant over `web-chat`; supports the three input kinds in `ONBOARDING_FLOW.md` (plain conversation / website link via `web-fetch` / uploaded file via `file-reader`).
+2. **Confirmation summary** — before go-live, show the extracted **fixed-menu** config + a short sample conversation for the customer to confirm or adjust (ONBOARDING_FLOW steps 4–5).
+3. **Later-edit path** — how a customer changes their business info after go-live. **Not designed anywhere yet.** Two options to decide: (ก) talk to a Support agent, or (ข) a separate form/panel. → **NEEDS_OWNER_DECISION before build.**
+Done when:
+- [ ] the three build items are split into child build cards with estimates and dependencies
+- [ ] the later-edit path (ก/ข) is decided by the Owner and written into the child card
+- [ ] reviewer on a different model checks the split is complete against both design docs
+- [ ] **no implementation** starts inside this card (this card only produces the build cards)
+Budget: planning/split only (no build spend)
+Links: `docs/product/ONBOARDING_FLOW.md`, `docs/product/STOREFRONT.md`, `docs/warroom/STARTUP_PLAYBOOK.md` (Step 1 onboarding assistant; Step 3 storefront + web-chat), T-004 (hard gate — no real customer onboarding until legal review is DONE)
+
+INTAKE T-079 — pending
+
+---
+
+### T-080 — Admin surface: log-only (ก) vs full admin page (ข) — NEEDS_OWNER_DECISION
+
+Status: NEEDS_DECISION — waiting for the Owner to choose (ก) or (ข)
+Owner: Project Lead — 2026-09-27 (Owner-raised gap: the admin/observability surface was designed in `MONITORING.md` but never carded as build work)
+Role: Project Lead (plan) + builder + reviewer on a different model
+Risk: L2 (internal operator surface; no customer-facing change)
+Goal: decide and then build the **operator's** view of the system — the thing that turns monitoring events into something a human acts on.
+Options:
+- **(ก) Log-only (as `MONITORING.md` designed it):** events are written to the database and a **LINE alert** is sent for red events; no new web page. Fast, no new surface to secure. **(Owner's stated preference so far.)**
+- **(ข) A full admin page:** the log + an operator dashboard (events, card/quota status, red alerts, per-bot usage) on top of (ก). More work, and it is a new authenticated surface.
+Done when:
+- [ ] the Owner picks (ก) or (ข) — recorded in `docs/warroom/decision-log.md`
+- [ ] the chosen option is split into build cards per Step 0/Step 1 of `STARTUP_PLAYBOOK.md`
+- [ ] if (ข): the admin page has its own auth/isolation card (security review mandatory)
+Budget: planning only until the Owner decides
+Links: `docs/warroom/MONITORING.md`, `docs/warroom/STARTUP_PLAYBOOK.md` Step 0/Step 1, T-071 (the owner alert channel — email first, LINE later), `docs/architecture/MESSAGE_FLOW_V1.md` §8 (monitor-log events)
+
+INTAKE T-080 — pending
 
 ---
 

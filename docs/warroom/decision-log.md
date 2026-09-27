@@ -1251,3 +1251,29 @@ Task: MESSAGE_FLOW_V1 (ND resolution) — docs updated and committed as a separa
 chunk ("resolve ND-1 to ND-7"); not pushed. A reviewer on a different model is to
 verify the whole file before Phase 2 (building the real n8n workflows).
 
+## 2026-09-27 — Project Owner — HOLD replaced; pre-HOLD set parked; T-078 parked; front-of-house gaps carded
+
+Context: an Owner stop order ("HOLD") had frozen all cards while the Owner drafted
+the rules/flow. The Owner has now confirmed that the HOLD is **superseded** by the
+later orders (board cleanup / T-004 / LITE_SCHEMA / MESSAGE_FLOW / auto-card) that
+were executed and committed after it.
+
+Decision (Owner, 2026-09-27):
+1. **HOLD is replaced** — work continues under the normal process.
+2. **Pre-HOLD set parked, not closed:** T-032, T-033, T-071…T-076 — do not resume
+   until the Owner orders "เดินต่อ" ("เอาทีละอย่าง").
+3. **T-078 (auto-card mechanism) parked, not closed, and not retried** — three
+   consecutive builder failures with three *different* symptoms (empty output /
+   upstream rate-limit / `reason: length`) are attributed to the **brief being too
+   long/complex**, not to model luck; revisit later with a smaller, split brief.
+4. **Two design-to-build gaps carded:** **T-079** (customer onboarding + config —
+   setup via web-chat, confirmation summary, later-edit path) and **T-080** (admin
+   surface — log-only (ก) vs full admin page (ข); awaiting the Owner's pick).
+
+Reason: the Owner wants front-of-house work prioritised over the parked
+backend/mechanism items, and wants design gaps that were never carded to become
+buildable work before Phase 2 opens.
+
+Task: board update (`TASKS.md`), T-079, T-080. Committed as one board-update chunk;
+not pushed.
+
