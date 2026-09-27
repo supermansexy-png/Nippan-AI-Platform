@@ -185,6 +185,18 @@ that references the old one.
 - scope_in: the two edits in ROADMAP_STUDY_DRAFT_2026-09-26.md; this append-only record; one free reviewer verification; one commit of the single file.
 - scope_out: no other file edits; no code/runtime/production/deploy/database/credential change; no paid calls; no commits of other working-tree files.
 
+### T-081 — 2026-09-27 — Merge PR #97 (T-081 doc–card gap check) after Owner approval
+- owner_intent_verbatim: "อนุมัติ"
+- order (as understood by the receiver): merge PR #97 (base dev-workspace) using existing commit 518cac3 with normal merge (no force push); close card T-081 in TASKS.md with Status → DONE and full DELIVERY (diff summary + reviewer verdict WITHIN-MANDATE + Owner approve); record this advisor instruction in ADVISOR_LOG.md with owner_intent_verbatim "อนุมัติ", receiver project-lead, auditor reviewer different model, verdict pending.
+- receiver: project-lead `openrouter/deepseek/deepseek-v4.1-flash`
+- scope_in: merge PR #97; update TASKS.md T-081 to DONE with DELIVERY; append this ADVISOR_LOG entry. No other files.
+- scope_out: no force push; no other file edits; no new work creation; no deploy/production/runtime change.
+- prohibitions: must not force push; must not edit other files; must not create new work.
+- auditor: `opencode/muse-spark-1.3-contributor-free` (reviewer Primary L1–L3, different from builder `opencode-go/glm-5.3-flash` and from advisor `opencode-go/mimo-v2.6-pro`)
+- verdict: pending
+- evidence: PR #97 merge commit `3ac8a21`; TASKS.md T-081 updated; ADVISOR_LOG.md this entry appended
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4).
+
 ### T-071/T-072 — 2026-09-27 — Open P0.1 Alert channel + P0.2 Backup/restore proof (parallel, pre-G1)
 - owner_intent_verbatim: "ทำไมไม่จำเลย" + "นี้เข้าใจมัียว่าตอนนี้ไม่มีผู้เช่า ไม่มีผู้ใช้ ยังไม่ได้เปิดระบบ เข้าใจใช่มัย" + "เปิดเลย ... อันดับแรกเปิดงาน ทั้ง 2 ใบ และให้ pl ว่างแผนงาน ออกมา เลือกทีมงาน และการกระจายงาน แผนดำเนินการ ให้ทำมาส่งก่อน"
 - order (as understood by the receiver): (1) record the standing project status (no tenant, no user, pre-G1, Supabase is test DB, test directly on real DB, no production touch) in SESSION_HANDOFF.md and CURRENT_STATE.md; (2) create two cards T-071 (P0.1 Owner alert channel) and T-072 (P0.2 Supabase backup/restore proof) in TASKS.md with full card fields; (3) write a parallel execution plan draft at docs/warroom/P0_EXECUTION_PLAN_DRAFT_2026-09-27.md with per-card team (role + provider-prefixed model from T-065 roster), parallel flow, INTAKE→Issue→branch→PR→CI→different-model reviewer→merge→close steps, evidence checklist, stop rules, budget caps, risks, Owner dependencies, and advisor control points; (4) append this instruction record to ADVISOR_LOG.md as the receiver; (5) do NOT start any real work (no Issue, no branch, no commit/push) — wait for Owner approval of the plan first.
