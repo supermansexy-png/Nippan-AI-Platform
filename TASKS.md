@@ -347,6 +347,13 @@ Done when:
 - [ ] non-200 (429 / unavailable) fails **toward the human**: no signal is produced and the deciding role proceeds as today — never "assume L1"
 - [ ] reviewer on a different model checks both the helper and the usage rule
 - [ ] no agent pin and no `opencode.json` change in this card
+**ACCEPTED USES (Owner 2026-09-27 — "ถ้าเหมาะก็เอามาใช้งาน")**
+- **ใช้เลย (เหมาะมาก):** จัดระดับความเสี่ยง L1/L2/L3 · ตัวกรองรอบแรก "คำกล่าวอ้างตรงกับหลักฐานไหม" แบบ noul ทีละข้อ · ด่านใช่/ไม่ใช่ (ต้องขออนุมัติ Owner ไหม · แตะ auth/tenant ไหม · กระทบ production ไหม · แตะข้อมูลลูกค้าไหม) · จัดหมวด/จัดเส้นทางด้วย choice จาก criteria ที่เรากำหนด
+- **ใช้แบบ "เสนอ" เท่านั้น (คนยืนยัน):** เสนอสถานะการ์ด READY/IN_PROGRESS/REVIEW — **ห้ามเขียนบอร์ดเอง** · ให้คะแนน fit ของโมเดลให้ HR · ให้คะแนนตาม rubric
+- **ห้ามใช้ (เป็นข้อเท็จจริงที่เครื่องมือตอบตรงกว่า):** ไฟล์ไหนเปลี่ยน/แตะไฟล์ที่สั่งไหม → `git` · ไฟล์มีอยู่ไหม · ราคา/ลิมิต · ควรอ่านไฟล์ไหน → `grep`/`glob` · งานที่ต้องผลิตข้อความหรือโค้ด
+- **กฎถาวร:** เป็นสัญญาณเท่านั้น · ไม่ใช่ผู้ตัดสินในเรื่องที่มีกฎเป็นลายลักษณ์อักษร · ไม่เป็นด่านเดียวของงาน L2/L3 · ถ้าไม่ตอบ 200 (429/ล่ม) ต้องไม่ให้สัญญาณและให้คนตัดสินเหมือนเดิม
+- **หมายเหตุ:** การผูก Jev เข้า "ขั้นตอนบังคับ" ของทีม (`AI_OPERATING_PROTOCOL.md` / `TASK_CONTROL.md`) เป็นการแก้เอกสาร protected ต้องเปิดการ์ด L3 + Owner อนุมัติถ้อยคำแยกต่างหาก — **ไม่อยู่ในขอบเขตการ์ดนี้**
+
 Budget: $0 — Jev free tier only; no paid call.
 Links: `docs/product/MODEL_ROSTER.md` § "Jev 1.13 Free — correction + role" · `runs/jev_pilot.cjs` · `docs/project-memory/DECISIONS.md` 2026-09-27
 
