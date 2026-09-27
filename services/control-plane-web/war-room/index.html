@@ -96,6 +96,13 @@
       <aside class="panel context-panel" aria-label="Agenda, findings, and decisions">
         <section>
           <div class="panel-heading"><h2>วาระ</h2></div>
+          <form id="agenda-form" class="agenda-create">
+            <label for="agenda-title">หัวข้อวาระ</label>
+            <input id="agenda-title" name="agenda-title" autocomplete="off" placeholder="หัวข้อวาระ">
+            <label for="agenda-objective">เป้าหมาย</label>
+            <input id="agenda-objective" name="agenda-objective" autocomplete="off" placeholder="เป้าหมายของวาระ">
+            <button id="agenda-create" type="button" class="primary">เพิ่มวาระ</button>
+          </form>
           <div id="agenda-list" class="stack empty">ยังไม่มีวาระ</div>
         </section>
         <section>
@@ -121,6 +128,6 @@
     </footer>
   </main>
 
-  <script type="module" src="./war-room.js?v=20260923-thai-default"></script>
+  <script type="module" src="./war-room.js?v=20260926-agenda"></script>
 </body>
 </html>

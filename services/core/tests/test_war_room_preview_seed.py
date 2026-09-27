@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+import uuid
 from uuid import UUID
 
 import psycopg
@@ -67,6 +68,38 @@ def _cleanup(admin_dsn: str) -> None:
         conn.execute(
             "delete from public.tenants where tenant_id = %s",
             (TENANT_ID,),
+        )
+
+
+def _cleanup_room(admin_dsn: str, room_id: UUID) -> None:
+    with psycopg.connect(admin_dsn, autocommit=True) as conn:
+        conn.execute(
+            "delete from public.project_room_action_items where room_id = %s",
+            (room_id,),
+        )
+        conn.execute(
+            "delete from public.project_room_findings where room_id = %s",
+            (room_id,),
+        )
+        conn.execute(
+            "delete from public.project_room_decisions where room_id = %s",
+            (room_id,),
+        )
+        conn.execute(
+            "delete from public.project_room_messages where room_id = %s",
+            (room_id,),
+        )
+        conn.execute(
+            "delete from public.project_room_agenda_items where room_id = %s",
+            (room_id,),
+        )
+        conn.execute(
+            "delete from public.project_room_participants where room_id = %s",
+            (room_id,),
+        )
+        conn.execute(
+            "delete from public.project_rooms where room_id = %s",
+            (room_id,),
         )
 
 
@@ -178,3 +211,138 @@ def test_local_preview_seed_refuses_production_environment() -> None:
 
     assert result.returncode == 1
     assert "refuses non-development environment" in result.stderr
+
+
+def test_local_preview_seed_new_custom_room_has_counts_unchanged_default() -> None:
+    admin_dsn = _admin_dsn()
+    custom_room_id = uuid.uuid4()
+    _cleanup(admin_dsn)
+    env = os.environ.copy()
+    env.update({
+        'NIPPAN_ENVIRONMENT': 'development',
+        'NIPPAN_WAR_ROOM_PREVIEW_ENABLED': 'true',
+        'NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN': admin_dsn,
+    })
+    for key in ('NIPPAN_WAR_ROOM_PREVIEW_TENANT_ID', 'NIPPAN_WAR_ROOM_PREVIEW_APPLICATION_ID', 'NIPPAN_WAR_ROOM_PREVIEW_PRINCIPAL_ID'):
+        env.pop(key, None)
+    try:
+        # First seed default room
+        result = subprocess.run(
+            [sys.executable, str(SEED_SCRIPT)],
+            cwd=CORE_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        # Seed second room
+        env_custom = env.copy()
+        result2 = subprocess.run(
+            [sys.executable, str(SEED_SCRIPT), '--room-id', str(custom_room_id), '--title', 'Custom Preview Room'],
+            cwd=CORE_ROOT,
+            env=env_custom,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result2.returncode == 0, result2.stderr
+        with psycopg.connect(admin_dsn) as conn:
+            default_participants = conn.execute(
+                'select count(*) from public.project_room_participants where room_id = %s and active',
+                (ROOM_ID,),
+            ).fetchone()
+            default_agenda = conn.execute(
+                'select count(*) from public.project_room_agenda_items where room_id = %s',
+                (ROOM_ID,),
+            ).fetchone()
+            custom_participants = conn.execute(
+                'select count(*) from public.project_room_participants where room_id = %s and active',
+                (custom_room_id,),
+            ).fetchone()
+            custom_agenda = conn.execute(
+                'select count(*) from public.project_room_agenda_items where room_id = %s',
+                (custom_room_id,),
+            ).fetchone()
+        assert default_participants == (8,)
+        assert default_agenda == (1,)
+        assert custom_participants == (8,)
+        assert custom_agenda == (1,)
+    finally:
+        _cleanup_room(admin_dsn, custom_room_id)
+        _cleanup(admin_dsn)
+
+
+def test_local_preview_seed_repeat_non_default_without_force_fails() -> None:
+    admin_dsn = _admin_dsn()
+    custom_room_id = uuid.uuid4()
+    env = os.environ.copy()
+    env.update({
+        'NIPPAN_ENVIRONMENT': 'development',
+        'NIPPAN_WAR_ROOM_PREVIEW_ENABLED': 'true',
+        'NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN': admin_dsn,
+    })
+    for key in ('NIPPAN_WAR_ROOM_PREVIEW_TENANT_ID', 'NIPPAN_WAR_ROOM_PREVIEW_APPLICATION_ID', 'NIPPAN_WAR_ROOM_PREVIEW_PRINCIPAL_ID'):
+        env.pop(key, None)
+    try:
+        # Create custom room
+        result = subprocess.run(
+            [sys.executable, str(SEED_SCRIPT), '--room-id', str(custom_room_id), '--title', 'Custom Preview Room'],
+            cwd=CORE_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        # Try again without --force
+        result2 = subprocess.run(
+            [sys.executable, str(SEED_SCRIPT), '--room-id', str(custom_room_id), '--title', 'Custom Preview Room'],
+            cwd=CORE_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result2.returncode == 1
+        with psycopg.connect(admin_dsn) as conn:
+            room_exists = conn.execute(
+                'select 1 from public.project_rooms where room_id = %s',
+                (custom_room_id,),
+            ).fetchone()
+        assert room_exists is not None
+    finally:
+        _cleanup_room(admin_dsn, custom_room_id)
+        _cleanup(admin_dsn)
+
+
+def test_local_preview_seed_whitespace_title_fails() -> None:
+    admin_dsn = _admin_dsn()
+    whitespace_room_id = uuid.uuid4()
+    env = os.environ.copy()
+    env.update({
+        'NIPPAN_ENVIRONMENT': 'development',
+        'NIPPAN_WAR_ROOM_PREVIEW_ENABLED': 'true',
+        'NIPPAN_WAR_ROOM_PREVIEW_SEED_ADMIN_DSN': admin_dsn,
+    })
+    for key in ('NIPPAN_WAR_ROOM_PREVIEW_TENANT_ID', 'NIPPAN_WAR_ROOM_PREVIEW_APPLICATION_ID', 'NIPPAN_WAR_ROOM_PREVIEW_PRINCIPAL_ID'):
+        env.pop(key, None)
+    try:
+        result = subprocess.run(
+            [sys.executable, str(SEED_SCRIPT), '--room-id', str(whitespace_room_id), '--title', '   '],
+            cwd=CORE_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 1
+        with psycopg.connect(admin_dsn) as conn:
+            room_exists = conn.execute(
+                'select 1 from public.project_rooms where room_id = %s',
+                (whitespace_room_id,),
+            ).fetchone()
+        assert room_exists is None
+    finally:
+        _cleanup_room(admin_dsn, whitespace_room_id)
+        _cleanup(admin_dsn)
