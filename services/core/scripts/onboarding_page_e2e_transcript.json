@@ -32,7 +32,7 @@
     "after_answer": {
       "identity_verified": false,
       "identity_notice": "dev escape enabled: tenant identity is UNVERIFIED (X-Onboarding-Scope header is not an authenticate signal)",
-      "session_id": "s-0001-SOiHBcZ5Dv2Fb20IheX9-4fV4kXzGsSV",
+      "session_id": "s-0001-H0t6xSWKjGFY6M3jgdRtZ-QbQlSIrFvL",
       "tenant_scope_id": "tenant-A",
       "missing_fields": [
         "business_type",

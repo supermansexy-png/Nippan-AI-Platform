@@ -1,0 +1,146 @@
+{
+  "steps": [
+    {
+      "step": "summary_html",
+      "value": "<section id=\"confirm-summary\" class=\"confirm-summary\">\n<h2>สรุปการตั้งค่าบอทของคุณ</h2>\n<ul id=\"config-rows\"><li class=\"done\">สไตล์การตอบ: polite</li><li class=\"done\">ประเภทร้าน: cafe</li><li class=\"done\">ชื่อร้าน: ร้านกาแฟดอย</li><li class=\"done\">เวลาทำการ: 08:00-18:00</li><li class=\"done\">รายการเมนู: ลาเต้, อเมริกาโน่, ชานมไข่มุก</li><li class=\"done\">เครื่องมือที่เปิดใช้: chat-bot-core</li><li class=\"done\">ช่องทางติดต่อสำรอง: 02-123-4567</li></ul>\n<h2>ตัวอย่างบทสนทนา</h2>\n<ul id=\"sample-conversation\">\n<li><strong>ลูกค้า</strong>: มีเมนูอะไรบ้าง</li>\n<li><strong>บอท</strong>: ร้านกาแฟดอย ยินดีต้อนรับครับ/ค่ะ</li>\n<li><strong>ลูกค้า</strong>: ขอดูเมนูทางร้าน ร้านกาแฟดอย</li>\n<li><strong>บอท</strong>: ทางร้านมีเมนู เช่น ลาเต้และ อเมริกาโน่และ ชานมไข่มุกครับ/ค่ะ</li>\n<li><strong>ลูกค้า</strong>: เปิดกี่โมง</li>\n<li><strong>บอท</strong>: เปิด 08:00-18:00ครับ/ค่ะ</li>\n<li><strong>ลูกค้า</strong>: ติดต่อเจ้าของร้านยังไง</li>\n<li><strong>บอท</strong>: ฝากข้อความไว้ได้ ทางร้านจะติดต่อกลับที่ 02-123-4567ครับ/ค่ะ</li>\n</ul>\n</section>"
+    },
+    {
+      "step": "sample_conversation",
+      "value": [
+        [
+          "ลูกค้า",
+          "มีเมนูอะไรบ้าง"
+        ],
+        [
+          "บอท",
+          "ร้านกาแฟดอย ยินดีต้อนรับครับ/ค่ะ"
+        ],
+        [
+          "ลูกค้า",
+          "ขอดูเมนูทางร้าน ร้านกาแฟดอย"
+        ],
+        [
+          "บอท",
+          "ทางร้านมีเมนู เช่น ลาเต้และ อเมริกาโน่และ ชานมไข่มุกครับ/ค่ะ"
+        ],
+        [
+          "ลูกค้า",
+          "เปิดกี่โมง"
+        ],
+        [
+          "บอท",
+          "เปิด 08:00-18:00ครับ/ค่ะ"
+        ],
+        [
+          "ลูกค้า",
+          "ติดต่อเจ้าของร้านยังไง"
+        ],
+        [
+          "บอท",
+          "ฝากข้อความไว้ได้ ทางร้านจะติดต่อกลับที่ 02-123-4567ครับ/ค่ะ"
+        ]
+      ]
+    },
+    {
+      "step": "persisted_row_after_confirm",
+      "value": {
+        "status": "active",
+        "tone": "polite",
+        "enabled_tools": [
+          "chat-bot-core"
+        ],
+        "business_info": {
+          "business_name": "ร้านกาแฟดอย",
+          "business_type": "cafe",
+          "opening_hours": {
+            "open": "08:00",
+            "close": "18:00"
+          },
+          "menu_categories": [
+            "ลาเต้",
+            "อเมริกาโน่",
+            "ชานมไข่มุก"
+          ],
+          "fallback_contact": "02-123-4567"
+        }
+      }
+    },
+    {
+      "step": "persisted_row_summary",
+      "value": {
+        "status": "active",
+        "tone": "polite",
+        "enabled_tools": [
+          "chat-bot-core"
+        ],
+        "business_info": {
+          "business_name": "ร้านกาแฟดอย",
+          "business_type": "cafe",
+          "opening_hours": {
+            "open": "08:00",
+            "close": "18:00"
+          },
+          "menu_categories": [
+            "ลาเต้",
+            "อเมริกาโน่",
+            "ชานมไข่มุก"
+          ],
+          "fallback_contact": "02-123-4567"
+        }
+      }
+    },
+    {
+      "step": "persisted_expected",
+      "value": {
+        "tone": "polite",
+        "tools": [
+          "chat-bot-core"
+        ],
+        "hours": "08:00-18:00",
+        "contact": "02-123-4567",
+        "status": "active"
+      }
+    },
+    {
+      "step": "row_after_edit",
+      "value": {
+        "status": "paused"
+      }
+    },
+    {
+      "step": "checks",
+      "value": {
+        "summary_shows_config": true,
+        "summary_shows_sample_conversation": true,
+        "conversation_generated_from_config": true,
+        "no_model_or_vendor_name_in_summary": true,
+        "summary_complete_draft_gaps_empty": true,
+        "confirm_persists_active": true,
+        "persisted_config_shown": true,
+        "persisted_values_are_fixed_menu": true,
+        "persisted_no_free_text_instruction_keys": true,
+        "edit_revokes_active": true,
+        "reconfirm_after_edit_reactivates": true,
+        "incomplete_confirm_refused": true,
+        "incomplete_summary_says_missing": true,
+        "decline_never_activates": true
+      }
+    }
+  ],
+  "checks": {
+    "summary_shows_config": true,
+    "summary_shows_sample_conversation": true,
+    "conversation_generated_from_config": true,
+    "no_model_or_vendor_name_in_summary": true,
+    "summary_complete_draft_gaps_empty": true,
+    "confirm_persists_active": true,
+    "persisted_config_shown": true,
+    "persisted_values_are_fixed_menu": true,
+    "persisted_no_free_text_instruction_keys": true,
+    "edit_revokes_active": true,
+    "reconfirm_after_edit_reactivates": true,
+    "incomplete_confirm_refused": true,
+    "incomplete_summary_says_missing": true,
+    "decline_never_activates": true
+  }
+}
