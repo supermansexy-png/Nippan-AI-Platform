@@ -60,6 +60,20 @@ class Settings(BaseSettings):
         le=21600,
     )
 
+    # Owner alert channel (T-071): email-first transport. Fail-closed —
+    # when any required field is unset the channel is disabled and the War
+    # Room keeps running without it (alerts fall back to the log sink).
+    # The SMTP password is a secret and lives only in the deployment
+    # environment; it is never committed to the repository.
+    alert_email_enabled: bool = Field(default=False)
+    alert_email_smtp_host: str | None = Field(default=None)
+    alert_email_smtp_port: int = Field(default=587, ge=1, le=65535)
+    alert_email_username: str | None = Field(default=None)
+    alert_email_password: str | None = Field(default=None)
+    alert_email_from: str | None = Field(default=None)
+    alert_email_to: str | None = Field(default=None)
+    alert_email_timeout_seconds: float = Field(default=20.0, ge=1.0, le=60.0)
+
 
 @lru_cache
 def get_settings() -> Settings:

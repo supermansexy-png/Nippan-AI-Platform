@@ -20,6 +20,7 @@ import time
 
 import psycopg
 
+from .alert import AlertingEventSink, EventAlertRenderer, build_alert_channel
 from .auth import (
     DatabaseRoomCommandAuthorizer,
     DatabaseRoomReadAuthorizer,
@@ -743,13 +744,30 @@ def create_war_room_preview_router(
         model_gateway = _DisabledModelGateway()
         budget_authority = _DisabledBudgetAuthority()
 
+    postgres_event_sink = PostgresRoomEventSink(database)
+    # T-071 owner alert channel: wrap the durable sink so critical War Room
+    # events (TURN_FAILED, BUDGET_HARD_STOP) and sink failures (e.g. DB
+    # outage) emit an owner email alert. Fail-closed: an unconfigured SMTP
+    # environment degrades to the log sink; the room flow is never blocked.
+    alert_channel, alert_to_addr, alert_from_addr = build_alert_channel(
+        settings
+    )
+    alerting_sink = AlertingEventSink(
+        inner=postgres_event_sink,
+        channel=alert_channel,
+        renderer=EventAlertRenderer(
+            to_addr=alert_to_addr,
+            from_addr=alert_from_addr or "noreply@nippan.local",
+        ),
+    )
+
     orchestrator = WarRoomOrchestrator(
         model_gateway=model_gateway,
         budget_authority=budget_authority,
         command_authorizer=command_authorizer,
         turn_execution_guard=PostgresRoomTurnGuard(database),
         failure_history_source=PostgresRoomFailureHistorySource(database),
-        event_sink=PostgresRoomEventSink(database),
+        event_sink=alerting_sink,
     )
 
     async def authorize_read(
