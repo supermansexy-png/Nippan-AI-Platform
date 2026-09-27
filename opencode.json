@@ -177,6 +177,25 @@
           "options": {
             "reasoningEffort": "low"
           }
+        },
+        "qwen3.8-flash": {
+          "options": {
+            "reasoningEffort": "low"
+          }
+        }
+      }
+    },
+    "openrouter": {
+      "models": {
+        "deepseek-v4.1-flash": {
+          "options": {
+            "reasoningEffort": "low"
+          }
+        },
+        "qwen3.8-flash": {
+          "options": {
+            "reasoningEffort": "low"
+          }
         }
       }
     }
