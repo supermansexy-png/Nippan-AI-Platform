@@ -363,37 +363,6 @@ Estimate: 30 minutes.
 Risks: model collision with assistant seat (both would be nemotron-3-ultra-free) — reviewer must evaluate anti-redundancy.
 Decision: ACCEPT.
 
-### T-069 — ChatGPT Task Handoff — Issue-based queue
-
-Status: IN_PROGRESS — created 2026-09-27 from Owner order via advisor
-Owner: Project Lead — 2026-09-27
-Role: Project Lead (plan/record/verify) + reviewer on a **different model**
-Risk: L1 — dev-time governance/tooling. No runtime/production/customer/data impact.
-Goal: establish a GitHub Issue-based queue for AI task handoff, with clear labels, governance rules in AGENTS.md, and an advisor instruction record.
-Done when:
-- [x] 4 labels exist on the repo: `ai:ready`, `ai:claimed`, `ai:done`, `ai:blocked` (verified via `gh label list`)
-- [x] `AGENTS.md` has a new section "## ChatGPT Task Handoff" with the 5 governance rules
-- [x] `ADVISOR_LOG.md` has the instruction record for this order
-- [x] a reviewer on a different model checks the diff and records a verdict
-Budget: $0 — no paid calls.
-Links: `AGENTS.md`, `docs/warroom/ADVISOR_LOG.md`, GitHub labels
-
-**INTAKE T-069 — 2026-09-27 (Project Lead) — ACCEPT**
-Understanding: the Owner wants a GitHub Issue-based queue for AI task handoff. The queue uses 4 labels (ai:ready, ai:claimed, ai:done, ai:blocked) as signals. The governance rules are written into AGENTS.md. The advisor instruction is recorded in ADVISOR_LOG.md. A reviewer on a different model verifies the diff.
-Scope: create the 4 labels, write the AGENTS.md section, record the advisor instruction, get a reviewer verdict. No code, no runtime, no deploy.
-Needs: `gh` CLI access, the repo, the advisor order.
-Missing: nothing blocking.
-Plan: (1) create 4 labels via `gh label create`; (2) verify with `gh label list`; (3) write the AGENTS.md section; (4) append the ADVISOR_LOG entry; (5) send the diff to a reviewer on a different model; (6) record the verdict.
-Estimate: 30 minutes.
-Risks: none material — this is a governance/tooling change with no runtime impact.
-Decision: ACCEPT.
-
-**WORK LOG — T-069 (PL, 2026-09-27)**
-- Labels created: `ai:ready` (0E8A16), `ai:claimed` (FBCA04), `ai:done` (0075CA), `ai:blocked` (B60205) — verified via `gh label list`.
-- AGENTS.md section "## ChatGPT Task Handoff" added with 5 governance rules.
-- ADVISOR_LOG entry appended.
-- Reviewer verdict: **ACCEPT** (reviewer `opencode/muse-spark-1.3-contributor-free`, ≠ author `opencode-go/longcat-2.5-preview-free`). Findings (non-blocking): (1) working tree contains other sessions' uncommitted work — when committing, stage only T-069 files; (2) section heading uses `#` (correct for top-level) vs card's `##` — cosmetic; (3) log entry needs timestamp + auditor slug — fixed in ADVISOR_LOG.
-
 ## REVIEW
 
 (none)

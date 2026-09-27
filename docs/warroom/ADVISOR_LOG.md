@@ -405,3 +405,15 @@ that references the old one.
 - verdict: pending
 - evidence: card T-070 in TASKS.md · git log f166a92 · scorecard row · builder diff · reviewer verdict
 - notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Board check: 7 open cards vs cap 10 — T-070 makes 8, under cap. This entry is appended; no earlier entry is altered.
+
+### T-069 — 2026-09-27 — ChatGPT Task Handoff: closed
+- owner_intent_verbatim: "อนุมัติ069"
+- order (as understood by the receiver): Owner restarted opencode and approved closing T-069. Archive the card verbatim to TASKS_DONE_ARCHIVE.md with status DONE (Owner approved 2026-09-27; reviewer ACCEPT from original work — no new review needed since no new work was added). Append this record.
+- receiver: project-lead `opencode/nemotron-3-ultra-free`
+- scope_in: TASKS.md (remove T-069) · TASKS_DONE_ARCHIVE.md (append verbatim T-069 with DONE status) · ADVISOR_LOG.md (this entry) · local commit of these three files
+- scope_out: no runtime files · no deploy · no push · no other card changes · no SESSION_HANDOFF.md (belongs to another session)
+- prohibitions: must not push · must not touch services/migrations/opencode.json · must not change other card statuses
+- auditor: N/A (no new work since original reviewer ACCEPT)
+- verdict: WITHIN-MANDATE — original reviewer `opencode/muse-spark-1.3-contributor-free` ACCEPT recorded; no new review required
+- evidence: TASKS.md (T-069 removed) · TASKS_DONE_ARCHIVE.md (T-069 appended with DONE status) · ADVISOR_LOG.md (this entry)
+- notes: written by the receiver, not the advisor. Original review was `opencode/muse-spark-1.3-contributor-free` ACCEPT (different model from author `opencode-go/longcat-2.5-preview-free`). No new work added since ACCEPT, so no re-review. Commit staged locally; push deferred per Owner batching habit.
