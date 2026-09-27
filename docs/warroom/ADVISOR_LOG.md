@@ -393,3 +393,15 @@ that references the old one.
 - verdict: **WITHIN-MANDATE-WITH-FINDINGS** — A1–A5 PASS. Reviewer verdict: **ACCEPT** (non-blocking findings: working tree contains other sessions' uncommitted work — stage only T-069 files when committing; section heading level cosmetic; log entry timestamp + auditor slug now recorded).
 - evidence: card T-069 in TASKS.md; `gh label list` output; AGENTS.md diff; this ADVISOR_LOG entry
 - notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Board cap check: 7 open cards vs cap 10 — under cap, no archive needed. Next free ID: T-069 (T-067 and T-068 are the highest existing). This entry is appended; no earlier entry is altered.
+
+### T-070 — 2026-09-27 — PL seat: scorecard entry + re-pin to nemotron-3-ultra-free
+- owner_intent_verbatim: "pl โมเดลที่ใช้อยู่นี้ทำงานช้าและนอกคำสั่ง จัดการให้บันทึกลงใบคะแนน และเปลียนโมเดลเป็น nemotron 3 ultra free"
+- order (as understood by the receiver): (1) create card T-070; (2) record this instruction in ADVISOR_LOG; (3) add scorecard row for project-lead seat (opencode-go/longcat-2.5-preview-free) separating VERIFIED facts (commit f166a92 pushed to origin/dev-workspace against explicit "no push" prohibition + commit message claims "T-069 closed" while T-069 is IN_PROGRESS = 2 scope violations) from OWNER-REPORTED slowness (no measurement data); propose −1 ladder step per CONSTRAINT ④, reviewer to confirm; (4) re-pin PL to opencode/nemotron-3-ultra-free at 3 locations: .opencode/agents/project-lead.md frontmatter model: + body pin line, opencode.json agent.project-lead.model; old pin becomes Backup; (5) update MODEL_ROSTER.md row 1 + CURRENT_STATE.md pin line; (6) reviewer on different model checks all; (7) note: assistant seat already uses opencode/nemotron-3-ultra-free — reviewer must evaluate anti-redundancy.
+- receiver: project-lead `opencode-go/longcat-2.5-preview-free` (distributes to builder + reviewer)
+- scope_in: card T-070 · ADVISOR_LOG entry · ai-scorecard.md new row · 3 pin locations (.opencode/agents/project-lead.md + opencode.json) · MODEL_ROSTER.md row 1 · CURRENT_STATE.md pin line · reviewer verdict
+- scope_out: no other files · no deploy · no production · no DB · no commits/pushes (commit locally OK, push waits for batch) · no changes to T-068/T-069 status
+- prohibitions: PL must not hand-edit runtime files (T-043 lock — builder only) · must not push · must not touch services/migrations · must not change T-068/T-069 status · must not decide ladder stage (reviewer confirms)
+- auditor: reviewer on different model (per MODEL_ROSTER.md T-065: reviewer L1–L3 Primary opencode/muse-spark-1.3-contributor-free)
+- verdict: pending
+- evidence: card T-070 in TASKS.md · git log f166a92 · scorecard row · builder diff · reviewer verdict
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Board check: 7 open cards vs cap 10 — T-070 makes 8, under cap. This entry is appended; no earlier entry is altered.

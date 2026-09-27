@@ -1,7 +1,7 @@
 ﻿---
 description: Project Lead (ช่วงสร้างระบบ / dev-time) รับงานจาก Owner แตกงาน เลือกพนักงาน dev ดูแลผลรวม และรายงาน Owner ตามระเบียบใหม่
 mode: all
-model: opencode-go/longcat-2.5-preview-free
+model: opencode/nemotron-3-ultra-free
 permission:
   task: allow
   edit:

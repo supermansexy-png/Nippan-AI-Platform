@@ -337,6 +337,32 @@ Push: the deferred batch (commits `9c9b2bf`…`a7afacc`) was pushed to `origin/d
 
 ---
 
+### T-070 — PL seat: scorecard entry + re-pin to nemotron-3-ultra-free
+
+Status: IN_PROGRESS — created 2026-09-27 from Owner order via advisor
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (plan/record/verify) + builder/worker (runtime file edits) + reviewer on a **different model**
+Risk: L2 (model pin change + scorecard deduction)
+Goal: record the PL seat's Owner-reported issue + verified scope violations on the scorecard, and re-pin the PL seat from `opencode-go/longcat-2.5-preview-free` to `opencode/nemotron-3-ultra-free` at all 3 pin locations.
+Done when:
+- [x] ai-scorecard.md has a new row for project-lead `opencode-go/longcat-2.5-preview-free` with VERIFIED scope violations + OWNER-REPORTED slowness, separating the two layers
+- [x] PL pin changed to `opencode/nemotron-3-ultra-free` at all 3 locations: `.opencode/agents/project-lead.md` frontmatter `model:` + body pin line, `opencode.json` `agent.project-lead.model`
+- [x] `docs/product/MODEL_ROSTER.md` row 1 updated to match (CURRENT_STATE.md has no pin line — "one home per detail" rule sends readers to MODEL_ROSTER.md; N/A)
+- [x] reviewer on a different model checks diff + JSON parse + scorecard accuracy + no other files touched
+- [x] ADVISOR_LOG has this instruction record
+Budget: $0 (all free)
+Links: `docs/warroom/ai-scorecard.md`, `docs/warroom/ADVISOR_LOG.md`, `docs/product/MODEL_ROSTER.md`, `docs/project-memory/CURRENT_STATE.md`, `.opencode/agents/project-lead.md`, `opencode.json`
+
+**INTAKE T-070 — 2026-09-27 (Project Lead) — ACCEPT**
+Understanding: Owner reports the PL model (opencode-go/longcat-2.5-preview-free) is slow and off-instruction. Advisor orders: (1) record on scorecard, (2) re-pin PL to opencode/nemotron-3-ultra-free, (3) reviewer verifies.
+Scope: scorecard row + 3 pin locations + 2 doc mirrors + reviewer verdict. No other files.
+Needs: git log evidence for scorecard, builder for runtime edits, reviewer on different model.
+Missing: nothing blocking.
+Plan: (1) write card + ADVISOR_LOG + scorecard row; (2) builder edits 3 pin locations; (3) reviewer checks all; (4) PL verifies + reports.
+Estimate: 30 minutes.
+Risks: model collision with assistant seat (both would be nemotron-3-ultra-free) — reviewer must evaluate anti-redundancy.
+Decision: ACCEPT.
+
 ### T-069 — ChatGPT Task Handoff — Issue-based queue
 
 Status: IN_PROGRESS — created 2026-09-27 from Owner order via advisor

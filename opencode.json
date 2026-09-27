@@ -114,7 +114,7 @@
   },
   "agent": {
     "project-lead": {
-      "model": "opencode-go/longcat-2.5-preview-free"
+      "model": "opencode/nemotron-3-ultra-free"
     },
     "model-recruiter": {
       "model": "opencode/nemotron-3-ultra-free"
