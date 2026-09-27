@@ -97,8 +97,8 @@ twice. Drop on the platform's event id (`webhookEventId` for LINE; `message_id`
 in the normalized format) (`adapters/line-oa.md`).
 - **Dedup store (ND-1 resolved 2026-09-27):** a small `lite_processed_events`
   table — scoped by `tenant_id` + `bot_id`, keyed by the platform event id, with
-  a short TTL. To be added to `LITE_SCHEMA_V1.md` when the schema card (T-076)
-  runs.
+  a short TTL. Specified in `LITE_SCHEMA_V1.md`; the migration is tracked by
+  **card T-077**.
 - **Fallback:** if the dedup store is unavailable, treat the message as a
   duplicate and drop it (answering twice is worse than answering once) and raise
   an alert.
@@ -195,7 +195,7 @@ delivery (LINE reply delivery is free and unlimited).
 - This still honours `PRICING_V1.md`: the customer is told where to go rather
   than met with silence, and the model is never silently downgraded.
 - *Requires `bots.business_info` to carry a fallback contact (phone / LINE) —
-  add it when the bot-config schema is finalised (card T-076).*
+  add it when the bot-config schema is finalised (card T-077).*
 
 **S4.3 — Check the push cap (proactive path only).** Cap =
 `bots.monthly_push_quota` (default 200/bot/month, set below LINE's free-plan
@@ -425,7 +425,7 @@ runtime behaviour of the system).
 
 | ID | Decision |
 |---|---|
-| **ND-1** | De-duplication uses a new `lite_processed_events` table (scoped by `tenant_id` + `bot_id`, keyed by the platform event id, short TTL), added to `LITE_SCHEMA_V1.md` when T-076 runs. If the store is unavailable → drop the message (fail-closed). |
+| **ND-1** | De-duplication uses a new `lite_processed_events` table (scoped by `tenant_id` + `bot_id`, keyed by the platform event id, short TTL), specified in `LITE_SCHEMA_V1.md`; the migration is tracked by card **T-077**. If the store is unavailable → drop the message (fail-closed). |
 | **ND-2** | Over the reply quota with no top-up → the bot sends **one fixed message** pointing the customer to the shop's direct fallback contact (from `bots.business_info`), then stops answering — no model calls until top-up or a new month. Sent once, not repeated. |
 | **ND-3** | The pre-send check is a **deterministic filter only** (keyword/pattern: model-name denylist, human-claim patterns, "unsure → handoff"). No second model call at this stage; an upgrade is reconsidered later with a price approval. |
 | **ND-4** | The PDPA first-contact notice is **attached to the first answer** — one message, one reply. |
