@@ -112,10 +112,36 @@ VERIFIED 2026-09-27 (card T-064) — ทดสอบจริงผ่าน ope
     **ไม่มีข้อมูลราคา (UNKNOWN — อาจฟรี)**
   - → **ยังไม่แต่งตั้งตำแหน่งใด** จน Owner ตัดสินเรื่องเพดานราคา
 - **`groq` — PARKED (Owner สั่ง "ปิด", 2026-09-27).** คีย์ถูกต้อง — Groq ตอบกลับโดยระบุ org จริง
-  (`org_01m3esvje0e1eveqtdfb3r2fev`) — แต่บัญชีอยู่ขั้นฟรี `on_demand` จำกัด **8,000 tokens/นาที**
-  ขณะที่คำขอเดียวของ opencode ≈ **36,900 tokens** (เกิน ~4.6 เท่า) ทุกคำขอจึงล้มด้วย
-  `Request too large … Upgrade to Dev Tier`. บัญชีนี้มีเฉพาะ GPT OSS 120B/20B · Qwen 3.8 27B ·
-  Safety GPT OSS 20B (**ไม่มี Llama เลย**). จะใช้ได้เมื่อ Owner อัปเกรด Dev Tier เท่านั้น — ยังไม่ทำ
+   (`org_01m3esvje0e1eveqtdfb3r2fev`) — แต่บัญชีอยู่ขั้นฟรี `on_demand` จำกัด **8,000 tokens/นาที**
+   ขณะที่คำขอเดียวของ opencode ≈ **36,900 tokens** (เกิน ~4.6 เท่า) ทุกคำขอจึงล้มด้วย
+   `Request too large … Upgrade to Dev Tier`. บัญชีนี้มีเฉพาะ GPT OSS 120B/20B · Qwen 3.8 27B ·
+   Safety GPT OSS 20B (**ไม่มี Llama เลย**). จะใช้ได้เมื่อ Owner อัปเกรด Dev Tier เท่านั้น — ยังไม่ทำ
+
+### Google free tier — adopted 2026-09-27 (Owner order: เอา 2 ตัว)
+
+**Adopted (verified HTTP 200 live probe):**
+- `google/gemini-flash-lite-latest` — routine / non-sensitive work (alias auto-tracks per policy)
+- `google/gemini-3.8-flash` — higher-quality non-sensitive fallback (proven 200)
+
+**Stand-ins (probed 200, not adopted):**
+- `google/gemini-3.1-flash-lite`
+- `google/gemini-3.5-flash-lite`
+
+**Excluded (unusable):**
+- `google/gemini-2.5-flash-lite` → 404 "no longer available to new users"
+- `google/gemma-4-31b-it` → 500 INTERNAL
+
+**Cost:** $0 (Google FREE tier, unpaid quota) — the $0.25/$1.00 cost cap does NOT apply while on free tier.
+
+**Limits:** UNKNOWN — Google no longer publishes exact RPM/TPM/RPD for this project; limits are per PROJECT (not per key). RPD resets at midnight Pacific. Preview models are more restricted. Read exact limits at the AI Studio rate-limit page for this key.
+
+**Privacy caveat (Google Gemini API Additional Terms — "Unpaid Services"):** "Do not submit sensitive, confidential, or personal information to the Unpaid Services." Google uses submitted content and generated responses to improve/develop products and ML; human reviewers may read and process API input/output.
+
+**Fail-closed scope (Project Lead):** These two models are a **free fallback for NON-SENSITIVE work ONLY**. They must NOT receive repo code, secrets, customer data, or any confidential material unless the Owner explicitly overrides in writing.
+
+**Slug form:** `google/<model-id>` (no provider entry needed in opencode.json).
+
+**Seat PINNING:** Still requires HR (`model-recruiter`) check + Owner approval — NOT done yet.
 
 ## Per-role staffing — T-065 re-staff (2026-09-27) — **AUTHORITATIVE: 3 tiers per role**
 

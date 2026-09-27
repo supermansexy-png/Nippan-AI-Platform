@@ -59,3 +59,19 @@ Normal CI, testing, review, and security verification continue even while
 Independent Audit is paused.
 
 Major architecture changes require evidence and Project Owner decision.
+
+## 2026-09-27 — Adopt 2 Google free models as non-sensitive fallback
+
+Decision: Adopt exactly two Google free-tier models as a zero-cost fallback for non-sensitive work:
+- `google/gemini-flash-lite-latest` (routine)
+- `google/gemini-3.8-flash` (higher-quality fallback)
+
+Authority: Owner decision 2026-09-27 ("เคเอา2ตัว"). Live probe verified both return HTTP 200.
+
+Caveats:
+- Free tier trains on + human-reviews submitted content (Google Gemini API Additional Terms, "Unpaid Services": "Do not submit sensitive, confidential, or personal information to the Unpaid Services.")
+- Limits UNKNOWN (per PROJECT, not per key; RPM/TPM/RPD unpublished; RPD resets midnight Pacific; preview models more restricted).
+- Not usable for repo code, secrets, customer data, or any confidential material unless Owner explicitly overrides in writing.
+- Slug form: `google/<model-id>` (no provider entry needed in opencode.json).
+
+Status: Recorded in MODEL_ROSTER.md and CURRENT_STATE.md. Seat pinning still requires HR check + Owner approval.

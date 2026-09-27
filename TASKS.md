@@ -309,6 +309,25 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 
 > **T-064 (DONE 2026-09-27)** is archived in `docs/archive/TASKS_DONE_ARCHIVE.md`. One-line result: the **Google** provider works end to end (live call proven); **Groq** was wired correctly and its key is valid, but the free tier caps it, so the Owner parked it ("ปิด"). **Open follow-up (Owner):** a cost exception for Google (no usable Gemini model fits `MODEL_POLICY`'s $0.25/$1.00 cap), then HR staffing. No commit was made for this card.
 
+### T-067 — Google free tier adoption: 2 models (non-sensitive fallback)
+
+Status: OPEN — created 2026-09-27 from the Owner's direct order ("เคเอา2ตัว"); recording done, seat pinning NOT started
+Owner: model-recruiter (HR) — limits check + seat proposal; Project Lead records/verifies
+Role: model-recruiter (limits + proposal) + builder (pin apply, only after the Owner approves) + reviewer on a **different model**
+Risk: L1–L2 — dev-time roster/model config. No runtime/production/customer/data impact. Standing caveat: the Google **free** tier must never receive repo code, secrets, customer data, or any confidential material.
+Goal: adopt exactly two Google free-tier models as a zero-cost fallback for non-sensitive work, and record the real limits.
+Adopted: `google/gemini-flash-lite-latest` (routine) · `google/gemini-3.8-flash` (higher-quality fallback) — both live-probed HTTP 200, cost $0.
+Stand-ins (probed 200, NOT adopted): `google/gemini-3.1-flash-lite` · `google/gemini-3.5-flash-lite`. Excluded: `google/gemini-2.5-flash-lite` (404, retired) · `google/gemma-4-31b-it` (500 INTERNAL).
+Done when:
+- [x] `MODEL_ROSTER.md` + `DECISIONS.md` + `CURRENT_STATE.md` updated (2026-09-27)
+- [ ] the real free-tier limits (RPM/TPM/RPD) recorded from the AI Studio rate-limit page for this project, or UNKNOWN declared with its source
+- [ ] HR proposes which seats may use the 2 Google models as a free fallback (non-sensitive work only), with the anti-redundancy check
+- [ ] Owner approves the proposed pins
+- [ ] builder applies the pins (`opencode.json` / `.opencode/agents/*.md`); reviewer on a different model verifies; PL keeps no runtime-file edit
+Budget: $0 — free-tier probes and free models only; no paid call for this card.
+Links: `docs/product/MODEL_ROSTER.md` § "Google free tier — adopted 2026-09-27" · `docs/project-memory/DECISIONS.md` (2026-09-27 entry) · Google Gemini API Additional Terms § "Unpaid Services"
+Note: this card changes **no** runtime file; model pins require separate Owner approval before any agent config is touched.
+
 ## REVIEW
 
 (none)
