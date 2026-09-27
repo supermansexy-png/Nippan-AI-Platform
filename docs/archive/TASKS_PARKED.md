@@ -163,3 +163,388 @@ The bridge talks to **one fixed chat**, never to "whichever PL chat happens to b
 - UNVERIFIED: `watcher.mjs` behaviour (never run, no `node --check`, no test result) — that is T-BRIDGE-01, still parked.
 
 ---
+
+## Parked 2026-09-27 (Owner order) — pre-HOLD set + T-078
+
+Moved off the board on 2026-09-27 under the Owner's "เอาทีละอย่าง" order. NOT done — parked, to be resumed only when the Owner orders "เดินต่อ". T-078 is parked for a different reason (see its card).
+
+---
+### T-032 — Dispatch work over Git (issue → branch → draft PR → CI → review → merge)
+
+Status: IN_PROGRESS — **pilot A DONE 2026-09-27** (Issue #88, external assistant `GPT-5.6 Sol`, PL-verified); pilot B (write) remains. Repo settings resolved; external-side values still OPEN.
+Owner: Project Lead — 2026-09-25
+Role: PL (dispatch + verify) + external assistant (author, on `codex/*` branches) + reviewer on a different model + Owner (approval)
+Risk: L3 (external party writes into our repository)
+Goal: the external assistant receives work through Git (not through the bridge), does it on its own branch, and lands it only through review — so work keeps moving when the Owner is not in a chat
+Done when: 1) safe settings confirmed on both sides; 2) `dev-workspace` protected against direct/force pushes (or an equivalent rule agreed); 3) the issue↔card convention is written; 4) **pilot A (read-only)** proves the assistant can find our queued work by itself; 5) **pilot B (write)** lands one real change as a PR with CI evidence, checked by a different-model reviewer; 6) no secret ever reaches git; 7) PL/Owner approval recorded before merge
+Budget: ½ day for pilot A, ½ day for pilot B
+Links: `TASKS.md` (cards = source of truth), GitHub Issues (queue), `.github/workflows/` (CI), `docs/warroom/decision-log.md` (2026-09-25 git-channel decision)
+
+**Hard rules (no exceptions)**: the external assistant works only on branches it creates (`codex/*`) · **never merge its own PR** · never push directly to `dev-workspace` or `phase2/postgres-logical-schema` · never force-push · **never put secrets in git** (history is permanent — work touching credentials runs on our machine only) · author ≠ checker: a different model reviews every non-trivial change · merge and any preview deploy still need the Owner (or the PL when the Owner is away, except deploy/architecture).
+
+**Blockers / open questions**
+1. Repo settings: **RESOLVED 2026-09-27** — `phase2/postgres-logical-schema` is protected by repository ruleset "Phase 2 required CI" (id 23846449: `deletion` + `non_fast_forward` + `required_status_checks` + `pull_request`; ruleset, NOT classic branch protection — the classic endpoint returns 404). `dev-workspace` force-push block **DONE**: ruleset "protect-dev-workspace" (id 24070054, rule `non_fast_forward`, enforcement=active) created via API 2026-09-27; verified `GET /rules/branches/dev-workspace` → `non_fast_forward`. No PR requirement added to `dev-workspace`.
+2. External side settings: **OPEN** — Owner has not yet confirmed the four values (Draft PR = ON · auto-merge = **OFF** · branch prefix `codex/` · no force-push).
+3. **Trigger — UPDATED 2026-09-27 (Owner, standing rule — see `docs/warroom/decision-log.md` 2026-09-27 "the Git work channel now runs two lanes"):** the channel now runs **two lanes**. **Urgent** work = the PL tells the Owner, the Owner tells the external assistant directly (Owner is the trigger — the original 2026-09-25 rule survives for this lane only). **Non-urgent** work = the PL opens a GitHub Issue with label `ai:ready` and a complete body (Task/Role/Risk/Scope/Done-when/Stop rules) and leaves it queued; the **external assistant polls hourly and pulls work by itself**, no message needed. Either lane: the PL verifies label transitions + INTAKE/DELIVERY comments + raw evidence before anything is reported done. This **supersedes** the old flat rule "the assistant does not auto-start from a queue", which held for pilot A only.
+4. **Review (RESOLVED 2026-09-25)** — three layers: (a) **CI runs automatically on the PR** = machine evidence, no human needed; (b) a reviewer on a **different model** than the author reads the diff and writes a verdict comment; (c) the **PL** checks scope/evidence and records the verdict on the card. **Approval/merge: the Owner when present — or the PL on the Owner's behalf when the Owner is away** (deploy preview and architecture changes always need the Owner).
+
+**Review checklist for the assistant's PRs (7 points)** — 1) in scope vs the card? 2) only the expected files touched? 3) tests added / CI green? 4) **no secrets, tokens, DSNs or customer data anywhere in the diff?** 5) evidence attached (CI run + what was run and what was expected)? 6) claims match the diff (no "done" without proof)? 7) author ≠ checker confirmed.
+
+INTAKE T-032 — 2026-09-25 (session 2)
+Understanding: Owner decision — "ยึดแนวทาง git"; the bridge is not opened and no relay/watcher service is built. Git becomes the work channel because it is an asynchronous queue: the external assistant reads our queued work, does it on a branch, and CI + review provide the evidence, so work does not stall when nobody is answering a chat.
+Scope: set-up + two pilots on this repo. Nothing else.
+Needs: repo settings change (Owner), external-side settings (Owner), CI already exists.
+Missing: the four answers above.
+Plan: 1) Owner answers 1-4; 2) PL writes the issue↔card convention; 3) pilot A (read-only) — assistant finds queued work itself, evidence recorded; 4) pilot B (write) — one real PR with CI + different-model review; 5) verdict recorded in the decision log.
+Estimate: 1 day total.
+Risks: an external party writing into the repo (mitigated by branch rules + review + no secrets); auto-merge must stay off; `dev-workspace` is currently unprotected.
+Decision: ACCEPT (Owner chose the Git channel 2026-09-25).
+
+**OWNER DELEGATION + PL ANSWERS (2026-09-27)** — Owner delegated the 2 pending answers to the PL ("ให้ pl อนุมัติแทนได้เลย ตามความเหมาะสม").
+
+**Answer 1 — branch protection on `dev-workspace` (verified 2026-09-27: currently NOT protected, gh api = 404):**
+Decision: do NOT enable full PR-required protection. Rationale: (a) the dev team commits directly to `dev-workspace` daily — requiring PRs would stall the dev workflow; (b) the external assistant is already constrained by this card's hard rules (codex/* branches only, never pushes directly to `dev-workspace`, never force-push, never merges its own PR, different-model review) — this is the "equivalent rule" that done-when item 2 allows; (c) force-push is the highest-risk operation — recommend the Owner enable force-push blocking only (repo setting, reversible) as belt-and-braces. Status: process rule ACTIVE; repo-level force-push block = **DONE 2026-09-27** (ruleset id 24070054, `non_fast_forward`, verified active on the branch; see blocker 1).
+
+**Answer 2 — the four Codex-side values:** the project's required values are confirmed: Draft PR = ON · auto-merge = OFF · branch prefix `codex/` · never force-push — these match the card's hard rules exactly. The external side's ACTUAL current settings cannot be verified from this environment (they live on the Owner's Codex setup) = **UNKNOWN** until the Owner confirms on the Codex side or pilot B's PR demonstrates the branch prefix + draft state.
+
+**WORK LOG — T-032 PILOT A (DONE 2026-09-27) — evidence independently re-verified by the PL, not accepted from the report**
+- Queue: Issue #88 (`T-032 Pilot A: External assistant finds queued work (read-only)`), label `ai:ready`.
+- External assistant: `GPT-5.6 Sol`. Sequence of comments on #88 (read from GitHub by the PL): **INTAKE 12:52:38Z → pilot-A verification 12:53:31Z → DELIVERY 12:54:03Z**. Final label = `ai:done` (transitions `ai:ready → ai:claimed → ai:done` all present).
+- What it verified: (a) found Issue #88 as the eligible `ai:ready` item; (b) read the T-032 card from `dev-workspace:TASKS.md` lines 28–96, status `READY for INTAKE`; (c) ruleset `24070054` = `protect-dev-workspace`, `target=branch`, `enforcement=active`, `rules=[non_fast_forward]`, `bypass_actors=[]`; (d) scope respected — no code, no branch, no PR, no push, no secret access.
+- **PL independent check** (`gh api repos/.../rulesets/24070054`): identical object — name/target/enforcement/rules/bypass_actors all match. The assistant's sole `[UNKNOWN]` (its connector rejected `/rules/branches/dev-workspace` with HTTP 400) is a **connector limitation on its side**, not a repo fault: the PL read the ruleset object directly with no error.
+- Done-when coverage: items 1 (settings confirmed on our side) and 4 (**pilot A: the assistant finds queued work by itself**) are met. Item 2 = force-push block DONE (blocker 1). External-side values (blocker 2) = still UNKNOWN pending pilot B's PR.
+- **Not done**: pilot B (write) — one real change landing as a draft PR with CI evidence + a different-model reviewer; done-when items 3, 5, 6, 7 remain.
+
+---
+
+
+---
+### T-033 — War Room in real use: the AI team's meeting room
+
+Status: IN_PROGRESS — Owner answered 3 of 3 open decisions 2026-09-27 (fresh room per meeting = yes; Owner pays, ceiling $1/meeting; participants = PL decides per meeting agenda). All blockers resolved — ready for next pilot round.
+Owner: Project Lead — 2026-09-26 (Owner order: "ทดลองใช้ห้องวอร์รูปจริง ๆ เพราะหลังจากนี้เราต้องเอา AI เข้าไปประชุมและวางงาน แจกงาน รายงานผล พร้อมอภิปรายปัญหางานกัน")
+Role: Owner (chair) + PL (facilitate, record, verify) + AI participants + reviewer on a different model
+Risk: L3 (the room drives billable provider turns and holds the team's working record; no tenant/customer data involved)
+Goal: the Owner and the AI team hold a **real working meeting** in the deployed War Room — plan, assign work, report results, debate problems — with durable room artifacts (agenda / findings / decisions / owner decisions) instead of a chat transcript.
+Done when: 1) a human owner can open the room in a browser over a real auth path; 2) a fresh room can be opened for each meeting; 3) the agreed AI participants are present and produce bounded turns; 4) work assignments, reports and problem discussion are durable in the room; 5) cost per meeting is measured and inside an Owner-approved ceiling; 6) a reviewer on a different model checks the meeting evidence; 7) no secret and no production system touched.
+Budget: 1 day setup + one pilot meeting (cost ceiling = Owner decision)
+Links: `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` (acceptance + the three carried findings), `services/control-plane-web/war-room/README.md`, `docs/product/MODEL_ROSTER.md`, Issue #35 (closed)
+
+**Blockers / open decisions — NEEDS_OWNER_DECISION**
+1. ~~**Human access.**~~ **RESOLVED 2026-09-26** — Cloudflare Access was already configured for `warroom.nippan.org`
+   (team `https://1011.cloudflareaccess.com`, AUD read from the login redirect); the Owner completed the Access one-time-PIN
+   login and the room loaded in his browser. No new Cloudflare setup needed. Evidence:
+   `docs/audits/WAR_ROOM_PREVIEW_DEPLOYMENT_EVIDENCE.md` §"Cloudflare Access configuration — discovered by read-only probe".
+2. ~~**A fresh room per meeting.**~~ **RESOLVED 2026-09-27 — Owner answer: "ใช้ใหม่" (a fresh room per meeting = YES).** Delivered by T-034b: the reviewed create-room path (`POST /war-room/rooms`, slice 2a) plus the seed-script slice 1 (`--room-id`/`--title`/`--force`, tenant-scoped, transactional) are being deployed to the preview with the agenda work (deploy in progress, see T-034b). The old options (a)/(b)/(c) below are superseded.
+3. **Who joins, and who pays.** **RESOLVED 2026-09-27 — Owner answers: bearer = Owner ("พี่จ่าย"); cost ceiling = $1 per meeting ("ไม่เกิน 1 เหรียญต่อครั้ง").** The ceiling replaces the provisional $0.05 stop rule in the meeting plan above. **STILL OPEN: "ใครเข้าร่วม"** — **RESOLVED 2026-09-27 — Owner decision (verbatim): "033 ตามวาระการประชุม ว่าเรื่องที่ประชุมเกี่ยวกับใครบ้าง ให้ pl ตัดสินใจเป็นครั้งๆ" — คือผู้เข้าร่วมแต่ละครั้งให้ PL เลือกตามวาระการประชุมว่าเรื่องนั้นเกี่ยวกับใครบ้าง ตัดสินเป็นครั้ง ๆ ไป** — หลักการที่บันทึก: PL เลือก participants ตาม agenda ของแต่ละครั้ง ครั้งต่อครั้ง ภายใต้เพดาน $1/ครั้งที่ Owner ตั้งไว้แล้ว. Credit ≈ **$1.60** as of 2026-09-27.
+
+INTAKE T-033 — 2026-09-26 (Project Lead)
+Understanding: the Owner wants the War Room used as the team's real working room: AIs attend, work is planned and assigned, results are reported, problems are debated — the meeting itself must become the durable record, not a chat.
+Scope: one pilot meeting end to end on the deployed preview, with the three decisions above answered first. No new architecture, no production system, no customer data.
+Needs: the three decisions; then (depending on the answers) a Cloudflare Access setup by the Owner, or a small reviewed create-room path, or a script client.
+Missing: all three answers; the current preview's model-turn setting and its per-meeting cost are not readable from the PL session.
+Plan (outline, subject to the answers): 1) Owner answers 1–3; 2) PL writes the meeting protocol (who chairs, turn budget, artifact expectations, stop rule); 3) prepare the access path + a fresh room; 4) run the pilot meeting with a hard cost ceiling and a kill switch; 5) collect the durable artifacts and the measured cost; 6) a different-model reviewer checks the evidence; 7) record the verdict and the cost per meeting.
+Estimate: 1 day setup + 1 pilot meeting.
+Risks: provider spend with a small credit balance (mitigated by the ceiling + kill switch); the room has never been driven by a real multi-participant meeting; the auth path may still block a browser (finding 2 of the War Room acceptance).
+Decision: NEEDS_DECISION — blocked on the Owner's three answers above. No AI is dispatched and no paid call is made before that.
+
+**MEETING #001 PLAN — prepared by the PL 2026-09-26 (Owner approved running the pilot)**
+
+- Room: `d3333333-3333-4333-8333-333333333333` ("Nippan AI Team — Meeting #001"), 8 participants, 1 agenda item, DRAFT.
+- **Topic (PL recommendation):** "ลำดับงานถัดไป 3 อย่าง + ใครรับงานไหน + ความเสี่ยงที่ต้องเฝ้า" — it is the real next decision, every role has something to contribute, and it produces exactly the artifacts this pilot must prove (agenda → findings → assignment → decision).
+- Chair: the room's CHAIR participant; the Owner holds the room controls; the PL records the outcome and verifies it against the database afterwards.
+- Opening message for the Owner to paste into the room (then press **ถามทุกคน** while the room is RUNNING):
+  > ประชุมครั้งแรกของทีม Nippan AI — ขอให้แต่ละฝ่ายเสนอสั้น ๆ 3 ข้อ: (1) งานถัดไป 3 อย่างที่ควรทำก่อน (2) ใครควรรับงานไหน (3) ความเสี่ยงที่ต้องเฝ้า ตอบไม่เกิน 3 บรรทัด
+- Turn budget: the room's defaults — up to 3 participants per Ask, 160 output tokens per turn, model `poolside/laguna-s-2.1` (already enabled: `NIPPAN_WAR_ROOM_PREVIEW_MODEL_TURNS_ENABLED=true`, confirmed by the Owner 2026-09-26).
+- **Stop rule (hard):** if the cost display passes **$0.05** for this meeting, or the turns loop/repeat, the Owner presses **หยุด** immediately. The PL records cost before and after (`usage_events`), and the spend must stay inside the ceiling.
+- Artifacts to verify after the meeting: `TURN_SCHEDULED` + `MESSAGE_APPENDED` per participant, the room's ordered sequence, the measured cost, and — if the Owner wants it on the record — a decision row via **บันทึกคำตัดสิน**.
+- Known limitation to state honestly in the pilot: the room drives **one** cheap model, so the voices are that model, not our real roster agents (T-033 blocker 3 option (a)). The durable-record architecture (option (b)) is a follow-up.
+
+**PILOT RESULT — Meeting #001, 2026-09-26 (Owner ran it in the browser; PL verified against the database)**
+
+- The Owner pressed เตียมห้อง → เริ่ม → ถามทุกคน with the prepared opening message. The room answered with **three participants**,
+  the maximum per Ask: **Preview Chair** (CHAIR_SYNTHESIS, 411 tokens), **Preview Builder** (AGENT_MESSAGE, 410 tokens),
+  **Preview Security** (AGENT_MESSAGE, 412 tokens) — all on `poolside/laguna-s-2.1`, each preceded by its own `TURN_SCHEDULED`.
+- Events recorded: seq 1–2 state changes (DRAFT→READY→RUNNING), seq 3 owner message, seq 4–9 the three scheduled turns and their
+  messages. Three new `requests` rows (19 total, all `SUCCEEDED`).
+- **Cost: $0.000149** for the meeting (total ledger moved 0.000269334 → 0.000418320 over 30 `usage_events`) — far inside the
+  $0.05 ceiling. `ai_calls` remains 0 rows (that table is not the preview's spend ledger; `usage_events` is).
+- **Owner finding (drives T-034):** the transcript is unreadable as a chat — you cannot tell **who** answered. The data shows
+  three distinct speakers, so this is a **display** problem, not a missing-reply problem.
+- T-033 status after the pilot: the room is proven usable for a real meeting (access, fresh room, live turns, durable artifacts,
+  measured cost). Remaining: the Owner's UX requirements → T-034.
+
+---
+
+
+---
+### T-071 — P0.1 หน้าตั้งค่าช่องทางแจ้งเตือนเจ้าของ (Settings page: Owner เลือก Email|LINE, กรอกค่าเองตอนเปิดใช้งานจริง)
+
+Status: IN_PROGRESS — Owner redefined 2026-09-27; **SMTP credential blocker CANCELLED** (Owner: "เขียนโครงไว้รอ ไม่ต้องเอา credential จริง")
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + builder (implementation) + reviewer L1–L3 on a different model + ops (CI/hosting evidence)
+Risk: L2 (new settings UI + pluggable transport; no production/customer data; no schema change)
+Goal: **หน้า Settings ในระบบ (settings page)** ให้ Owner เลือกช่องทางแจ้งเตือนได้ **Email หรือ LINE** แล้ว Owner จะกรอกค่าเองเมื่อเปิดใช้งานจริง — **ตอนนี้เขียนโครงสร้างไว้รอ (stub)** ไม่ต้องใช้ credential จริง
+- UI: หน้า Settings แท็บ "แจ้งเตือน" — dropdown เลือกช่องทาง (email | line) + ฟิลด์กรอกค่า config ต่อช่องทาง (ยังว่างได้)
+- Transport: แยกต่อช่องทาง (pluggable) — `EmailTransport` (SMTP), `LineTransport` (LINE Notify / Messaging API) — ใช้ interface เดียว `AlertTransport`
+- Fail-closed: ยังไม่ตั้งค่า ⇒ transport disabled (log-only), ไม่บล็อก flow หลัก
+- PR #92 เดิมปรับตามนิยามใหม่ (branch เดิม `t-071-alert-channel`) — ห้ามเปิด PR ซ้อน
+Done when:
+- [ ] Settings page UI: tab "แจ้งเตือน" + dropdown email|line + config fields per channel (read/write config to `settings.alert_channels` JSONB)
+- [ ] Pluggable transport layer: `AlertTransport` protocol + `EmailTransport` + `LineTransport` (stub implementations, no real send yet)
+- [ ] Config persistence: `settings.py` adds `alert_channels` (JSONB, nullable) + validation; unset ⇒ disabled (fail-closed)
+- [ ] Wiring: War Room `AlertingEventSink` uses selected transport(s) from config; critical events only (TURN_FAILED, BUDGET_HARD_STOP, SCHEDULER_HALTED w/ breach)
+- [ ] CI green + unit tests (fake transports, no network)
+- [ ] Reviewer (different model) checks diff + evidence; verdict recorded
+- [ ] No schema/RLS/grant change; no production system touched; no secret in git
+Budget: 4 hours builder + 1 hour reviewer (free models preferred; cap per card: builder ≤ $2 via OpenCode Go flat pool; reviewer free)
+Links: roadmap §7 (P0.1), §8 (P0.2); T-030 evidence (RLS), T-034b (War Room transport), PR #92 (existing branch)
+
+INTAKE T-071 — 2026-09-27 (Project Lead) — ACCEPT
+Owner decisions recorded (verbatim): "แจ้งเตือนให้ทำเป็นหน้าให้กรอกได้ ให้เลือกกรอกทางเมล์ หรือทางไลน์ ผมจะกรอกเองเมือเปิดใช้งาน ตอนนี้ให้เขียนรอไว้" + "ไม่เห็นจ่ายงานให้ chatgpt" + "ยกเลิก blocker เรื่อง SMTP credential"
+Understanding: Owner redefines T-071 as a **settings page** where Owner chooses Email or LINE, fills in values when going live. **Now: write the structure (stub) — no real credentials needed**. Cancel SMTP credential blocker. Adjust PR #92 on existing branch.
+Scope: Settings UI + pluggable transport stubs + config persistence (JSONB, nullable) + fail-closed wiring + unit tests. PR #92 on branch `t-071-alert-channel` updated.
+Needs: None — Owner will provide credentials later when enabling.
+Missing: None (SMTP credential blocker removed).
+Plan: (1) builder adjusts PR #92: replace SMTP-only code with Settings UI + pluggable transport stubs; (2) CI + unit tests; (3) different-model review; (4) DELIVERY.
+Estimate: within budget.
+Risks: alert fatigue (mitigate: severity levels + only critical fires); config validation (fail-closed on invalid).
+Decision: IN_PROGRESS — ready to execute on existing branch.
+
+INTAKE T-071 (builder) — 2026-09-27 — opencode-go/glm-5.3-flash — Issue #90 claimed, branch `t-071-alert-channel` from `dev-workspace`
+Understanding: Settings page with Email|LINE selector, pluggable transports (EmailTransport, LineTransport stubs), config in `settings.alert_channels` JSONB, fail-closed when unset. Adjust existing PR #92.
+Code survey: `services/core/app/settings.py` (add alert_channels JSONB), `services/core/app/war_room/alert.py` (protocol + stubs), `services/control-plane-web/` (settings page UI), `services/core/app/war_room/transport.py` (wire AlertingEventSink to use selected transports).
+Plan: (1) settings.py: add alert_channels JSONB + validation; (2) alert.py: AlertTransport protocol + EmailTransport/LineTransport stubs; (3) transport.py: wire AlertingEventSink to read config + dispatch; (4) control-plane-web: Settings page tab "แจ้งเตือน" with dropdown + fields; (5) unit tests (fake transports); (6) PR #92 update → CI → reviewer opencode/muse-spark-1.3-contributor-free.
+Estimate: within budget (≤$2 Go pool).
+Risks: config validation; transport stubs must not raise.
+
+DELIVERY T-071 — 2026-09-27 — builder opencode-go/glm-5.3-flash — **IN_PROGRESS (rework started, PR #92 being adjusted)**
+Status: Implementation rework in progress on branch `t-071-alert-channel`.
+Evidence to collect:
+- Settings UI page (control-plane-web) with email|line selector + config fields
+- Pluggable transport protocol + stubs in alert.py
+- Config persistence in settings.py (JSONB, nullable, fail-closed)
+- Unit tests: fake transports, critical event filtering, disabled-when-unset
+- CI green on PR #92
+- Reviewer verdict (opencode/muse-spark-1.3-contributor-free)
+Still to do: (1) Complete rework on PR #92; (2) CI green; (3) Reviewer verdict; (4) Merge + card close.
+ 
+---
+ 
+
+---
+### T-072 — P0.2 พิสูจน์ backup/restore กับ Supabase จริงผ่าน **Supabase MCP** (dump→restore→verify บนฐานแยก)
+
+Status: IN_PROGRESS — Owner approved 2026-09-27; **restore target = separate database/schema** (Owner: "ฐานแยก"); **Supabase MCP enabled** — ไม่รอ pg_dump/psql/CLI/Docker
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/verify) + ops (execution + evidence via Supabase MCP) + reviewer L1–L3 on a different model
+Risk: L2 (DB operation on real Supabase project; no customer data exists; pre-G1)
+Goal: prove a full backup→restore round-trip works on the real Supabase project `xzxwakvsbdzkdybijbzs` (Phase A lite schema `lite_*` tables) using **Supabase MCP** (`supabase_execute_sql`, `supabase_apply_migration`, `supabase_list_tables`). Dump schema + data via SQL, restore to a **separate schema** (`t072_restore`) in the same project, verify row counts + FK integrity + RLS policies survive + `nippan_runtime` role + policies re-applied. No tenant data to protect (pre-G1 — standing fact).
+Done when:
+- [ ] Dump via Supabase MCP: `supabase_execute_sql` to generate `pg_dump`-equivalent SQL (schema + data for `lite_*`) — output captured
+- [ ] Restore via Supabase MCP: create schema `t072_restore`, apply dumped SQL — command + output captured
+- [ ] Verification via Supabase MCP: row counts match per table, FK constraints intact, RLS ENABLE+FORCE on restored tables, `nippan_runtime` role + policies re-applied
+- [ ] Reviewer (different model) checks evidence + commands; verdict recorded
+- [ ] No production system touched; no secret in git; commands documented for repeatability
+Budget: 2 hours ops + 1 hour reviewer (free models; cap per card: ops ≤ $1 via OpenCode Go flat pool; reviewer free)
+Links: roadmap §7 (P0.1), §8 (P0.2); CURRENT_STATE.md § "Phase A Database — Lite Schema V1"; Supabase MCP tools; T-030 RLS evidence
+
+INTAKE T-072 — 2026-09-27 (Project Lead) — ACCEPT
+Owner decisions recorded (verbatim): "1 อนุมัติ" + "อีเมล์ก่อน พอเปิดจริงจะเพิ่มแจ้งทางไลน์ด้วย" + "ฐานแยก"
+Understanding: Owner approved the plan. Restore target = **separate schema** (`t072_restore` in same project). **Supabase MCP is the execution channel** — no pg_dump/psql/CLI/Docker needed. No tenant data protection needed (standing fact).
+Scope: one complete dump→restore→verify round trip via Supabase MCP to separate schema. No tenant data protection needed.
+Needs: Owner approved; ops executes via Supabase MCP, captures all commands/outputs; reviewer checks.
+Missing: None — Supabase MCP enabled and ready.
+Plan: (1) ops runs dump (SQL via `supabase_execute_sql`) → restore (create schema + `supabase_execute_sql`) → verify (row counts, FK, RLS FORCE, policies, role), captures all; (2) reviewer checks evidence; (3) DELIVERY.
+Estimate: within budget.
+Risks: Supabase MCP DDL limits (UNVERIFIED — test first); schema name collision (mitigate: unique `t072_restore`); policy function `app_private.current_tenant_id()` must be recreated.
+Decision: IN_PROGRESS — ready to execute via Supabase MCP.
+
+INTAKE — T-072 — opencode/mimo-v2.6-flash-free (ops) — 2026-09-27
+Understanding: รัน dump→restore→verify ครบ 1 รอบผ่าน **Supabase MCP** บนโปรเจกต์ `xzxwakvsbdzkdybijbzs` ตาราง `lite_*` 7 ตาราง — dump schema+data เป็น SQL, restore ลง schema ใหม่ `t072_restore`, verify row counts/FK/RLS FORCE/policies/`nippan_runtime` role/grants — เก็บ command + output ทั้งหมดให้ reviewer คนละโมเดลตรวจ
+Done when: (1) dump SQL via `supabase_execute_sql` + output; (2) restore schema `t072_restore` + apply SQL + output; (3) verify row counts/FK/RLS FORCE/policies/role; (4) reviewer ต่างโมเดลตรวจ evidence แล้วบันทึก verdict; (5) ไม่แตะ production, ไม่มี secret ใน git, สั่งซ้ำได้
+Needs: Supabase MCP (enabled), project ref 20-char, reviewer `opencode/muse-spark-1.3-contributor-free`
+Missing: **project ref 20-char สำหรับ Supabase MCP** — ต้องหาจาก environment/repo config
+Plan: (0) หา project ref; (1) dump DDL+data `lite_*` + policy/grant/role ผ่าน `supabase_execute_sql`; (2) `CREATE SCHEMA t072_restore` + restore SQL; (3) verify queries; (4) evidence + reviewer ต่างโมเดล; (5) DELIVERY
+Estimate: ภายใน budget (ops ≤ $1)
+Risks: `supabase_execute_sql` อาจจำกัด DDL (UNVERIFIED); policy function ต้องสร้างใหม่ใน schema เป้าหมาย
+Decision: **ACCEPT** — ใช้ Supabase MCP ทั้งหมด ตามคำสั่ง Owner
+
+---
+
+
+---
+### T-073 — กลไกตรวจคำสั่ง Owner ผ่านที่ปรึกษา (advisor) ก่อน PL เริ่มงาน — จุดตรวจอยู่ที่ช่วง "ที่ปรึกษา → PL"
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order verbatim: "ไม่ใช่จาก โอเนอร์ไป pl ต้อง จากโอเนอ ไปที่ปรึกษา ----- ตรวจสอบคำสั่ง ---- ไป pl ให้ตรวจสอบช่วง ที่ปรึกาาไป pl")
+Role: Project Lead (design/verify) + reviewer L1–L3 on a different model + security (governance boundary check)
+Risk: L1–L2 (dev-time governance mechanism; no runtime/production/customer data impact)
+Goal: a **reusable, practical mechanism** that catches when the advisor adds/modifies/extends the Owner's verbatim instruction before it reaches the PL — not a theoretical document but a checklist + gate that runs on every work order.
+Done when:
+- [ ] (ก) Advisor **must attach** `owner_intent_verbatim` on every work order (already required by `ADVISOR_MANDATE.md` §4) — codified as a hard gate
+- [ ] (ข) PL as receiver **compares** the received `owner_intent_verbatim` against the actual Owner utterance in the decision log / chat record **before starting any work** — if not traceable → STOP (NEEDS_DECISION)
+- [ ] (ค) Reviewer on a **different model** audits **every item in the work order** and flags any item that cannot trace back to the verbatim or an approved card/document as **OVER-REACH**
+- [ ] (ง) Statistics captured in `ai-scorecard.md`: count of advisor-added/over-reach items per work order, model, and date — for trend visibility
+- [ ] Mechanism documented in `docs/warroom/ADVISOR_CHECK_GATE.md` (or similar) with a runnable checklist the PL uses on every receipt
+- [ ] Different-model reviewer verifies the mechanism design + checklist completeness; verdict recorded
+Budget: 2 hours PL + 1 hour reviewer (free models; no paid calls)
+Links: `docs/warroom/ADVISOR_MANDATE.md` §4–§5, `docs/warroom/ADVISOR_LOG.md`, `docs/warroom/decision-log.md`, `docs/warroom/ai-scorecard.md`, T-038/T-048/T-050 entries showing real over-reach cases
+
+INTAKE T-073 — pending
+Understanding: Owner wants a practical, reusable gate at the "advisor → PL" handoff that catches any advisor embellishment/extension of the Owner's actual words. Not theory — a checklist the PL runs every time.
+Scope: design the gate, codify the 4 checks (ก–ง), produce a runnable checklist doc, reviewer verifies.
+Needs: PL designs; reviewer (different model) checks; document the mechanism.
+Missing: None — Owner decision is clear.
+Plan: (1) PL writes the checklist/mechanism doc; (2) reviewer on different model verifies design; (3) record in ai-scorecard format; (4) DELIVERY.
+Estimate: within budget.
+Risks: over-engineering (mitigate: keep checklist to ≤ 10 actionable items); reviewer model availability (use roster backups).
+Decision: READY for INTAKE — awaiting Issue creation and Owner approval to start design.
+
+---
+
+
+---
+### T-074 — Code Stream: โครงสร้าง codebase ตามดีไซน์โครงการ (Code stream — structure first)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + builder (implementation) + reviewer L1–L3 on a different model
+Risk: L2 (code structure changes; no production/customer data)
+Goal: **วางโครงสร้าง codebase ให้เป็นรูปร่างก่อน** ตามดีไซน์โครงการ — **ยังไม่ต้องเอา/ไม่ต้องรอข้อมูลหรือ credential ของ Owner**
+Design source files (ต้นทาง):
+- `docs/future/architecture/FOUNDATION_V1.md` — Foundation architecture (tenancy, identity, data contracts)
+- `docs/future/architecture/NIPPAN_MCP_HUB_FOUNDATION.md` — MCP Hub architecture
+- `docs/product/MODEL_POLICY.md` — Model policy & routing rules
+- `docs/product/CUSTOMER_FACING_RULES.md` — Customer-facing rules (no hardcoded model names in runtime)
+- `docs/warroom/STARTUP_PLAYBOOK.md` — Step 0–3 implementation sequence
+Scope: Create/adjust directory structure, module boundaries, config loading, interface definitions, and stub implementations per the design docs. No business logic, no real credentials, no external API calls. Pure structural scaffolding.
+Done when:
+- [ ] Directory/module structure matches `FOUNDATION_V1.md` tenancy/identity/data contract layers
+- [ ] Config system loads from `settings.py` with fail-closed defaults (no hardcoded secrets)
+- [ ] Interface definitions (Protocols/ABCs) for: transport, auth, model gateway, event sink, alert transport
+- [ ] Stub implementations for each interface (return NOT_IMPLEMENTED or fail-closed)
+- [ ] CI green + unit tests for structure (imports, type checks, interface compliance)
+- [ ] Reviewer (different model) checks diff + evidence; verdict recorded
+- [ ] No schema/RLS/grant change; no production system touched; no secret in git
+Budget: 6 hours builder + 1 hour reviewer (cap: builder ≤ $3 via OpenCode Go flat pool; reviewer free)
+Links: Design sources above; `services/core/app/` (existing structure to align)
+
+INTAKE T-074 — pending
+Understanding: Create the structural scaffolding of the codebase per project design docs. No real implementation, no credentials, no Owner data — just structure first.
+Scope: Directory layout, module boundaries, config, interfaces, stubs. Pure structural work.
+Needs: Design docs (listed above); builder; reviewer (different model).
+Missing: None — all design docs exist in repo.
+Plan: (1) builder creates/adjusts structure per design docs; (2) CI + type checks + interface compliance tests; (3) reviewer checks; (4) DELIVERY.
+Estimate: within budget.
+Risks: over-engineering (mitigate: stubs only, no logic); alignment with existing code (mitigate: builder surveys first).
+Decision: READY for INTAKE.
+
+---
+
+
+---
+### T-075 — n8n Workflow: วาง workflow ตามดีไซน์โครงการผ่าน n8n MCP (n8n workflow — structure first)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + ops (n8n MCP execution) + reviewer L1–L3 on a different model
+Risk: L2 (n8n workflow structure; no production deployment; no customer data)
+Goal: **วาง workflow n8n ให้เป็นรูปร่างก่อน** ตามดีไซน์โครงการ — **ยังไม่ต้องเอา/ไม่ต้องรอข้อมูลหรือ credential ของ Owner**
+Design source files (ต้นทาง):
+- `docs/future/architecture/NIPPAN_MCP_HUB_FOUNDATION.md` — MCP Hub workflow patterns
+- `docs/product/MCP_TOOLS_V1.md` — MCP tool definitions & contracts
+- `docs/product/INTEGRATIONS.md` — Integration points (LINE, Email, Supabase, Render)
+- `docs/warroom/STARTUP_PLAYBOOK.md` — Step 1–3 n8n workflow requirements
+- `docs/proposals/WAR_ROOM_V1_IMPLEMENTATION_PLAN.md` — War Room n8n integration
+Scope: Create n8n workflow JSON/files via n8n MCP (`n8n_create_workflow_from_code`, `n8n_update_workflow`) for: alert webhook receiver, LINE webhook handler, Supabase sync, Render deploy trigger, War Room event forwarder. Workflows are **structural stubs** — nodes wired, credentials referenced via n8n credential references (not real values), no active triggers. Stored in repo under `n8n/workflows/` for version control.
+Done when:
+- [ ] 5 workflow stubs created via n8n MCP: alert-webhook, line-webhook, supabase-sync, render-deploy, warroom-forwarder
+- [ ] Each workflow: nodes wired, credential refs (placeholders), no hardcoded secrets, disabled by default
+- [ ] Workflow files committed to `n8n/workflows/` (version controlled)
+- [ ] CI validates workflow JSON syntax + n8n MCP `validate_workflow` passes
+- [ ] Reviewer (different model) checks structure + evidence; verdict recorded
+- [ ] No production n8n deployment; no real credentials; no customer data
+Budget: 4 hours ops + 1 hour reviewer (cap: ops ≤ $2 via OpenCode Go flat pool; reviewer free)
+Links: Design sources above; n8n MCP tools (enabled per tool survey)
+
+INTAKE T-075 — pending
+Understanding: Create structural n8n workflow stubs per design docs via n8n MCP. No real credentials, no production deploy — structure first.
+Scope: 5 workflow stubs with proper node wiring, credential references, disabled state. Committed to repo.
+Needs: n8n MCP (verified enabled); design docs; ops; reviewer (different model).
+Missing: None — n8n MCP enabled, design docs exist.
+Plan: (1) ops creates workflows via n8n MCP; (2) validate + commit to repo; (3) CI + reviewer checks; (4) DELIVERY.
+Estimate: within budget.
+Risks: n8n MCP rate limits (UNVERIFIED); credential ref format (mitigate: use n8n standard pattern).
+Decision: READY for INTAKE.
+
+---
+
+
+---
+### T-076 — Database System: Schema/migrations ตามดีไซน์โครงการ (Database — structure first)
+
+Status: READY for INTAKE
+Owner: Project Lead — 2026-09-27 (Owner order via advisor)
+Role: Project Lead (plan/coordinate) + builder (migrations via Supabase MCP) + reviewer L1–L3 on a different model + security (RLS/tenant isolation review)
+Risk: L2 (schema changes on real Supabase via MCP; no customer data; pre-G1)
+Goal: **วาง schema + migrations ให้เป็นรูปร่างก่อน** ตามดีไซน์โครงการ — **ยังไม่ต้องเอา/ไม่ต้องรอข้อมูลหรือ credential ของ Owner**
+Design source files (ต้นทาง):
+- `docs/future/architecture/FOUNDATION_V1.md` — Data contracts, tenancy, RLS policies
+- `docs/proposals/WAR_ROOM_V1_SCHEMA_RLS_DESIGN.md` — War Room schema + RLS design
+- `docs/product/CUSTOMER_FACING_RULES.md` — Data handling rules
+- `docs/warroom/STARTUP_PLAYBOOK.md` — Step 0 database requirements
+- `docs/product/PRICING_V1.md` — Pricing/quota tables
+Scope: Create migration files via Supabase MCP (`supabase_apply_migration`) for: tenancy tables, identity tables, data contracts, War Room tables (rooms, agenda, participants, findings, decisions), pricing/quota tables, audit/log tables. Migrations are **structural** — tables, indexes, FK, RLS policies (FORCE RLS), roles/grants. No seed data, no real credentials, no production apply until Owner approves. Migration files committed to `migrations/` for version control.
+Done when:
+- [ ] Migration files created for all design-specified tables (via `supabase_apply_migration` on dev schema)
+- [ ] Each migration: tables + indexes + FK + RLS ENABLE+FORCE + policies + role grants
+- [ ] Migration files committed to `migrations/` (version controlled, ordered)
+- [ ] Supabase MCP `supabase_list_tables` + `supabase_execute_sql` verification on dev schema
+- [ ] Reviewer (different model) + security (RLS/tenant) check structure + evidence; verdicts recorded
+- [ ] No production apply; no real credentials; no customer data
+Budget: 4 hours builder + 1 hour reviewer + 1 hour security (cap: builder ≤ $2 Go pool; reviewer/security free)
+Links: Design sources above; Supabase MCP (enabled per tool survey); T-072 (backup/restore proof on same project)
+
+INTAKE T-076 — pending
+Understanding: Create structural schema/migrations per design docs via Supabase MCP. No seed data, no production apply, no Owner credentials — structure first.
+Scope: Full migration set for tenancy, identity, data contracts, War Room, pricing, audit. RLS FORCE throughout.
+Needs: Supabase MCP (enabled); design docs; builder; reviewer + security (different models).
+Missing: None — Supabase MCP enabled, design docs exist.
+Plan: (1) builder creates migrations via Supabase MCP on dev schema; (2) verify via MCP; (3) commit migration files; (4) reviewer + security check; (5) DELIVERY.
+Estimate: within budget.
+Risks: Supabase MCP DDL limits (UNVERIFIED — T-072 will test first); RLS policy complexity (mitigate: security review per migration).
+Decision: READY for INTAKE.
+
+
+---
+### T-078 — Auto-card signal mechanism: extend `monitor-log` to open task cards on 4 conditions (card-opening ONLY)
+
+Status: **PARKED** — Owner order 2026-09-27: park, do not retry, do not change model. Reason recorded: three consecutive builder failures with three *different* symptoms (Primary `opencode-go/glm-5.3-flash` = empty output; Backup1 `openrouter/poolside/laguna-s-2.1:free` = upstream rate-limit; Backup2 `opencode-go/kimi-k3` = `reason: length`) point at the **task brief being too long/complex for the model**, not model luck. Revisit later with a smaller, split brief. Not closed.
+Owner: Project Lead — 2026-09-27 (Owner order via this session; design source `docs/architecture/MESSAGE_FLOW_V1.md` + Track A → War Room linkage)
+Role: Project Lead (plan/verify) + builder (extend `services/dev/tools/monitor_log.py`) + reviewer L1–L3 on a **different model**
+Risk: L2 (extends an existing dev tool; writes to `TASKS.md`; **no** runtime/customer/production impact)
+Goal: `monitor-log` can **open a new task card** in `TASKS.md` when one of four conditions is observed — and can do **nothing else**. It is a signal into the normal queue, never an actor.
+Triggers (thresholds in the card, changeable by config):
+1. the same role's model fails **≥ 3 consecutive times** → open a card to **Model Scout**: "ตรวจสอบ/เสนอสลับโมเดลตำแหน่ง X"
+2. the bot cannot answer / hands off to the owner on the **same subject ≥ 3 times** → open a card to **Marketing**: "คำถามซ้ำที่ตอบไม่ได้: [content] — เจอ N ครั้ง"
+3. one shop is **near/over quota for several consecutive months** → open a card to **Cost Guard**: "ตรวจสอบการใช้งานร้าน X"
+4. a **red event unhandled for > 30 minutes** → open a card to **Project Lead** at status **NEEDS_DECISION**
+**Hard safety rule (the core of this card):** the mechanism may ONLY open a card. It must **never** swap a model, change config, send a customer message, deploy, or take any other action. Every opened card enters the normal process (INTAKE → accept/decline → do → review) exactly like a human-opened card.
+Done when:
+- [ ] the four triggers are implemented with explicit, configurable thresholds
+- [ ] opening a card appends a well-formed card block to `TASKS.md` (unique next `T-0XX` id, `Status: READY`, `Owner:` = the addressed role, `Risk:`, `Goal:`, the evidence that triggered it)
+- [ ] **idempotent:** one ongoing condition opens exactly one card (dedup key per trigger+subject); re-observation does not create duplicates
+- [ ] no code path in the mechanism performs any action other than writing the card (verified by reviewer reading the diff)
+- [ ] simulation test with **fake events** proves each of the 4 triggers opens exactly one correct card (and the dedup holds); test artifact recorded
+- [ ] reviewer on a **different model** checks the diff + the simulation evidence; verdict recorded
+- [ ] no runtime/customer/production file touched; no secret in git
+Budget: 3h builder + 1h reviewer (OpenCode Go pool / free; builder ≤ $2)
+Links: `services/dev/tools/monitor_log.py` (T-003), `docs/product/MCP_TOOLS_V1.md` (`monitor-log`), `docs/warroom/ROLES.md` (Model Scout, Marketing, Cost Guard, Project Lead), `docs/warroom/MONITORING.md`, `docs/warroom/TASK_CONTROL.md` (board cap — see note)
+Note (cap interaction): auto-opened cards count against the board's 10-open-card cap. The mechanism only signals; **triaging the board stays with the PL.** Flagged to the Owner as a follow-up decision.
+
+INTAKE T-078 — pending
+
+---
+
+
