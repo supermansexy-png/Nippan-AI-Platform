@@ -310,7 +310,7 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 
 ### T-065 — Role-attribute staffing criteria + OpenRouter Free Models Router + full re-staff
 
-Status: IN_PROGRESS — Owner order 2026-09-27 (criteria table + "ให้ hr คัดสรรใหม่")
+Status: DONE 2026-09-27 — archived (see TASKS_DONE_ARCHIVE.md); board move pending
 Owner: Project Lead — 2026-09-27 (Owner order: use `openrouter/free` for OpenRouter free models; HR re-selects every role against the new per-role attribute table; test a new model against **that role's** attributes, not "does it answer")
 Role: Project Lead (write the criteria into `MODEL_POLICY.md`) + model-recruiter (HR: re-staff + role-specific probes) + assistant/builder (runtime pin writes) + reviewer on a **different model**
 Risk: L2 — dev-time roster + agent pins only; no runtime/customer/production impact
