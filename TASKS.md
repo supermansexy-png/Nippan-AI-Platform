@@ -264,15 +264,18 @@ Status: READY for INTAKE (non-urgent — do it when the queue frees)
 Owner: Project Lead — 2026-09-27 (Owner order; long-term fix from T-082)
 Role: Project Lead (plan) + builder (edit `opencode.json` and/or add a runner flag) + reviewer L1–L3 on a **different model**
 Risk: L2 (dev-time agent/model config change)
-Goal: headless builder jobs can use any roster model without the `reason:"length"` / zero-output failure — reasoning is bounded (or disabled) per model instead of relying on a temporary model swap.
-Design source: T-082 finding; `opencode.json` (`agent` + model options); `scripts/headless_run.mjs`
+Goal: headless builder jobs can run **a real, T-079a-sized task** on a roster model without the `reason:"length"` / zero-output failure — reasoning is bounded per model instead of relying on a temporary model swap.
+Mechanism (VERIFIED from the opencode docs, 2026-09-27 — do not guess):
+`opencode.json` → `provider.<providerId>.models.<modelId>.options` accepts `reasoningEffort` (e.g. `"low"` / `"minimal"` / `"none"`), and the same file supports **variants** (`models.<id>.variants.<name>` with the same option keys). Provider ids here are `opencode-go` / `opencode` / `openrouter`. Agent-level config overrides the global model options.
+Design source: T-082 finding; opencode docs `/docs/models` ("Configure models", "Variants"); `opencode.json`; `scripts/headless_run.mjs`
 Done when:
-- [ ] a per-model reasoning/token bound is configured (or a runner flag passes it through) for at least the three failing models
-- [ ] a re-test proves each of `glm-5.3-flash`, `kimi-k3`, `deepseek-v4.1-flash` returns real output in a headless job (reason `stop`, non-empty text)
-- [ ] the temporary rule (headless default = `mimo-v2.6-flash`) is reverted or kept deliberately, and that choice is recorded in the decision-log
+- [ ] a reasoning cap (or off-switch) is applied for the failing models via `provider.<id>.models.<model>.options` (or a variant passed by the runner)
+- [ ] **proof must use a test job whose length and complexity are close to the real T-079a** — not a trivial one-liner — and it must end with `reason:"stop"` and real output (**`reason:"length"` = fail, even if some text was produced**)
+- [ ] if the cap still fails on a T-079a-sized job, apply the fallback **immediately without asking**: (a) split T-079a into smaller sub-jobs that are short enough, and/or (b) cut unnecessary reference files/context out of the brief
+- [ ] the temporary rule (headless default = `opencode-go/mimo-v2.6-flash`) is reverted or kept deliberately, and that choice is recorded in the decision-log
 - [ ] reviewer (different model) verdict recorded
-Budget: 2h builder + 1h reviewer
-Links: T-082, `scripts/headless_run.mjs`, `opencode.json`, `docs/warroom/decision-log.md` 2026-09-27
+Budget: 2h builder + 1h reviewer + the cost of the verification jobs (Go pool / free)
+Links: T-082, `scripts/headless_run.mjs`, `opencode.json`, `docs/warroom/decision-log.md` 2026-09-27, T-079a (the real task this must unblock)
 
 INTAKE T-083 — pending
 
