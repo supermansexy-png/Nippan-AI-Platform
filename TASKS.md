@@ -404,6 +404,46 @@ No other files touched. No force push. No new work created.
 
 ---
 
+### T-082 — Diagnose: headless worker returns zero output on reasoning-heavy models (`reason:"length"`, `output:0`, `reasoning:4096`)
+
+Status: **DONE 2026-09-27** — diagnosis complete; evidence recorded below
+Owner: Project Lead — 2026-09-27 (Owner order: diagnose after 3 consecutive builder failures)
+Role: Project Lead (diagnosis; read-only)
+Risk: L1 — diagnosis only; no runtime/production touched; no file changed beyond this card
+Goal: explain why headless builder jobs come back with no output, and name the short- and long-term fixes.
+Finding (VERIFIED):
+- The runner `scripts/headless_run.mjs` passes **no** model options — it sends only `run --format json --agent <agent> --model <model> --auto <prompt>` (read in full).
+- Three builder models failed inside it with the **same** signature — `step_finish reason:"length"`, `output:0`, `reasoning:4096`: `opencode-go/glm-5.3-flash`, `opencode-go/kimi-k3`, `opencode-go/deepseek-v4.1-flash`.
+- Control test through the **same runner and agent** with `opencode-go/mimo-v2.6-flash` returned real text (`CONTROL_OK`, `reason:"stop"`).
+→ **Root cause: model behaviour against opencode's default reasoning budget** — not the brief length, and not the runner script.
+Fixes:
+- **Short term (applied):** headless builder jobs default to `opencode-go/mimo-v2.6-flash` (decision-log 2026-09-27).
+- **Long term:** bound or disable reasoning per model — card **T-083**.
+Evidence: `runs/2026-09-27T15-56-41Z-diag-control-mimo` (reason `stop`) · `runs/2026-09-27T15-47-22Z-t079a-web-chat-adapter` (reason `length`, output 0, reasoning 4096) · `runs/2026-09-27T15-58-28Z-t079a-web-chat-adapter-b2`.
+Budget: < 30 minutes; no paid spend.
+
+---
+
+### T-083 — Bound/disable model reasoning for headless jobs (`opencode.json`) — L2
+
+Status: READY for INTAKE (non-urgent — do it when the queue frees)
+Owner: Project Lead — 2026-09-27 (Owner order; long-term fix from T-082)
+Role: Project Lead (plan) + builder (edit `opencode.json` and/or add a runner flag) + reviewer L1–L3 on a **different model**
+Risk: L2 (dev-time agent/model config change)
+Goal: headless builder jobs can use any roster model without the `reason:"length"` / zero-output failure — reasoning is bounded (or disabled) per model instead of relying on a temporary model swap.
+Design source: T-082 finding; `opencode.json` (`agent` + model options); `scripts/headless_run.mjs`
+Done when:
+- [ ] a per-model reasoning/token bound is configured (or a runner flag passes it through) for at least the three failing models
+- [ ] a re-test proves each of `glm-5.3-flash`, `kimi-k3`, `deepseek-v4.1-flash` returns real output in a headless job (reason `stop`, non-empty text)
+- [ ] the temporary rule (headless default = `mimo-v2.6-flash`) is reverted or kept deliberately, and that choice is recorded in the decision-log
+- [ ] reviewer (different model) verdict recorded
+Budget: 2h builder + 1h reviewer
+Links: T-082, `scripts/headless_run.mjs`, `opencode.json`, `docs/warroom/decision-log.md` 2026-09-27
+
+INTAKE T-083 — pending
+
+---
+
 ## REVIEW
 
 (none)
