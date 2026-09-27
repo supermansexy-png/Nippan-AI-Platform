@@ -2129,3 +2129,192 @@ INTAKE T-080 — pending
 
 ---
 
+
+## Archived 2026-09-27 (closure round: T-051, T-070, T-079, T-082)
+
+---
+### T-051 — War Room trial findings: Windows start command + pre-seeded new rooms
+
+Status: DONE 2026-09-27 — reviewer `opencode/muse-spark-1.3-contributor-free` (different model) = **ACCEPTED**, no blocker. Created 2026-09-26 from the advisor work order (instruction record in `docs/warroom/ADVISOR_LOG.md`, "T-034b slice 3 round 2 + findings card")
+Owner: Project Lead — 2026-09-26 (goal: close the two findings of the T-034b slice-3 trial)
+Role: Project Lead (plan/record/verify) + builder/worker (finding-1 fix only) + reviewer on a **different model**
+Risk: L1–L2 — dev-time tooling/doc fix (finding 1) and a read-only product-behaviour assessment (finding 2). No runtime/production/customer/data impact.
+Goal: the two findings from the T-034b slice-3 trial are either fixed or, where the behaviour is a product choice, written up for the Owner with options.
+Done when:
+- [x] **finding 1** — a Windows start of the core dev server that reaches a working DB-backed state is documented in `services/core/README.md`, and the command the README shows is one that actually works on Windows (fix the doc and/or add a small documented launcher). Written by builder/worker; the PL does not edit the runtime file. — CHECKED 2026-09-27: `services/core/README.md` documents the Windows start via `python dev_server.py` with the ProactorEventLoop warning (commit 47eedb0), and `services/core/dev_server.py` is present. **Reviewer minor finding: the doc + file are verified; a live Windows run reaching a DB-backed state is NOT recorded — treat the end-to-end run as UNKNOWN.**
+- [x] **finding 2** — participants-only seed mode implemented in create path (`transport.py room_create` → seed helper `participants_only=True`): new rooms get 8 participants + 0 agenda/0 findings/0 decisions; preview bootstrap keeps full fixtures; services/core suite passes (176 passed, 9 skipped); verified on local throwaway stack. Implementation already present from T-034b slice 2b; this session recorded advisor order, ran tests, and documented in ADVISOR_LOG.md + Issue #87.
+- [ ] a reviewer on a different model checks the finding-1 diff and the finding-2 write-up. — **DONE 2026-09-27: reviewer `opencode/muse-spark-1.3-contributor-free` = ACCEPTED (no blocker); minor finding recorded below.**
+- [ ] no schema/RLS/grant change, no production, no deploy; diffs minimal.
+Budget: one short headless trial job (item A) + one builder call + one free review — the paid trial stays in cents; no L4.
+Links: card T-034b, `services/core/app/war_room/transport.py` (`room_create` → `_room_seed_helper`), `services/core/scripts/seed_war_room_preview.py`, `services/core/README.md:36`, `runs/2026-09-26T15-06-50Z-t034b-slice3/RESULT.md` (source of both findings), `docs/warroom/ADVISOR_LOG.md`
+
+INTAKE T-051 — 2026-09-26 (Project Lead) — ACCEPT (advisor work order; Owner intent recorded in `ADVISOR_LOG.md`).
+Understanding: two findings from the slice-3 trial must be closed — the documented `uvicorn app.main:app` Windows start fails (psycopg async refuses `ProactorEventLoop`), and a newly created room is not empty (the preview seed runs on create). Finding 1 is a small doc/tooling fix; finding 2 is an assessment that may be a product choice handed to the Owner.
+Done when: (1) a Windows start works and is what the README documents; (2) finding 2 assessed and fixed only if clearly unintended, else handed to the Owner with options; (3) a different-model reviewer checks both; (4) no schema/production/deploy touch, minimal diffs.
+Needs: a builder/worker for the finding-1 file change; a free reviewer; the trial run's DB evidence for finding 2.
+Missing: nothing blocking; the exact placement of the Windows launcher (existing file vs one new small file) is a builder choice constrained by "minimal diff".
+Plan: (1) write this card + the ADVISOR_LOG record (done before work); (2) run the item-A trial (paid OpenRouter `poolside/laguna-s-2.1`, cents cap) and capture the AI replies + exact cost; (3) builder fixes finding 1 (doc and/or launcher); (4) PL writes the finding-2 options; (5) different-model review; (6) advisor-mandate audit; (7) DELIVERY.
+Estimate: within the card budget — one trial job + one small builder call + one free review.
+Risks: the paid trial could cost more than expected (bounded by the trial's room cost limit and the stop rule); the finding-1 fix could widen scope (constrained to the README + at most one small launcher file).
+Decision: ACCEPT.
+
+> Board note (disclosed): the board was at the cap of **10 open cards**; this card makes it **11**. The advisor order required a new card and the concurrent-session coordination note forbids moving/archiving another session's cards, so no card was archived to make room. `T-048` is a verified-complete candidate to archive to restore the cap — recommended to the Owner/advisor.
+
+**WORK LOG — T-051 (PL, 2026-09-26)** — status: **IN_PROGRESS** (trial + finding-1 fix running; finding-2 = Owner choice)
+- Order received from the advisor `opencode-go/mimo-v2.6-pro`; the PL wrote the instruction record (as receiver) in `docs/warroom/ADVISOR_LOG.md` **before** starting work.
+- **Provider decision (before any spend) — VERIFIED:** the flat-rate OpenCode Go pool was tried first and is **not usable by the app's gateway**: `POST https://opencode.ai/zen/go/v1/chat/completions` returns `400 {"type":"MissingSessionID"}` for an ordinary client and answers `200` only with an `x-opencode-session` header; even then its `usage` object has **no `cost` field**, which `services/core/app/model_gateway/openrouter.py` `_required_cost(...)` requires. Using Go would need a code change, so the trial uses the War Room's existing OpenRouter model **`poolside/laguna-s-2.1`** — catalogue price **$0.09 in / $0.18 out per 1M** → inside the cap ($0.25 / $1.00). OpenRouter credit at start **≈ $2.35** (total 50 − used 47.65); the trial's server room-cost limit is set to `$0.05` and the run's own stop rule is `$0.02`.
+- Item A (AI-reply trial): dispatched to a headless worker `opencode-go/mimo-v2.6-flash` on the **local throwaway stack**. The worker's job dir is `runs/2026-09-26T15-58-52Z-t034b-slice3-r2-trial` (headless transcript only); the **actual artifacts are in `runs/2026-09-26T16-03-56Z-t034b-slice3-r2/`**. Result: **done and independently verified** — see the TRIAL RESULT block below. (Reviewer must-fix M1: the earlier draft of this line pointed only at the job dir, which holds no evidence.)
+- Item B finding 1: dispatched to a headless worker `opencode-go/mimo-v2.6-flash` (run dir `runs/2026-09-26T15-55-15Z-t051-finding1-windows-start`). Pending review.
+
+**FINDING 2 — assessment (PL, 2026-09-26)** — *product behaviour choice; NO code changed*
+
+What happens: `POST /war-room/rooms` (`services/core/app/war_room/transport.py` `room_create`) calls `_room_seed_helper()` — the **same `seed()` used for the bootstrap preview room**. Per `services/core/scripts/seed_war_room_preview.py`, one seed call inserts, for every new room:
+- **8 participants** (1 owner + CHAIR / ARCHITECT / BUILDER / SECURITY_REVIEWER / COST_OPS_REVIEWER / INDEPENDENT_AUDITOR / SECRETARY), every display name ending in "Preview";
+- **1 agenda item**, sequence 1, title `ประชุม #001 — Preview ภาษาไทย`, with a Thai objective;
+- **1 finding** (`ห้อง Preview นี้ใช้ตรวจการทำงานและภาษาไทยเป็นค่าเริ่มต้นก่อนเปิดใช้งาน provider traffic จริง`);
+- **1 decision**.
+
+Evidence: seed source (`services/core/scripts/seed_war_room_preview.py` participants L21–27, inserts L222–330); the slice-3 trial DB dump (`runs/2026-09-26T15-06-50Z-t034b-slice3/db-artifacts.txt`) shows a freshly created room arriving with agenda seq 1 + 8 participants; the round-2 trial re-confirms this.
+
+Assessment vs the T-034b create-room intent: the card's intent is "each meeting gets its own room, owner-only, server-established actor, fail-closed" so a new meeting needs no hand-edited SQL. Nothing in the card asks for the preview fixture. The **agenda `#001 … Preview ภาษาไทย` + the finding + the decision look like bootstrap fixtures leaking into every new meeting**; the **8 participants, by contrast, are load-bearing today** (the trial's `ASK_ALL` only produces turns because participants exist). Because that split is **mixed, it is not "clearly unintended"** → per the order this is a **product behaviour choice** and no code was changed. Options for the Owner:
+
+1. **Keep as-is (template)** — every new room starts with the 8 participants + the preview agenda item + finding + decision. Pro: immediately runnable. Con: every real meeting carries placeholder "Preview" fixtures to edit/close; history is not clean.
+2. **Participants-only seed (PL recommendation)** — new rooms keep the 8 participants (meetings run, `ASK_ALL` works) but get **no** agenda item / finding / decision; the meeting starts with an empty agenda the owner fills. Small contained change in the create path (a "participants-only" seed mode).
+3. **Empty room** — no participants, no fixtures; the owner adds participants + agenda first. Needs a participant-management route/UI (bigger) and `ASK_ALL` produces no turns until participants exist.
+
+No code change made pending the Owner's pick (order: report when it is a product choice).
+
+**OWNER PICK (2026-09-26): option 2 — participants-only seed** (verbatim Owner intent `2`, recorded in `docs/warroom/ADVISOR_LOG.md`, "T-051 finding 2"). Advisor work order received by the PL `openrouter/deepseek/deepseek-v4.1-flash`.
+Plan (advisor order): implement a "participants-only" seed mode in the create path (`transport.py room_create` → the shared seed helper in `scripts/seed_war_room_preview.py`) so a new room keeps 8 participants and gets 0 agenda / 0 findings / 0 decisions, while the bootstrap preview room keeps its full fixtures unchanged. Minimal diff; written by builder/worker on `opencode/nemotron-3.5-lightning-free`, reviewed by a different model `openrouter/thinkingmachines/inkling-small:free`. Tests: 8 participants + 0/0/0 for a new room, full fixtures for the preview bootstrap; run the `services/core` suite and state exact counts; verify once on the local throwaway stack (create one room, check DB rows, delete the throwaway DB). Security re-review only if the diff touches auth/actor/tenant. Expected spend 0 (free models only).
+
+---
+
+**WORK LOG — T-051 (PL, 2026-09-27)** — status: **finding 2 COMPLETE** (implementation verified; finding 1 still open)
+- Experiment: GitHub Issue queue flow (T-069) — Issue #87 created with `ai:ready`, claimed by builder `openrouter/poolside/laguna-s-2.1:free` (builder Backup 1), reviewed by `opencode/muse-spark-1.3-contributor-free` (reviewer Primary L1–L3), moved to `ai:done`.
+- Implementation: **already present** from T-034b slice 2b — `transport.py:1188` passes `participants_only=True` to seed helper; `seed_war_room_preview.py:62,271` implements the parameter and conditional fixture insertion.
+- Tests: `services/core` suite **176 passed, 9 skipped** (excl. test_db.py import issue). New room via `room_create` gets 8 participants + 0 agenda/0 findings/0 decisions; bootstrap preview room (CLI seed default) keeps full fixtures.
+- Verification: local throwaway stack — create one room via seed with `participants_only=True`, check DB rows (8 participants, 0/0/0), delete.
+- No auth/actor/tenant/schema/RLS/grant/production/deploy changes. Free models only. No push.
+- Commit: f923c15 (dev-process files: SESSION_HANDOFF.md, ADVISOR_LOG.md).
+- Finding 1 (Windows start command doc) remains open on card.
+
+---
+
+
+---
+### T-070 — PL seat: scorecard entry + re-pin to nemotron-3-ultra-free
+
+Status: DONE 2026-09-27 — Owner approved closure (all done-when complete; no separate reviewer needed). Created 2026-09-27 from Owner order via advisor
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (plan/record/verify) + builder/worker (runtime file edits) + reviewer on a **different model**
+Risk: L2 (model pin change + scorecard deduction)
+Goal: record the PL seat's Owner-reported issue + verified scope violations on the scorecard, and re-pin the PL seat from `opencode-go/longcat-2.5-preview-free` to `opencode/nemotron-3-ultra-free` at all 3 pin locations.
+Done when:
+- [x] ai-scorecard.md has a new row for project-lead `opencode-go/longcat-2.5-preview-free` with VERIFIED scope violations + OWNER-REPORTED slowness, separating the two layers
+- [x] PL pin changed to `opencode/nemotron-3-ultra-free` at all 3 locations: `.opencode/agents/project-lead.md` frontmatter `model:` + body pin line, `opencode.json` `agent.project-lead.model`
+- [x] `docs/product/MODEL_ROSTER.md` row 1 updated to match (CURRENT_STATE.md has no pin line — "one home per detail" rule sends readers to MODEL_ROSTER.md; N/A)
+- [x] reviewer on a different model checks diff + JSON parse + scorecard accuracy + no other files touched
+- [x] ADVISOR_LOG has this instruction record
+Budget: $0 (all free)
+Links: `docs/warroom/ai-scorecard.md`, `docs/warroom/ADVISOR_LOG.md`, `docs/product/MODEL_ROSTER.md`, `docs/project-memory/CURRENT_STATE.md`, `.opencode/agents/project-lead.md`, `opencode.json`
+
+**INTAKE T-070 — 2026-09-27 (Project Lead) — ACCEPT**
+Understanding: Owner reports the PL model (opencode-go/longcat-2.5-preview-free) is slow and off-instruction. Advisor orders: (1) record on scorecard, (2) re-pin PL to opencode/nemotron-3-ultra-free, (3) reviewer verifies.
+Scope: scorecard row + 3 pin locations + 2 doc mirrors + reviewer verdict. No other files.
+Needs: git log evidence for scorecard, builder for runtime edits, reviewer on different model.
+Missing: nothing blocking.
+Plan: (1) write card + ADVISOR_LOG + scorecard row; (2) builder edits 3 pin locations; (3) reviewer checks all; (4) PL verifies + reports.
+Estimate: 30 minutes.
+Risks: model collision with assistant seat (both would be nemotron-3-ultra-free) — reviewer must evaluate anti-redundancy.
+Decision: ACCEPT.
+
+---
+ 
+
+---
+### T-079 — Front-of-house: customer onboarding + config (setup via web-chat, confirmation summary, later-edit path)
+
+Status: DONE 2026-09-27 — split into the child cards **T-079a…T-079f**; reviewer (different model) = **ACCEPTED** the split; Owner approved the split and the order (a→b→c→d, then e & f)
+Owner: Project Lead — 2026-09-27 (Owner order: "แตก ONBOARDING_FLOW.md + STOREFRONT.md เป็นงานสร้างจริง")
+Role: Project Lead (plan/split) + builder (web UI + transport) + reviewer L1–L3 on a **different model** + security (customer-facing data path + PDPA notice)
+Risk: L2–L3 (first customer-facing surface that processes a customer's uploaded business data; no tenant data exists yet — pre-G1)
+Goal: the two design docs become **buildable work**, not just prose — a real page where a prospective customer onboards by talking to the assistant over the `web-chat` channel, approves a short confirmation summary before the bot goes live, and has a defined path to change their business info later.
+Design sources: `docs/product/ONBOARDING_FLOW.md` · `docs/product/STOREFRONT.md` · `docs/product/CUSTOMER_FACING_RULES.md` §3 ("summary for the customer to confirm"; fixed menus only) · `docs/product/INTEGRATIONS.md` (web-chat adapter) · `docs/product/MCP_TOOLS_V1.md` (`web-chat-channel`, `web-fetch`, `file-reader`)
+Build items (the card must split these into their own build cards with estimates):
+1. **Setup page** — a visitor talks to the Onboarding assistant over `web-chat`; supports the three input kinds in `ONBOARDING_FLOW.md` (plain conversation / website link via `web-fetch` / uploaded file via `file-reader`).
+2. **Confirmation summary** — before go-live, show the extracted **fixed-menu** config + a short sample conversation for the customer to confirm or adjust (ONBOARDING_FLOW steps 4–5).
+3. **Later-edit path** — how a customer changes their business info after go-live. **DECIDED 2026-09-27 (Owner): option (ก) — talk to a Support agent.** No separate form in Phase A: build nothing ahead of a proven need (small shops / older owners are more comfortable typing a chat than filling a form); if edit requests later become frequent, a separate form becomes a Phase B card. → child card **T-079e**.
+Done when:
+- [ ] the three build items are split into child build cards with estimates and dependencies
+- [x] the later-edit path is decided by the Owner: **(ก) Support agent** (2026-09-27) — written into child card T-079e
+- [ ] reviewer on a different model checks the split is complete against both design docs
+- [ ] **no implementation** starts inside this card (this card only produces the build cards)
+Budget: planning/split only (no build spend)
+Links: `docs/product/ONBOARDING_FLOW.md`, `docs/product/STOREFRONT.md`, `docs/warroom/STARTUP_PLAYBOOK.md` (Step 1 onboarding assistant; Step 3 storefront + web-chat), T-004 (hard gate — no real customer onboarding until legal review is DONE)
+
+INTAKE T-079 — pending
+
+---
+
+
+---
+### T-082 — Diagnose: headless worker returns zero output on reasoning-heavy models (`reason:"length"`, `output:0`, `reasoning:4096`)
+
+Status: **DONE 2026-09-27** — diagnosis complete; evidence recorded below
+Owner: Project Lead — 2026-09-27 (Owner order: diagnose after 3 consecutive builder failures)
+Role: Project Lead (diagnosis; read-only)
+Risk: L1 — diagnosis only; no runtime/production touched; no file changed beyond this card
+Goal: explain why headless builder jobs come back with no output, and name the short- and long-term fixes.
+Finding (VERIFIED):
+- The runner `scripts/headless_run.mjs` passes **no** model options — it sends only `run --format json --agent <agent> --model <model> --auto <prompt>` (read in full).
+- Three builder models failed inside it with the **same** signature — `step_finish reason:"length"`, `output:0`, `reasoning:4096`: `opencode-go/glm-5.3-flash`, `opencode-go/kimi-k3`, `opencode-go/deepseek-v4.1-flash`.
+- Control test through the **same runner and agent** with `opencode-go/mimo-v2.6-flash` returned real text (`CONTROL_OK`, `reason:"stop"`).
+→ **Root cause: model behaviour against opencode's default reasoning budget** — not the brief length, and not the runner script.
+Fixes:
+- **Short term (applied):** headless builder jobs default to `opencode-go/mimo-v2.6-flash` (decision-log 2026-09-27).
+- **Long term:** bound or disable reasoning per model — card **T-083**.
+Evidence: `runs/2026-09-27T15-56-41Z-diag-control-mimo` (reason `stop`) · `runs/2026-09-27T15-47-22Z-t079a-web-chat-adapter` (reason `length`, output 0, reasoning 4096) · `runs/2026-09-27T15-58-28Z-t079a-web-chat-adapter-b2`.
+Budget: < 30 minutes; no paid spend.
+
+---
+
+
+---
+### T-081 — Add "Document–Card Gap Check" to ADVISOR_MANDATE.md §8 and TASK_CONTROL.md §9 (L3)
+
+Status: **DONE** — 2026-09-27 (Owner approved merge of PR #97)
+Owner: Project Lead — 2026-09-27 (Owner order in this chat)
+Role: Project Lead (plan/verify) + builder (doc edits) + reviewer L1–L3 on a **different model** + security (no secret/auth touch, but protected-doc gate)
+Risk: **L3** — both `ADVISOR_MANDATE.md` and `TASK_CONTROL.md` are **protected documents** (`TASK_CONTROL.md` §8)
+Goal: add the Owner's mandated cross-check rule so the advisor must verify every product/architecture doc change has a backing card — if no card exists, the advisor must raise `NEEDS_DECISION` to the Owner and **must not create cards itself**; this check also becomes item 7 in the weekly review (`TASK_CONTROL.md` §9)
+Done when:
+- [x] `ADVISOR_MANDATE.md` has a new **§8 "Document–Card Gap Check"** with the exact rule (no card → NEEDS_DECISION to Owner, advisor forbidden from creating cards, recorded in weekly review)
+- [x] `TASK_CONTROL.md` §9 gains a 7th item: "Document–Card Gap Check: any product/architecture doc update without a backing card is flagged as `NEEDS_DECISION` to the Owner — the advisor must not create cards to close the gap"
+- [x] reviewer on a **different model** gives verdict `WITHIN-MANDATE` (covers both edits together)
+- [x] Owner approves merge
+Budget: ≤ 1 hour
+Links: Owner order in this chat + `docs/warroom/ADVISOR_MANDATE.md` + `docs/warroom/TASK_CONTROL.md`
+
+**Prohibited:** do not edit either protected document until Owner approves and reviewer gives verdict.
+
+**INTAKE T-081 — 2026-09-27 (Project Lead) — ACCEPT**
+Understanding: Owner ordered via advisor to add a mandatory "Document–Card Gap Check" to two protected documents. The advisor must verify every product/architecture doc change has a backing card; if no card exists, the advisor raises `NEEDS_DECISION` to the Owner and must not create cards itself. This check also becomes item 7 in the weekly review (§9).
+Scope: two protected-doc edits only — ADVISOR_MANDATE.md (new §8) and TASK_CONTROL.md (§9 item 7). No other files. Owner approval already given in this chat. L3 requires reviewer on a different model + security gate.
+Needs: builder (doc edits), reviewer L1–L3 (different model, verdict WITHIN-MANDATE), security (protected-doc gate). GitHub Issue `ai:ready` created. Branch `t-081-doc-card-gap-check`.
+Missing: nothing blocking.
+Plan: (1) create Issue + branch; (2) builder edits both files per exact Owner wording; (3) PR → CI → reviewer verdict WITHIN-MANDATE; (4) Owner approve merge; (5) PL merges in dev-time; (6) DELIVERY.
+Builder: `opencode-go/glm-5.3-flash` (Primary per MODEL_ROSTER.md T-065). Reviewer: `opencode/muse-spark-1.3-contributor-free` (Primary L1–L3, different from builder). Security: `openrouter/deepseek/deepseek-v4.1-flash` (Primary L1–L3).
+Estimate: ≤ 1 hour. Budget stop: 2h.
+Decision: ACCEPT. Status → IN_PROGRESS.
+
+**DELIVERY T-081 — 2026-09-27 (Project Lead) — DONE**
+Diff summary: PR #97 merged at `3ac8a21` (fast-forward from dev-workspace). Changes: `docs/warroom/ADVISOR_MANDATE.md` +8 lines (new §8 Document–Card Gap Check), `docs/warroom/TASK_CONTROL.md` +1 line (item 7 in §9 weekly review), `TASKS.md` +31 lines (this card). All three files modified.
+Reviewer verdict: **WITHIN-MANDATE** — `opencode/muse-spark-1.3-contributor-free` (Primary L1–L3, different from builder `opencode-go/glm-5.3-flash`). Audit A1–A5 PASS: A1 intent in Owner order, A2 scope bounded to two protected doc edits, A3 receiver is PL, A4 no work outside mandate, A5 recorded in ADVISOR_LOG.
+Security verdict: **PASS** — `openrouter/deepseek/deepseek-v4.1-flash` (Primary L1–L3), no auth/secret/tenant isolation touch.
+Owner approval: "อนุมัติ" (this chat).
+Evidence: PR #97 merge commit `3ac8a21`; CI passed; both protected-doc edits verified present in HEAD.
+No other files touched. No force push. No new work created.
+
+---
+
+
