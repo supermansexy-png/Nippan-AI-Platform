@@ -51,9 +51,24 @@ Local commit **`a7afacc`** (other window's T-030 n8n publish entry) is **not pus
 
 ## งานค้างที่ยังไม่ปิด — บ้านเดียว
 
-- **T-033** — War Room pilot: ปิดแล้ว 2 ข้อ (fresh room ครั้งละห้อง = ใช่ · Owner จ่าย เพดาน $1/ครั้ง) — **เหลือ "ใครเข้าร่วม" รอ Owner ตัดสิน** (สถานะบนการ์ด: IN_PROGRESS)
-- **T-032** — force-push block บน `dev-workspace` (repo setting): แนะนำให้ Owner เปิดใน GitHub UI (process rule มีอยู่แล้ว; นี่คือ repo-level belt-and-braces)
+### ⚙️ กฎถาวรใหม่ — Git work channel 2 เลน (Owner 2026-09-27; decision-log 2026-09-27)
+- **งานด่วน** → PL แจ้งพี่ → **พี่แชทบอก ChatGPT อีกตัวเอง** (Owner = trigger)
+- **งานไม่ด่วน** → PL โยน GitHub Issue label `ai:ready` body ครบ (Task/Role/Risk/Scope/Done-when/Stop rules) → **อีกตัว poll ทุก 1 ชม. ดึงเอง**
+- **ทุกกรณี** → PL เข้าไป verify: label `ai:ready→ai:claimed→ai:done` + comment INTAKE/DELIVERY + หลักฐานดิบ ก่อนรายงานว่าดี
+- อีกตัวเขียนงานบน branch `codex/*` เท่านั้น · ห้าม merge PR ตัวเอง · ห้าม push ตรงเข้า `dev-workspace`/`phase2/postgres-logical-schema` · ห้าม force-push · ห้าม secret ลง git
+- กฎนี้ **แทนที่** T-032 blocker 3 เดิม ("assistant ไม่ auto-start จากคิว") — ใช้เฉพาะเลนด่วนเท่านั้น
+
+### การ์ดค้าง
+- **T-032** — Git work channel: **pilot A DONE 2026-09-27** (Issue #88, external assistant `GPT-5.6 Sol`, PL verify เอง ruleset 24070054) · force-push block DONE · **เหลือ pilot B (write): 1 real PR + CI + different-model review**
+- **T-033** — War Room pilot: ปิด 3/3 ข้อแล้ว (fresh room · Owner จ่าย เพดาน $1/ครั้ง · participants = **PL เลือกตาม agenda ครั้งต่อครั้ง**) — การ์ด IN_PROGRESS พร้อมรอบ pilot ถัดไป
 - **T-050** — roadmap draft (`ROADMAP_STUDY_DRAFT_2026-09-26.md`) รอ Owner พิจารณา (DRAFT — NOT APPROVED)
-- **restart opencode** — pin ใหม่ (project-lead ฯลฯ) จะมีผลหลังเปิดแชทใหม่ (resumed session ยังใช้โมเดลเก่า)
-- **n8n publish** — ✅ RESOLVED 2026-09-27: execution test proved the edited (new) query already runs on manual execution; publish is moot. Workflow `eohtRWY8YEvEuS7n` stays inactive.
+- **restart opencode** — pin ใหม่ (project-lead ฯลฯ) จะมีผลหลังเปิดแชทใหม่
+- **n8n publish** — ✅ RESOLVED 2026-09-27: execution test พิสูจน์ว่า query ใหม่รันแล้ว; publish ไม่จำเป็น. Workflow `eohtRWY8YEvEuS7n` คง inactive
 - **OpenRouter credit** — ~$0.64 คงเหลือ; งานเสียเงินต้องขอ Owner ก่อน
+
+### Working tree / push
+- **ยังไม่ push** — local ahead `origin/dev-workspace` 2 commits: `bc2141c` (T-032 pilot A + two-lane rule) · `47eedb0` (T-051 finding 1 README)
+- **push แล้วอีกตัวจะเห็น rules ใหม่** ในรอบ poll ถัดไป (อีกฝั่งตั้ง hourly poll ไว้แล้ว)
+- `docs/warroom/ADVISOR_LOG.md` มีงานค้างของ session อื่น — **อย่าเขียนทับ**
+- ⚠️ อาจมี session อื่นทำงานอยู่: **อย่าเขียนทับไฟล์ที่ตัวเองไม่ได้แก้**
+
