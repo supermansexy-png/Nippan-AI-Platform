@@ -443,3 +443,17 @@ the headless runner instead of blocking the main chat. Binding rules:
 
 Queue: `node scripts/headless_run.mjs --agent worker --model <provider/model> --label <tag> --prompt "<task>"`
 Details: `docs/warroom/DEV_WORKING_GUIDE.md`.
+
+---
+
+# ChatGPT Task Handoff
+
+This section defines the GitHub Issue-based queue for AI task handoff. The queue uses 4 labels as signals: `ai:ready`, `ai:claimed`, `ai:done`, `ai:blocked`.
+
+## Governance rules
+
+1. **Task ID must exist first.** Every Issue must reference a `T-0XX` ID that already has a card in `TASKS.md`. Never create a new Task ID inside an Issue.
+2. **Issues are the queue only.** The card in `TASKS.md` is the source of truth for status, done-when, and evidence. Labels are signals only — they do not close work.
+3. **No secrets in Issues.** Issue bodies must not contain secrets, customer data, or large code blocks.
+4. **"Do not call ChatGPT directly" means cross-environment only.** The team may still communicate with the PL through START_PROMPT as usual.
+5. **Issue body format:** Task / Role / Risk (L0-L3) / Scope (read-only/write/commit/PR as applicable) / Context (reason + branch/commit/PR/file) / Done when / Stop rules. Before creating an Issue, search open Issues for the same Task ID. The creator must not set `ai:claimed` themselves — the receiver of the work claims it.

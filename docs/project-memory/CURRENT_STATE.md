@@ -16,7 +16,7 @@ Status: ACTIVE — PHASE A MARKET TEST PIVOT (dev-time)
 - **Model roster (T-065):** all 9 dev roles re-staffed per the T-065 table (`MODEL_ROSTER.md` § "Per-role staffing"); runtime pins written to `.opencode/agents/*.md` + `opencode.json` (uncommitted). Post-restart live verification: **8/9 seats VERIFIED** (reviewer/ops/security/builder/researcher/advisor/assistant/model-recruiter); **project-lead NOT confirmed** — a resumed session keeps its own model; a brand-new session is required. Hard role-specific suite (7 free models, hidden bug + negative control): **all 7 found the bug, none hallucinated** — runs `runs/*t065-hard*`.
 - **T-051 finding 2:** participants-only seed implemented in `services/core/**` (working tree, uncommitted by design); reviewer check in flight.
 - **T-066:** two stale security pins in agent prompts fixed to the T-065 roster.
-- **Open board:** T-032 (git dispatch, 2 answers recorded), T-033 (War Room pilot), T-034b (committed — **deploy blocked on Owner**), T-035/T-038 (closing), T-050 (roadmap draft awaiting Owner), T-051, T-065, T-066, **T-067** (Google free adoption — 2 models).
+- **Open board:** T-032 (git dispatch, 2 answers recorded), T-033 (War Room pilot), T-034b (committed — **deploy blocked on Owner**), T-035/T-038 (closing), T-050 (roadmap draft awaiting Owner), T-051, T-065, T-066. **T-067 CLOSED 2026-09-27** (Google free adoption — 2 models; limits UNKNOWN).
 - **Google free tier:** key linked + verified in opencode (provider `google`, type=api, FREE tier); 2 models adopted — `google/gemini-flash-lite-latest` and `google/gemini-3.8-flash` — for **non-sensitive use only**.
 
 ## Provider & model pins — single source, not copied here

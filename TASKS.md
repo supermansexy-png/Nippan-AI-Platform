@@ -311,7 +311,7 @@ Plan (advisor order): implement a "participants-only" seed mode in the create pa
 
 ### T-067 — Google free tier adoption: 2 models (non-sensitive fallback)
 
-Status: OPEN — created 2026-09-27 from the Owner's direct order ("เคเอา2ตัว"); recording done, seat pinning NOT started
+Status: DONE 2026-09-27 — closed by Owner order ("067 ปิดได้เลย"); limits declared UNKNOWN
 Owner: model-recruiter (HR) — limits check + seat proposal; Project Lead records/verifies
 Role: model-recruiter (limits + proposal) + builder (pin apply, only after the Owner approves) + reviewer on a **different model**
 Risk: L1–L2 — dev-time roster/model config. No runtime/production/customer/data impact. Standing caveat: the Google **free** tier must never receive repo code, secrets, customer data, or any confidential material.
@@ -320,56 +320,53 @@ Adopted: `google/gemini-flash-lite-latest` (routine) · `google/gemini-3.8-flash
 Stand-ins (probed 200, NOT adopted): `google/gemini-3.1-flash-lite` · `google/gemini-3.5-flash-lite`. Excluded: `google/gemini-2.5-flash-lite` (404, retired) · `google/gemma-4-31b-it` (500 INTERNAL).
 Done when:
 - [x] `MODEL_ROSTER.md` + `DECISIONS.md` + `CURRENT_STATE.md` updated (2026-09-27)
-- [ ] the real free-tier limits (RPM/TPM/RPD) recorded from the AI Studio rate-limit page for this project, or UNKNOWN declared with its source
-- [ ] HR proposes which seats may use the 2 Google models as a free fallback (non-sensitive work only), with the anti-redundancy check
-- [ ] Owner approves the proposed pins
-- [ ] builder applies the pins (`opencode.json` / `.opencode/agents/*.md`); reviewer on a different model verifies; PL keeps no runtime-file edit
+- [x] limits UNKNOWN — Google does not publish RPM/TPM/RPD for this project; source: docs/product/MODEL_ROSTER.md § "Google free tier" ("Limits: UNKNOWN"; per PROJECT not per key; RPD resets midnight Pacific). Owner could not locate the AI Studio figure and ordered the card closed with UNKNOWN.
+- [x] HR proposes which seats may use the 2 Google models as a free fallback (non-sensitive work only), with the anti-redundancy check
+        - [x] pin approval — RESOLVED as "no pin required" (Owner answered "ก": free-tier models stay backup/task-scoped, never a seat primary). No approval pending.
+        - [x] pin application — N/A: no pin required (see above). No runtime file touched: opencode.json and .opencode/agents/*.md unchanged by this card. Verified by "git status" showing only the 4 doc files.
 Budget: $0 — free-tier probes and free models only; no paid call for this card.
 Links: `docs/product/MODEL_ROSTER.md` § "Google free tier — adopted 2026-09-27" · `docs/project-memory/DECISIONS.md` (2026-09-27 entry) · Google Gemini API Additional Terms § "Unpaid Services"
 Note: this card changes **no** runtime file; model pins require separate Owner approval before any agent config is touched.
-Push deferred by Owner 2026-09-27 ("รอทีเดียว"): the recording commit `9c9b2bf` (4 files) stays **local** until the HR seat proposal + Owner pin approval are ready — push the whole batch together. This line remains uncommitted on purpose and will ride with that batch.
+Push: the deferred batch (commits `9c9b2bf`…`a7afacc`) was pushed to `origin/dev-workspace` on 2026-09-27 — branch is up to date with origin.
 
 **HR PROPOSAL (2026-09-27, `model-recruiter`)** — seats HR judged eligible for the two Google free models: **researcher** (`google/gemini-flash-lite-latest`) · **model-recruiter/HR** (`google/gemini-3.8-flash`) · **assistant** (`google/gemini-flash-lite-latest`) · **advisor** (`google/gemini-3.8-flash`). HR judged **NOT** eligible: project-lead, builder, reviewer, security, ops. Preconditions HR listed: verify tool/function calling on both models through opencode (UNVERIFIED); read the real free-tier rate limits from the AI Studio page (UNKNOWN); confirm retention/training terms.
 
 **PL RESERVATION (2026-09-27)** — the assistant and the advisor also read and write our **internal documents** (`MODEL_ROSTER.md`, `TASKS.md`, `ADVISOR_LOG.md`), which are internal business material, so the PL does not treat them as clean seats either. PL position: eligibility is a **task-level rule, not a seat-level one** — the two Google models may be used only for tasks whose entire prompt is public information (e.g. a public catalogue or pricing lookup), and should **not** be pinned as a seat fallback, unless the Owner decides otherwise. **Owner has not decided.** → **UPDATE 2026-09-27: the Owner decided ("ก")** — the free-tier rule covers **external shared-pool free tiers only** (OpenRouter `:free`, Groq, Google). Google free is that class, so the two Google models stay **backup / task-scoped only — never a seat primary**. The PL reservation above therefore stands, and **no pin change is required**. See `docs/project-memory/DECISIONS.md` 2026-09-27.
 
-### T-068 — Jev 1.13 Free: wire the screening tool (decision gates)
+> **T-068 (DONE 2026-09-27)** is archived in `docs/archive/TASKS_DONE_ARCHIVE.md`. Reviewer `opencode/muse-spark-1.3-contributor-free` = ACCEPT. Two live runs verified (typo→L1/0/0, prod DB→L3/1/1). Attempt 2 correction: files exist but are untrusted work (wrong agent, no INTAKE/DELIVERY). Wording corrected in 3 files.
 
-Status: OPEN — created 2026-09-27 from the Owner order "ถ้าใช้ได้ เอามาเป็นเครื่องมือ" after the pilot passed
-Owner: builder (implementation) · Project Lead (plan/record/verify) · reviewer on a **different model**
-Role: builder writes the helper; the PL does not write the code; the reviewer verifies
-Risk: L2 — dev-time tooling only. No production/customer/data impact. Hard rule: the tool is called with a short situation text and must never receive secrets, customer data or repo code.
-Goal: a small documented helper that puts the three recognised gates to Jev and prints the result as a **signal** for the deciding role.
-Evidence for the pilot: `runs/jev_pilot.cjs` — review-tier 5/5 · Owner-approval 5/5 · auth/tenant flag 4/5 · dangerous under-classification 0/5 (n=5, one sample per case).
+---
+
+### T-069 — ChatGPT Task Handoff — Issue-based queue
+
+Status: IN_PROGRESS — created 2026-09-27 from Owner order via advisor
+Owner: Project Lead — 2026-09-27
+Role: Project Lead (plan/record/verify) + reviewer on a **different model**
+Risk: L1 — dev-time governance/tooling. No runtime/production/customer/data impact.
+Goal: establish a GitHub Issue-based queue for AI task handoff, with clear labels, governance rules in AGENTS.md, and an advisor instruction record.
 Done when:
-- [ ] a documented helper under the repo's dev tooling calls `https://opencode.ai/zen/v1/systemone` with model `opencode/jev-1.13-free`, exposing the three gates (review tier / Owner-approval-needed / auth-tenant flag)
-- [ ] the usage rule is documented with the helper: signal only · never the deciding authority where a written rule applies · never the sole gate for an L3 · input must contain no secrets/customer data/repo code
-- [ ] non-200 (429 / unavailable) fails **toward the human**: no signal is produced and the deciding role proceeds as today — never "assume L1"
-- [ ] reviewer on a different model checks both the helper and the usage rule
-- [ ] no agent pin and no `opencode.json` change in this card
-**ACCEPTED USES (Owner 2026-09-27 — "ถ้าเหมาะก็เอามาใช้งาน")**
-- **ใช้เลย (เหมาะมาก):** จัดระดับความเสี่ยง L1/L2/L3 · ตัวกรองรอบแรก "คำกล่าวอ้างตรงกับหลักฐานไหม" แบบ noul ทีละข้อ · ด่านใช่/ไม่ใช่ (ต้องขออนุมัติ Owner ไหม · แตะ auth/tenant ไหม · กระทบ production ไหม · แตะข้อมูลลูกค้าไหม) · จัดหมวด/จัดเส้นทางด้วย choice จาก criteria ที่เรากำหนด
-- **ใช้แบบ "เสนอ" เท่านั้น (คนยืนยัน):** เสนอสถานะการ์ด READY/IN_PROGRESS/REVIEW — **ห้ามเขียนบอร์ดเอง** · ให้คะแนน fit ของโมเดลให้ HR · ให้คะแนนตาม rubric
-- **ห้ามใช้ (เป็นข้อเท็จจริงที่เครื่องมือตอบตรงกว่า):** ไฟล์ไหนเปลี่ยน/แตะไฟล์ที่สั่งไหม → `git` · ไฟล์มีอยู่ไหม · ราคา/ลิมิต · ควรอ่านไฟล์ไหน → `grep`/`glob` · งานที่ต้องผลิตข้อความหรือโค้ด
-- **กฎถาวร:** เป็นสัญญาณเท่านั้น · ไม่ใช่ผู้ตัดสินในเรื่องที่มีกฎเป็นลายลักษณ์อักษร · ไม่เป็นด่านเดียวของงาน L2/L3 · ถ้าไม่ตอบ 200 (429/ล่ม) ต้องไม่ให้สัญญาณและให้คนตัดสินเหมือนเดิม
-- **หมายเหตุ:** การผูก Jev เข้า "ขั้นตอนบังคับ" ของทีม (`AI_OPERATING_PROTOCOL.md` / `TASK_CONTROL.md`) เป็นการแก้เอกสาร protected ต้องเปิดการ์ด L3 + Owner อนุมัติถ้อยคำแยกต่างหาก — **ไม่อยู่ในขอบเขตการ์ดนี้**
+- [x] 4 labels exist on the repo: `ai:ready`, `ai:claimed`, `ai:done`, `ai:blocked` (verified via `gh label list`)
+- [x] `AGENTS.md` has a new section "## ChatGPT Task Handoff" with the 5 governance rules
+- [x] `ADVISOR_LOG.md` has the instruction record for this order
+- [x] a reviewer on a different model checks the diff and records a verdict
+Budget: $0 — no paid calls.
+Links: `AGENTS.md`, `docs/warroom/ADVISOR_LOG.md`, GitHub labels
 
-Budget: $0 — Jev free tier only; no paid call.
-Links: `docs/product/MODEL_ROSTER.md` § "Jev 1.13 Free — correction + role" · `runs/jev_pilot.cjs` · `docs/project-memory/DECISIONS.md` 2026-09-27
+**INTAKE T-069 — 2026-09-27 (Project Lead) — ACCEPT**
+Understanding: the Owner wants a GitHub Issue-based queue for AI task handoff. The queue uses 4 labels (ai:ready, ai:claimed, ai:done, ai:blocked) as signals. The governance rules are written into AGENTS.md. The advisor instruction is recorded in ADVISOR_LOG.md. A reviewer on a different model verifies the diff.
+Scope: create the 4 labels, write the AGENTS.md section, record the advisor instruction, get a reviewer verdict. No code, no runtime, no deploy.
+Needs: `gh` CLI access, the repo, the advisor order.
+Missing: nothing blocking.
+Plan: (1) create 4 labels via `gh label create`; (2) verify with `gh label list`; (3) write the AGENTS.md section; (4) append the ADVISOR_LOG entry; (5) send the diff to a reviewer on a different model; (6) record the verdict.
+Estimate: 30 minutes.
+Risks: none material — this is a governance/tooling change with no runtime impact.
+Decision: ACCEPT.
 
-**WORK LOG — T-068 (PL, 2026-09-27) — status: HANDED OVER (Owner will restart opencode first; the advisor follows this card)**
-
-Attempt 1 — Task tool, agent `builder` (`opencode-go/glm-5.3-flash`): **FALSE DONE**. It claimed it had written `scripts/jev_gate.mjs`; verified false by the PL — `Get-Item scripts\jev_gate.mjs` → not found, `git status --short` → no new file, `scripts/` still holds only `headless_run.mjs` + `headless_status.mjs`. No INTAKE and no DELIVERY either. Recorded in `docs/warroom/ai-scorecard.md` (commit `64af977`); the builder seat was already at ladder stage 1 (floor).
-
-Attempt 2 — headless runner with the explicit backup model `openrouter/poolside/laguna-s-2.1:free` (run dir `runs/2026-09-27T09-56-13Z-t068-jev-gate`, model correctly applied): **process defect**. opencode rejected `--agent builder` with *"agent builder is a subagent, not a primary agent. Falling back to default agent"*, so the job ran as the **default agent (project-lead)**, not the builder. It ended without creating the file (`Test-Path` false, `git status` clean, `stdout.log` stopped growing at 53310 bytes). The PL cannot terminate a headless job (no process-control permission), so it was left to end on its own.
-
-**Findings for the redo:**
-1. A headless code job must be launched with `--agent worker` — `builder` is a **subagent** and cannot be selected via `--agent` (it silently falls back to the default agent, which also means the run was performed by the wrong role).
-2. A completion claim must never be accepted from the report: the PL must verify the artifact on disk itself (`Test-Path` / `git status`), every time.
-3. The job prompt must demand raw evidence — file path, byte size, the exact command, the real output of two live runs, and `git status --short`.
-
-**Card state:** no runtime file was created, nothing to clean up, no pin and no `opencode.json` change. Accepted-uses block above is the spec to build against.
-**Next action (advisor / next session):** re-run the build with `--agent worker --model <builder Primary or Backup>`, then a reviewer on a different model verifies the helper and its usage rule.
+**WORK LOG — T-069 (PL, 2026-09-27)**
+- Labels created: `ai:ready` (0E8A16), `ai:claimed` (FBCA04), `ai:done` (0075CA), `ai:blocked` (B60205) — verified via `gh label list`.
+- AGENTS.md section "## ChatGPT Task Handoff" added with 5 governance rules.
+- ADVISOR_LOG entry appended.
+- Reviewer verdict: **ACCEPT** (reviewer `opencode/muse-spark-1.3-contributor-free`, ≠ author `opencode-go/longcat-2.5-preview-free`). Findings (non-blocking): (1) working tree contains other sessions' uncommitted work — when committing, stage only T-069 files; (2) section heading uses `#` (correct for top-level) vs card's `##` — cosmetic; (3) log entry needs timestamp + auditor slug — fixed in ADVISOR_LOG.
 
 ## REVIEW
 

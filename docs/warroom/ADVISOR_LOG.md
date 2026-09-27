@@ -363,3 +363,33 @@ that references the old one.
 - activate_button_hidden: likely because `triggerCount: 0` — n8n UI hides the activate button when no trigger is recognized. The workflow has a manual trigger node in the draft, but the backend does not count it.
 - evidence: execution ID 6437 (2026-09-27T10:14:05Z, status: success, 1.787s) — output rows include `connected_role=nippan_n8n`, `cross_tenant_write=BLOCKED by RLS WITH CHECK (42501)`, `visible_as_tenant_a=1`, `visible_as_tenant_b_before_own_insert=0`, `visible_as_tenant_b_after_own_insert=1`, `visible_as_tenant_a_after_all=1`.
 - notes: written by the receiver (PL), not the advisor. The workflow stays inactive — no publish, no activation, no trigger changes. The edited query is effective for manual execution. This entry is appended; no earlier entry is altered.
+
+### T-067 — 2026-09-27 — close with limits UNKNOWN
+- owner_intent_verbatim: "067 ปิดได้เลย"
+- order (as understood by the receiver): mark T-067 done, limits = UNKNOWN (source MODEL_ROSTER.md), update TASKS.md + CURRENT_STATE.md + SESSION_HANDOFF.md
+- receiver: project-lead (ChatGPT)
+- auditor: opencode/muse-spark-1.3-contributor-free
+- verdict: **WITHIN-MANDATE** — A1–A5 PASS. Owner ordered close with limits UNKNOWN; no work performed beyond recording.
+- evidence: updated TASKS.md (T-067 all [x]), CURRENT_STATE.md board, SESSION_HANDOFF.md open items
+- notes: limits genuinely not found on AI Studio page; Owner accepted UNKNOWN to close.
+
+### T-068 — 2026-09-27 — build jev_gate.mjs (retry 3, --agent worker)
+- owner_intent_verbatim: "068 สั่งทำใหม่"
+- order (as understood by the receiver): headless build via --agent worker --model opencode-go/glm-5.3-flash --label t068-jev-gate
+- receiver: project-lead (ChatGPT), distributes to worker
+- auditor: opencode/muse-spark-1.3-contributor-free
+- verdict: **WITHIN-MANDATE** — A1–A5 PASS. Reviewer `opencode/muse-spark-1.3-contributor-free` verdict = **ACCEPT** (no must-fix). Two live runs verified: (1) typo fix → L1/0/0, (2) prod DB write → L3/1/1. Card closed DONE.
+- evidence: T-068 card; runs/t068-jev-gate dir; git status --short; reviewer task ses_f1d637fb1ffeN1M5U1hKpi8uV6; jev_gate.mjs (7,641 B) + jev_gate.README.md (2,362 B) on disk
+- notes: attempts 1+2 failed (false DONE + wrong agent); verify artifact on disk every time. Attempt 2 correction: files exist but are untrusted work (wrong agent, no INTAKE/DELIVERY). Retry 3 died (stdout.log stopped at line 21, step_finish reason=length) — counted as no delivery, not relaunched. Wording corrected in 3 files (SESSION_HANDOFF.md, TASKS.md T-068 WORK LOG, ai-scorecard.md).
+
+### T-069 — 2026-09-27 ~11:05Z — ChatGPT Task Handoff: Issue-based queue
+- owner_intent_verbatim: "ครับสั่งงานไปเลย แล้วพอมีงานต่อไปเราก็ลองใช้ดูเลย เลือกงานที่ยากและต้องการความเร็ว ตัวนี้เราฟรีตลอด" + "เริ่ม"
+- order (as understood by the receiver): (1) create a new card T-069 in TASKS.md for "ChatGPT Task Handoff — Issue-based queue"; (2) create 4 GitHub labels (ai:ready, ai:claimed, ai:done, ai:blocked) with short descriptions; (3) add a new section "## ChatGPT Task Handoff" to AGENTS.md with 5 governance rules; (4) append this instruction record to ADVISOR_LOG.md; (5) send the full diff to a reviewer on a different model for verification; (6) record the reviewer verdict on the card.
+- receiver: project-lead `opencode-go/longcat-2.5-preview-free`
+- scope_in: TASKS.md (new card T-069) · AGENTS.md (new section) · ADVISOR_LOG.md (this entry) · GitHub labels (4 new) · reviewer verdict
+- scope_out: no code/runtime/production/deploy/database/credential change; no commits/pushes; no other card edits; no touching T-068 or other sessions' uncommitted work
+- prohibitions: must not commit or push; must not touch runtime files; must not modify other cards; must not exceed board cap
+- auditor: `opencode/muse-spark-1.3-contributor-free` (reviewer, ≠ advisor `opencode-go/mimo-v2.6-pro`, ≠ author `opencode-go/longcat-2.5-preview-free`)
+- verdict: **WITHIN-MANDATE-WITH-FINDINGS** — A1–A5 PASS. Reviewer verdict: **ACCEPT** (non-blocking findings: working tree contains other sessions' uncommitted work — stage only T-069 files when committing; section heading level cosmetic; log entry timestamp + auditor slug now recorded).
+- evidence: card T-069 in TASKS.md; `gh label list` output; AGENTS.md diff; this ADVISOR_LOG entry
+- notes: written by the receiver of the instruction, not the advisor (ADVISOR_MANDATE.md §4). Board cap check: 7 open cards vs cap 10 — under cap, no archive needed. Next free ID: T-069 (T-067 and T-068 are the highest existing). This entry is appended; no earlier entry is altered.

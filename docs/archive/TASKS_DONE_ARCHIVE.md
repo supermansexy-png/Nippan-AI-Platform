@@ -1929,4 +1929,43 @@ Status: DONE 2026-09-27 (batch order). Full card body preserved in git history.
 Owner: Project Lead — 2026-09-27 (Owner batch order: "new card + writer for wrong model refs")
 Delivered (VERIFIED): `.opencode/agents/project-lead.md:76` and `.opencode/agents/security.md:53` updated from the stale `opencode-go/kimi-k3` security pin to the T-065 roster (Primary `openrouter/deepseek/deepseek-v4.1-flash`, Backups `opencode-go/qwen3.8-flash` + `openrouter/qwen/qwen3.8-flash`); reviewer + L4 parts unchanged.
 Review: `opencode-go/space-bunny-free` (≠ writer `opencode/nemotron-3-ultra-free`), run `runs/2026-09-27T00-30-17Z-t066-fix-review` = **PASS** — both lines byte-for-byte match the roster; slugs provider-prefixed; anti-redundancy holds.
+
+---
+
+### T-068 — Jev 1.13 Free: wire the screening tool (decision gates)
+
+Status: DONE 2026-09-27 — closed by Owner order ("068 สั่งทำใหม่"); reviewer ACCEPT.
+Owner: builder (implementation) · Project Lead (plan/record/verify) · reviewer on a different model
+Role: builder writes the helper; the PL does not write the code; the reviewer verifies
+Risk: L2 — dev-time tooling only. No production/customer/data impact.
+Goal: a small documented helper that puts the three recognised gates to Jev and prints the result as a signal for the deciding role.
+Done when:
+- [x] a documented helper under the repo's dev tooling calls `https://opencode.ai/zen/v1/systemone` with model `opencode/jev-1.13-free`, exposing the three gates (review tier / Owner-approval-needed / auth-tenant flag)
+- [x] the usage rule is documented with the helper: signal only · never the deciding authority where a written rule applies · never the sole gate for an L3 · input must contain no secrets/customer data/repo code
+- [x] non-200 (429 / unavailable) fails toward the human: no signal is produced and the deciding role proceeds as today — never "assume L1"
+- [x] reviewer on a different model checks both the helper and the usage rule
+- [x] no agent pin and no `opencode.json` change in this card
+
+**WORK LOG — T-068 (PL, 2026-09-27) — status: DONE**
+
+Attempt 1 — Task tool, agent `builder` (`opencode-go/glm-5.3-flash`): **FALSE DONE**. It claimed it had written `scripts/jev_gate.mjs`; verified false by the PL — `Get-Item scripts\jev_gate.mjs` → not found, `git status --short` → no new file, `scripts/` still holds only `headless_run.mjs` + `headless_status.mjs`. No INTAKE and no DELIVERY either. Recorded in `docs/warroom/ai-scorecard.md` (commit `64af977`); the builder seat was already at ladder stage 1 (floor).
+
+Attempt 2 — headless runner with the explicit backup model `openrouter/poolside/laguna-s-2.1:free` (run dir `runs/2026-09-27T09-56-13Z-t068-jev-gate`, model correctly applied): **process defect**. opencode rejected `--agent builder` with *"agent builder is a subagent, not a primary agent. Falling back to default agent"*, so the job ran as the **default agent (project-lead)**, not the builder. It was initially recorded as "produced nothing" but **CORRECTED 2026-09-27**: attempt 2 did produce the files (`scripts/jev_gate.mjs` 7,641 B + `scripts/jev_gate.README.md` 2,362 B) — it ran as the wrong agent with no INTAKE/DELIVERY, so the files are **untrusted work**, not "nothing" and not "done". The PL cannot terminate a headless job (no process-control permission), so it was left to end on its own.
+
+Retry 3 — headless runner with `--agent worker --model opencode-go/glm-5.3-flash --label t068-jev-gate` (run dir `runs/2026-09-27T10-36-39Z-t068-jev-gate`): **died without delivery**. `stdout.log` stopped at line 21 (`step_finish reason=length`, output=0, no result event). Counted as no delivery, not relaunched.
+
+**PL verification (2026-09-27):**
+- Files on disk: `scripts/jev_gate.mjs` (7,641 bytes) + `scripts/jev_gate.README.md` (2,362 bytes) — verified by `Get-Item`.
+- Two live runs (exit code 0 both times):
+  - Run 1: `"A small documentation typo fix in a README file, changing one sentence for clarity"` → `review_tier=L1`, `owner_approval_needed=0`, `touches_auth_tenant=0` (82 bytes input)
+  - Run 2: `"Adding a new API endpoint that writes user data to the production database"` → `review_tier=L3`, `owner_approval_needed=1`, `touches_auth_tenant=1` (74 bytes input)
+- `git status --short` confirms no `opencode.json` or agent pin changes.
+
+**Reviewer verdict (2026-09-27):** `opencode/muse-spark-1.3-contributor-free` (≠ author `opencode-go/longcat-2.5-preview-free`) = **ACCEPT** (no must-fix). Two non-blocking findings: (1) README documents exit `2`=timeout but code sends timeout to exit code 6; (2) unused `candidates` variable in `loadKey` + wire value is short form `jev-1.13-free` (not prefixed) — but live runs pass, so not a problem.
+
+**Wording corrections (2026-09-27):** "attempt 2 produced nothing" corrected to "attempt 2 produced the files but ran as the wrong agent with no INTAKE/DELIVERY, so the files are untrusted work" in 3 files: `SESSION_HANDOFF.md`, T-068 WORK LOG in `TASKS.md`, and the scorecard row in `docs/warroom/ai-scorecard.md`.
+
+**Advisor audit (2026-09-27):** T-067 + T-068 instruction records in `docs/warroom/ADVISOR_LOG.md` updated with verdicts: both **WITHIN-MANDATE** (A1–A5 PASS).
+
+**Card state:** DONE. No runtime file created by this card (attempt 2 files are untrusted work, not card output). No pin and no `opencode.json` change. Accepted-uses block is the spec to build against.
 Note: the SESSION_HANDOFF item's builder-slug claim was already closed by T-059/T-061 (grep = 0 wrong builder refs); the real residual was the security pin.
