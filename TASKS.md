@@ -205,17 +205,21 @@ Depends on: T-079a, T-079b.
 
 ### T-079d — Confirmation summary + go-live gate
 
-Status: READY for INTAKE
+Status: **DONE — 2026-09-28** (commit `cacebbb`; reviewer ACCEPTED-WITH-FINDINGS, 4 findings fixed and re-verified)
 Owner: Project Lead — 2026-09-27 (child of T-079)
 Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model**
 Risk: L2 (the gate that decides when a bot becomes active — fail-closed matters)
 Goal: before the bot goes live, show the extracted **fixed-menu** config + a short sample conversation ("your bot will say things like…"); the customer confirms or asks for changes; **only on confirmation does the bot become active**.
 Design source: `docs/product/ONBOARDING_FLOW.md` steps 4–5, `docs/product/CUSTOMER_FACING_RULES.md` §3, `docs/data/LITE_SCHEMA_V1.md` (`bots.status`)
 Done when (provable by running):
-- [ ] run through onboarding → the summary renders the extracted config + a sample conversation
-- [ ] if the customer edits or declines, the config changes and the bot **does not** go live (fail-closed)
-- [ ] on confirm, `bots.status` flips to active and the config rows are persisted — shown in the run
-- [ ] reviewer (different model) verdict recorded
+- [x] run through onboarding → the summary renders the extracted config + a sample conversation
+- [x] if the customer edits or declines, the config changes and the bot **does not** go live (fail-closed)
+- [x] on confirm, `bots.status` flips to active and the config rows are persisted — shown in the run
+- [x] reviewer (different model) verdict recorded
+
+RESULT — 2026-09-28: `app/onboarding/gate.py` + `gate_repo.py` + `summary.py`. The reviewer enumerated every path to `active` and found exactly one: an explicit `confirm()` on a draft with no missing fields. `edit()` and `decline()` both write `paused` immediately, and a row that does not exist reads as `paused` — so an edit after confirming never leaves a bot ACTIVE on a draft the customer never re-confirmed. Status values (`active`/`paused`) and the persisted column names were checked against `LITE_SCHEMA_V1.md` and match the real schema; nothing was invented. 306 tests pass, 9 skipped; all three e2e scripts exit 0 (`run_onboarding_gate_e2e.py` 14 checks, `run_onboarding_page_e2e.py` 27, `run_onboarding_e2e.py` 8). Reviewer's 4 findings fixed: a proof check that was a truthy string is now a real boolean comparison, a dead helper that could write `status` bypassing the gate was removed, an unused `build_draft(fill)` parameter was resolved, and `summary.py` gained dedicated unit tests.
+
+KNOWN GAP (carried forward, not a blocker for this card): the gate is not yet wired to the page session — the real caller must bind an already-verified tenant scope, which happens with T-079e/T-079f.
 Budget: 4h builder + 1h reviewer
 Links: `docs/product/ONBOARDING_FLOW.md`, `docs/data/LITE_SCHEMA_V1.md`, T-079c
 Depends on: T-079c.
