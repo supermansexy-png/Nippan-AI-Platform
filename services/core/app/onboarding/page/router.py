@@ -18,7 +18,12 @@ from dataclasses import dataclass
 from fastapi import APIRouter, Header, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse
 
-__all__ = ["PDPA_NOTICE", "OnboardingPageStore", "create_onboarding_router"]
+__all__ = [
+    "PDPA_NOTICE",
+    "PDPA_SAMPLE_MARKER",
+    "OnboardingPageStore",
+    "create_onboarding_router",
+]
 
 logger = logging.getLogger("app.onboarding.page.router")
 
@@ -36,12 +41,28 @@ from .handlers import (
 from .render import render_page
 from .store import OnboardingPageStore, SessionScopeError
 
-__all__ = ["PDPA_NOTICE", "OnboardingPageStore", "create_onboarding_router"]
+__all__ = [
+    "PDPA_NOTICE",
+    "PDPA_SAMPLE_MARKER",
+    "OnboardingPageStore",
+    "create_onboarding_router",
+]
 
+# PDPA_NOTICE — PLACEHOLDER / SAMPLE ONLY.
+# This wording is a dev-time draft. It has NOT been reviewed by a lawyer.
+# Owner decision (2026-09-28, verbatim): "เดียวตอนก่อนเปิด จะให้ทนายเขียนใหม่
+# ตอนนี้ให้ใช้แบบที่เขียนมาก่อนเป็นเพียงตัวอย่าง" — a lawyer will write the
+# final wording before the site is publicly launched, and this text MUST be
+# replaced before launch. Cards: T-079c / T-079f.
 PDPA_NOTICE = (
     "เว็บไซต์นี้เก็บข้อมูลที่คุณกรอกเพื่อตั้งค่าบอทของร้านคุณเท่านั้น "
     "และปฏิบัติตาม PDPA — คุณสามารถขอลบข้อมูลได้ทุกเมื่อ"
 )
+
+# Visible, non-legal marker shown next to the notice wherever it is
+# rendered to a person (onboarding page + storefront). Text only — no
+# legal claim. Pair with PDPA_NOTICE above (same placeholder status).
+PDPA_SAMPLE_MARKER = "ตัวอย่าง — รอถ้อยคำฉบับสุดท้ายจากทนาย"
 
 SCOPE_HEADER = "X-Onboarding-Scope"
 

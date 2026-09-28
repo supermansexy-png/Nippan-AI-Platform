@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from xml.sax.saxutils import escape as esc
 
-from app.onboarding.page import PDPA_NOTICE
+from app.onboarding.page import PDPA_NOTICE, PDPA_SAMPLE_MARKER
 
 __all__ = ["render_storefront"]
 
@@ -64,7 +64,10 @@ def _live_demo() -> str:
         '<section id="live-demo">'
         "<h2>ลองคุยกับบอทตัวอย่าง</h2>"
         '<div id="demo-slot">เดโมบอทจะเปิดให้ลองคุยที่นี่</div>'
-        f'<p class="pdpa-notice" id="pdpa-notice">{esc(PDPA_NOTICE)}</p>'
+        f'<p class="pdpa-notice" id="pdpa-notice">{esc(PDPA_NOTICE)}'
+        '<span class="pdpa-sample-marker" '
+        'id="pdpa-sample-marker">'
+        f'{esc(PDPA_SAMPLE_MARKER)}</span></p>'
         "</section>"
     )
 
