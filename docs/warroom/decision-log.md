@@ -1301,3 +1301,18 @@ Evidence: `runs/2026-09-27T15-56-41Z-diag-control-mimo` (reason `stop`) vs `runs
 
 Task: T-079a (retry on the temporary model). Not pushed.
 
+
+## 2026-09-28 - T-079b..f built and reviewed; headless harness stopped producing output (T-079f left open)
+
+Context: the Owner ordered the remaining front-of-house chain to be completed (T-079b -> c -> d -> e -> f). Four cards closed with reviewer verdicts: T-079b (72a3d1a, pass 1 ACCEPTED-WITH-FINDINGS with one HIGH, fixed, pass 2 ACCEPTED), T-079c (176410, reviewer ACCEPTED-WITH-FINDINGS plus a separate security review that found 2 HIGH and 3 MEDIUM, all closed; the chunked body-size bypass was proven on a real uvicorn server and then closed), T-079d (cacebbb, ACCEPTED-WITH-FINDINGS, 4 findings fixed), T-079e (5992630, pass 2 ACCEPTED after a cross-tenant flag-apply hole was closed). Suite grew 226 -> 327 tests, all green; five e2e proof scripts all exit 0.
+
+Two decisions belong to the Owner, not the Project Lead, and are recorded rather than invented:
+1. **PDPA notice wording (from T-079c).** docs/security/PDPA_COMPLIANCE.md states the requirement but defines no exact sentence, so the short notice shown on the customer page and reused on the storefront is newly drafted wording. Customer-facing legal text is not the Project Lead's to write. The page is dev-time only until the Owner supplies or approves the wording.
+2. **Storefront demo daily cap (from T-079f).** No document defines a demo cap. The builder refused to invent a number: it is the storefront_demo_daily_cap setting, default None = demo OFF (fail-closed), and the real number needs the Owner's cost/traffic judgement before the page is public.
+
+T-079f is therefore **BUILT AND REVIEWED BUT NOT CLOSED** (0c1c2c). The reviewer returned ACCEPTED-WITH-FINDINGS with two findings still open: the 	enant_quota_untouched e2e check is asserted-only (the quota sink was wired before the run, so it cannot fail), and the tier check compares a literal against a literal in the same code instead of against MODEL_POLICY.md. A third MEDIUM is an accepted Phase A limitation recorded as a pre-launch blocker: the demo cap is per-process in memory, so a restart resets it and replicas multiply it.
+
+Reason the fix round could not run: from ~00:28 local the headless runner stopped writing any output at all. Three consecutive builder jobs produced a **zero-byte** stdout.log, including two one-line smoke tests (smoke-test, smoke-test-2) whose prompts asked only for the literal text SMOKE_OK. This is a process/harness-level failure, not a model failure, and it is **not** the T-082/T-083 reasoning problem - that one is fixed and proven (
+easoningEffort: low in opencode.json, commits 6d5f220 and c68f087). Work was committed rather than left loose, and the card was left honestly open rather than marked DONE. No finding was waived to make the card close.
+
+Task: T-079b, T-079c, T-079d, T-079e closed; T-079f open. Not pushed.
