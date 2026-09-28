@@ -16,6 +16,7 @@ Exports:
 from .body_limit import BodyLimitMiddleware
 from .router import (
     PDPA_NOTICE,
+    PDPA_SAMPLE_MARKER,
     DevEscapes,
     OnboardingPageStore,
     create_onboarding_router,
@@ -23,6 +24,7 @@ from .router import (
 
 __all__ = [
     "PDPA_NOTICE",
+    "PDPA_SAMPLE_MARKER",
     "DevEscapes",
     "OnboardingPageStore",
     "create_onboarding_router",

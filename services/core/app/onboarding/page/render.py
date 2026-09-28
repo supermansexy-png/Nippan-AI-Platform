@@ -71,7 +71,18 @@ def _progress(missing_fields: list[str], draft: dict, done: bool) -> str:
 
 
 def _form(pdpa_notice: str) -> str:
-    pdpa = f'<p class="pdpa-notice" id="pdpa-notice">{esc(pdpa_notice)}</p>'
+    # Deferred import: .router imports this module at load time, so the
+    # marker constant (single definition in router.py) is fetched at call
+    # time only.
+    from .router import PDPA_SAMPLE_MARKER
+
+    pdpa = (
+        '<p class="pdpa-notice" id="pdpa-notice">'
+        f'{esc(pdpa_notice)}'
+        '<span class="pdpa-sample-marker" '
+        'id="pdpa-sample-marker">'
+        f'{esc(PDPA_SAMPLE_MARKER)}</span></p>'
+    )
     text_input = (
         '<label>พิมพ์คำตอบ: '
         '<input type="text" name="answer" id="answer-input">'
