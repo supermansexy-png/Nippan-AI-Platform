@@ -228,17 +228,23 @@ Depends on: T-079c.
 
 ### T-079e — Later-edit path via Support agent (Owner decided (ก))
 
-Status: READY for INTAKE
+Status: **DONE — 2026-09-28** (commit `5992630`; reviewer pass 1 ACCEPTED-WITH-FINDINGS, pass 2 **ACCEPTED**)
 Owner: Project Lead — 2026-09-27 (child of T-079; Owner decision 2026-09-27: option (ก))
 Role: Project Lead (plan) + builder + reviewer L1–L3 on a **different model**
 Risk: L2 (a live tenant's own config changes; fixed menus only)
 Goal: an existing customer asks in chat to change their business info; the Support agent (`ROLES.md`) applies the change **within fixed menus only**, and flags anything that could raise cost to Cost Guard first.
 Design source: `docs/warroom/ROLES.md` (Support agent), `docs/product/CUSTOMER_FACING_RULES.md` §3, `docs/data/LITE_SCHEMA_V1.md` (`bots`)
 Done when (provable by running):
-- [ ] a chat change request updates the config row and the change is logged — shown in the run
-- [ ] only fixed-menu fields can change; an attempt to set free-form instructions is refused
-- [ ] a change that could raise cost (e.g. quota) is flagged to Cost Guard, not applied silently
-- [ ] reviewer (different model) verdict recorded
+- [x] a chat change request updates the config row and the change is logged — shown in the run
+- [x] only fixed-menu fields can change; an attempt to set free-form instructions is refused
+- [x] a change that could raise cost (e.g. quota) is flagged to Cost Guard, not applied silently
+- [x] reviewer (different model) verdict recorded
+
+RESULT — 2026-09-28: `services/core/app/support/`. Five fields are changeable and all are fixed-menu (`tone`, `opening_hours`, `enabled_tools`, `monthly_message_quota`, `monthly_push_quota`); the quota and tool changes are **held** and go through Cost Guard before they land. Free-form attempts (instructions / system_prompt / custom greeting / persona) are refused with nothing stored — the raw text goes to the log only, never to a config row. An edit goes through the existing `GoLiveGate.edit`, so it revokes to `paused`; returning to `active` requires re-confirming a complete draft. 315 tests pass, 9 skipped; all four e2e scripts exit 0 (`run_support_change_e2e.py` 16 checks plus `run_onboarding_gate_e2e.py`, `run_onboarding_page_e2e.py`, `run_onboarding_e2e.py`).
+
+Two MEDIUM findings from pass 1 were fixed and re-verified: `apply_held` now refuses a flag whose tenant/bot does not match the request (a guessed `flag_id` no longer reaches another tenant's approved change), and a held flag can only be decided by an actor carrying the Cost Guard role (a non-Cost-Guard actor raises and the flag stays held). Two LOW findings also fixed: the log no longer claims `applied` before the value is persisted, and a dead `business_type_key` field was removed.
+
+Residual LOW: `approved_by` is a free-text name, so attribution is not cryptographically enforced — it depends on the caller passing a correct actor. Acceptable for Phase A; revisit when a real database is wired.
 Budget: 4h builder + 1h reviewer
 Links: `docs/warroom/ROLES.md`, `docs/product/CUSTOMER_FACING_RULES.md` §3, T-079b
 Depends on: T-079b.
