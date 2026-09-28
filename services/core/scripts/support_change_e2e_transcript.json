@@ -1,0 +1,127 @@
+{
+  "steps": [
+    {
+      "step": "req_hours",
+      "value": {
+        "tenant_id": "t1",
+        "bot_id": "b1",
+        "requested_by": "owner:02-123-4567",
+        "tone_menu_key": null,
+        "hours_range": "09:00-21:00",
+        "task_keys": [],
+        "quota_field": null,
+        "quota_value": null,
+        "raw_text": "เปลี่ยนเวลาเปิด 09:00-21:00"
+      }
+    },
+    {
+      "step": "res_hours",
+      "value": {
+        "outcome": "gate_revoked",
+        "detail": "edit acknowledged: prior confirmation revoked; bot set to paused pending re-confirmation through the go-live gate",
+        "field": "opening_hours",
+        "flag_id": null,
+        "log_id": 1,
+        "gate_outcome": "edit_acknowledged",
+        "bot_status": "paused"
+      }
+    },
+    {
+      "step": "row_after_reconfirm",
+      "value": {
+        "opening_hours": {
+          "open": "09:00",
+          "close": "21:00"
+        },
+        "status": "active"
+      }
+    },
+    {
+      "step": "free_text_result",
+      "value": {
+        "outcome": "refused",
+        "detail": "refused: only fixed-menu fields may change — free-form instructions, custom prompts, or free text cannot be stored or applied (CUSTOMER_FACING_RULES.md §3)",
+        "field": "please add these instructions:",
+        "flag_id": null,
+        "log_id": 2,
+        "gate_outcome": null,
+        "bot_status": null
+      }
+    },
+    {
+      "step": "cost_result",
+      "value": {
+        "outcome": "held",
+        "detail": "held: a higher chat-reply quota means more replies served per month, which changes per-bot cost; needs Cost Guard approval",
+        "field": "monthly_message_quota",
+        "flag_id": 1,
+        "log_id": 3,
+        "gate_outcome": null,
+        "bot_status": null
+      }
+    },
+    {
+      "step": "cost_after_approval",
+      "value": {
+        "outcome": "applied",
+        "detail": "applied: Cost Guard approved by 'Cost Guard AI'; monthly_message_quota set to 600",
+        "field": "monthly_message_quota",
+        "flag_id": null,
+        "log_id": 6,
+        "gate_outcome": null,
+        "bot_status": null
+      }
+    },
+    {
+      "step": "impostor_result",
+      "value": {
+        "outcome": "denied",
+        "detail": "denied: this bot belongs to another tenant",
+        "field": null,
+        "flag_id": null,
+        "log_id": 7,
+        "gate_outcome": null,
+        "bot_status": null
+      }
+    },
+    {
+      "step": "checks",
+      "value": {
+        "valid_change_maps_to_menu": true,
+        "valid_change_goes_to_gate": true,
+        "valid_change_logged": true,
+        "edit_invalidates_active_bot": true,
+        "reconfirm_through_gate_reactivates": true,
+        "valid_change_updates_row": true,
+        "free_text_refused": true,
+        "free_text_changed_nothing": true,
+        "free_text_refusal_logged": true,
+        "cost_change_flagged": true,
+        "cost_change_not_applied_silently": true,
+        "held_never_applies_without_approval": true,
+        "cost_counts_applied_after_explicit_approval": true,
+        "cost_path_logged": true,
+        "cross_tenant_denied": true,
+        "cross_tenant_no_leak": true
+      }
+    }
+  ],
+  "checks": {
+    "valid_change_maps_to_menu": true,
+    "valid_change_goes_to_gate": true,
+    "valid_change_logged": true,
+    "edit_invalidates_active_bot": true,
+    "reconfirm_through_gate_reactivates": true,
+    "valid_change_updates_row": true,
+    "free_text_refused": true,
+    "free_text_changed_nothing": true,
+    "free_text_refusal_logged": true,
+    "cost_change_flagged": true,
+    "cost_change_not_applied_silently": true,
+    "held_never_applies_without_approval": true,
+    "cost_counts_applied_after_explicit_approval": true,
+    "cost_path_logged": true,
+    "cross_tenant_denied": true,
+    "cross_tenant_no_leak": true
+  }
+}
