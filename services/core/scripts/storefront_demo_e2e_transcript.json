@@ -1,0 +1,55 @@
+{
+  "steps": [
+    {
+      "step": "demo_exchange_1",
+      "value": {
+        "reply": "บอทตัวอย่าง: ร้านตัวอย่างเปิด 08:00-18:00 รับจองคิวได้ครับ (ถาม: ร้านเปิดกี่โมงครับ)",
+        "stopped": false,
+        "remaining": 2
+      }
+    },
+    {
+      "step": "demo_at_cap",
+      "value": {
+        "reply": "ขอบคุณที่ลองคุยกับบอทตัวอย่าง วันนี้มีผู้ลองใช้เต็มจำนวนแล้ว กรุณากลับมาลองใหม่พรุ่งนี้ หรือกดปุ่มตั้งค่าบอทของคุณได้เลย",
+        "stopped": true,
+        "remaining": 0
+      }
+    },
+    {
+      "step": "tenant_usage_sink",
+      "value": []
+    },
+    {
+      "step": "page_html_head",
+      "value": "<!DOCTYPE html>\n<html lang=\"th\"><head><meta charset=\"utf-8\">\n<title>ผู้ช่วยร้านของคุณ ตอบแชทตลอด 24 ชั่วโมง</title>\n</head><body>\n<section id=\"headline\"><h1>ผู้ช่วยร้านของคุณ ตอบแชทลูกค้าตลอด 24 ชั่วโมง</h1></section>\n<section id=\"live-demo\"><h2>ลองคุยกับบอทตัวอย่าง</h2><div id=\"demo-slot\">เดโมบอทจะเปิดให้ลองคุยที่นี่</div><p class=\"pdpa-notice\" id=\"pdpa-notice\">เว็บไซต์นี้เก็บข้อมูลที่คุณกรอกเพื่"
+    },
+    {
+      "step": "checks",
+      "value": {
+        "demo_answers_over_web_chat": true,
+        "demo_reply_has_no_model_vendor_name": true,
+        "cap_counts_only_demo_traffic": true,
+        "cap_stops_demo": true,
+        "stopped_request_spends_nothing": true,
+        "stop_message_has_no_model_vendor_name": true,
+        "tenant_quota_untouched": true,
+        "page_served": true,
+        "page_has_no_model_vendor_name": true,
+        "demo_tier_is_cheapest_per_policy": true
+      }
+    }
+  ],
+  "checks": {
+    "demo_answers_over_web_chat": true,
+    "demo_reply_has_no_model_vendor_name": true,
+    "cap_counts_only_demo_traffic": true,
+    "cap_stops_demo": true,
+    "stopped_request_spends_nothing": true,
+    "stop_message_has_no_model_vendor_name": true,
+    "tenant_quota_untouched": true,
+    "page_served": true,
+    "page_has_no_model_vendor_name": true,
+    "demo_tier_is_cheapest_per_policy": true
+  }
+}

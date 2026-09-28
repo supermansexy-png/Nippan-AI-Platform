@@ -6,6 +6,8 @@ from .config_repository import ConfigRepository
 from .db import Database
 from .preview_bootstrap import bootstrap_preview_database
 from .onboarding.page import BodyLimitMiddleware, create_onboarding_router
+from .storefront import create_storefront_router
+from .storefront.demo import StorefrontDemoService
 from .settings import get_settings
 from .war_room.transport import (
     create_war_room_preview_router,
@@ -52,6 +54,21 @@ app.add_middleware(BodyLimitMiddleware)
 # router refuses to serve onboarding data until the deployment binds a
 # verified scope at wiring time. The dev escape stays OFF here.
 app.include_router(create_onboarding_router())
+
+# Public storefront page + live demo (T-079f). The demo answers on the
+# cheapest model tier per MODEL_POLICY.md tier-by-task; its daily cap is
+# the explicit setting ``storefront_demo_daily_cap`` (None = demo closed,
+# fail-closed — no document defines the number yet). The LLM is injectable;
+# no live model is wired in this process until deployment binds the
+# roster's cheapest-tier pin.
+app.include_router(
+    create_storefront_router(
+        demo_service=StorefrontDemoService(
+            llm=None,
+            daily_cap=settings.storefront_demo_daily_cap,
+        )
+    )
+)
 
 
 @app.get("/health")

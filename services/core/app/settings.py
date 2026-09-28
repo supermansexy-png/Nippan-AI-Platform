@@ -60,6 +60,13 @@ class Settings(BaseSettings):
         le=21600,
     )
 
+    # Storefront live demo (T-079f Part 2). STOREFRONT.md requires the demo
+    # to have its OWN daily cap, but NO document defines the number
+    # (verified 2026-09-28) — so it is an explicit configuration value
+    # here, not a guessed constant buried in code. ``None`` (the default)
+    # keeps the demo CLOSED (fail-closed) until the Owner sets a number.
+    storefront_demo_daily_cap: int | None = Field(default=None, ge=1)
+
 
 @lru_cache
 def get_settings() -> Settings:
