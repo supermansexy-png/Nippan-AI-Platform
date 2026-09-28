@@ -253,17 +253,27 @@ Depends on: T-079b.
 
 ### T-079f — Storefront page (public, one page: headline, live demo, price, one button)
 
-Status: READY for INTAKE
+Status: **BUILT AND REVIEWED, NOT CLOSED** — commit `b0c1c2c`; reviewer ACCEPTED-WITH-FINDINGS with **2 findings still open**; the fix round could not run because the headless harness stopped producing output (even a one-line smoke test returned an empty log). Needs a working builder to close the two findings, then a re-review.
 Owner: Project Lead — 2026-09-27 (child of T-079; `STOREFRONT.md`, playbook Step 3)
 Role: Project Lead (plan) + builder + reviewer on a **different model**
 Risk: L1–L2 (public marketing page + live demo bot; the demo must have its own daily cap)
 Goal: a prospect understands the offer in under a minute and tries a real bot before paying.
 Design source: `docs/product/STOREFRONT.md`
 Done when (provable by running):
-- [ ] the one page runs locally with all 6 sections of `STOREFRONT.md` (headline, live demo, what it does, price 299, one button, small print)
-- [ ] the live demo bot answers over `web-chat` on the cheapest tier with a working daily cap — shown by a run that hits the cap and stops
-- [ ] no model name anywhere on the page; the demo shows the same consent notice as tenant bots
-- [ ] reviewer (different model) verdict recorded
+- [x] the one page runs locally with all 6 sections of `STOREFRONT.md` (headline, live demo, what it does, price 299, one button, small print)
+- [x] the live demo bot answers over `web-chat` on the cheapest tier with a working daily cap — shown by a run that hits the cap and stops
+- [x] no model name anywhere on the page; the demo shows the same consent notice as tenant bots
+- [ ] reviewer (different model) verdict recorded — verdict recorded (ACCEPTED-WITH-FINDINGS) but **2 findings still open**, so this box stays unchecked until they are closed and re-reviewed
+
+BUILT 2026-09-28, NOT CLOSED. `services/core/app/storefront/`. All 6 `STOREFRONT.md` sections are served with real content (no stubs); the price is 299/month read from `PRICING_V1.md` and the protected pricing/storefront docs were not modified; the served page and the demo replies contain no model or vendor name; the consent notice is imported verbatim from the T-079c page rather than newly written. The demo answers over `web-chat` on the cheapest-viable tier per `MODEL_POLICY.md`, and its daily cap is checked before the LLM is called, counts only demo traffic, and leaves tenant quota untouched. 327 tests pass, 9 skipped; all five e2e scripts exit 0.
+
+**STILL OPEN — must be fixed and re-reviewed before this card can close:**
+1. **MEDIUM — the `tenant_quota_untouched` e2e check is asserted-only.** The quota sink was wired before the run, so the check cannot fail. The demo cycle must actually flow through the production sink, and the check must be `False` with a non-zero exit if a demo reply ever increments a tenant quota.
+2. **LOW — the tier check tests its own string.** It compares the demo's tier label against a literal in the same code. It must be asserted against what `MODEL_POLICY.md` actually prescribes; if the policy is not precise enough, that is an Owner decision to record, not a literal to write.
+
+**ACCEPTED LIMITATION, recorded as a pre-launch blocker (not a closed finding):** the demo's daily cap is per-process in memory — a restart resets it to 0 and multiple replicas multiply the effective quota. It must move to durable shared storage before the page is exposed publicly. The fail-closed default is preserved and pinned by a test: with no cap configured the demo refuses to answer rather than defaulting to a number.
+
+**OWNER DECISION NEEDED:** no document defines a demo daily-cap number. The builder correctly refused to invent one — it is exposed as the `storefront_demo_daily_cap` setting, default `None` (demo off). The real number must come from the Owner's cost/traffic judgement before the page goes public.
 Budget: 4h builder + 1h reviewer
 Links: `docs/product/STOREFRONT.md`, T-079a
 Depends on: T-079a.
