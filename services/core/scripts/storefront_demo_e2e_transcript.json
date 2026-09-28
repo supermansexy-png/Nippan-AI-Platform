@@ -17,12 +17,19 @@
       }
     },
     {
-      "step": "tenant_usage_sink",
-      "value": []
+      "step": "shared_sink_rows",
+      "value": {
+        "tenant:t-e2e-001": 17,
+        "storefront-demo": 3
+      }
     },
     {
       "step": "page_html_head",
       "value": "<!DOCTYPE html>\n<html lang=\"th\"><head><meta charset=\"utf-8\">\n<title>ผู้ช่วยร้านของคุณ ตอบแชทตลอด 24 ชั่วโมง</title>\n</head><body>\n<section id=\"headline\"><h1>ผู้ช่วยร้านของคุณ ตอบแชทลูกค้าตลอด 24 ชั่วโมง</h1></section>\n<section id=\"live-demo\"><h2>ลองคุยกับบอทตัวอย่าง</h2><div id=\"demo-slot\">เดโมบอทจะเปิดให้ลองคุยที่นี่</div><p class=\"pdpa-notice\" id=\"pdpa-notice\">เว็บไซต์นี้เก็บข้อมูลที่คุณกรอกเพื่"
+    },
+    {
+      "step": "policy_tier_cell",
+      "value": "Cheapest viable model (free tier or lowest-cost paid, e.g. Gemini Flash-class)"
     },
     {
       "step": "checks",
@@ -34,6 +41,7 @@
         "stopped_request_spends_nothing": true,
         "stop_message_has_no_model_vendor_name": true,
         "tenant_quota_untouched": true,
+        "demo_recorded_in_shared_sink": true,
         "page_served": true,
         "page_has_no_model_vendor_name": true,
         "demo_tier_is_cheapest_per_policy": true
@@ -48,6 +56,7 @@
     "stopped_request_spends_nothing": true,
     "stop_message_has_no_model_vendor_name": true,
     "tenant_quota_untouched": true,
+    "demo_recorded_in_shared_sink": true,
     "page_served": true,
     "page_has_no_model_vendor_name": true,
     "demo_tier_is_cheapest_per_policy": true

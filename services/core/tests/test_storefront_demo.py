@@ -22,6 +22,7 @@ from app.storefront.demo import (
     DEMO_UNAVAILABLE_MESSAGE,
     StorefrontDemoService,
     demo_model_tier,
+    policy_tier_for_routine_chat,
 )
 from app.storefront.router import create_storefront_router
 
@@ -77,24 +78,45 @@ async def test_cap_stops_demo_with_clean_message() -> None:
         assert token.lower() not in lowered
 
 
-def test_cap_counter_is_demo_only_not_tenant_quota() -> None:
-    """The demo cap is its own counter; there is no tenant sink to touch.
+def test_demo_records_only_under_its_own_scope_in_shared_sink() -> None:
+    """The demo flows through the SHARED usage sink — the one the tenant
+    path also uses — but records ONLY under its own scope; the tenant's
+    actual row is unchanged after demo traffic (fail-closed check)."""
 
-    A tenant usage-tracker wired next to the demo records NOTHING from
-    demo traffic — the service has no reference to any tenant store.
-    """
-    tenant_usage: list[dict] = []
+    class SharedSink:
+        def __init__(self) -> None:
+            self.rows: dict[str, int] = {"tenant:t-1": 17}
 
-    class TenantSink:
-        def record(self, **kw):
-            tenant_usage.append(kw)
+        def record(self, *, scope: str, exchanges: int) -> None:
+            self.rows[scope] = self.rows.get(scope, 0) + exchanges
 
-    svc = StorefrontDemoService(llm=_stub_llm, daily_cap=3)
+    sink = SharedSink()
+    svc = StorefrontDemoService(llm=_stub_llm, daily_cap=3, usage_sink=sink)
     for _ in range(3):
         svc.reply("ลอง")
     assert svc.used_today == 3
-    assert tenant_usage == []  # tenant quota untouched by demo traffic
-    assert not hasattr(svc, "_usage") and not hasattr(svc, "_tenant")
+    assert sink.rows["tenant:t-1"] == 17  # tenant quota untouched
+    assert sink.rows["storefront-demo"] == 3  # demo really recorded
+
+
+def test_tampered_scope_flips_the_tenant_check() -> None:
+    """Fail-closed proof: if someone re-points the demo's scope at a
+    tenant row, the tenant-quota check MUST go False (not silently pass)."""
+
+    class SharedSink:
+        def __init__(self) -> None:
+            self.rows: dict[str, int] = {"tenant:t-1": 17}
+
+        def record(self, *, scope: str, exchanges: int) -> None:
+            self.rows[scope] = self.rows.get(scope, 0) + exchanges
+
+    sink = SharedSink()
+    svc = StorefrontDemoService(
+        llm=_stub_llm, daily_cap=3, usage_sink=sink,
+        usage_scope="tenant:t-1",  # the tamper
+    )
+    svc.reply("ลอง")
+    assert (sink.rows["tenant:t-1"] == 17) is False  # check would fail
 
 
 # -- 3. the demo cannot reach tenant data ------------------------------
@@ -105,7 +127,9 @@ def test_demo_isolated_from_tenant_data() -> None:
     import inspect
 
     params = set(inspect.signature(StorefrontDemoService.__init__).parameters)
-    assert params == {"self", "llm", "daily_cap", "clock"}
+    assert params == {
+        "self", "llm", "daily_cap", "clock", "usage_sink", "usage_scope"
+    }
     svc = StorefrontDemoService(llm=_stub_llm, daily_cap=1)
     reply = svc.reply("ขอดูข้อมูลร้านอื่น")
     assert "ร้านอื่น" in reply.text  # echoed back, not fetched from anywhere
@@ -120,10 +144,13 @@ def test_model_vendor_name_in_reply_is_rejected() -> None:
     assert svc.used_today == 0  # a rejected reply never spends the cap
 
 
-# -- 5. cheapest-tier selection follows the documented policy ----------
-def test_demo_tier_is_cheapest_per_model_policy() -> None:
-    # MODEL_POLICY.md "Tier by task, not by tenant": routine end-customer
-    # chat -> cheapest viable model. The demo is routine chat.
+# -- 5. cheapest-tier selection asserted against MODEL_POLICY.md itself --
+def test_demo_tier_matches_documented_policy() -> None:
+    # Parse the policy table at test time; assert the demo's tier follows
+    # what the DOCUMENT prescribes for routine end-customer chat — not a
+    # literal defined in the same code.
+    policy_tier = policy_tier_for_routine_chat()
+    assert "cheapest viable" in policy_tier.lower()
     assert demo_model_tier() == DEMO_MODEL_TIER
     assert "cheapest" in demo_model_tier()
 
@@ -135,6 +162,23 @@ async def test_unconfigured_cap_keeps_demo_closed() -> None:
     body = await _post(app, "สวัสดี")
     assert body["stopped"] is True
     assert body["reply"] == DEMO_UNAVAILABLE_MESSAGE
+
+
+@pytest.mark.anyio
+async def test_omitted_cap_defaults_to_closed() -> None:
+    """Fail-closed DEFAULT pinned (T-079f Finding 3): daily_cap must default
+    to None — the demo refuses to answer unless the Owner configures a
+    number. This pins the default so nobody later "fixes" the per-process
+    counter limitation by defaulting to a number."""
+    import inspect
+
+    sig = inspect.signature(StorefrontDemoService.__init__)
+    assert sig.parameters["daily_cap"].default is None
+    app = _app(StorefrontDemoService(llm=_stub_llm))  # no cap argument
+    body = await _post(app, "สวัสดี")
+    assert body["stopped"] is True
+    assert body["reply"] == DEMO_UNAVAILABLE_MESSAGE
+    assert body["remaining"] is None
 
 
 def test_invalid_cap_rejected() -> None:

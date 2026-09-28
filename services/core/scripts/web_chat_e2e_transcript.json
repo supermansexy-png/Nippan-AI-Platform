@@ -16,7 +16,7 @@
     "channel_id": "5a2c1e10-0000-4000-8000-000000000001",
     "end_customer_ref": "visitor-web-001",
     "message_id": "web-msg-20260927-001",
-    "received_at": "2026-09-27T17:10:21.206106+00:00",
+    "received_at": "2026-09-28T05:05:19.905460+00:00",
     "content": [
       {
         "type": "text",

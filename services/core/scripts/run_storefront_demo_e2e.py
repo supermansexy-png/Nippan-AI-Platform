@@ -34,11 +34,25 @@ from app.storefront.demo import (
     DEMO_CAP_REACHED_MESSAGE,
     StorefrontDemoService,
     demo_model_tier,
+    policy_tier_for_routine_chat,
 )
 from app.storefront.router import create_storefront_router
 
 TRANSCRIPT = Path(__file__).with_name("storefront_demo_e2e_transcript.json")
 DEMO_CAP = 3  # proof-local cap; the real number is Owner configuration
+TENANT_SCOPE = "tenant:t-e2e-001"
+TENANT_START = 17  # the tenant row already has real usage before the demo
+
+
+class SharedUsageSink:
+    """The one usage recorder BOTH the demo path and the tenant path call
+    (what production would back with a durable store). Rows keyed by scope."""
+
+    def __init__(self) -> None:
+        self.rows: dict[str, int] = {}
+
+    def record(self, *, scope: str, exchanges: int) -> None:
+        self.rows[scope] = self.rows.get(scope, 0) + exchanges
 
 
 def stub_llm(text: str) -> str:
@@ -49,20 +63,19 @@ async def exercise() -> tuple[list[dict], dict[str, bool], str]:
     steps: list[dict[str, object]] = []
     checks: dict[str, bool] = {}
 
-    svc = StorefrontDemoService(llm=stub_llm, daily_cap=DEMO_CAP)
+    # The SHARED sink — the one the demo path really records into. A
+    # tenant row already exists in it with real usage; the demo run must
+    # leave that row exactly as found.
+    sink = SharedUsageSink()
+    sink.rows[TENANT_SCOPE] = TENANT_START
+    tenant_before = sink.rows[TENANT_SCOPE]
+
+    svc = StorefrontDemoService(
+        llm=stub_llm, daily_cap=DEMO_CAP, usage_sink=sink
+    )
     app = FastAPI()
     app.include_router(create_storefront_router(demo_service=svc))
     transport = httpx.ASGITransport(app=app)
-
-    # A tenant usage-tracker standing next to the demo — the demo must
-    # never touch it (the cap counts ONLY demo traffic).
-    tenant_usage: list[dict] = []
-
-    class TenantSink:
-        def record(self, **kw):
-            tenant_usage.append(kw)
-
-    tenant_sink = TenantSink()  # noqa: F841 — intentionally never wired in
 
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
         # -- 1. a real demo exchange over web-chat ---------------------
@@ -93,9 +106,17 @@ async def exercise() -> tuple[list[dict], dict[str, bool], str]:
             t.lower() not in b4["reply"].lower() for t in PROHIBITED_TOKENS
         )
 
-        # -- 3. tenant quota untouched by all the demo traffic ---------
-        checks["tenant_quota_untouched"] = tenant_usage == []
-        steps.append({"step": "tenant_usage_sink", "value": tenant_usage})
+        # -- 3. tenant quota untouched: compare the tenant's ACTUAL row
+        # in the shared sink, captured AFTER the demo traffic, against
+        # the value before the run. False if any demo reply incremented
+        # the tenant's quota (fail-closed; exit code goes non-zero).
+        tenant_after = sink.rows[TENANT_SCOPE]
+        checks["tenant_quota_untouched"] = tenant_after == tenant_before
+        # ...and the demo really did flow through that sink (not a dummy):
+        checks["demo_recorded_in_shared_sink"] = (
+            sink.rows.get("storefront-demo", 0) == svc.used_today > 0
+        )
+        steps.append({"step": "shared_sink_rows", "value": dict(sink.rows)})
 
         # -- 4. the served page HTML -----------------------------------
         page = await c.get("/")
@@ -105,7 +126,13 @@ async def exercise() -> tuple[list[dict], dict[str, bool], str]:
         )
         steps.append({"step": "page_html_head", "value": page.text[:400]})
 
-    checks["demo_tier_is_cheapest_per_policy"] = "cheapest" in demo_model_tier()
+    # -- 5. tier asserted against MODEL_POLICY.md itself (not a literal)
+    policy_tier = policy_tier_for_routine_chat()
+    checks["demo_tier_is_cheapest_per_policy"] = (
+        "cheapest viable" in policy_tier.lower()
+        and "cheapest" in demo_model_tier()
+    )
+    steps.append({"step": "policy_tier_cell", "value": policy_tier})
     return steps, checks, b1["reply"]
 
 
