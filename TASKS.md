@@ -50,7 +50,7 @@ Links: docs/security/PDPA_COMPLIANCE.md, docs/product/BUSINESS_OPERATIONS.md
 ## IN_PROGRESS
 
 ### T-005 — Prototype internal Colab Compute Console (branch-only)
-Status: IN_PROGRESS
+Status: BLOCKED
 Owner: GPT-5.6 Sol — 2026-11-10
 Role: Developer
 Risk: L2
@@ -68,6 +68,23 @@ Missing: runnable checkout/test environment; MODEL_ROSTER is absent from main; C
 Plan: create/claim branch and card; implement only where testable; run checks after each step; hand L2 result to a different Auditor/owner.
 Estimate/Risks: one working session; risks are Phase A scope creep, unverified Colab API behavior, and producing code that cannot be executed here.
 Decision: ACCEPT WITH LIMITS — branch/task setup now; implementation verification is blocked until a runnable environment is available; owner already approved the branch/task route.
+
+DELIVERY — T-005 — GPT-5.6 Sol — 2026-11-10
+Status claimed: PARTIAL
+Done-when: runtime status and GPU are visible → NOT MET; implementation not started without a runnable test environment.
+Done-when: model source selectable from Google Drive → NOT MET; Drive/Colab runtime access unavailable here.
+Done-when: Start/Load exposes reconnect/loading/ready → NOT MET; no executable MVP yet.
+Done-when: test chat works against loaded model → NOT MET; no executable MVP yet.
+Done-when: Hermes/Ollama/NAS extension points documented → NOT MET; deferred with implementation.
+Done-when: test evidence captured → NOT MET; no runnable checkout/Colab runtime available.
+Evidence: branch is 1 commit ahead of main; compare shows only TASKS.md changed (+19/-1); T-005 exists on branch and not on main.
+Changed: TASKS.md on feat/t-005-compute-console-mvp; commit f38e828b742260f973c0f4fccfa25aae13dda5e2.
+Not done: application code, Colab integration, Drive model loading, chat, and tests.
+Unverified: live Colab API/auth behavior and any model roster because MODEL_ROSTER is absent from main.
+Problems: no runnable checkout/test environment; Bridge remains unavailable from prior 429 result.
+Confidence: high for branch/task isolation; no claim about MVP behavior.
+Next: restore/provide a runnable checkout or Bridge, then continue T-005 on this branch and send to a different Auditor/owner.
+
 
 ## REVIEW
 
