@@ -115,6 +115,46 @@ class TestComputeConsoleService(unittest.TestCase):
         ok, msg = self.service.set_adapter("nonexistent")
         self.assertFalse(ok)
 
+    def test_set_adapter_aborts_and_preserves_provider_when_disconnect_fails(self):
+        """If active provider disconnect returns False, set_adapter must abort and preserve original provider."""
+        self.service.connect()
+        self.assertEqual(self.service.get_state().status, RuntimeStatus.CONNECTED)
+        original_provider_name = self.service.compute_adapter.name
+        self.assertEqual(original_provider_name, "mock")
+
+        # Inject disconnect failure on mock adapter
+        mock_adapter: MockComputeAdapter = self.service.compute_adapter
+        mock_adapter.fail_next_disconnect = True
+
+        ok, msg = self.service.set_adapter("colab")
+        self.assertFalse(ok)
+        self.assertIn("Cannot switch provider to 'colab'", msg)
+        self.assertIn("Failed to disconnect active provider 'mock'", msg)
+
+        # Provider MUST NOT have changed
+        self.assertEqual(self.service.compute_adapter.name, "mock")
+        # State MUST be ERROR
+        state = self.service.get_state()
+        self.assertEqual(state.status, RuntimeStatus.ERROR)
+        self.assertIsNotNone(state.active_error)
+        self.assertIn("Cannot switch provider", state.active_error)
+
+    def test_set_adapter_aborts_and_preserves_provider_when_disconnect_raises(self):
+        """If active provider disconnect raises an exception, set_adapter must abort safely."""
+        self.service.connect()
+        self.assertEqual(self.service.get_state().status, RuntimeStatus.CONNECTED)
+
+        def broken_disconnect(*args, **kwargs):
+            raise ConnectionResetError("RPC pipe broken")
+
+        self.service.compute_adapter.disconnect = broken_disconnect
+
+        ok, msg = self.service.set_adapter("hermes")
+        self.assertFalse(ok)
+        self.assertIn("Cannot switch provider to 'hermes'", msg)
+        self.assertEqual(self.service.compute_adapter.name, "mock")
+        self.assertEqual(self.service.get_state().status, RuntimeStatus.ERROR)
+
     def test_race_condition_a3_stale_poll_cannot_overwrite_disconnected(self):
         """Race Condition A3: Stale status poll returning late must NOT overwrite DISCONNECTED state."""
         import time

@@ -146,6 +146,26 @@ class TestComputeConsoleAPI(unittest.TestCase):
         self.assertTrue(data["ok"])
         self.assertEqual(data["state"]["status"], "disconnected")
 
+    def test_api_adapter_select_aborts_on_disconnect_failure(self):
+        # Connect first
+        self._post("/api/runtime/connect")
+        self.assertEqual(self.service.get_state().status, "connected")
+        self.assertEqual(self.service.compute_adapter.name, "mock")
+
+        # Inject disconnect failure
+        self.service.compute_adapter.fail_next_disconnect = True
+        code, data = self._post("/api/adapter/select", {"provider": "colab"})
+        self.assertEqual(code, 400)
+        self.assertFalse(data["ok"])
+        self.assertIn("Failed to disconnect active provider 'mock'", data["message"])
+        self.assertEqual(data["active_provider"], "mock")
+        self.assertEqual(self.service.compute_adapter.name, "mock")
+
+        # Recover and disconnect cleanly
+        code, data = self._post("/api/runtime/disconnect")
+        self.assertEqual(code, 200)
+        self.assertTrue(data["ok"])
+
     def test_port_zero_dynamic_allocation_and_clean_teardown(self):
         """Verify passing port=0 binds to an ephemeral free port, reports actual port in /api/status, and cleans up."""
         ephemeral_service = ComputeConsoleService(config=self.config)

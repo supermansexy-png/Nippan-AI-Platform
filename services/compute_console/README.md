@@ -33,6 +33,7 @@ This is strictly an internal developer utility. It does not touch protected prod
 |                   CONNECTED -> LOADING -> READY / ERROR     |
 |  - Timeout & Error Handling Safeguards                      |
 |  - Chat Guard (Permitted ONLY when status == READY)         |
+|  - Atomic single JSON completion (/api/chat, non-streamed)  |
 +-------------------------------------------------------------+
                /                              \
               v                                v
@@ -71,6 +72,10 @@ All secrets and configuration are strictly externalized from source code:
   - `TIMEOUT_CONNECT_SEC`: Connection timeout (default: 15.0s)
   - `TIMEOUT_LOAD_SEC`: Model load timeout (default: 45.0s)
   - `TIMEOUT_CHAT_SEC`: Inference timeout (default: 20.0s)
+
+## Chat Inference Protocol Note
+
+The `/api/chat` endpoint performs synchronous, atomic JSON completions (`{"ok": true, "reply": "...", "history": [...]}`). The client receives the complete response once generated. Token streaming (Server-Sent Events / chunked transfer) is intentionally not implemented in this MVP prototype.
 
 ## How to Run
 

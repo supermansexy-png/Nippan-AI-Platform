@@ -93,13 +93,14 @@ Done-when check:
 - race condition A3 prevented on disconnect → MET (VERIFIED: Stale status poll guarded by generation counter and status checks; cannot overwrite DISCONNECTED)
 - disconnect failure handled honestly → MET (VERIFIED: Failure sets ERROR status with error message, returns HTTP 400, never displays false-positive DISCONNECTED)
 - port=0 dynamic binding & cleanup → MET (VERIFIED: create_server correctly binds to ephemeral port, reports actual_port, cleanly terminates without dangling sockets/threads)
-- test chat works against loaded model → MET (VERIFIED: Interactive chat UI and /api/chat endpoint tested; inference only permitted when status == READY; response streamed and stored in history)
+- test chat works against loaded model → MET (VERIFIED: Interactive chat UI and /api/chat endpoint tested; inference only permitted when status == READY; response returned as atomic single JSON payload [non-streamed] and stored in history)
+- adapter switch disconnect safety → MET (VERIFIED: If current runtime disconnect fails during set_adapter, switch is aborted, state remains ERROR, and previous adapter is preserved)
 - Hermes/Ollama/NAS extension points documented → MET (VERIFIED: HermesComputeAdapter [stub], OllamaComputeAdapter [live], and NASStorageAdapter [storage stub] implemented in adapters/ and documented in services/compute_console/README.md)
-- test evidence captured → MET (VERIFIED: 21/21 automated tests passing in ~1.09s covering adapters, service state transitions, race condition A3, disconnect error handling, port 0 lifecycle, timeouts, and API integration)
+- test evidence captured → MET (VERIFIED: 24/24 automated tests passing in ~1.12s covering adapters, service state transitions, race condition A3, disconnect error handling, set_adapter disconnect failure abortion, port 0 lifecycle, timeouts, and API integration)
 - live Google Colab runtime verified → NOT MET (UNKNOWN: No live Google Colab credentials or active runtime tunnel available in environment; ColabComputeAdapter implemented with timeouts & bearer auth, but unverified against live Colab; hence status is PARTIAL per protocol)
 Evidence:
-- Test command: `python -m unittest discover -s tests -p "test_*.py" -v` (21 tests, 0 failures, 0 errors, 0 warnings)
-- Integration verified: create_server / HTTP REST API with full lifecycle (connect -> list models -> load -> chat -> clear -> disconnect), error injection, and dynamic port allocation
+- Test command: `python -m unittest discover -s tests -p "test_*.py" -v` (24 tests, 0 failures, 0 errors, 0 warnings)
+- Integration verified: create_server / HTTP REST API with full lifecycle (connect -> list models -> load -> chat -> clear -> disconnect), error injection, adapter switching abort safety, and dynamic port allocation
 - Safe configuration verified: secrets strictly loaded via environment variables (.env.example provided, .env in .gitignore, credentials masked in API responses)
 Changed:
 - TASKS.md (updated intake & delivery)
@@ -127,8 +128,8 @@ Not done: Live testing against physical Google Colab backend with valid OAuth/tu
 Unverified:
 - UNKNOWN: Real Google Colab API response format across different tunnel providers (ngrok vs cloudflared).
 - INFERRED: Colab kernel memory metrics structure based on standard Jupyter/PyTorch query contract.
-- VERIFIED: All local simulation, state transitions, Race condition A3 fix, disconnect error handling, port=0 cleanup, Drive storage validation, test chat engine, extension adapter contracts, and HTTP endpoints.
-Problems: Fixed Race Condition A3, disconnect false-success bug, and port=0 evaluation bug identified in auditor review.
+- VERIFIED: All local simulation, state transitions, Race condition A3 fix, disconnect error handling, set_adapter disconnect abort safety, port=0 cleanup, Drive storage validation, non-streamed test chat engine, extension adapter contracts, and HTTP endpoints.
+Problems: Fixed Race Condition A3, disconnect false-success bug, port=0 evaluation bug, set_adapter disconnect abortion, and chat streaming claim.
 Confidence: High for the internal console architecture, adapter boundaries, and mock implementation; Low/Unverified for live Colab tunnel until real credentials are provided.
 Next: Auditor review (different model/owner) to verify evidence and branch isolation before deciding if credentials should be provisioned for live Colab test.
 

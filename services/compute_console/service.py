@@ -111,20 +111,47 @@ class ComputeConsoleService:
             )
 
     def set_adapter(self, provider_name: str) -> Tuple[bool, str]:
-        """Switch compute provider adapter dynamically (e.g. mock <-> colab)."""
+        """Switch compute provider adapter dynamically (e.g. mock <-> colab).
+        If current runtime is active, disconnect must succeed before switching.
+        If disconnect fails or raises, switching is aborted to preserve state.
+        """
         with self._lock:
             self._op_generation += 1
             key = provider_name.strip().lower()
             if key not in COMPUTE_ADAPTERS:
                 return False, f"Unknown compute adapter '{provider_name}'. Available: {list(COMPUTE_ADAPTERS.keys())}"
 
-            # Disconnect current if active
-            if self._status != RuntimeStatus.DISCONNECTED:
-                self.disconnect()
+            # If current provider is already this one and disconnected, nothing to do
+            if self._compute.name == key and self._status == RuntimeStatus.DISCONNECTED:
+                return True, f"Compute provider is already '{self._compute.display_name}'."
 
-            self._compute = COMPUTE_ADAPTERS[key](self._config)
-            self._status_message = f"Switched compute provider to '{self._compute.display_name}'."
-            return True, self._status_message
+            # Disconnect current adapter if active
+            if self._status != RuntimeStatus.DISCONNECTED:
+                try:
+                    ok, msg = self.disconnect()
+                except Exception as e:
+                    ok, msg = False, str(e)
+
+                if not ok:
+                    # Disconnect failed: STOP the switch, do not create or swap adapter.
+                    error_msg = f"Cannot switch provider to '{key}': Failed to disconnect active provider '{self._compute.name}'. Details: {msg}"
+                    self._status = RuntimeStatus.ERROR
+                    self._active_error = error_msg
+                    self._status_message = error_msg
+                    return False, error_msg
+
+            # Safe to instantiate and switch to new adapter
+            try:
+                self._compute = COMPUTE_ADAPTERS[key](self._config)
+                self._status_message = f"Switched compute provider to '{self._compute.display_name}'."
+                self._active_error = None
+                return True, self._status_message
+            except Exception as e:
+                error_msg = f"Failed to initialize compute adapter '{key}': {str(e)}"
+                self._status = RuntimeStatus.ERROR
+                self._active_error = error_msg
+                self._status_message = error_msg
+                return False, error_msg
 
     def connect(self) -> Tuple[bool, str]:
         """Initiate connection or reconnection to runtime."""
