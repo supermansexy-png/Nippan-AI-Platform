@@ -40,6 +40,10 @@ class OllamaComputeAdapter(ComputeProviderAdapter):
     def is_mock(self) -> bool:
         return False
 
+    @property
+    def adapter_tier(self) -> str:
+        return "live"
+
     def connect(self, timeout_sec: float) -> Tuple[bool, Optional[GPUInfo], str]:
         url = f"{self._endpoint}/api/tags"
         try:
@@ -47,13 +51,9 @@ class OllamaComputeAdapter(ComputeProviderAdapter):
             with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
                 if resp.getcode() == 200:
                     self._connected = True
-                    self._gpu_info = GPUInfo(
-                        name="Ollama Local GPU / Metal / ROCm",
-                        memory_total_mb=16384,
-                        memory_used_mb=1024,
-                        utilization_pct=6.0,
-                    )
-                    return True, self._gpu_info, f"Connected to Ollama service at {self._endpoint}"
+                    # /api/tags does not expose GPU metrics — do NOT fabricate
+                    self._gpu_info = None
+                    return True, None, f"Connected to Ollama service at {self._endpoint}"
                 return False, None, f"Ollama returned HTTP {resp.getcode()}"
         except urllib.error.URLError as e:
             self._connected = False

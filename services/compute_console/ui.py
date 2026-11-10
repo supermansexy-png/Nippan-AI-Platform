@@ -53,6 +53,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     
     .status-error { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #dc2626; }
     .status-error .status-dot { background: #ef4444; }
+
+    /* Operational Classification Badges (Simulation / Live / Stub) */
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tier-simulation { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid #d97706; }
+    .tier-live { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid #059669; }
+    .tier-stub { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid #7c3aed; }
     
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
@@ -109,6 +125,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       <div class="brand-logo">N</div>
       <div class="brand-title">Nippan AI Compute Console</div>
       <span class="brand-badge" id="envBadge">INTERNAL MVP</span>
+      <span class="tier-badge tier-simulation" id="tierBadge">SIMULATION (MOCK)</span>
     </div>
     <div id="statusBadge" class="status-badge status-disconnected">
       <div class="status-dot"></div>
@@ -130,11 +147,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <div class="card-title">
           <span>Compute Runtime</span>
           <select id="providerSelect" class="select" style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.75rem;" onchange="switchProvider()">
-            <option value="mock">Mock Colab (Local)</option>
-            <option value="colab">Google Colab (Remote)</option>
-            <option value="hermes">Hermes Cluster</option>
-            <option value="ollama">Ollama Daemon</option>
+            <option value="mock">[Simulation] Mock Colab (Local)</option>
+            <option value="colab">[Live] Google Colab (Remote)</option>
+            <option value="hermes">[Stub] Hermes Cluster</option>
+            <option value="ollama">[Live] Ollama Daemon</option>
           </select>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Runtime Tier:</span>
+          <span class="tier-badge tier-simulation" id="runtimeTierTag" style="font-size:0.7rem; padding:0.15rem 0.5rem;">SIMULATION</span>
         </div>
         <div class="metric-row">
           <span class="metric-label">Status Info:</span>
@@ -199,11 +220,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
           <span style="font-size:0.75rem; color:#9ca3af;">Interfaces</span>
         </div>
         <div class="adapters-list">
-          <div class="adapter-item"><span>Google Colab</span><span style="color:#60a5fa;">Compute (Remote)</span></div>
-          <div class="adapter-item"><span>Hermes Cluster</span><span style="color:#c084fc;">Compute (Agentic)</span></div>
-          <div class="adapter-item"><span>Ollama Daemon</span><span style="color:#34d399;">Compute (Local API)</span></div>
-          <div class="adapter-item"><span>Google Drive</span><span style="color:#fbbf24;">Storage (Drive API)</span></div>
-          <div class="adapter-item"><span>Internal NAS</span><span style="color:#94a3b8;">Storage (NFS/SMB)</span></div>
+          <div class="adapter-item"><span>Mock Colab</span><span class="tier-badge tier-simulation" style="font-size:0.65rem; padding:0.1rem 0.4rem;">SIMULATION</span></div>
+          <div class="adapter-item"><span>Google Colab</span><span class="tier-badge tier-live" style="font-size:0.65rem; padding:0.1rem 0.4rem;">LIVE</span></div>
+          <div class="adapter-item"><span>Hermes Cluster</span><span class="tier-badge tier-stub" style="font-size:0.65rem; padding:0.1rem 0.4rem;">STUB</span></div>
+          <div class="adapter-item"><span>Ollama Daemon</span><span class="tier-badge tier-live" style="font-size:0.65rem; padding:0.1rem 0.4rem;">LIVE</span></div>
+          <div class="adapter-item"><span>Google Drive</span><span style="color:#fbbf24; font-size:0.75rem;">Storage (Drive API)</span></div>
+          <div class="adapter-item"><span>Internal NAS</span><span style="color:#94a3b8; font-size:0.75rem;">Storage (NFS/SMB Stub)</span></div>
         </div>
       </div>
 
@@ -280,6 +302,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       text.textContent = state.status.toUpperCase();
 
       document.getElementById('statusMessageText').textContent = state.status_message || '';
+
+      // Operational Tier Classification (Simulation / Live / Stub)
+      const tier = state.adapter_tier || 'simulation';
+      const tierBadge = document.getElementById('tierBadge');
+      const runtimeTierTag = document.getElementById('runtimeTierTag');
+      if (tierBadge && runtimeTierTag) {
+        tierBadge.className = `tier-badge tier-${tier}`;
+        runtimeTierTag.className = `tier-badge tier-${tier}`;
+        if (tier === 'live') {
+          tierBadge.textContent = 'LIVE RUNTIME';
+          runtimeTierTag.textContent = 'LIVE RUNTIME';
+        } else if (tier === 'stub') {
+          tierBadge.textContent = 'STUB INTERFACE';
+          runtimeTierTag.textContent = 'STUB INTERFACE';
+        } else {
+          tierBadge.textContent = 'SIMULATION (MOCK)';
+          runtimeTierTag.textContent = 'SIMULATION (MOCK)';
+        }
+      }
 
       // Error banner
       const errBanner = document.getElementById('errorBanner');

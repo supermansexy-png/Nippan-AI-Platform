@@ -27,6 +27,7 @@ class MockComputeAdapter(ComputeProviderAdapter):
 
         # Fault injection toggles for automated testing
         self.fail_next_connect = False
+        self.fail_next_disconnect = False
         self.fail_next_load = False
         self.simulate_timeout = False
 
@@ -41,6 +42,10 @@ class MockComputeAdapter(ComputeProviderAdapter):
     @property
     def is_mock(self) -> bool:
         return True
+
+    @property
+    def adapter_tier(self) -> str:
+        return "simulation"
 
     def connect(self, timeout_sec: float) -> Tuple[bool, Optional[GPUInfo], str]:
         if self.simulate_timeout:
@@ -65,6 +70,10 @@ class MockComputeAdapter(ComputeProviderAdapter):
         return True, self._gpu_info, "Connected to simulated Colab runtime environment"
 
     def disconnect(self, timeout_sec: float) -> Tuple[bool, str]:
+        if self.fail_next_disconnect:
+            self.fail_next_disconnect = False
+            return False, "Simulated disconnect RPC failure: kernel process unresponsive"
+
         if self._latency > 0:
             time.sleep(self._latency / 2)
         self._connected = False

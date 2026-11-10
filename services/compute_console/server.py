@@ -69,8 +69,10 @@ class ComputeConsoleHTTPHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/status":
-            state = self.service.get_state()
+            state = self.service.get_state(live=True)
             safe_config = self.service.config.to_safe_dict()
+            if hasattr(self.server, "actual_port") and self.server.actual_port:
+                safe_config["http_port"] = self.server.actual_port
             self._send_json(HTTPStatus.OK, {"ok": True, "state": state.to_dict(), "config": safe_config})
             return
 
@@ -81,7 +83,12 @@ class ComputeConsoleHTTPHandler(BaseHTTPRequestHandler):
 
         if path == "/api/adapters":
             compute_list = [
-                {"id": k, "display_name": cls(self.service.config).display_name, "is_mock": cls(self.service.config).is_mock}
+                {
+                    "id": k,
+                    "display_name": cls(self.service.config).display_name,
+                    "is_mock": cls(self.service.config).is_mock,
+                    "tier": cls(self.service.config).adapter_tier,
+                }
                 for k, cls in COMPUTE_ADAPTERS.items()
             ]
             storage_list = [
@@ -96,6 +103,7 @@ class ComputeConsoleHTTPHandler(BaseHTTPRequestHandler):
                     "storage_adapters": storage_list,
                     "active_compute": self.service.compute_adapter.name,
                     "active_storage": self.service.storage_adapter.name,
+                    "active_tier": self.service.compute_adapter.adapter_tier,
                 },
             )
             return
@@ -121,7 +129,8 @@ class ComputeConsoleHTTPHandler(BaseHTTPRequestHandler):
         if path == "/api/runtime/disconnect":
             ok, msg = self.service.disconnect()
             state = self.service.get_state()
-            self._send_json(HTTPStatus.OK, {"ok": ok, "message": msg, "state": state.to_dict()})
+            status_code = HTTPStatus.OK if ok else HTTPStatus.BAD_REQUEST
+            self._send_json(status_code, {"ok": ok, "message": msg, "state": state.to_dict()})
             return
 
         if path == "/api/model/load":
@@ -177,13 +186,15 @@ def create_server(
     srv_service = service or ComputeConsoleService()
     cfg = srv_service.config
     bind_host = host or cfg.http_host
-    bind_port = port or cfg.http_port
+    bind_port = port if port is not None else cfg.http_port
 
     class CustomHandler(ComputeConsoleHTTPHandler):
         pass
 
     CustomHandler.service = srv_service
     server = ThreadingHTTPServer((bind_host, bind_port), CustomHandler)
+    server.daemon_threads = True
+    server.actual_port = server.server_address[1]
     return server
 
 

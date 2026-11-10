@@ -57,6 +57,7 @@ class ConsoleState:
     status_message: str
     active_provider: str
     active_storage: str
+    adapter_tier: str = "simulation"
     gpu_info: Optional[GPUInfo] = None
     loaded_model: Optional[ModelSource] = None
     active_error: Optional[str] = None
@@ -67,6 +68,7 @@ class ConsoleState:
             "status_message": self.status_message,
             "active_provider": self.active_provider,
             "active_storage": self.active_storage,
+            "adapter_tier": self.adapter_tier,
             "gpu_info": self.gpu_info.to_dict() if self.gpu_info else None,
             "loaded_model": self.loaded_model.to_dict() if self.loaded_model else None,
             "active_error": self.active_error,

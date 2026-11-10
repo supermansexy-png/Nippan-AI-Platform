@@ -87,16 +87,19 @@ Decision: ACCEPT WITH LIMITS — Implementing full MVP with runnable mock adapte
 DELIVERY — T-005 — Developer (Gemini 3.8 Flash) — 2026-11-10
 Status claimed: PARTIAL
 Done-when check:
-- runtime status and GPU are visible → MET (VERIFIED: tested on MockComputeAdapter and ColabComputeAdapter contract; GPU allocation & utilization displayed in UI and /api/status)
-- model source selectable from Google Drive → MET (VERIFIED: GoogleDriveStorageAdapter lists and validates GGUF/SafeTensors sources; UI dropdown & custom path inputs functional)
+- runtime status and GPU are visible → MET (VERIFIED: tested on MockComputeAdapter and ColabComputeAdapter contract; GPU allocation & utilization displayed in UI and /api/status; operational tier badges Simulation/Live/Stub surfaced)
+- model source selectable from Google Drive → MET (VERIFIED: GoogleDriveStorageAdapter lists and validates GGUF/SafeTensors sources; UI dropdown & custom path inputs functional; dev catalog cleanly separated from live mount)
 - Start/Load exposes reconnect/loading/ready/error states → MET (VERIFIED: State machine in ComputeConsoleService covers DISCONNECTED, RECONNECTING, CONNECTED, LOADING, READY, ERROR with full test suite)
+- race condition A3 prevented on disconnect → MET (VERIFIED: Stale status poll guarded by generation counter and status checks; cannot overwrite DISCONNECTED)
+- disconnect failure handled honestly → MET (VERIFIED: Failure sets ERROR status with error message, returns HTTP 400, never displays false-positive DISCONNECTED)
+- port=0 dynamic binding & cleanup → MET (VERIFIED: create_server correctly binds to ephemeral port, reports actual_port, cleanly terminates without dangling sockets/threads)
 - test chat works against loaded model → MET (VERIFIED: Interactive chat UI and /api/chat endpoint tested; inference only permitted when status == READY; response streamed and stored in history)
-- Hermes/Ollama/NAS extension points documented → MET (VERIFIED: HermesComputeAdapter, OllamaComputeAdapter, and NASStorageAdapter implemented in adapters/ and documented in services/compute_console/README.md)
-- test evidence captured → MET (VERIFIED: 17/17 automated tests passing in 0.65s covering adapters, service state transitions, error injection, timeouts, and API integration)
+- Hermes/Ollama/NAS extension points documented → MET (VERIFIED: HermesComputeAdapter [stub], OllamaComputeAdapter [live], and NASStorageAdapter [storage stub] implemented in adapters/ and documented in services/compute_console/README.md)
+- test evidence captured → MET (VERIFIED: 21/21 automated tests passing in ~1.09s covering adapters, service state transitions, race condition A3, disconnect error handling, port 0 lifecycle, timeouts, and API integration)
 - live Google Colab runtime verified → NOT MET (UNKNOWN: No live Google Colab credentials or active runtime tunnel available in environment; ColabComputeAdapter implemented with timeouts & bearer auth, but unverified against live Colab; hence status is PARTIAL per protocol)
 Evidence:
-- Test command: `python -m unittest discover -s tests -p "test_*.py" -v` (17 tests, 0 failures, 0 errors)
-- Integration verified: create_server / HTTP REST API with full lifecycle (connect -> list models -> load -> chat -> clear -> disconnect)
+- Test command: `python -m unittest discover -s tests -p "test_*.py" -v` (21 tests, 0 failures, 0 errors, 0 warnings)
+- Integration verified: create_server / HTTP REST API with full lifecycle (connect -> list models -> load -> chat -> clear -> disconnect), error injection, and dynamic port allocation
 - Safe configuration verified: secrets strictly loaded via environment variables (.env.example provided, .env in .gitignore, credentials masked in API responses)
 Changed:
 - TASKS.md (updated intake & delivery)
@@ -124,8 +127,8 @@ Not done: Live testing against physical Google Colab backend with valid OAuth/tu
 Unverified:
 - UNKNOWN: Real Google Colab API response format across different tunnel providers (ngrok vs cloudflared).
 - INFERRED: Colab kernel memory metrics structure based on standard Jupyter/PyTorch query contract.
-- VERIFIED: All local simulation, state transitions, Drive storage validation, test chat engine, extension adapter contracts, and HTTP endpoints.
-Problems: None in local test suite (17/17 passed).
+- VERIFIED: All local simulation, state transitions, Race condition A3 fix, disconnect error handling, port=0 cleanup, Drive storage validation, test chat engine, extension adapter contracts, and HTTP endpoints.
+Problems: Fixed Race Condition A3, disconnect false-success bug, and port=0 evaluation bug identified in auditor review.
 Confidence: High for the internal console architecture, adapter boundaries, and mock implementation; Low/Unverified for live Colab tunnel until real credentials are provided.
 Next: Auditor review (different model/owner) to verify evidence and branch isolation before deciding if credentials should be provisioned for live Colab test.
 

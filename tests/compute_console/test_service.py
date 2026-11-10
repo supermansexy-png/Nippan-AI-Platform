@@ -109,10 +109,72 @@ class TestComputeConsoleService(unittest.TestCase):
         ok, msg = self.service.set_adapter("colab")
         self.assertTrue(ok)
         self.assertEqual(self.service.compute_adapter.name, "colab")
+        self.assertEqual(self.service.get_state().adapter_tier, "live")
 
         # Switch to invalid adapter returns False
         ok, msg = self.service.set_adapter("nonexistent")
         self.assertFalse(ok)
+
+    def test_race_condition_a3_stale_poll_cannot_overwrite_disconnected(self):
+        """Race Condition A3: Stale status poll returning late must NOT overwrite DISCONNECTED state."""
+        import time
+        import threading
+
+        self.service.connect()
+        models = self.service.list_models()
+        self.service.load_model(models[0].id)
+        self.assertEqual(self.service.get_state().status, RuntimeStatus.READY)
+
+        # Inject delay into compute_adapter.get_status to simulate slow network/kernel poll
+        original_get_status = self.service.compute_adapter.get_status
+        poll_started = threading.Event()
+
+        def slow_get_status(timeout_sec):
+            poll_started.set()
+            time.sleep(0.05)
+            return original_get_status(timeout_sec)
+
+        self.service.compute_adapter.get_status = slow_get_status
+
+        # Thread 1: Initiates live status poll
+        poll_thread = threading.Thread(target=lambda: self.service.get_state(live=True))
+        poll_thread.start()
+
+        # Wait until poll has commenced
+        poll_started.wait()
+
+        # Thread 2 (Main): User triggers Disconnect while poll is in-flight
+        ok, msg = self.service.disconnect()
+        self.assertTrue(ok)
+        self.assertEqual(self.service.get_state().status, RuntimeStatus.DISCONNECTED)
+
+        # Wait for slow poll thread to finish
+        poll_thread.join()
+
+        # CRITICAL VERIFICATION: State MUST remain DISCONNECTED, never overwritten by late poll
+        state_after = self.service.get_state()
+        self.assertEqual(state_after.status, RuntimeStatus.DISCONNECTED)
+        self.assertIsNone(state_after.gpu_info)
+        self.assertIsNone(state_after.loaded_model)
+
+    def test_disconnect_failure_sets_error_state_and_does_not_claim_disconnected(self):
+        """Disconnect failure MUST NOT display as disconnected; it must transition to ERROR."""
+        self.service.connect()
+        self.assertEqual(self.service.get_state().status, RuntimeStatus.CONNECTED)
+
+        # Inject failure into mock adapter disconnect
+        mock_adapter: MockComputeAdapter = self.service.compute_adapter
+        mock_adapter.fail_next_disconnect = True
+
+        ok, msg = self.service.disconnect()
+        self.assertFalse(ok)
+        self.assertIn("Disconnect failed", msg)
+
+        # Verify state is ERROR and active_error is set
+        state = self.service.get_state()
+        self.assertEqual(state.status, RuntimeStatus.ERROR)
+        self.assertIsNotNone(state.active_error)
+        self.assertIn("Disconnect failed", state.active_error)
 
 
 if __name__ == "__main__":

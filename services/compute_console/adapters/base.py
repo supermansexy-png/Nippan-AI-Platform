@@ -33,6 +33,12 @@ class ComputeProviderAdapter(ABC):
         """Indicates if this is a simulation adapter."""
         pass
 
+    @property
+    @abstractmethod
+    def adapter_tier(self) -> str:
+        """Adapter operational classification: 'simulation' | 'live' | 'stub'."""
+        pass
+
     @abstractmethod
     def connect(self, timeout_sec: float) -> Tuple[bool, Optional[GPUInfo], str]:
         """

@@ -43,6 +43,10 @@ class ColabComputeAdapter(ComputeProviderAdapter):
     def is_mock(self) -> bool:
         return False
 
+    @property
+    def adapter_tier(self) -> str:
+        return "live"
+
     def _make_request(
         self, path: str, method: str = "GET", data: Optional[dict] = None, timeout_sec: float = 10.0
     ) -> Tuple[int, dict, str]:
@@ -92,29 +96,41 @@ class ColabComputeAdapter(ComputeProviderAdapter):
             self._connected = False
             return False, None, err or f"Colab returned status {status_code}"
 
-        # Parse GPU info from runtime response if available
-        gpu_data = payload.get("gpu", {})
-        gpu_info = GPUInfo(
-            name=gpu_data.get("name", "NVIDIA GPU (Colab Allocated)"),
-            memory_total_mb=int(gpu_data.get("memory_total_mb", 15360)),
-            memory_used_mb=int(gpu_data.get("memory_used_mb", 1024)),
-            utilization_pct=float(gpu_data.get("utilization_pct", 5.0)),
-        )
+        # Parse GPU info from runtime response — do NOT fabricate defaults in live mode
+        gpu_data = payload.get("gpu")
+        if gpu_data and isinstance(gpu_data, dict):
+            gpu_info = GPUInfo(
+                name=gpu_data.get("name", ""),
+                memory_total_mb=int(gpu_data.get("memory_total_mb", 0)),
+                memory_used_mb=int(gpu_data.get("memory_used_mb", 0)),
+                utilization_pct=float(gpu_data.get("utilization_pct", 0.0)),
+            )
+        else:
+            gpu_info = None
+
         self._current_gpu = gpu_info
         self._connected = True
         return True, gpu_info, f"Successfully connected to Colab runtime at {self._endpoint}"
 
     def disconnect(self, timeout_sec: float) -> Tuple[bool, str]:
-        """Disconnect from Colab runtime session."""
+        """Disconnect from Colab runtime session. Reports actual endpoint result."""
+        ok = True
+        msg = "Disconnected from Colab runtime"
+
         if self._endpoint and self._connected:
-            self._make_request("api/disconnect", method="POST", timeout_sec=timeout_sec)
+            status_code, _, err = self._make_request("api/disconnect", method="POST", timeout_sec=timeout_sec)
+            if err or status_code not in (200, 204):
+                ok = False
+                msg = f"Colab disconnect reported error: {err or f'HTTP {status_code}'}"
+
+        # Always clear local state regardless of endpoint response (best-effort cleanup)
         self._connected = False
         self._loaded_model = None
         self._current_gpu = None
-        return True, "Disconnected from Colab runtime"
+        return ok, msg
 
     def get_status(self, timeout_sec: float) -> Tuple[RuntimeStatus, Optional[GPUInfo], str]:
-        """Poll Colab status."""
+        """Poll Colab status and parse fresh GPU metrics from response."""
         if not self._connected or not self._endpoint:
             return RuntimeStatus.DISCONNECTED, None, "Runtime disconnected"
 
@@ -122,6 +138,18 @@ class ColabComputeAdapter(ComputeProviderAdapter):
         if err or status_code != 200:
             self._connected = False
             return RuntimeStatus.ERROR, None, f"Colab health check failed: {err}"
+
+        # Parse GPU from live response — do NOT fall back to cached value
+        gpu_data = payload.get("gpu")
+        if gpu_data and isinstance(gpu_data, dict):
+            self._current_gpu = GPUInfo(
+                name=gpu_data.get("name", ""),
+                memory_total_mb=int(gpu_data.get("memory_total_mb", 0)),
+                memory_used_mb=int(gpu_data.get("memory_used_mb", 0)),
+                utilization_pct=float(gpu_data.get("utilization_pct", 0.0)),
+            )
+        else:
+            self._current_gpu = None
 
         if self._loaded_model:
             return RuntimeStatus.READY, self._current_gpu, f"Ready with model {self._loaded_model.name}"

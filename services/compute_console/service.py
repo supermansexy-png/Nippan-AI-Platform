@@ -53,6 +53,7 @@ class ComputeConsoleService:
         self._loaded_model: Optional[ModelSource] = None
         self._active_error: Optional[str] = None
         self._chat_history: List[ChatMessage] = []
+        self._op_generation: int = 0
 
     @property
     def config(self) -> ConsoleConfig:
@@ -66,13 +67,44 @@ class ComputeConsoleService:
     def storage_adapter(self) -> StorageProviderAdapter:
         return self._storage
 
-    def get_state(self) -> ConsoleState:
+    def get_state(self, live: bool = False) -> ConsoleState:
+        """Return current console state. If live=True, re-poll the compute adapter."""
+        if live:
+            poll_gen: Optional[int] = None
+            with self._lock:
+                if self._status in (RuntimeStatus.CONNECTED, RuntimeStatus.READY):
+                    poll_gen = self._op_generation
+
+            if poll_gen is not None:
+                try:
+                    status, gpu, msg = self._compute.get_status(
+                        timeout_sec=self._config.timeout_connect_sec
+                    )
+                    with self._lock:
+                        # Guard against Race Condition A3:
+                        # Discard stale poll if superseded by disconnect or state changed away from connected/ready
+                        if poll_gen == self._op_generation and self._status in (RuntimeStatus.CONNECTED, RuntimeStatus.READY):
+                            self._status = status
+                            self._gpu_info = gpu
+                            if status == RuntimeStatus.ERROR:
+                                self._active_error = msg
+                                self._status_message = f"Runtime error detected: {msg}"
+                            elif msg:
+                                self._status_message = msg
+                except Exception as e:
+                    with self._lock:
+                        if poll_gen == self._op_generation and self._status in (RuntimeStatus.CONNECTED, RuntimeStatus.READY):
+                            self._status = RuntimeStatus.ERROR
+                            self._active_error = str(e)
+                            self._status_message = f"Status poll failed: {str(e)}"
+
         with self._lock:
             return ConsoleState(
                 status=self._status,
                 status_message=self._status_message,
                 active_provider=self._compute.name,
                 active_storage=self._storage.name,
+                adapter_tier=self._compute.adapter_tier,
                 gpu_info=self._gpu_info,
                 loaded_model=self._loaded_model,
                 active_error=self._active_error,
@@ -81,6 +113,7 @@ class ComputeConsoleService:
     def set_adapter(self, provider_name: str) -> Tuple[bool, str]:
         """Switch compute provider adapter dynamically (e.g. mock <-> colab)."""
         with self._lock:
+            self._op_generation += 1
             key = provider_name.strip().lower()
             if key not in COMPUTE_ADAPTERS:
                 return False, f"Unknown compute adapter '{provider_name}'. Available: {list(COMPUTE_ADAPTERS.keys())}"
@@ -96,6 +129,8 @@ class ComputeConsoleService:
     def connect(self) -> Tuple[bool, str]:
         """Initiate connection or reconnection to runtime."""
         with self._lock:
+            self._op_generation += 1
+            gen = self._op_generation
             self._status = RuntimeStatus.RECONNECTING
             self._status_message = f"Connecting to {self._compute.display_name}..."
             self._active_error = None
@@ -104,6 +139,8 @@ class ComputeConsoleService:
         try:
             ok, gpu, msg = self._compute.connect(timeout_sec=self._config.timeout_connect_sec)
             with self._lock:
+                if gen != self._op_generation:
+                    return False, "Connection superseded by a newer operation."
                 if ok:
                     self._gpu_info = gpu
                     self._loaded_model = None
@@ -117,25 +154,34 @@ class ComputeConsoleService:
                     return False, self._status_message
         except Exception as e:
             with self._lock:
+                if gen != self._op_generation:
+                    return False, "Connection superseded by a newer operation."
                 self._status = RuntimeStatus.ERROR
                 self._active_error = str(e)
                 self._status_message = f"Connection exception: {str(e)}"
                 return False, self._status_message
 
     def disconnect(self) -> Tuple[bool, str]:
-        """Disconnect and release runtime session."""
+        """Disconnect and release runtime session. Returns adapter's actual result."""
         with self._lock:
+            self._op_generation += 1
             try:
                 ok, msg = self._compute.disconnect(timeout_sec=self._config.timeout_connect_sec)
             except Exception as e:
                 ok, msg = False, str(e)
 
-            self._status = RuntimeStatus.DISCONNECTED
-            self._gpu_info = None
-            self._loaded_model = None
-            self._active_error = None
-            self._status_message = msg or "Runtime disconnected."
-            return True, self._status_message
+            if ok:
+                self._status = RuntimeStatus.DISCONNECTED
+                self._gpu_info = None
+                self._loaded_model = None
+                self._active_error = None
+                self._status_message = msg or "Runtime disconnected."
+                return True, self._status_message
+            else:
+                self._status = RuntimeStatus.ERROR
+                self._active_error = f"Disconnect failed: {msg}"
+                self._status_message = self._active_error
+                return False, self._status_message
 
     def list_models(self) -> List[ModelSource]:
         """Discover model sources available in active storage (e.g. Google Drive)."""
@@ -152,6 +198,8 @@ class ComputeConsoleService:
             if self._status in (RuntimeStatus.DISCONNECTED, RuntimeStatus.RECONNECTING):
                 return False, "Cannot load model: Runtime is not connected. Connect first."
 
+            self._op_generation += 1
+            gen = self._op_generation
             self._status = RuntimeStatus.LOADING
             self._status_message = f"Loading model '{model_identifier}'..."
             self._active_error = None
@@ -178,6 +226,8 @@ class ComputeConsoleService:
         valid, val_msg = self._storage.validate_source(target_source.path, timeout_sec=self._config.timeout_load_sec)
         if not valid:
             with self._lock:
+                if gen != self._op_generation:
+                    return False, "Load superseded by a newer operation."
                 self._status = RuntimeStatus.ERROR
                 self._active_error = f"Storage validation failed: {val_msg}"
                 self._status_message = self._active_error
@@ -187,6 +237,8 @@ class ComputeConsoleService:
         try:
             ok, msg = self._compute.load_model(target_source, timeout_sec=self._config.timeout_load_sec)
             with self._lock:
+                if gen != self._op_generation:
+                    return False, "Load superseded by a newer operation."
                 if ok:
                     self._loaded_model = target_source
                     self._status = RuntimeStatus.READY
@@ -203,6 +255,8 @@ class ComputeConsoleService:
                     return False, self._status_message
         except Exception as e:
             with self._lock:
+                if gen != self._op_generation:
+                    return False, "Load superseded by a newer operation."
                 self._status = RuntimeStatus.ERROR
                 self._active_error = str(e)
                 self._status_message = f"Model load exception: {str(e)}"

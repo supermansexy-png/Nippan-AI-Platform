@@ -34,6 +34,7 @@ class TestAdapters(unittest.TestCase):
         adapter = MockComputeAdapter(self.config)
         self.assertTrue(adapter.is_mock)
         self.assertEqual(adapter.name, "mock")
+        self.assertEqual(adapter.adapter_tier, "simulation")
 
         # Initial status
         status, gpu, msg = adapter.get_status(timeout_sec=1.0)
@@ -98,6 +99,12 @@ class TestAdapters(unittest.TestCase):
         self.assertFalse(success)
         self.assertIn("Simulated OOM", msg)
 
+        # Test disconnect failure
+        adapter.fail_next_disconnect = True
+        success, msg = adapter.disconnect(timeout_sec=1.0)
+        self.assertFalse(success)
+        self.assertIn("Simulated disconnect RPC failure", msg)
+
     def test_colab_adapter_without_endpoint_fails_gracefully(self):
         # When COLAB_ENDPOINT_URL is not set
         empty_colab_config = ConsoleConfig(
@@ -150,12 +157,14 @@ class TestAdapters(unittest.TestCase):
     def test_hermes_and_ollama_and_nas_extensions(self):
         hermes = HermesComputeAdapter(self.config)
         self.assertEqual(hermes.name, "hermes")
+        self.assertEqual(hermes.adapter_tier, "stub")
         ok, gpu, msg = hermes.connect(timeout_sec=1.0)
         self.assertTrue(ok)
         self.assertIn("Hermes", gpu.name)
 
         ollama = OllamaComputeAdapter(self.config)
         self.assertEqual(ollama.name, "ollama")
+        self.assertEqual(ollama.adapter_tier, "live")
 
         nas = NASStorageAdapter(self.config)
         self.assertEqual(nas.name, "nas")

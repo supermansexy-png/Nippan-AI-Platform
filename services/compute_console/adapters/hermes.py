@@ -36,7 +36,11 @@ class HermesComputeAdapter(ComputeProviderAdapter):
 
     @property
     def is_mock(self) -> bool:
-        return False
+        return True  # STUB — no real HTTP calls; returns simulated responses
+
+    @property
+    def adapter_tier(self) -> str:
+        return "stub"
 
     def connect(self, timeout_sec: float) -> Tuple[bool, Optional[GPUInfo], str]:
         # Hermes integration handshake stub with timeout and error checking
